@@ -1,0 +1,114 @@
+{
+  "enhet": "meter",
+  "brytare": {
+    "skada": true,
+    "fiender": true,
+    "ljud": true,
+    "effekter": true,
+    "haptik": true,
+    "acceleration": true,
+    "occlusion": true,
+    "lod": true
+  },
+  "kamera": {
+    "fov": 60,
+    "hojd_m": 1.65,
+    "near_m": 0.05,
+    "far_m": 250,
+    "pixelRatio_max": 2,
+    "mal_hz": 60
+  },
+  "styrning": {
+    "kanslighet": 1,
+    "inverteraX": false,
+    "inverteraY": false,
+    "inverteraZ": false,
+    "utjamning_s": 0.055,
+    "dra_rad_px": 0.004,
+    "acc_sväng": 0.0018,
+    "acc_max": 5,
+    "rekyl_avklingning": 15
+  },
+  "fiende": {
+    "start_m": 60,
+    "fart_ms": 3.4,
+    "nara_m": 2,
+    "aterkomst_s": 1.6,
+    "fall_s": 0.5,
+    "hojd_m": 1.83,
+    "modell": "assets/modeller/soldat.glb",
+    "animation": "assets/modeller/jogg.glb",
+    "klipp": "R_Jog_fix",
+    "rotation_y": 0,
+    "hp": 1,
+    "traffvolym": {
+      "radie_m": 0.28,
+      "langd_m": 1.15,
+      "centrum_y": 0.88
+    }
+  },
+  "sikte": {
+    "ring_vinkel_grad": 8,
+    "ring_min_px": 24,
+    "ring_max_px": 84
+  },
+  "miljo": {
+    "mark_m": 240,
+    "mark_farg": "#575d43",
+    "himmel_farg": "#aebcb8",
+    "dimma_near": 60,
+    "dimma_far": 210,
+    "tanks": [
+      {
+        "x": -9,
+        "z": -55,
+        "rotation": 0.3
+      },
+      {
+        "x": 11,
+        "z": -83,
+        "rotation": -0.4
+      }
+    ],
+    "hus": [
+      {
+        "x": -17,
+        "z": -95,
+        "rotation": 0.4
+      },
+      {
+        "x": 18,
+        "z": -100,
+        "rotation": -0.2
+      }
+    ],
+    "tiger_langd_m": 8.45,
+    "hus_hojd_m": 6,
+    "tiger_hp": 3
+  },
+  "lod": {
+    "tiger_m": [
+      0,
+      38,
+      125
+    ],
+    "hus_m": [
+      0,
+      65,
+      135
+    ],
+    "overgang_m": 4
+  },
+  "effekter": {
+    "pool": 80,
+    "kvalitet": "lag",
+    "ljus": true
+  },
+  "ljud": {
+    "volym": 0.16,
+    "max_roster": 8
+  },
+  "ui": {
+    "debug": false
+  }
+}

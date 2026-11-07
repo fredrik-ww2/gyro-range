@@ -1,0 +1,50 @@
+[
+  {
+    "fil": "assets/modeller/soldat.glb",
+    "kalla": "/workspace/ww2_assets/SOLDATER_V3_3_20261026/tyskland/soldat_tyskland_ww2_v33_iphone.glb",
+    "byte": 1078288,
+    "sha256": "dd015318c72e9b46c17c02f06e8d04d7f79652ce060636fbfd2878dd769560bd"
+  },
+  {
+    "fil": "assets/modeller/jogg.glb",
+    "kalla": "/workspace/ww2_assets/assets/nedladdat/animationer/retarget/infanteri/anim-infanteri-allm-1944-jogg_fix_v33a.glb",
+    "byte": 61572,
+    "sha256": "956a406960c1e7033d99a9595d2fbb9ec5b6ad4c39ed0e4c37d488f942b59ace"
+  },
+  {
+    "fil": "assets/modeller/tiger_lod1.glb",
+    "kalla": "/workspace/ww2_assets/assets/asset_niva_1/enheter/stridsvagnar/tiger_i_late_42manako_m_lod1.glb",
+    "byte": 4163740,
+    "sha256": "d6dd8cd95e79d4b194da235af60a6b8f849afd9c808ddfd8c8d12bc4815135dc"
+  },
+  {
+    "fil": "assets/modeller/tiger_lod2.glb",
+    "kalla": "/workspace/ww2_assets/assets/asset_niva_1/enheter/stridsvagnar/tiger_i_late_42manako_m_lod2.glb",
+    "byte": 1618916,
+    "sha256": "8db93b627a52abf23fb9df76282c67fe807e5526a6177960be8860d5105b3473"
+  },
+  {
+    "fil": "assets/modeller/tiger_bb.glb",
+    "kalla": "/workspace/ww2_assets/assets/asset_niva_1/enheter/stridsvagnar/tiger_i_late_42manako_m_bb.glb",
+    "byte": 83744,
+    "sha256": "1e4ac7f4d9e4dc071f98c5f5b6739d8313b7eb4d672c1d636bc1be097d2796b2"
+  },
+  {
+    "fil": "assets/modeller/hus_lod1.glb",
+    "kalla": "/workspace/ww2_assets/assets/asset_niva_1/terrang/stad/hus/house_a_lod1.glb",
+    "byte": 31344,
+    "sha256": "4fe2eddc30ecb296dbeb10175cff978543b05b702ec41af305388d22267c3394"
+  },
+  {
+    "fil": "assets/modeller/hus_lod2.glb",
+    "kalla": "/workspace/ww2_assets/assets/asset_niva_1/terrang/stad/hus/house_a_lod2.glb",
+    "byte": 13228,
+    "sha256": "f1a90dd238a9ec826ad0e2a6db9aa337587d008ee8d22d3487dd650d7069da91"
+  },
+  {
+    "fil": "assets/modeller/hus_bb.glb",
+    "kalla": "/workspace/ww2_assets/assets/asset_niva_1/terrang/stad/hus/house_a_bb.glb",
+    "byte": 12800,
+    "sha256": "4891c6680c2f2f3a2d130544b87c9151e4c5a93158b8d707f414955706575224"
+  }
+]

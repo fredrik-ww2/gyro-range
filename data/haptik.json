@@ -1,0 +1,17 @@
+{
+  "latt": {
+    "namn": "Lätt",
+    "styrka": 0.25,
+    "varaktighet_ms": 12
+  },
+  "medel": {
+    "namn": "Medel",
+    "styrka": 0.55,
+    "varaktighet_ms": 24
+  },
+  "tung": {
+    "namn": "Tung",
+    "styrka": 0.9,
+    "varaktighet_ms": 40
+  }
+}

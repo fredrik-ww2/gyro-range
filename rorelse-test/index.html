@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Rörelsetest – gyro och haptik</title>
+<style>
+  :root { --bg:#111417; --kort:#1c2126; --text:#e9edf0; --svag:#9aa6b0; --acc:#d9a441; --ok:#5cc27a; --fel:#e25b55; --bla:#5aa6e8; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; background:var(--bg); color:var(--text); font: 16px/1.4 -apple-system, system-ui, sans-serif; }
+  body { padding: env(safe-area-inset-top) 0 calc(64px + env(safe-area-inset-bottom)); }
+  header { padding: 10px 14px 4px; display:flex; justify-content:space-between; align-items:baseline; }
+  header h1 { font-size: 18px; margin:0; }
+  header .st { font-size: 14px; color: var(--svag); }
+  nav { position: fixed; left:0; right:0; bottom:0; display:flex; background:#0b0d0f; border-top:1px solid #2a3138; padding-bottom: env(safe-area-inset-bottom); z-index:10; }
+  nav button { flex:1; background:none; border:0; color:var(--svag); font-size:13px; padding:10px 2px 12px; }
+  nav button.aktiv { color: var(--acc); font-weight: 600; }
+  section { display:none; padding: 6px 12px 16px; }
+  section.aktiv { display:block; }
+  .kort { background: var(--kort); border-radius: 12px; padding: 12px; margin: 10px 0; }
+  .kort h2 { font-size: 16px; margin: 0 0 6px; }
+  .kort p { margin: 4px 0; color: var(--svag); font-size: 14px; }
+  button.knapp { font-size: 16px; padding: 12px 14px; border-radius: 10px; border: 0; background: #2d353d; color: var(--text); margin: 4px 4px 4px 0; min-height: 44px; }
+  button.knapp.huvud { background: var(--acc); color: #111; font-weight: 600; }
+  button.knapp:disabled { opacity: .45; }
+  .stor { width: 100%; font-size: 20px !important; padding: 22px !important; }
+  table { width:100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+  td { padding: 3px 4px; border-bottom: 1px solid #2a3138; }
+  td:first-child { color: var(--svag); }
+  .ok { color: var(--ok); } .fel { color: var(--fel); } .var { color: var(--acc); }
+  .bar { height: 8px; background:#2a3138; border-radius: 4px; overflow:hidden; margin: 6px 0; }
+  .bar > div { height:100%; width:0; background: var(--acc); }
+  pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; background:#0b0d0f; padding:8px; border-radius:8px; max-height: 260px; overflow:auto; margin: 6px 0 0; }
+  canvas { width: 100%; display:block; background:#0b0d0f; border-radius: 10px; touch-action: none; }
+  label.rad { display:flex; align-items:center; justify-content:space-between; gap: 8px; font-size: 14px; margin: 6px 0; }
+  label.rad input[type=range] { flex: 1; }
+  label.rad span.v { min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+  textarea { width:100%; min-height: 220px; background:#0b0d0f; color: var(--text); border-radius: 8px; border: 1px solid #2a3138; font: 12px/1.3 ui-monospace, monospace; }
+  .instr { font-size: 18px; font-weight: 600; color: var(--acc); min-height: 1.4em; margin: 6px 0; }
+  #blixt { position: fixed; inset: 0; pointer-events: none; opacity: 0; z-index: 50; }
+  .rutnat2 { display:grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  input[type=number] { width: 90px; font-size: 16px; background:#0b0d0f; color:var(--text); border:1px solid #2a3138; border-radius:6px; padding:4px; }
+</style>
+</head>
+<body>
+<div id="blixt"></div>
+<header><h1>Rörelsetest</h1><span class="st" id="hStatus">sensorer av</span></header>
+
+<!-- ============ START ============ -->
+<section id="s-start" class="aktiv">
+  <div class="kort">
+    <h2>1. Starta sensorerna</h2>
+    <p>Tryck på knappen. På iPhone kommer en fråga om rörelse och orientering; svara <b>Tillåt</b>.</p>
+    <button class="knapp huvud stor" id="bStart">Starta sensorer</button>
+    <p id="pBeh"></p>
+  </div>
+  <div class="kort"><h2>Enhet och stöd</h2><table id="tEnhet"></table></div>
+  <div class="kort"><h2>Haptik på den här enheten</h2><table id="tHaptik"></table></div>
+  <div class="kort"><p>Inget skickas någonstans. Alla mätningar sparas i en JSON-fil som du laddar ner under <b>Export</b>.</p></div>
+</section>
+
+<!-- ============ LIVE ============ -->
+<section id="s-live">
+  <div class="kort"><h2>Ström just nu</h2><table id="tLive"></table></div>
+  <div class="kort"><h2>Gyro (°/s): x röd, y grön, z blå</h2><canvas id="cGraf" height="180"></canvas></div>
+</section>
+
+<!-- ============ SIKTE ============ -->
+<section id="s-sikte">
+  <div class="kort" style="padding:6px">
+    <canvas id="cSikte" height="300"></canvas>
+    <div class="rutnat2" style="margin-top:6px">
+      <button class="knapp" id="bKal">Kalibrera (ligg still)</button>
+      <button class="knapp" id="bCentrera">Centrera</button>
+      <button class="knapp" id="bGyroAv">Håll: gyro av</button>
+      <button class="knapp huvud" id="bEld">ELD</button>
+    </div>
+    <p id="pSikte"></p>
+  </div>
+  <div class="kort">
+    <h2>Inställningar (sparas i JSON)</h2>
+    <label class="rad">Känslighet sida <input type="range" id="rSensY" min="0.2" max="10" step="0.1"><span class="v" id="vSensY"></span></label>
+    <label class="rad">Känslighet höjd <input type="range" id="rSensP" min="0.2" max="10" step="0.1"><span class="v" id="vSensP"></span></label>
+    <label class="rad">1€ minCutoff (Hz) <input type="range" id="rMin" min="0.05" max="5" step="0.05"><span class="v" id="vMin"></span></label>
+    <label class="rad">1€ beta <input type="range" id="rBeta" min="0" max="0.5" step="0.005"><span class="v" id="vBeta"></span></label>
+    <label class="rad">Tightening (°/s) <input type="range" id="rTight" min="0" max="6" step="0.1"><span class="v" id="vTight"></span></label>
+    <label class="rad">1€-filter på <input type="checkbox" id="cbEuro"></label>
+    <label class="rad">Vänd höjd <input type="checkbox" id="cbInv"></label>
+    <p>Grå prick = ofiltrerat, gul = efter 1€. Tecknen (vänster/höger, upp/ner) ska kontrolleras på riktig telefon.</p>
+  </div>
+</section>
+
+<!-- ============ MÄT ============ -->
+<section id="s-mat">
+  <div class="instr" id="mInstr"></div>
+  <div class="bar"><div id="mBar"></div></div>
+  <div class="kort"><h2>M1. Frekvens, jitter och dubbletter</h2>
+    <p>Del 1: telefonen still på bordet. Del 2: rör telefonen hela tiden.</p>
+    <button class="knapp huvud" data-mat="frekvens">Starta M1</button><pre id="r-frekvens"></pre></div>
+  <div class="kort"><h2>M2. Drift i vridningen åt sidorna (alpha)</h2>
+    <p>Lägg telefonen helt still. Byt gärna flik eller lås skärmen en gång under mätningen och kom tillbaka (hopp loggas).</p>
+    <label class="rad">Längd (s) <input type="number" id="nDrift" min="10" max="1800"></label>
+    <button class="knapp huvud" data-mat="drift">Starta M2</button> <button class="knapp" id="bDriftStopp">Avsluta nu</button><pre id="r-drift"></pre></div>
+  <div class="kort"><h2>M3. Tecken för acceleration</h2>
+    <p>Lägg telefonen platt med skärmen UPPÅT. Specen säger z = +9,81; iOS väntas ge −9,81.</p>
+    <button class="knapp huvud" data-mat="acctecken">Starta M3</button><pre id="r-acctecken"></pre></div>
+  <div class="kort"><h2>M4. Tecken för gyro (porträtt)</h2>
+    <p>Tre styrda rörelser på ca 90°. Följ texten överst.</p>
+    <button class="knapp huvud" data-mat="gyrotecken">Starta M4</button><pre id="r-gyrotecken"></pre></div>
+  <div class="kort"><h2>M5. Skärmvinkel</h2>
+    <p>Vrid telefonen till liggande läge (rotationslås av) och tryck på knappen som stämmer.</p>
+    <div class="rutnat2"><button class="knapp" data-vinkel="porträtt">Porträtt</button><button class="knapp" data-vinkel="vänster kant ner">Vänster kant ner</button><button class="knapp" data-vinkel="höger kant ner">Höger kant ner</button><button class="knapp" data-vinkel="upp och ner">Upp och ner</button></div>
+    <pre id="r-vinkel"></pre></div>
+  <div class="kort"><h2>M6. Strömsparläge</h2>
+    <p>Kör en gång med strömsparläge av och en gång med det på.</p>
+    <label class="rad">Strömsparläge är PÅ <input type="checkbox" id="cbLpm"></label>
+    <button class="knapp huvud" data-mat="strom">Starta M6 (10 s)</button><pre id="r-strom"></pre></div>
+  <p style="color:var(--svag);font-size:13px">Sving (M7) och haptik (M8) har egna flikar. Behörighetsförsök loggas automatiskt.</p>
+</section>
+
+<!-- ============ SVING ============ -->
+<section id="s-sving">
+  <div class="kort">
+    <h2>M7. Sving och klubbhastighet</h2>
+    <p>Håll telefonen stadigt i händerna som ett klubbgrepp. Stå still en kort stund, sving sedan. Uppskattningen är ω × radie och har stora felmarginaler.</p>
+    <label class="rad">Radie arm + klubba (m) <input type="number" id="nRadie" step="0.05" min="0.3" max="2.5"></label>
+    <div class="instr" id="svStatus">väntar på stillhet…</div>
+    <table id="tSving"></table>
+    <canvas id="cSving" height="140" style="margin-top:8px"></canvas>
+  </div>
+  <div class="kort"><h2>Alla svingar</h2><pre id="r-sving"></pre></div>
+</section>
+
+<!-- ============ HAPTIK ============ -->
+<section id="s-haptik">
+  <div class="kort">
+    <h2>M8. Haptik: tidpunkt och fördröjning</h2>
+    <p id="pHapt"></p>
+    <button class="knapp huvud stor" id="bHapt">TRYCK HÄR</button>
+    <p>Vit blixt = fingret ner. Röd blixt = när haptiken utlöses (iOS: switch-klick; Android: direkt vid ner). Filma skärmen i slow motion med en annan telefon för att mäta mot det du känner.</p>
+    <div class="rutnat2"><button class="knapp" data-kansla="vid tryck">Kändes vid tryck</button><button class="knapp" data-kansla="vid släpp">Kändes vid släpp</button><button class="knapp" data-kansla="inget">Kändes inget</button><button class="knapp" id="bMonster">Prova mönster</button></div>
+    <table id="tHapt"></table>
+  </div>
+  <div class="kort"><h2>Logg</h2><pre id="r-haptik"></pre></div>
+</section>
+
+<!-- ============ EXPORT ============ -->
+<section id="s-export">
+  <div class="kort">
+    <h2>Spara mätningarna</h2>
+    <p id="pRec"></p>
+    <button class="knapp huvud" id="bLadda">Ladda ner JSON</button>
+    <button class="knapp" id="bDela">Dela fil</button>
+    <button class="knapp" id="bKopiera">Kopiera sammanfattning</button>
+    <button class="knapp" id="bNy">Ny inspelning</button>
+  </div>
+  <div class="kort"><h2>Sammanfattning</h2><pre id="pSamm"></pre></div>
+  <div class="kort">
+    <h2>Inställningar (JSON)</h2>
+    <p>Alla värden. Ändra och tryck Spara; sidan laddas om. Sparas bara i den här webbläsaren.</p>
+    <textarea id="taCfg" spellcheck="false"></textarea>
+    <button class="knapp" id="bCfgSpara">Spara</button> <button class="knapp" id="bCfgAter">Återställ standard</button>
+  </div>
+  <div class="kort"><p>Rörelsetest v0.1 · MotionCore <span id="sVer"></span></p></div>
+</section>
+
+<nav id="nav">
+  <button data-flik="start" class="aktiv">Start</button><button data-flik="live">Live</button><button data-flik="sikte">Sikte</button><button data-flik="mat">Mät</button><button data-flik="sving">Sving</button><button data-flik="haptik">Haptik</button><button data-flik="export">Export</button>
+</nav>
+
+<script type="application/json" id="installningar">
+{
+  "sensorer": { "plattformTvinga": null, "accTeckenTvinga": null, "stillaGransDegS": 3 },
+  "sikte": { "sensYaw": 1.0, "sensPitch": 1.0, "yawSign": 1, "pitchSign": -1, "invertPitch": false,
+             "tightenDegS": 1.5, "maxPitchDeg": 85, "useOneEuro": true,
+             "oneEuro": { "minCutoff": 1.0, "beta": 0.02, "dCutoff": 1.0 }, "pixlarPerGrad": 6, "kalibreraS": 2 },
+  "matning": { "frekvensStillaS": 15, "frekvensRorelseS": 15, "driftS": 300, "driftHoppDeg": 5,
+               "accTeckenS": 3, "gyroTeckenS": 4, "nedrakningS": 3, "stromS": 10 },
+  "sving": { "startDegS": 120, "restDegS": 25, "restMs": 250, "armWindowMs": 1500, "endMs": 300, "refractoryMs": 800,
+             "minDurationMs": 120, "radiusM": 1.6, "clipMinDegS": 1800, "clipFlatTolDegS": 3, "sensorMaxDegS": 2000 },
+  "haptik": { "androidPulsMs": 20, "androidMonster": [30, 60, 30, 60, 60] },
+  "inspelning": { "maxSampel": 30000 },
+  "graf": { "sekunder": 5, "skalaDegS": 400 }
+}
+</script>
+
+<script type="module">
+// ---- motion-core.js (inbäddad) ----
+// motion-core.js – MotionCore v0.1.0 (2026-11-07)
+// Motoroberoende kärna för gyro, rörelse och haptik i mobilwebben (WW2-projektet).
+// Underlag: RESEARCH_GYRO_HAPTIK.md (avsnitt 13 = mönstren, avsnitt 12 = mätlistan).
+// Enheter internt: sekunder, rad/s, m/s², meter. Grader bara i rapport/UI-fält som heter ...Deg.
+// Ren ES-modul utan beroenden. Allt som rör window/document/navigator ligger i adaptrar
+// (createDomSource, requestMotionPermission, createHaptics) och får sina objekt injicerade.
+
+export const VERSION = '0.1.0';
+export const G = 9.80665;
+export const DEG = Math.PI / 180;
+export const RAD2DEG = 180 / Math.PI;
+
+// ---------- Plattform ----------
+export function detectPlatform(nav) {
+  if (!nav) return 'other';
+  const ua = nav.userAgent || '';
+  if (/iPad|iPhone|iPod/.test(ua) || (nav.platform === 'MacIntel' && nav.maxTouchPoints > 1)) return 'ios';
+  if (/Android/i.test(ua)) return 'android';
+  return 'other';
+}
+export function safariMajor(nav) {
+  const m = /Version\/(\d+)(?:\.(\d+))?.*Safari/.exec((nav && nav.userAgent) || '');
+  return m ? { major: +m[1], minor: +(m[2] || 0) } : null;
+}
+
+// ---------- interval: iOS ger sekunder (0,0167), specen ms (16) ----------
+export function normalizeIntervalToSeconds(iv) {
+  if (iv == null || !Number.isFinite(iv) || iv <= 0) return { s: null, unit: 'saknas' };
+  if (iv < 1) return { s: iv, unit: 's' };
+  return { s: iv / 1000, unit: 'ms' };
+}
+
+// ---------- Normalisering ----------
+// Ut: acc/accG i m/s² enligt specen (platt, skärm upp => accG z ≈ +9,81),
+// gyro i rad/s [x,y,z] (rotationRate alpha=x, beta=y, gamma=z), i skärmens axlar
+// efter rotation med skärmvinkeln. devGyro/devAccG = samma i enhetens axlar.
+export function createNormalizer(opts = {}) {
+  const o = { platform: 'other', accSign: null, getScreenAngleDeg: () => 0, maxDt: 0.25, ...opts };
+  let accSign = o.accSign != null ? (o.accSign < 0 ? -1 : 1) : (o.platform === 'ios' ? -1 : 1);
+  let accSignSource = o.accSign != null ? 'inställning' : (o.platform === 'ios' ? 'plattform (iOS-regel)' : 'plattform (spec)');
+  let lastT = null, lastKey = null;
+  const vec = (v, s) => (v && v.x != null && v.y != null && v.z != null) ? [s * v.x, s * v.y, s * v.z] : null;
+  const rate = r => (r && r.alpha != null && r.beta != null && r.gamma != null) ? [r.alpha * DEG, r.beta * DEG, r.gamma * DEG] : null;
+  const rotZ = (v, c, s) => v && [v[0] * c - v[1] * s, v[0] * s + v[1] * c, v[2]];
+  return {
+    get accSign() { return accSign; },
+    get accSignSource() { return accSignSource; },
+    setAccSign(sign, source = 'kalibrering') { accSign = sign < 0 ? -1 : 1; accSignSource = source; },
+    reset() { lastT = null; lastKey = null; },
+    fromMotion(e) {
+      const t = e.timeStamp;
+      const iv = normalizeIntervalToSeconds(e.interval);
+      const dtMeasured = lastT == null ? null : (t - lastT) / 1000;
+      let dt = dtMeasured;
+      if (dt == null || dt <= 0 || dt > o.maxDt) dt = iv.s || 1 / 60;
+      lastT = t;
+      const a = e.acceleration, ag = e.accelerationIncludingGravity, rr = e.rotationRate;
+      const key = JSON.stringify([ag && [ag.x, ag.y, ag.z], rr && [rr.alpha, rr.beta, rr.gamma], a && [a.x, a.y, a.z]]);
+      const dup = key === lastKey;
+      lastKey = key;
+      const devAcc = vec(a, accSign), devAccG = vec(ag, accSign), devGyro = rate(rr);
+      const angle = Number(o.getScreenAngleDeg()) || 0;
+      const th = angle * DEG, c = Math.cos(th), s = Math.sin(th);
+      return {
+        t, dt, dtMeasured, dup, screenAngleDeg: angle,
+        intervalS: iv.s, intervalUnit: iv.unit, intervalRaw: e.interval ?? null,
+        acc: rotZ(devAcc, c, s), accG: rotZ(devAccG, c, s), gyro: rotZ(devGyro, c, s),
+        devAcc, devAccG, devGyro,
+        raw: { acc: a ? [a.x, a.y, a.z] : null, accG: ag ? [ag.x, ag.y, ag.z] : null, rr: rr ? [rr.alpha, rr.beta, rr.gamma] : null }
+      };
+    },
+    fromOrientation(e) {
+      const hasAbs = typeof e.absolute === 'boolean';
+      return {
+        t: e.timeStamp, alphaDeg: e.alpha, betaDeg: e.beta, gammaDeg: e.gamma,
+        absolute: hasAbs ? e.absolute : null,
+        compassHeadingDeg: e.webkitCompassHeading ?? null, compassAccuracyDeg: e.webkitCompassAccuracy ?? null,
+        quat: (e.alpha != null && e.beta != null && e.gamma != null) ? quatFromEuler(e.alpha, e.beta, e.gamma) : null
+      };
+    }
+  };
+}
+
+// ---------- Kvaternioner [x,y,z,w] ----------
+export function quatFromEuler(alphaDeg, betaDeg, gammaDeg) {
+  const z = alphaDeg * DEG / 2, x = betaDeg * DEG / 2, y = gammaDeg * DEG / 2;
+  const cX = Math.cos(x), cY = Math.cos(y), cZ = Math.cos(z), sX = Math.sin(x), sY = Math.sin(y), sZ = Math.sin(z);
+  return [sX * cY * cZ - cX * sY * sZ, cX * sY * cZ + sX * cY * sZ, cX * cY * sZ + sX * sY * cZ, cX * cY * cZ - sX * sY * sZ];
+}
+export function quatMul(a, b) {
+  const [ax, ay, az, aw] = a, [bx, by, bz, bw] = b;
+  return [ax * bw + aw * bx + ay * bz - az * by, ay * bw + aw * by + az * bx - ax * bz,
+    az * bw + aw * bz + ax * by - ay * bx, aw * bw - ax * bx - ay * by - az * bz];
+}
+export const quatInv = a => [-a[0], -a[1], -a[2], a[3]];
+export function quatFromAxisAngle(axis, ang) { const s = Math.sin(ang / 2); return [axis[0] * s, axis[1] * s, axis[2] * s, Math.cos(ang / 2)]; }
+export function quatAngleRad(a, b) { const d = Math.abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]); return 2 * Math.acos(Math.min(1, d)); }
+// Om-centrering: rel = inv(ref) * now
+export const quatRelative = (ref, now) => quatMul(quatInv(ref), now);
+
+// ---------- Filter ----------
+export function createOneEuro({ minCutoff = 1.0, beta = 0.0, dCutoff = 1.0 } = {}) {
+  const al = (cutoff, dt) => { const r = 2 * Math.PI * cutoff * dt; return r / (r + 1); };
+  let xPrev = null, dxPrev = 0;
+  const f = (x, dt) => {
+    if (xPrev === null || !(dt > 0)) { xPrev = x; return x; }
+    const dx = (x - xPrev) / dt;
+    const ad = al(f.dCutoff, dt); dxPrev = ad * dx + (1 - ad) * dxPrev;
+    const a = al(f.minCutoff + f.beta * Math.abs(dxPrev), dt);
+    xPrev = a * x + (1 - a) * xPrev; return xPrev;
+  };
+  f.minCutoff = minCutoff; f.beta = beta; f.dCutoff = dCutoff;
+  f.reset = (x = null) => { xPrev = x; dxPrev = 0; };
+  return f;
+}
+export function tighten(v, threshold) {
+  if (!(threshold > 0)) return v;
+  const m = Math.abs(v); return m < threshold ? v * (m / threshold) : v;
+}
+
+// ---------- Gravitation ----------
+export function gravityFromSample(s) {
+  if (!s.accG || !s.acc) return null;
+  return [s.accG[0] - s.acc[0], s.accG[1] - s.acc[1], s.accG[2] - s.acc[2]];
+}
+// Komplementärfilter: gEst = enhetsvektor "upp" (samma riktning som accG i vila, spec-tecken).
+export function updateGravity(gEst, gyro, accG, dt, k = 0.02) {
+  if (!gEst) { const n = Math.hypot(...accG) || 1; return accG.map(v => v / n); }
+  const [wx, wy, wz] = gyro.map(v => -v * dt);
+  let g = [gEst[0] + (wy * gEst[2] - wz * gEst[1]), gEst[1] + (wz * gEst[0] - wx * gEst[2]), gEst[2] + (wx * gEst[1] - wy * gEst[0])];
+  const n = Math.hypot(...accG) || 1, m = accG.map(v => v / n);
+  g = g.map((v, i) => v + (m[i] - v) * k);
+  const gn = Math.hypot(...g) || 1; return g.map(v => v / gn);
+}
+
+// ---------- Musliknande gyrosikte med 1€-filter ----------
+// yaw = rotation runt skärmens y, pitch = runt skärmens x. Tecken är inställbara (verifieras på enhet).
+export function createAimMouse(opts = {}) {
+  const o = {
+    sensYaw: 1, sensPitch: 1, yawSign: 1, pitchSign: 1, invertPitch: false,
+    tightenDegS: 1.5, maxPitchDeg: 85, useOneEuro: true,
+    oneEuro: { minCutoff: 1.0, beta: 0.02, dCutoff: 1.0 }, ...opts
+  };
+  const fy = createOneEuro(o.oneEuro), fp = createOneEuro(o.oneEuro);
+  let bias = [0, 0, 0], rawYaw = 0, rawPitch = 0, yaw = 0, pitch = 0, enabled = true;
+  const clampP = v => Math.max(-o.maxPitchDeg * DEG, Math.min(o.maxPitchDeg * DEG, v));
+  return {
+    options: o,
+    get bias() { return bias.slice(); },
+    setBias(b) { bias = b.slice(); },
+    setEnabled(b) { enabled = !!b; },
+    get enabled() { return enabled; },
+    setOneEuro(p) { Object.assign(o.oneEuro, p); for (const f of [fy, fp]) Object.assign(f, o.oneEuro); },
+    recenter() { rawYaw = rawPitch = yaw = pitch = 0; fy.reset(0); fp.reset(0); },
+    update(s) {
+      // Dubbletter integreras: tiden mellan händelserna är verklig och hastigheten är bästa skattningen.
+      if (!s.gyro || !enabled) return { yaw, pitch, dYaw: 0, dPitch: 0 };
+      const th = o.tightenDegS * DEG;
+      const yr = o.yawSign * tighten(s.gyro[1] - bias[1], th);
+      const pr = (o.invertPitch ? -1 : 1) * o.pitchSign * tighten(s.gyro[0] - bias[0], th);
+      rawYaw += yr * o.sensYaw * s.dt;
+      rawPitch = clampP(rawPitch + pr * o.sensPitch * s.dt);
+      const ny = o.useOneEuro ? fy(rawYaw, s.dt) : rawYaw, np = o.useOneEuro ? fp(rawPitch, s.dt) : rawPitch;
+      const out = { yaw: ny, pitch: np, dYaw: ny - yaw, dPitch: np - pitch, rawYaw, rawPitch };
+      yaw = ny; pitch = np; return out;
+    }
+  };
+}
+// Medelvärde av gyro i vila => bias (rad/s)
+export function meanVec(list) {
+  const m = [0, 0, 0]; let n = 0;
+  for (const v of list) if (v) { m[0] += v[0]; m[1] += v[1]; m[2] += v[2]; n++; }
+  return n ? m.map(x => x / n) : m;
+}
+
+// ---------- Mätare ----------
+function quantile(sorted, q) { if (!sorted.length) return null; const i = (sorted.length - 1) * q, lo = Math.floor(i), hi = Math.ceil(i); return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo); }
+
+// Frekvens, jitter, dubbletter, luckor
+export function createRateMeter() {
+  let dts = [], dups = 0, n = 0, first = null, last = null, intervalRaw = null, intervalUnit = null;
+  return {
+    reset() { dts = []; dups = 0; n = 0; first = last = null; intervalRaw = intervalUnit = null; },
+    add(s) {
+      n++; if (first == null) first = s.t; last = s.t;
+      if (s.dup) dups++;
+      if (s.dtMeasured != null) dts.push(s.dtMeasured * 1000);
+      if (s.intervalRaw != null) { intervalRaw = s.intervalRaw; intervalUnit = s.intervalUnit; }
+    },
+    summary() {
+      const sorted = dts.slice().sort((a, b) => a - b);
+      const mean = sorted.length ? sorted.reduce((a, b) => a + b, 0) / sorted.length : null;
+      const sd = mean == null ? null : Math.sqrt(sorted.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, sorted.length - 1));
+      const med = quantile(sorted, 0.5);
+      const durS = first == null ? 0 : (last - first) / 1000;
+      const hist = {};
+      for (const d of sorted) { const b = Math.round(d); hist[b] = (hist[b] || 0) + 1; }
+      return {
+        antal: n, varaktighetS: durS,
+        hzMedel: durS > 0 ? (n - 1) / durS : null,
+        hzFranMedianDt: med ? 1000 / med : null,
+        dtMs: { medel: mean, median: med, p5: quantile(sorted, 0.05), p95: quantile(sorted, 0.95), min: sorted[0] ?? null, max: sorted.at(-1) ?? null },
+        jitterMsSd: sd,
+        dubbletter: dups, dubblettAndel: n ? dups / n : 0,
+        dtNollEllerNegativ: sorted.filter(d => d <= 0.0001).length,
+        luckor: med ? sorted.filter(d => d > 1.8 * med).length : 0,
+        intervalRa: intervalRaw, intervalEnhet: intervalUnit,
+        dtHistogramMs: hist
+      };
+    }
+  };
+}
+
+// Drift och hopp i alpha (vridning åt sidorna)
+export function createDriftMeter({ jumpDeg = 5 } = {}) {
+  let pts = [], prev = null, unwrapped = 0, jumps = [], marks = [];
+  return {
+    reset() { pts = []; prev = null; unwrapped = 0; jumps = []; marks = []; },
+    mark(t, label) { marks.push({ t, label, alphaDeg: pts.length ? pts.at(-1)[1] : null }); },
+    add(t, alphaDeg) {
+      if (alphaDeg == null) return;
+      if (prev != null) {
+        let d = alphaDeg - prev; if (d > 180) d -= 360; if (d < -180) d += 360;
+        if (Math.abs(d) >= jumpDeg) jumps.push({ t, stegDeg: d });
+        unwrapped += d;
+      } else unwrapped = alphaDeg;
+      prev = alphaDeg; pts.push([t, unwrapped]);
+    },
+    summary() {
+      if (pts.length < 2) return { antal: pts.length };
+      const t0 = pts[0][0]; let sx = 0, sy = 0, sxx = 0, sxy = 0; const n = pts.length;
+      for (const [t, a] of pts) { const x = (t - t0) / 60000; sx += x; sy += a; sxx += x * x; sxy += x * a; }
+      const slope = (n * sxy - sx * sy) / ((n * sxx - sx * sx) || 1);
+      let min = Infinity, max = -Infinity; for (const [, a] of pts) { min = Math.min(min, a); max = Math.max(max, a); }
+      return { antal: n, varaktighetS: (pts.at(-1)[0] - t0) / 1000, driftDegPerMin: slope, spannDeg: max - min, totalDeg: pts.at(-1)[1] - pts[0][1], hopp: jumps, markeringar: marks };
+    }
+  };
+}
+
+// Stillhet: |ω| under tröskel
+export const isStill = (s, thrDegS = 3) => !!s.gyro && Math.hypot(...s.gyro) < thrDegS * DEG;
+
+// Tecken för acceleration: telefonen platt med skärmen UPPÅT. Specen: accG z = +9,81.
+export function createAccSignCheck() {
+  let zs = [], norms = [];
+  return {
+    reset() { zs = []; norms = []; },
+    add(s) { if (s.raw.accG) { zs.push(s.raw.accG[2]); norms.push(Math.hypot(...s.raw.accG)); } },
+    result() {
+      if (zs.length < 5) return { ok: false, orsak: 'för få sampel' };
+      const z = zs.reduce((a, b) => a + b, 0) / zs.length, nrm = norms.reduce((a, b) => a + b, 0) / norms.length;
+      const flat = Math.abs(Math.abs(z) - nrm) < 0.6 && Math.abs(nrm - G) < 1.0;
+      return { ok: flat, raZMedel: z, normMedel: nrm, platt: flat, teckenFaktor: z >= 0 ? 1 : -1, foljerSpec: z >= 0, orsak: flat ? null : 'telefonen låg inte platt och stilla' };
+    }
+  };
+}
+
+// Tecken för gyro: integrera rotationRate (enhetens axlar, grader) under en styrd rörelse.
+export function createGyroSignCheck() {
+  let ang = [0, 0, 0], n = 0;
+  return {
+    reset() { ang = [0, 0, 0]; n = 0; },
+    add(s) { if (s.devGyro) { for (let i = 0; i < 3; i++) ang[i] += s.devGyro[i] * s.dt * RAD2DEG; n++; } },
+    result(expect /* {axel:'x'|'y'|'z', tecken:1|-1} */) {
+      const ax = ['x', 'y', 'z'], abs = ang.map(Math.abs), i = abs.indexOf(Math.max(...abs));
+      const res = { antal: n, vinkelDeg: { x: ang[0], y: ang[1], z: ang[2] }, dominantAxel: ax[i], tecken: Math.sign(ang[i]) };
+      if (expect) { res.forvantat = expect; res.matcharSpec = res.dominantAxel === expect.axel && res.tecken === expect.tecken; }
+      if (abs[i] < 30) res.varning = 'för liten rörelse (<30°)';
+      return res;
+    }
+  };
+}
+
+// ---------- Svingdetektor (golf) ----------
+export function createSwingDetector(opts = {}) {
+  const c = {
+    startDegS: 120, restDegS: 25, restMs: 250, armWindowMs: 1500, endMs: 300, refractoryMs: 800, minDurationMs: 120,
+    radiusM: 1.6, clipMinDegS: 1800, clipFlatTolDegS: 3, sensorMaxDegS: 2000, ...opts
+  };
+  let st = 'VILA', restSince = null, armed = false, leftRest = null, buf = [], quietSince = null, lastEnd = -1e12;
+  function analyse() {
+    const w = buf.map(b => Math.hypot(...b.g));
+    let ip = 0; for (let i = 1; i < w.length; i++) if (w[i] > w[ip]) ip = i;
+    const pk = buf[ip], pu = pk.g.map(v => v / (w[ip] || 1));
+    // topp = sista sampel före toppen där projektionen på toppriktningen var <= 0 (baksving -> nedsving)
+    let top = -1; for (let i = ip; i >= 0; i--) { const d = buf[i].g[0] * pu[0] + buf[i].g[1] * pu[1] + buf[i].g[2] * pu[2]; if (d <= 0) { top = i; break; } }
+    // subsampel-topp (parabel)
+    let tPeak = pk.t, wPeak = w[ip];
+    if (ip > 0 && ip < w.length - 1) {
+      const a = w[ip - 1], b = w[ip], d = w[ip + 1], den = a - 2 * b + d;
+      if (den < 0) { const off = 0.5 * (a - d) / den; tPeak = pk.t + off * ((buf[ip + 1].t - buf[ip - 1].t) / 2); wPeak = b - 0.25 * (a - d) * off; }
+    }
+    // klippning: >=2 sampel i rad på samma axel, |komponent| >= clipMin och nästan lika
+    let clipped = false, maxComp = 0;
+    for (let i = 0; i < buf.length; i++) for (let k = 0; k < 3; k++) {
+      const v = Math.abs(buf[i].g[k]) * RAD2DEG; maxComp = Math.max(maxComp, v);
+      if (i > 0) { const p = Math.abs(buf[i - 1].g[k]) * RAD2DEG; if (v >= c.clipMinDegS && p >= c.clipMinDegS && Math.abs(v - p) <= c.clipFlatTolDegS) clipped = true; }
+    }
+    if (maxComp >= 0.98 * c.sensorMaxDegS) clipped = true;
+    let aPk = 0, taPk = null; for (const b of buf) if (b.a) { const m = Math.hypot(...b.a); if (m > aPk) { aPk = m; taPk = b.t; } }
+    const omega = clipped ? w[ip] : Math.max(wPeak, w[ip]);   // klippt: ingen interpolation över taket
+    const v = omega * c.radiusM;
+    const dts = []; for (let i = 1; i < buf.length; i++) dts.push(buf[i].t - buf[i - 1].t);
+    return {
+      tStart: buf[0].t, tSlut: buf.at(-1).t, varaktighetMs: buf.at(-1).t - buf[0].t,
+      tTopp: top >= 0 ? buf[top].t : null, harBaksving: top > 0,
+      baksvingMs: top > 0 ? buf[top].t - buf[0].t : null, nedsvingMs: top >= 0 ? tPeak - buf[top].t : null,
+      tMaxOmega: tPeak, omegaMaxRadS: omega, omegaMaxDegS: omega * RAD2DEG, maxAxelDegS: maxComp,
+      samplesINedsving: top >= 0 ? ip - top : null, antalSampel: buf.length,
+      klippt: clipped, radieM: c.radiusM,
+      klubbfartMS: v, klubbfartKmH: v * 3.6, fartArMinst: clipped,
+      accToppMS2: aPk, tAccTopp: taPk, dtMedelMs: dts.length ? dts.reduce((x, y) => x + y, 0) / dts.length : null
+    };
+  }
+  const det = (s, emit) => {
+    if (!s.gyro) return;
+    const w = Math.hypot(...s.gyro) * RAD2DEG, t = s.t;
+    if (st === 'VILA') {
+      if (w < c.restDegS) {
+        if (restSince == null) restSince = t;
+        if (t - restSince >= c.restMs) { armed = true; leftRest = null; }
+      } else {
+        restSince = null;
+        if (armed && leftRest == null) leftRest = t;
+        if (armed && t - leftRest > c.armWindowMs) armed = false;   // för lång långsam rörelse: inte en sving
+        if (armed && w > c.startDegS && t - lastEnd >= c.refractoryMs) {
+          st = 'AKTIV'; armed = false; leftRest = null;
+          buf = [{ t, g: s.gyro.slice(), a: s.acc && s.acc.slice() }]; quietSince = null; emit && emit('swingStart', { t });
+        }
+      }
+    } else {
+      buf.push({ t, g: s.gyro.slice(), a: s.acc && s.acc.slice() });
+      if (w < c.restDegS) { if (quietSince == null) quietSince = t; } else quietSince = null;
+      if ((quietSince != null && t - quietSince >= c.endMs) || buf.length > 600) {
+        const dur = buf.at(-1).t - buf[0].t;
+        st = 'VILA'; lastEnd = t; restSince = null;
+        if (dur >= c.minDurationMs) emit && emit('swing', analyse()); else emit && emit('swingAvbruten', { t, varaktighetMs: dur });
+        buf = [];
+      }
+    }
+  };
+  det.options = c; det.reset = () => { st = 'VILA'; restSince = null; armed = false; leftRest = null; buf = []; lastEnd = -1e12; };
+  Object.defineProperty(det, 'state', { get: () => st });
+  return det;
+}
+
+// ---------- Skak/stöt ----------
+export function createShakeDetector({ thresholdMS2 = 15, refractoryMs = 250 } = {}) {
+  let last = -1e12;
+  return (s, emit) => {
+    if (!s.acc || s.dup) return;
+    const m = Math.hypot(...s.acc);
+    if (m >= thresholdMS2 && s.t - last >= refractoryMs) { last = s.t; emit && emit('shake', { t: s.t, accMS2: m }); }
+  };
+}
+
+// ---------- Inspelning (JSON, SI-enheter) ----------
+const r4 = v => v == null ? null : Math.round(v * 1e4) / 1e4;
+const r4v = a => a ? a.map(r4) : null;
+export function createRecorder({ maxSamples = 30000 } = {}) {
+  let rec = null;
+  return {
+    start(device = {}) {
+      rec = { format: 'motioncore-rec', version: 1, coreVersion: VERSION, skapad: new Date().toISOString(), device,
+        units: { t: 'ms (event.timeStamp)', dt: 's', gyro: 'rad/s', acc: 'm/s2', vinklar: 'grader', langd: 'm' },
+        samples: [], orientation: [], marks: [], results: {}, avkortad: false };
+      return rec;
+    },
+    get active() { return !!rec; },
+    addSample(s) {
+      if (!rec) return; if (rec.samples.length >= maxSamples) { rec.avkortad = true; return; }
+      rec.samples.push({ t: r4(s.t), dt: r4(s.dt), dup: s.dup || undefined, acc: r4v(s.acc), accG: r4v(s.accG), gyro: r4v(s.gyro),
+        sv: s.screenAngleDeg || undefined, raw: { accG: r4v(s.raw.accG), rr: r4v(s.raw.rr), iv: s.intervalRaw } });
+    },
+    addOrientation(o) { if (rec && rec.orientation.length < maxSamples) rec.orientation.push([r4(o.t), r4(o.alphaDeg), r4(o.betaDeg), r4(o.gammaDeg), o.compassHeadingDeg == null ? null : r4(o.compassHeadingDeg)]); },
+    mark(t, label, data) { if (rec) rec.marks.push({ t, label, ...(data ? { data } : {}) }); },
+    result(name, obj) { if (rec) (rec.results[name] ||= []).push({ tid: new Date().toISOString(), ...obj }); },
+    toJSON() { return rec; },
+    clear() { rec = null; }
+  };
+}
+
+// ================= Adaptrar (DOM injiceras) =================
+
+// Behörighet: anropas DIREKT i en click/pointerup, utan await före.
+export function requestMotionPermission(win = globalThis) {
+  const DME = win.DeviceMotionEvent, DOE = win.DeviceOrientationEvent;
+  if (!win.isSecureContext) return Promise.resolve('insecure');
+  if (!DME) return Promise.resolve('unsupported');
+  if (typeof DME.requestPermission !== 'function') return Promise.resolve('granted');
+  let pm, po;
+  try { pm = DME.requestPermission(); po = (DOE && typeof DOE.requestPermission === 'function') ? DOE.requestPermission() : pm; }
+  catch (e) { return Promise.resolve('error'); }
+  return Promise.all([pm, po]).then(([a, b]) => (a === 'granted' && b === 'granted') ? 'granted' : 'denied')
+    .catch(err => (err && err.name === 'NotAllowedError') ? 'needs-gesture' : 'error');
+}
+
+export function screenAngleDeg(win = globalThis) {
+  const so = win.screen && win.screen.orientation;
+  if (so && typeof so.angle === 'number') return so.angle;
+  if (typeof win.orientation === 'number') return (win.orientation + 360) % 360;
+  return 0;
+}
+
+// Händelsekälla: kopplar devicemotion/deviceorientation/visibilitychange till callbacks.
+export function createDomSource(win, { onMotion, onOrientation, onVisibility } = {}) {
+  const doc = win.document;
+  const hm = e => onMotion && onMotion(e), ho = e => onOrientation && onOrientation(e), hv = () => onVisibility && onVisibility(doc.visibilityState, performance.now());
+  let on = false;
+  return {
+    start() { if (on) return; on = true; win.addEventListener('devicemotion', hm); win.addEventListener('deviceorientation', ho); doc.addEventListener('visibilitychange', hv); },
+    stop() { if (!on) return; on = false; win.removeEventListener('devicemotion', hm); win.removeEventListener('deviceorientation', ho); doc.removeEventListener('visibilitychange', hv); },
+    get running() { return on; }
+  };
+}
+
+// Haptik: ärlig kapabilitetsrapport. iOS: bara ett lätt tick vid riktigt tryck (switch, Safari 18+).
+export function createHaptics(win = globalThis) {
+  const doc = win.document, nav = win.navigator;
+  const platform = detectPlatform(nav), sv = safariMajor(nav);
+  const hasVibrate = typeof nav.vibrate === 'function';
+  const isFirefox = /Firefox|FxiOS/.test(nav.userAgent || '');
+  const switchAttr = !!(win.HTMLInputElement && 'switch' in win.HTMLInputElement.prototype);
+  const iosTick = platform === 'ios' && (switchAttr || (sv && sv.major >= 18));
+  const caps = {
+    plattform: platform, safariVersion: sv ? `${sv.major}.${sv.minor}` : null,
+    vibrateApi: hasVibrate,
+    vibrateFungerar: !hasVibrate || platform === 'ios' ? 'nej'
+      : isFirefox ? 'nej (Firefox: API finns men gör inget)'
+      : platform === 'android' ? 'troligen (kräver tidigare tryck)'
+      : 'API finns, men en dator har oftast ingen vibrationsmotor',
+    monster: hasVibrate && platform !== 'ios' && !isFirefox,
+    styrka: false,
+    switchElement: switchAttr,
+    iosTickVidTryck: iosTick ? 'troligen: ett lätt tick per riktigt tryck, fast styrka; kan inte mätas från JS' : 'nej',
+    iosSkriptTrigger: platform === 'ios' ? 'nej (stängt från iOS 26.5)' : 'ej aktuellt',
+    beskrivning: platform === 'ios'
+      ? 'iOS: ingen vibration. Bara ett lätt tick när användaren själv trycker på en knapp med haptikyta.'
+      : (hasVibrate && !isFirefox ? 'navigator.vibrate: längd och paus, ingen styrka. Kräver ett tidigare tryck.' : 'Ingen haptik tillgänglig.')
+  };
+  return {
+    capabilities: () => ({ ...caps }),
+    pulse(pattern) {
+      if (!caps.monster) return { ok: false, metod: 'ingen' };
+      let ok = false; try { ok = nav.vibrate(pattern); } catch (e) { ok = false; }
+      return { ok, metod: 'vibrate' };
+    },
+    attachTapTarget(el, onTick) {
+      if (platform !== 'ios' || el.querySelector(':scope > [data-hapt]')) return false;
+      const label = doc.createElement('label'); label.setAttribute('data-hapt', ''); label.setAttribute('aria-hidden', 'true');
+      Object.assign(label.style, { position: 'absolute', inset: '0', touchAction: 'manipulation' });
+      label.style.setProperty('-webkit-tap-highlight-color', 'transparent');
+      const sw = doc.createElement('input'); sw.type = 'checkbox'; sw.setAttribute('switch', '');
+      Object.assign(sw.style, { position: 'absolute', width: '1px', height: '1px', margin: '0', visibility: 'hidden' });
+      sw.addEventListener('click', e => { e.stopPropagation(); onTick && onTick(e); });
+      label.append(sw);
+      if (win.getComputedStyle(el).position === 'static') el.style.position = 'relative';
+      el.append(label);
+      return true;
+    }
+  };
+}
+
+// ---- slut motion-core.js ----
+
+// ======================= Appen =======================
+const $ = id => document.getElementById(id);
+const STD = JSON.parse($('installningar').textContent);
+let CFG = STD;
+try { const s = localStorage.getItem('rorelsetest.cfg'); if (s) CFG = deepMerge(structuredClone(STD), JSON.parse(s)); } catch (e) {}
+function deepMerge(a, b) { for (const k in b) { if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && a[k] && typeof a[k] === 'object') deepMerge(a[k], b[k]); else a[k] = b[k]; } return a; }
+const qs = new URLSearchParams(location.search);
+const PLATFORM = qs.get('plattform') || CFG.sensorer.plattformTvinga || detectPlatform(navigator);
+const fmt = (v, d = 1) => v == null || Number.isNaN(v) ? '–' : Number(v).toFixed(d);
+const now = () => performance.now();
+
+const norm = createNormalizer({ platform: PLATFORM, accSign: CFG.sensorer.accTeckenTvinga, getScreenAngleDeg: () => screenAngleDeg(window) });
+const haptics = createHaptics(window);
+const rec = createRecorder({ maxSamples: CFG.inspelning.maxSampel });
+const aim = createAimMouse(structuredClone(CFG.sikte));
+const swingDet = createSwingDetector(structuredClone(CFG.sving));
+let lastS = null, lastO = null, motionCount = 0, orientCount = 0;
+const subs = new Set(), osubs = new Set();
+const recentT = [];
+
+function deviceInfo() {
+  return { ua: navigator.userAgent, plattform: PLATFORM, plattformTvingad: PLATFORM !== detectPlatform(navigator),
+    safari: (safariMajor(navigator) || null), skarm: { b: screen.width, h: screen.height, dpr: devicePixelRatio, vinkel: screenAngleDeg(window) },
+    secureContext: isSecureContext, requestPermission: typeof window.DeviceMotionEvent?.requestPermission === 'function',
+    haptik: haptics.capabilities(), installningar: CFG };
+}
+rec.start(deviceInfo());
+
+const source = createDomSource(window, {
+  onMotion(e) {
+    const s = norm.fromMotion(e); lastS = s; motionCount++;
+    recentT.push(s.t); if (recentT.length > 121) recentT.shift();
+    rec.addSample(s); for (const f of subs) f(s);
+  },
+  onOrientation(e) { const o = norm.fromOrientation(e); lastO = o; orientCount++; rec.addOrientation(o); for (const f of osubs) f(o); },
+  onVisibility(state, t) { rec.mark(t, 'synlighet:' + state, { alpha: lastO?.alphaDeg ?? null }); norm.reset(); for (const f of visSubs) f(state, t); }
+});
+const visSubs = new Set();
+
+// ---------- Flikar ----------
+let flik = 'start';
+$('nav').addEventListener('click', e => {
+  const b = e.target.closest('button[data-flik]'); if (!b) return;
+  flik = b.dataset.flik;
+  for (const x of document.querySelectorAll('nav button')) x.classList.toggle('aktiv', x === b);
+  for (const s of document.querySelectorAll('section')) s.classList.toggle('aktiv', s.id === 's-' + flik);
+  if (flik === 'export') visaExport();
+  resizeCanvases();
+});
+
+// ---------- Blixt ----------
+const blixt = $('blixt');
+function flash(color) { blixt.style.transition = 'none'; blixt.style.background = color; blixt.style.opacity = '0.9'; requestAnimationFrame(() => { blixt.style.transition = 'opacity 180ms'; blixt.style.opacity = '0'; }); }
+
+// ---------- Start / behörighet ----------
+function fyllTabell(el, rows) { el.innerHTML = rows.map(([k, v, c]) => `<tr><td>${k}</td><td class="${c || ''}">${v}</td></tr>`).join(''); }
+function visaEnhet() {
+  const sv = safariMajor(navigator);
+  fyllTabell($('tEnhet'), [
+    ['Plattform', PLATFORM + (PLATFORM !== detectPlatform(navigator) ? ' (tvingad)' : '')],
+    ['Safari-version', sv ? `${sv.major}.${sv.minor}` : '–'],
+    ['Säker sida (https)', isSecureContext ? 'ja' : 'NEJ – sensorer fungerar inte', isSecureContext ? 'ok' : 'fel'],
+    ['Behörighetsfråga krävs', typeof window.DeviceMotionEvent?.requestPermission === 'function' ? 'ja (iOS)' : 'nej'],
+    ['Skärmvinkel', screenAngleDeg(window) + '°'],
+    ['Accelerationstecken', `${norm.accSign > 0 ? '+1' : '−1'} (${norm.accSignSource})`],
+    ['Rörelsehändelser', motionCount ? `${motionCount} st` : 'inga än', motionCount ? 'ok' : 'var'],
+    ['Orienteringshändelser', orientCount ? `${orientCount} st` : 'inga än', orientCount ? 'ok' : 'var'],
+  ]);
+}
+function visaHaptik() {
+  const c = haptics.capabilities();
+  fyllTabell($('tHaptik'), [
+    ['Sammanfattning', c.beskrivning],
+    ['navigator.vibrate', c.vibrateFungerar],
+    ['Mönster (puls/paus)', c.monster ? 'ja' : 'nej'],
+    ['Styrka', 'nej (finns inte på webben)'],
+    ['iOS-tick vid tryck', c.iosTickVidTryck],
+    ['iOS-tick från kod', c.iosSkriptTrigger],
+    ['switch-element finns', c.switchElement ? 'ja' : 'nej'],
+  ]);
+}
+$('bStart').addEventListener('click', () => {
+  const t0 = now();
+  const p = requestMotionPermission(window);   // direkt i gesten, ingen await före
+  p.then(res => {
+    const ms = now() - t0;
+    rec.result('behorighet', { svar: res, ms: Math.round(ms) });
+    const txt = { granted: 'Tillåtet.', denied: 'Nekat. Stäng Safari helt (svep bort appen), öppna sidan igen och tryck Starta.', 'needs-gesture': 'Frågan kräver ett tryck. Tryck igen.', insecure: 'Sidan är inte https; sensorer går inte att använda.', unsupported: 'Webbläsaren saknar rörelsesensorer.', error: 'Okänt fel vid behörighet.' }[res] || res;
+    $('pBeh').textContent = `${txt} (svar på ${Math.round(ms)} ms)`;
+    $('pBeh').className = res === 'granted' ? 'ok' : 'fel';
+    if (res === 'granted') { source.start(); $('bStart').textContent = 'Sensorer startade'; setTimeout(kollaData, 1500); }
+    else $('hStatus').textContent = 'sensorer: ' + res;
+  });
+});
+function kollaData() {
+  visaEnhet();
+  if (!motionCount) { $('pBeh').textContent += ' Inga rörelsedata kommer – enheten saknar sensorer eller så är de avstängda.'; $('pBeh').className = 'var'; }
+}
+visaEnhet(); visaHaptik();
+setInterval(() => { if (flik === 'start') visaEnhet(); if (source.running) { const hz = hzNu(); $('hStatus').textContent = motionCount ? `sensorer på · ${fmt(hz, 0)} Hz · ${fmt(fpsNu, 0)} fps` : 'sensorer på · inga data'; } }, 1000);
+
+// ---------- Live ----------
+const graf = []; // [t, gx, gy, gz]
+subs.add(s => { if (s.gyro) graf.push([s.t, ...s.gyro.map(v => v * RAD2DEG)]); while (graf.length && s.t - graf[0][0] > CFG.graf.sekunder * 1000) graf.shift(); });
+function hzNu() { if (recentT.length < 3) return null; return (recentT.length - 1) / ((recentT.at(-1) - recentT[0]) / 1000); }
+function visaLive() {
+  const s = lastS, o = lastO, v = a => a ? a.map(x => fmt(x, 2)).join(', ') : '–';
+  fyllTabell($('tLive'), [
+    ['Frekvens (senaste 2 s)', fmt(hzNu(), 1) + ' Hz'],
+    ['interval (rått / enhet)', s ? `${s.intervalRaw} / ${s.intervalUnit}` : '–'],
+    ['acc m/s² (utan g)', v(s?.acc)], ['accG m/s² (med g)', v(s?.accG)],
+    ['gyro °/s (skärmaxlar)', s?.gyro ? s.gyro.map(x => fmt(x * RAD2DEG, 1)).join(', ') : '–'],
+    ['alpha / beta / gamma °', o ? [o.alphaDeg, o.betaDeg, o.gammaDeg].map(x => fmt(x, 1)).join(' / ') : '–'],
+    ['Kompass (iOS) °', o?.compassHeadingDeg != null ? `${fmt(o.compassHeadingDeg, 0)} ±${fmt(o.compassAccuracyDeg, 0)}` : '–'],
+    ['absolute', o ? String(o.absolute) : '–'], ['Skärmvinkel', screenAngleDeg(window) + '°'],
+    ['Dubblett (senaste)', s ? (s.dup ? 'ja' : 'nej') : '–'], ['Rendering (rAF)', fmt(fpsNu, 0) + ' fps'],
+  ]);
+}
+function ritaGraf() {
+  const c = $('cGraf'), g = c.getContext('2d'), W = c.width, H = c.height; g.clearRect(0, 0, W, H);
+  g.strokeStyle = '#2a3138'; g.beginPath(); g.moveTo(0, H / 2); g.lineTo(W, H / 2); g.stroke();
+  if (graf.length < 2) return;
+  const t1 = graf.at(-1)[0], span = CFG.graf.sekunder * 1000, sk = (H / 2) / CFG.graf.skalaDegS;
+  ['#e25b55', '#5cc27a', '#5aa6e8'].forEach((col, k) => {
+    g.strokeStyle = col; g.lineWidth = 2 * devicePixelRatio / 2; g.beginPath();
+    graf.forEach((p, i) => { const x = W - (t1 - p[0]) / span * W, y = H / 2 - Math.max(-H / 2, Math.min(H / 2, p[k + 1] * sk)); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+    g.stroke();
+  });
+}
+
+// ---------- rAF-mätare ----------
+let fpsNu = 0; const rafT = [];
+function loop(t) {
+  rafT.push(t); while (rafT.length && t - rafT[0] > 1000) rafT.shift(); fpsNu = rafT.length;
+  if (flik === 'live') { visaLive(); ritaGraf(); }
+  if (flik === 'sikte') ritaSikte();
+  if (flik === 'sving') ritaSving();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function resizeCanvases() {
+  for (const c of document.querySelectorAll('canvas')) {
+    if (!c.dataset.h) c.dataset.h = c.getAttribute('height');
+    const w = c.clientWidth; if (!w) continue;            // dold flik: vänta tills den visas
+    c.style.height = c.dataset.h + 'px'; c.width = Math.round(w * devicePixelRatio); c.height = Math.round(+c.dataset.h * devicePixelRatio);
+  }
+}
+addEventListener('resize', resizeCanvases); resizeCanvases();
+
+// ---------- Sikte ----------
+let siktOut = { yaw: 0, pitch: 0, rawYaw: 0, rawPitch: 0 }, skott = [];
+subs.add(s => { const o = aim.update(s); if (o.rawYaw != null) siktOut = o; });
+function koppla(id, path, dec) {
+  const r = $('r' + id), v = $('v' + id);
+  const get = () => path.reduce((a, k) => a[k], CFG.sikte);
+  r.value = get(); v.textContent = fmt(+r.value, dec);
+  r.addEventListener('input', () => {
+    let o = CFG.sikte; for (const k of path.slice(0, -1)) o = o[k]; o[path.at(-1)] = +r.value; v.textContent = fmt(+r.value, dec);
+    aim.options.sensYaw = CFG.sikte.sensYaw; aim.options.sensPitch = CFG.sikte.sensPitch; aim.options.tightenDegS = CFG.sikte.tightenDegS; aim.setOneEuro(CFG.sikte.oneEuro);
+  });
+}
+koppla('SensY', ['sensYaw'], 1); koppla('SensP', ['sensPitch'], 1); koppla('Min', ['oneEuro', 'minCutoff'], 2); koppla('Beta', ['oneEuro', 'beta'], 3); koppla('Tight', ['tightenDegS'], 1);
+$('cbEuro').checked = CFG.sikte.useOneEuro; $('cbEuro').addEventListener('change', e => { CFG.sikte.useOneEuro = aim.options.useOneEuro = e.target.checked; });
+$('cbInv').checked = CFG.sikte.invertPitch; $('cbInv').addEventListener('change', e => { CFG.sikte.invertPitch = aim.options.invertPitch = e.target.checked; });
+$('bCentrera').addEventListener('click', () => { aim.recenter(); rec.mark(now(), 'sikte:centrera'); });
+const gyroAv = $('bGyroAv');
+gyroAv.addEventListener('pointerdown', () => { aim.setEnabled(false); gyroAv.classList.add('huvud'); });
+for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) gyroAv.addEventListener(ev, () => { aim.setEnabled(true); gyroAv.classList.remove('huvud'); });
+$('bKal').addEventListener('click', async () => {
+  const lista = []; const f = s => s.gyro && !s.dup && lista.push(s.gyro.slice());
+  subs.add(f); $('pSikte').textContent = 'Kalibrerar – rör inte telefonen…';
+  await vanta(CFG.sikte.kalibreraS * 1000); subs.delete(f);
+  const b = meanVec(lista), mag = Math.hypot(...b) * RAD2DEG;
+  if (lista.length < 10) { $('pSikte').textContent = 'För få sampel – är sensorerna startade?'; return; }
+  aim.setBias(b); rec.result('kalibrering', { biasDegS: b.map(x => x * RAD2DEG), sampel: lista.length });
+  $('pSikte').textContent = `Bias: ${b.map(x => fmt(x * RAD2DEG, 3)).join(', ')} °/s (|b| ${fmt(mag, 3)}). CoreMotion tar normalt redan bort bias.`;
+});
+const eld = $('bEld');
+haptics.attachTapTarget(eld, () => {});
+eld.addEventListener('pointerdown', () => {
+  const t = now(); flash('rgba(255,220,120,.6)'); haptics.pulse(CFG.haptik.androidPulsMs);
+  skott.push({ t, yaw: siktOut.yaw, pitch: siktOut.pitch }); if (skott.length > 30) skott.shift();
+  rec.mark(t, 'skott', { yawDeg: siktOut.yaw * RAD2DEG, pitchDeg: siktOut.pitch * RAD2DEG });
+});
+function ritaSikte() {
+  const c = $('cSikte'), g = c.getContext('2d'), W = c.width, H = c.height, ppd = CFG.sikte.pixlarPerGrad * devicePixelRatio;
+  g.fillStyle = '#0b0d0f'; g.fillRect(0, 0, W, H);
+  const yawD = siktOut.yaw * RAD2DEG, pitD = siktOut.pitch * RAD2DEG;
+  // värld: rutnät var 10:e grad. Vrid åt vänster (yaw +) => världen glider åt höger.
+  g.lineWidth = 1; g.font = `${11 * devicePixelRatio}px system-ui`; g.fillStyle = '#9aa6b0';
+  const cx = W / 2, cy = H / 2;
+  for (let d = Math.floor((yawD - W / ppd / 2) / 10) * 10 - 10; d <= yawD + W / ppd / 2 + 10; d += 10) {
+    const x = cx - (d - yawD) * ppd; g.strokeStyle = d % 90 === 0 ? '#d9a441' : '#2a3138'; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke();
+    g.fillText(((((-d) % 360) + 360) % 360) + '°', x + 3, 14 * devicePixelRatio);
+  }
+  for (let d = -90; d <= 90; d += 10) {
+    const y = cy - (d - pitD) * ppd; if (y < 0 || y > H) continue;
+    g.strokeStyle = d === 0 ? '#5aa6e8' : '#2a3138'; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke();
+  }
+  // skott (världsfasta)
+  g.fillStyle = '#e25b55';
+  for (const s of skott) { const x = cx - (s.yaw - siktOut.yaw) * RAD2DEG * ppd, y = cy - (s.pitch - siktOut.pitch) * RAD2DEG * ppd; g.beginPath(); g.arc(x, y, 4 * devicePixelRatio, 0, 7); g.fill(); }
+  // ofiltrerat relativt filtrerat
+  const dx = (siktOut.rawYaw - siktOut.yaw) * RAD2DEG * ppd, dy = (siktOut.rawPitch - siktOut.pitch) * RAD2DEG * ppd;
+  g.fillStyle = '#777'; g.beginPath(); g.arc(cx - dx, cy - dy, 4 * devicePixelRatio, 0, 7); g.fill();
+  g.strokeStyle = '#d9a441'; g.lineWidth = 2 * devicePixelRatio; g.beginPath();
+  g.moveTo(cx - 14 * devicePixelRatio, cy); g.lineTo(cx + 14 * devicePixelRatio, cy); g.moveTo(cx, cy - 14 * devicePixelRatio); g.lineTo(cx, cy + 14 * devicePixelRatio); g.stroke();
+  g.fillStyle = '#e9edf0'; g.fillText(`sida ${fmt(yawD, 1)}°  höjd ${fmt(pitD, 1)}°  ${aim.enabled ? '' : 'GYRO AV'}`, 8 * devicePixelRatio, H - 8 * devicePixelRatio);
+}
+
+// ---------- Mätningar ----------
+const vanta = ms => new Promise(r => setTimeout(r, ms));
+let matPagar = false, driftAvbryt = false;
+const instr = t => { $('mInstr').textContent = t; };
+const bar = f => { $('mBar').style.width = Math.round(Math.max(0, Math.min(1, f)) * 100) + '%'; };
+async function kor(sek, onSample, onOrient) {
+  if (onSample) subs.add(onSample); if (onOrient) osubs.add(onOrient);
+  const t0 = now(); while (now() - t0 < sek * 1000) { if (driftAvbryt) break; bar((now() - t0) / (sek * 1000)); await vanta(100); }
+  bar(1); if (onSample) subs.delete(onSample); if (onOrient) osubs.delete(onOrient);
+}
+async function nedrakning(text) { for (let i = CFG.matning.nedrakningS; i > 0; i--) { instr(`${text} – start om ${i}`); await vanta(1000); } }
+const visa = (id, obj) => { $('r-' + id).textContent = JSON.stringify(obj, (k, v) => typeof v === 'number' ? Math.round(v * 1000) / 1000 : v, 1); };
+function kravSensorer() { if (!source.running || !motionCount) { instr('Starta sensorerna först (fliken Start).'); return false; } return true; }
+
+const MATNINGAR = {
+  async frekvens() {
+    const out = {};
+    for (const [fas, sek, txt] of [['stilla', CFG.matning.frekvensStillaS, 'Lägg telefonen STILL'], ['rorelse', CFG.matning.frekvensRorelseS, 'RÖR telefonen hela tiden']]) {
+      await nedrakning(txt); instr(txt + '…');
+      const rm = createRateMeter(); rec.mark(now(), 'M1:' + fas + ':start');
+      await kor(sek, s => rm.add(s)); out[fas] = rm.summary();
+    }
+    rec.result('frekvens', out); visa('frekvens', out); instr('M1 klar.');
+  },
+  async drift() {
+    const sek = +$('nDrift').value || CFG.matning.driftS; driftAvbryt = false;
+    await nedrakning('Lägg telefonen helt STILL');
+    const dm = createDriftMeter({ jumpDeg: CFG.matning.driftHoppDeg }); let stillaBrott = 0;
+    const vf = (st, t) => dm.mark(t, 'synlighet:' + st); visSubs.add(vf);
+    instr('Mäter drift – rör inte telefonen…'); rec.mark(now(), 'M2:start');
+    const tick = setInterval(() => { const sm = dm.summary(); if (sm.antal > 2) visa('drift', { pagar: true, ...sm, hopp: sm.hopp.length }); }, 2000);
+    await kor(sek, s => { if (!isStill(s, CFG.sensorer.stillaGransDegS * 3)) stillaBrott++; }, o => dm.add(o.t, o.alphaDeg));
+    clearInterval(tick); visSubs.delete(vf);
+    const res = { ...dm.summary(), sampelMedRorelse: stillaBrott, avbruten: driftAvbryt };
+    driftAvbryt = false; rec.result('drift', res); visa('drift', res); instr('M2 klar.');
+  },
+  async acctecken() {
+    await nedrakning('Lägg telefonen PLATT, skärmen UPPÅT'); instr('Mäter…');
+    const ac = createAccSignCheck(); await kor(CFG.matning.accTeckenS, s => ac.add(s));
+    const r = ac.result(); r.anvandFaktorNu = norm.accSign; r.plattform = PLATFORM;
+    r.normaliseradZ = r.raZMedel != null ? r.raZMedel * norm.accSign : null;
+    r.normaliseringRatt = r.ok ? (r.normaliseradZ > 0) : null;
+    rec.result('acctecken', r); visa('acctecken', r);
+    if (r.ok && r.teckenFaktor !== norm.accSign) { norm.setAccSign(r.teckenFaktor, 'M3-mätning'); instr('M3: tecknet avvek från regeln – rättat för den här sessionen.'); }
+    else instr(r.ok ? 'M3 klar: normaliseringen stämmer.' : 'M3: ' + r.orsak);
+  },
+  async gyrotecken() {
+    const steg = [
+      ['vanster', 'Håll telefonen UPPRÄTT (porträtt). Vrid ca 90° åt VÄNSTER', { axel: 'y', tecken: 1 }],
+      ['tippa', 'Tippa ÖVERKANTEN mot dig ca 90°', { axel: 'x', tecken: 1 }],
+      ['ratt', 'Vrid som en ratt MEDURS ca 90° (skärmen mot dig)', { axel: 'z', tecken: -1 }],
+    ];
+    const out = {};
+    for (const [k, txt, exp] of steg) {
+      await nedrakning(txt); instr(txt + ' – NU');
+      const gs = createGyroSignCheck(); await kor(CFG.matning.gyroTeckenS, s => gs.add(s)); out[k] = gs.result(exp);
+    }
+    out.allaMatcharSpec = Object.values(out).every(r => r.matcharSpec);
+    out.not = 'Förväntat enligt specen (högerhandsregel, enhetens axlar). Avvikelse = rapportera.';
+    rec.result('gyrotecken', out); visa('gyrotecken', out); instr(out.allaMatcharSpec ? 'M4 klar: alla tecken enligt specen.' : 'M4 klar: AVVIKELSE – se resultat.');
+  },
+  async strom() {
+    await nedrakning('Håll telefonen i handen och rör den lite');
+    const rm = createRateMeter(), fps = [];
+    const iv = setInterval(() => fps.push(fpsNu), 500);
+    await kor(CFG.matning.stromS, s => rm.add(s)); clearInterval(iv);
+    const r = { stromsparlage: $('cbLpm').checked, sensor: rm.summary(), rafFpsMedel: fps.reduce((a, b) => a + b, 0) / Math.max(1, fps.length), rafFpsMin: Math.min(...fps) };
+    delete r.sensor.dtHistogramMs; rec.result('strom', r); visa('strom', r); instr('M6 klar.');
+  },
+};
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-mat]'); if (!b) return;
+  if (matPagar) { instr('En mätning pågår redan.'); return; }
+  if (!kravSensorer()) return;
+  matPagar = true; for (const x of document.querySelectorAll('[data-mat]')) x.disabled = true;
+  try { await MATNINGAR[b.dataset.mat](); } catch (err) { instr('Fel: ' + err.message); }
+  finally { matPagar = false; for (const x of document.querySelectorAll('[data-mat]')) x.disabled = false; bar(0); }
+});
+$('bDriftStopp').addEventListener('click', () => { driftAvbryt = true; });
+$('nDrift').value = CFG.matning.driftS;
+const vinklar = [];
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-vinkel]'); if (!b) return;
+  const r = { lage: b.dataset.vinkel, screenOrientationAngle: screen.orientation?.angle ?? null, screenOrientationType: screen.orientation?.type ?? null, windowOrientation: typeof window.orientation === 'number' ? window.orientation : null, gravitationSkarm: lastS?.accG?.map(v => Math.round(v * 100) / 100) ?? null };
+  vinklar.push(r); rec.result('skarmvinkel', r); $('r-vinkel').textContent = JSON.stringify(vinklar, null, 1);
+});
+
+// ---------- Sving ----------
+const svingar = [], svGraf = [];
+$('nRadie').value = CFG.sving.radiusM;
+$('nRadie').addEventListener('change', e => { const v = +e.target.value; if (v > 0) { CFG.sving.radiusM = v; swingDet.options.radiusM = v; } });
+subs.add(s => {
+  if (s.gyro) { svGraf.push([s.t, Math.hypot(...s.gyro) * RAD2DEG]); while (svGraf.length && s.t - svGraf[0][0] > 4000) svGraf.shift(); }
+  swingDet(s, (typ, d) => {
+    if (typ === 'swingStart') { $('svStatus').textContent = 'sving pågår…'; rec.mark(d.t, 'sving:start'); }
+    else if (typ === 'swingAvbruten') $('svStatus').textContent = 'för kort rörelse – väntar på stillhet…';
+    else if (typ === 'swing') {
+      svingar.push(d); rec.result('sving', d);
+      $('svStatus').textContent = d.klippt ? 'Sving klar – sensorn slog i taket (värdet är ett minimum)' : 'Sving klar';
+      fyllTabell($('tSving'), [
+        ['Klubbfart (uppskattad)', `${d.fartArMinst ? '≥ ' : ''}${fmt(d.klubbfartMS, 1)} m/s = ${fmt(d.klubbfartKmH, 0)} km/h`, d.klippt ? 'var' : 'ok'],
+        ['ω max', `${fmt(d.omegaMaxDegS, 0)} °/s (största axel ${fmt(d.maxAxelDegS, 0)})`],
+        ['Klippt', d.klippt ? 'ja' : 'nej', d.klippt ? 'var' : ''],
+        ['Baksving / nedsving', `${fmt(d.baksvingMs, 0)} / ${fmt(d.nedsvingMs, 0)} ms`],
+        ['Sampel i nedsving', d.samplesINedsving ?? '–'],
+        ['Acc-topp', `${fmt(d.accToppMS2, 1)} m/s²`], ['Radie', `${d.radieM} m`],
+      ]);
+      $('r-sving').textContent = svingar.map((x, i) => `${i + 1}: ${x.fartArMinst ? '≥' : ''}${fmt(x.klubbfartKmH, 0)} km/h, ω ${fmt(x.omegaMaxDegS, 0)} °/s, klippt ${x.klippt ? 'ja' : 'nej'}, ${x.antalSampel} sampel`).join('\n');
+    }
+  });
+  if (swingDet.state === 'VILA' && $('svStatus').textContent === 'sving pågår…') $('svStatus').textContent = 'väntar på stillhet…';
+});
+function ritaSving() {
+  const c = $('cSving'), g = c.getContext('2d'), W = c.width, H = c.height; g.clearRect(0, 0, W, H);
+  const max = CFG.sving.sensorMaxDegS * 1.1, yOf = v => H - v / max * H;
+  g.strokeStyle = '#e25b55'; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(0, yOf(CFG.sving.sensorMaxDegS)); g.lineTo(W, yOf(CFG.sving.sensorMaxDegS)); g.stroke(); g.setLineDash([]);
+  if (svGraf.length < 2) return;
+  const t1 = svGraf.at(-1)[0]; g.strokeStyle = '#d9a441'; g.lineWidth = 2; g.beginPath();
+  svGraf.forEach((p, i) => { const x = W - (t1 - p[0]) / 4000 * W, y = yOf(p[1]); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
+}
+
+// ---------- Haptik ----------
+const hBtn = $('bHapt'), hLogg = [];
+let hNer = null, hUpp = null, hTick = null;
+const cap = haptics.capabilities();
+$('pHapt').textContent = cap.beskrivning;
+const iosTarget = haptics.attachTapTarget(hBtn, e => { hTick = now(); flash('rgba(226,91,85,.85)'); loggaTryck('tick'); });
+hBtn.addEventListener('pointerdown', () => {
+  hNer = now(); hUpp = hTick = null; flash('rgba(255,255,255,.85)');
+  if (!iosTarget) { const r = haptics.pulse(CFG.haptik.androidPulsMs); if (r.ok) { hTick = now(); setTimeout(() => flash('rgba(226,91,85,.85)'), 0); } loggaTryck('ner', r); }
+});
+hBtn.addEventListener('pointerup', () => { hUpp = now(); if (!iosTarget) loggaTryck('upp'); });
+function loggaTryck(typ, extra) {
+  const r = { typ, ner: hNer, upp: hUpp, haptik: hTick, haptikEfterNerMs: hTick != null && hNer != null ? hTick - hNer : null, haptikEfterUppMs: hTick != null && hUpp != null ? hTick - hUpp : null, metod: iosTarget ? 'ios-switch' : (cap.monster ? 'vibrate' : 'ingen'), ...(extra ? { vibrateSvar: extra.ok } : {}) };
+  if (typ === 'ner' && !iosTarget) return; // vänta på upp
+  hLogg.push(r); rec.result('haptik', r); visaHaptLogg();
+}
+function visaHaptLogg() {
+  const ok = hLogg.filter(x => x.haptikEfterNerMs != null);
+  const med = a => { const s = a.slice().sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : null; };
+  fyllTabell($('tHapt'), [
+    ['Antal tryck', hLogg.length], ['Metod', iosTarget ? 'iOS switch (label-yta)' : (cap.monster ? 'navigator.vibrate' : 'ingen')],
+    ['Haptik efter ner (median)', fmt(med(ok.map(x => x.haptikEfterNerMs)), 1) + ' ms'],
+    ['Haptik efter släpp (median)', fmt(med(ok.filter(x => x.haptikEfterUppMs != null).map(x => x.haptikEfterUppMs)), 1) + ' ms'],
+    ['Obs', 'Tiden är när koden utlöser haptiken, inte när motorn vibrerar. Filma för verklig tid.'],
+  ]);
+  $('r-haptik').textContent = hLogg.slice(-12).map(x => JSON.stringify(x, (k, v) => typeof v === 'number' ? Math.round(v * 10) / 10 : v)).join('\n');
+}
+visaHaptLogg();
+document.addEventListener('click', e => { const b = e.target.closest('[data-kansla]'); if (!b) return; const r = { kansla: b.dataset.kansla, metod: iosTarget ? 'ios-switch' : (cap.monster ? 'vibrate' : 'ingen') }; rec.result('haptikKansla', r); hLogg.push({ typ: 'känsla', ...r }); visaHaptLogg(); });
+$('bMonster').addEventListener('click', () => { const r = haptics.pulse(CFG.haptik.androidMonster); rec.result('haptikMonster', { monster: CFG.haptik.androidMonster, ...r }); $('pHapt').textContent = r.ok ? 'Mönster skickat (navigator.vibrate).' : 'Mönster stöds inte här. ' + cap.beskrivning; });
+
+// ---------- Export ----------
+function sammanfattning() {
+  const j = rec.toJSON(), r = j.results, sist = k => r[k] ? r[k].at(-1) : null;
+  return {
+    enhet: { plattform: PLATFORM, safari: j.device.safari, ua: j.device.ua },
+    accTeckenFaktor: norm.accSign, accTeckenKalla: norm.accSignSource,
+    behorighet: r.behorighet || null,
+    frekvens: sist('frekvens') && { stillaHz: sist('frekvens').stilla?.hzMedel, rorelseHz: sist('frekvens').rorelse?.hzMedel, jitterMs: sist('frekvens').rorelse?.jitterMsSd, dubblettAndel: sist('frekvens').rorelse?.dubblettAndel, interval: sist('frekvens').stilla?.intervalRa, intervalEnhet: sist('frekvens').stilla?.intervalEnhet },
+    drift: sist('drift') && { degPerMin: sist('drift').driftDegPerMin, hopp: sist('drift').hopp?.length, sekunder: sist('drift').varaktighetS },
+    accTecken: sist('acctecken') && { raZ: sist('acctecken').raZMedel, foljerSpec: sist('acctecken').foljerSpec },
+    gyroTecken: sist('gyrotecken') && { allaMatcharSpec: sist('gyrotecken').allaMatcharSpec },
+    skarmvinklar: r.skarmvinkel || null,
+    strom: r.strom ? r.strom.map(x => ({ lpm: x.stromsparlage, hz: x.sensor.hzMedel, fps: x.rafFpsMedel })) : null,
+    svingar: r.sving ? r.sving.map(x => ({ kmh: x.klubbfartKmH, degS: x.omegaMaxDegS, klippt: x.klippt })) : null,
+    haptik: r.haptik ? { tryck: r.haptik.length, kanslor: (r.haptikKansla || []).map(x => x.kansla) } : null,
+    sampel: j.samples.length, orienteringar: j.orientation.length, avkortad: j.avkortad
+  };
+}
+function visaExport() { const j = rec.toJSON(); $('pRec').textContent = `${j.samples.length} rörelsesampel, ${j.orientation.length} orienteringar, ${j.marks.length} markeringar${j.avkortad ? ' (taket nått, äldre sparas)' : ''}.`; $('pSamm').textContent = JSON.stringify(sammanfattning(), (k, v) => typeof v === 'number' ? Math.round(v * 1000) / 1000 : v, 1); $('taCfg').value = JSON.stringify(CFG, null, 2); }
+function filnamn() { const d = new Date(), p = n => String(n).padStart(2, '0'); return `rorelsetest_${PLATFORM}_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.json`; }
+function jsonBlob() { const j = rec.toJSON(); j.sammanfattning = sammanfattning(); j.device.installningar = CFG; return new Blob([JSON.stringify(j)], { type: 'application/json' }); }
+$('bLadda').addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(jsonBlob()); a.download = filnamn(); document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); });
+$('bDela').addEventListener('click', () => {
+  const f = new File([jsonBlob()], filnamn(), { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [f] })) navigator.share({ files: [f], title: 'Rörelsetest' }).catch(() => {});
+  else $('pRec').textContent = 'Delning av filer stöds inte här – använd Ladda ner.';
+});
+$('bKopiera').addEventListener('click', () => { navigator.clipboard?.writeText(JSON.stringify(sammanfattning(), null, 1)).then(() => { $('pRec').textContent = 'Sammanfattningen kopierad.'; }, () => { $('pRec').textContent = 'Kunde inte kopiera.'; }); });
+$('bNy').addEventListener('click', () => { if (confirm('Börja en ny inspelning? Osparade mätningar försvinner.')) { rec.start(deviceInfo()); svingar.length = 0; hLogg.length = 0; visaExport(); } });
+$('bCfgSpara').addEventListener('click', () => { try { const v = JSON.parse($('taCfg').value); localStorage.setItem('rorelsetest.cfg', JSON.stringify(v)); location.reload(); } catch (e) { alert('Felaktig JSON: ' + e.message); } });
+$('bCfgAter').addEventListener('click', () => { localStorage.removeItem('rorelsetest.cfg'); location.reload(); });
+$('sVer').textContent = VERSION;
+
+// för headless-test
+window.__rorelsetest = { rec, norm, sammanfattning, get motionCount() { return motionCount; }, PLATFORM };
+</script>
+</body>
+</html>

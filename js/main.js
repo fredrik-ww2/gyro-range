@@ -14,6 +14,7 @@ async function boot(){
  const settings={...cfg.styrning,...saved.styrning,brytare:{...cfg.brytare,...saved.brytare},hapticStyle:saved.hapticStyle||'auto'};
  // Validera sparade siffror; blockerad lagring ska aldrig hindra spelet.
  settings.kanslighet=THREE.MathUtils.clamp(Number(settings.kanslighet)||1,.25,3);
+ settings.skottkansla=Number.isFinite(Number(settings.skottkansla))?THREE.MathUtils.clamp(Number(settings.skottkansla),0,2):1;
  const hapticStyles=structuredClone(hapticDefaults);
  for(const k of Object.keys(hapticStyles)){const s=saved.haptik?.[k];if(s){hapticStyles[k].styrka=THREE.MathUtils.clamp(Number(s.styrka)||0,0,1);hapticStyles[k].varaktighet_ms=THREE.MathUtils.clamp(Number(s.varaktighet_ms)||12,1,100);}}
  function save(){try{const {brytare,hapticStyle,...styrning}=settings;localStorage.setItem('gyro_faltprov_v1',JSON.stringify({styrning,brytare,hapticStyle,haptik:hapticStyles,debug:$('showDebug').checked}));}catch{}}
@@ -63,11 +64,25 @@ async function boot(){
  const direction=new THREE.Vector3(),point=new THREE.Vector3(),tmp=new THREE.Vector3(),motion=new THREE.Euler(),recoilQuat=new THREE.Quaternion();
  let renderTick=performance.now();const renderInterval=1000/cfg.kamera.mal_hz;
  let started=false,selected=0,shots=0,hits=0,recoil=0,cooldown=0,deadFor=0,hitUntil=0,queue=[],last=performance.now(),frames=0,fps=0,measureTime=last,enemyCount=0,burstToken=0;
- let audio=null,voices=[],audioBuffer=null;const modelLoadMs=Math.round(performance.now()-t0);
+ let audio=null,voices=[],audioBuffer=null,audioBus=null;
+ const muzzleLight=new THREE.PointLight(0xffd690,0,6,2);camera.add(muzzleLight);muzzleLight.position.set(.13,-.16,-.55);
+ const muzzleFlash=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:0xffe7a0,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}));muzzleFlash.position.copy(muzzleLight.position);camera.add(muzzleFlash);
+ let recoilDecay=19,shakeMeters=0,shake=0,flash=0,flashDuration=.075,lightPeak=0;const modelLoadMs=Math.round(performance.now()-t0);
  async function unlockAudio(){
-  try{audio??=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();if(!audioBuffer){audioBuffer=audio.createBuffer(1,Math.round(audio.sampleRate*.2),audio.sampleRate);const data=audioBuffer.getChannelData(0);let seed=1701;for(let i=0;i<data.length;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;data[i]=(seed/2147483648-1)*Math.exp(-i/(audio.sampleRate*.025));}}}catch{ $('status').textContent='Ljud saknas här; spelet fungerar utan ljud.';}
+  try{audio??=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();if(!audioBus){audioBus=audio.createDynamicsCompressor();audioBus.threshold.value=-16;audioBus.knee.value=10;audioBus.ratio.value=16;audioBus.attack.value=.001;audioBus.release.value=.08;const master=audio.createGain();master.gain.value=.7;audioBus.connect(master).connect(audio.destination);}if(!audioBuffer){audioBuffer=audio.createBuffer(1,Math.round(audio.sampleRate*.2),audio.sampleRate);const data=audioBuffer.getChannelData(0);let seed=1701;for(let i=0;i<data.length;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;data[i]=(seed/2147483648-1)*Math.exp(-i/(audio.sampleRate*.025));}}}catch{ $('status').textContent='Ljud saknas här; spelet fungerar utan ljud.';}
  }
- function shotSound(weapon){if(!settings.brytare.ljud||!audioBuffer||audio?.state!=='running')return;while(voices.length>=cfg.ljud.max_roster){try{voices.shift().stop();}catch{}}const source=audio.createBufferSource();source.buffer=audioBuffer;const gain=audio.createGain(),filter=audio.createBiquadFilter();filter.type='lowpass';filter.frequency.value=weapon.ljud_hz*25;gain.gain.value=cfg.ljud.volym;source.connect(filter).connect(gain).connect(audio.destination);source.start();source.stop(audio.currentTime+weapon.ljud_langd_s);voices.push(source);source.onended=()=>{voices=voices.filter(v=>v!==source);source.disconnect();filter.disconnect();gain.disconnect();};}
+ function shotSound(weapon){
+  if(!settings.brytare.ljud||!audioBuffer||audio?.state!=='running')return;
+  while(voices.length>=cfg.ljud.max_roster){voices.shift().stop();}
+  const now=audio.currentTime, bus=audio.createGain();bus.gain.value=cfg.ljud.volym*2.4*(.65+.35*settings.skottkansla);bus.connect(audioBus);
+  const echo=audio.createDelay(.3),echoGain=audio.createGain(),echoFilter=audio.createBiquadFilter();echo.delayTime.value=weapon.eko_s;echoGain.gain.value=weapon.eko_gain;echoFilter.frequency.value=1800;bus.connect(echo).connect(echoFilter).connect(echoGain).connect(audioBus);
+  const bass=audio.createOscillator(),bassGain=audio.createGain();bass.frequency.setValueAtTime(weapon.bas_hz,now);bass.frequency.exponentialRampToValueAtTime(40,now+weapon.bas_s);bassGain.gain.setValueAtTime(.0001,now);bassGain.gain.exponentialRampToValueAtTime(1.1,now+.002);bassGain.gain.exponentialRampToValueAtTime(.0001,now+weapon.bas_s);bass.connect(bassGain).connect(bus);
+  const source=audio.createBufferSource(),gain=audio.createGain(),filter=audio.createBiquadFilter();source.buffer=audioBuffer;filter.type='highpass';filter.frequency.value=weapon.small_hz;gain.gain.setValueAtTime(1.6,now);gain.gain.exponentialRampToValueAtTime(.0001,now+weapon.small_s);source.connect(filter).connect(gain).connect(bus);
+  let stopped=false;const voice={stop(){if(stopped)return;stopped=true;try{source.stop();bass.stop();}catch{}}};voices.push(voice);source.start(now);source.stop(now+.2);bass.start(now);bass.stop(now+weapon.bas_s);
+  // Städa först när den korta ekosvansen har klingat ut.
+  source.onended=()=>setTimeout(()=>{voices=voices.filter(v=>v!==voice);for(const n of [source,gain,filter,bass,bassGain,bus,echo,echoFilter,echoGain])n.disconnect();},300);
+ }
+
  function respawn(){const enemy=targets[0];enemy.alive=true;enemy.hp=cfg.fiende.hp;enemy.root.position.set(0,0,-cfg.fiende.start_m);enemy.root.rotation.set(0,0,0);enemy.root.visible=settings.brytare.fiender;runAction.reset().play();deadFor=0;enemyCount++;}
  respawn();
  function targetUnderCrosshair(){scene.updateMatrixWorld(true);ray.setFromCamera(zero,camera);const list=[...occluders,...targets.filter(t=>t.alive&&(t.kind!=='soldat'||settings.brytare.fiender)).map(t=>t.hitbox)];const collision=ray.intersectObjects(list,true)[0];if(!collision)return null;return targets.find(t=>t.hitbox===collision.object)||null;}
@@ -75,7 +90,9 @@ async function boot(){
   shots++;shotSound(weapon);haptics.shot(weapon.haptik);const target=targetUnderCrosshair();
   if(target){hits++;hitUntil=performance.now()+160;if(settings.brytare.skada){target.hp--;if(target.hp<=0){target.alive=false;if(target.kind==='soldat'){runAction.stop();deadFor=.001;}else{target.root.traverse(n=>{if(n.isMesh&&n.material?.color){n.material.color.multiplyScalar(.45);}});}}}}
   if(settings.brytare.effekter){camera.getWorldDirection(direction);const muzzle=new THREE.Vector3(.13,-.16,-.55).applyQuaternion(camera.quaternion).add(camera.position);fx.spela('mynningsflamma',{pos:muzzle,riktning:direction.clone(),kaliber_mm:weapon.kaliber_mm,mynningsbroms:false});}
-  recoil+=weapon.rekyl_rad;$('score').textContent=`TRÄFFAR ${hits} · SKOTT ${shots}`;
+  recoil=Math.min(.16,recoil+weapon.rekyl_rad*settings.skottkansla);shake=weapon.skak_rad*settings.skottkansla;recoilDecay=weapon.rekyl_avklingning;shakeMeters=weapon.skak_m*settings.skottkansla;
+  if(settings.brytare.effekter){flash=weapon.blixt_styrka*settings.skottkansla;flashDuration=weapon.blixt_s;lightPeak=weapon.mynningsljus*settings.skottkansla;muzzleFlash.scale.setScalar(weapon.mynningsflamma_m);}
+  $('score').textContent=`TRÄFFAR ${hits} · SKOTT ${shots}`;
  }
  function fire(){const now=performance.now();if(!started||now<cooldown||document.hidden)return false;void unlockAudio();const weapon={...weapons[selected]};cooldown=now+weapon.omladdning_ms;const token=++burstToken;shoot(weapon);queue=Array.from({length:weapon.salva-1},(_,i)=>({at:now+(i+1)*weapon.intervall_ms,weapon,token}));return true;}
  // Själva labeln täcker knappen, men inputen är ett syskon: ingen dubbel eventkedja.
@@ -83,13 +100,14 @@ async function boot(){
  $('trigger').addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();fire();}});
  $('fire').addEventListener('click',fire);
  $('weapon').onclick=()=>{selected=(selected+1)%weapons.length;$('weapon').textContent=weapons[selected].namn;};
- $('center').onclick=()=>{gyro.center();recoil=0;};
+ $('center').onclick=()=>{gyro.center();recoil=0;shake=0;shakeMeters=0;};
  function hideStart(){started=true;$('startPanel').hidden=true;last=performance.now();}
  $('manual').onclick=()=>{gyro.active=false;hideStart();void unlockAudio();$('status').textContent='Dra i bilden för att sikta · Centrera nollställer';};
  $('start').disabled=false;
  $('start').onclick=()=>{const promise=gyro.start();void unlockAudio();hideStart();$('status').textContent='Väntar på sensorer…';promise.then(p=>{$('status').textContent=p.orientation==='granted'?'Gyro tillåtet · vänta på sensorvärden': 'Gyro nekades eller saknas · dra för att sikta';if(p.motion!=='granted')$('status').textContent+=' · rörelsedata saknas';}).catch(()=>{$('status').textContent='Sensorerna kunde inte starta · dra för att sikta';});};
  const settingsPanel=$('settings');function showSettings(show){settingsPanel.hidden=!show;$('settingsButton').setAttribute('aria-expanded',String(show));}
  $('settingsButton').onclick=()=>showSettings(settingsPanel.hidden);$('closeSettings').onclick=()=>showSettings(false);
+ $('shotFeel').value=settings.skottkansla;function updateShotFeel(){settings.skottkansla=Number($('shotFeel').value);$('shotFeelValue').value=settings.skottkansla.toFixed(2)+'×';save();}updateShotFeel();$('shotFeel').oninput=updateShotFeel;
  $('sensitivity').value=settings.kanslighet;function updateSensitivity(){settings.kanslighet=Number($('sensitivity').value);$('sensitivityValue').value=settings.kanslighet.toFixed(2)+'×';save();}updateSensitivity();$('sensitivity').oninput=updateSensitivity;
  for(const [id,key]of [['invertX','inverteraX'],['invertY','inverteraY'],['invertZ','inverteraZ']]){$(id).checked=!!settings[key];$(id).onchange=()=>{settings[key]=$(id).checked;save();};}
  let debugEnabled=!!saved.debug;function setDebug(){debugEnabled=$('showDebug').checked;$('debug').hidden=!debugEnabled;}$('showDebug').checked=debugEnabled;setDebug();$('showDebug').onchange=()=>{setDebug();save();};
@@ -108,8 +126,9 @@ async function boot(){
   const a=gyro.values.acc;const freshMotion=now-gyro.lastMotion<500;
   const clamp=v=>THREE.MathUtils.clamp(v,-cfg.styrning.acc_max,cfg.styrning.acc_max);
   const sway=settings.brytare.acceleration&&freshMotion?cfg.styrning.acc_sväng:0;
-  motion.set(recoil+clamp(a.y)*sway,clamp(a.x)*sway,clamp(a.z)*sway,'YXZ');camera.quaternion.multiply(recoilQuat.setFromEuler(motion));
-  camera.position.set(clamp(a.x)*sway,cfg.kamera.hojd_m+clamp(a.y)*sway,clamp(a.z)*sway);recoil*=Math.exp(-cfg.styrning.rekyl_avklingning*dt);
+  motion.set(recoil+Math.sin(now*.17)*shake+clamp(a.y)*sway,Math.sin(now*.23)*shake+clamp(a.x)*sway,Math.cos(now*.19)*shake*.5+clamp(a.z)*sway,'YXZ');camera.quaternion.multiply(recoilQuat.setFromEuler(motion));
+  camera.position.set(clamp(a.x)*sway+Math.sin(now*.21)*shakeMeters,cfg.kamera.hojd_m+clamp(a.y)*sway+Math.cos(now*.27)*shakeMeters,clamp(a.z)*sway);recoil*=Math.exp(-recoilDecay*dt);shake*=Math.exp(-26*dt);shakeMeters*=Math.exp(-26*dt);
+  flash*=Math.exp(-dt/flashDuration);if(flash<.001)flash=0;$('shotFlash').style.opacity=String(Math.min(.85,flash));muzzleLight.intensity=lightPeak*flash;muzzleFlash.material.opacity=Math.min(.9,flash*2);muzzleFlash.rotation.z=shots*2.4;
   const enemy=targets[0];enemy.root.visible=settings.brytare.fiender;
   if(started&&settings.brytare.fiender){if(enemy.alive){mixer.update(dt);enemy.root.position.z+=cfg.fiende.fart_ms*dt;if(enemy.root.position.z>-cfg.fiende.nara_m)respawn();}else{deadFor+=dt;enemy.root.rotation.x=-Math.min(1,deadFor/cfg.fiende.fall_s)*Math.PI/2;if(deadFor>cfg.fiende.aterkomst_s)respawn();}}
   while(queue.length&&queue[0].at<=now){const shot=queue.shift();if(shot.token===burstToken)shoot(shot.weapon);}
@@ -126,7 +145,7 @@ async function boot(){
    const f=n=>n==null?'—':Number(n).toFixed(1);$('debug').textContent=`α ${f(gyro.values.alpha)} β ${f(gyro.values.beta)} γ ${f(gyro.values.gamma)}\nacc ${f(a.x)} ${f(a.y)} ${f(a.z)} m/s²\nrot ${Object.values(gyro.values.rotationRate).map(f).join(' ')} °/s\nsensor ${f(gyro.values.interval)} ms · tex ${renderer.info.memory.textures} · JS ${performance.memory?(performance.memory.usedJSHeapSize/1048576).toFixed(1)+' MB':'saknas'}\n${gyro.active&&gyro.received?'gyro aktivt':'finger/ingen sensordata'}`;
    if(started&&gyro.active){if(gyro.received&&now-gyro.lastEvent<1500)$('status').textContent='Gyro aktivt · Centrera om riktningen driver';else $('status').textContent='Ingen färsk gyrosignal · dra för att sikta';}
   }
-  Object.assign(snapshot,{fps,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,textures:renderer.info.memory.textures,shots,hits,enemyZ:enemy.root.position.z,enemyAlive:enemy.alive,animationTime:runAction.time,quaternion:camera.quaternion.toArray(),sensor:structuredClone(gyro.values),enemyCount});
+  Object.assign(snapshot,{fps,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,textures:renderer.info.memory.textures,shots,hits,recoil,shake,skottkansla:settings.skottkansla,audioVoices:voices.length,enemyZ:enemy.root.position.z,enemyAlive:enemy.alive,animationTime:runAction.time,quaternion:camera.quaternion.toArray(),sensor:structuredClone(gyro.values),enemyCount});
  }
  requestAnimationFrame(loop);
 }

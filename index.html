@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="theme-color" content="#171e1c"><link rel="icon" href="data:,"><title>Gyrosikte · Fältprov</title><link rel="stylesheet" href="./js/style.css"><script type="importmap">{"imports":{"three":"./js/vendor/three.module.js"}}</script></head>
 <body>
+<div id="shotFlash" aria-hidden="true"></div>
 <canvas id="spel" aria-label="Skjutbana med WW2-soldat och två Tiger-stridsvagnar"></canvas>
 <header><div class="eyebrow">WW2 / FÄLTPROV 01</div><div class="topline"><h1>Gyrosikte</h1><button id="settingsButton" aria-expanded="false" aria-controls="settings">Inställningar</button></div><div id="status" role="status">Laddar skjutbanan…</div></header>
 <div id="aim" aria-hidden="true"><div id="ring"></div><div class="cross"></div><div id="hit">×</div></div>
@@ -10,6 +11,7 @@
 <div class="topline"><h2>Finjustera</h2><button id="closeSettings">Klar</button></div>
 <details open><summary>Styrning</summary><label>Känslighet <output id="sensitivityValue"></output><input id="sensitivity" type="range" min="0.25" max="3" step="0.05"></label><div class="checks"><label><input id="invertX" type="checkbox"> Invertera pitch (X)</label><label><input id="invertY" type="checkbox"> Invertera yaw (Y)</label><label><input id="invertZ" type="checkbox"> Invertera roll (Z)</label><label><input id="showDebug" type="checkbox"> Visa sensorer och mätning</label></div></details>
 <details><summary>Haptik</summary><label>Stil <select id="hapticStyle"><option value="auto">Följ vapnet</option><option value="latt">Lätt</option><option value="medel">Medel</option><option value="tung">Tung</option></select></label><div id="hapticEditors"></div><p>Safari: en fast knackning per verkligt tryck, om systemet stöder det. Salvan ger inte fem knackningar. Styrka är förberedd för en framtida app; längd används på Android.</p></details>
+<label>Skottkänsla <output id="shotFeelValue"></output><input id="shotFeel" type="range" min="0" max="2" step="0.05"></label>
 <details><summary>Spel och återkoppling</summary><div id="toggles" class="checks"></div><p>Berätta i chatten hur riktning, känslighet och rekyl känns. Inställningarna sparas bara på den här enheten.</p></details>
 </section>
 <footer><div class="weaponrow"><button id="weapon">Prickskyttegevär</button><button id="center">Centrera</button></div><div id="fireWrap"><button id="fire" tabindex="-1" aria-hidden="true">SKJUT<span id="reload">REDO</span></button><input id="hapticSwitch" type="checkbox" switch tabindex="-1" aria-hidden="true"><label id="trigger" for="hapticSwitch" role="button" tabindex="0" aria-label="Skjut"></label></div><div id="score">TRÄFFAR 0 · SKOTT 0</div></footer>

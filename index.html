@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#171e1c"><link rel="icon" href="data:,"><title>Gyrosikte · Fältprov</title><link rel="stylesheet" href="./js/style.css"><script type="importmap">{"imports":{"three":"./js/vendor/three.module.js"}}</script></head>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#171e1c"><link rel="icon" href="data:,"><title>Gyrosikte · Fältprov</title><link rel="stylesheet" href="./js/style.css?v=2"><script type="importmap">{"imports":{"three":"./js/vendor/three.module.js"}}</script></head>
 <body>
 <div id="shotFlash" aria-hidden="true"></div>
 <canvas id="spel" aria-label="Skjutbana med WW2-soldat och två Tiger-stridsvagnar"></canvas>
@@ -16,4 +16,4 @@
 </section>
 <footer><div class="weaponrow"><button id="weapon">Prickskyttegevär</button><button id="center">Centrera</button></div><div id="fireWrap"><button id="fire" tabindex="-1" aria-hidden="true">SKJUT<span id="reload">REDO</span></button><input id="hapticSwitch" type="checkbox" switch tabindex="-1" aria-hidden="true"><label id="trigger" for="hapticSwitch" role="button" tabindex="0" aria-label="Skjut"></label></div><div id="score">TRÄFFAR 0 · SKOTT 0</div></footer>
 <script type="module" src="./js/main.js"></script>
-</body></html>
+<script>document.addEventListener('contextmenu',e=>e.preventDefault());document.addEventListener('selectstart',e=>{if(!e.target.closest?.('input[type=text],textarea'))e.preventDefault();});</script></body></html>

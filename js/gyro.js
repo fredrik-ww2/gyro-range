@@ -7,8 +7,10 @@ export class GyroAim {
   this.settings=settings;this.config=config;this.active=false;this.received=false;this.pendingCenter=true;
   this.raw=new THREE.Quaternion();this.origin=new THREE.Quaternion();this.target=new THREE.Quaternion();this.smooth=new THREE.Quaternion();this.relative=new THREE.Quaternion();
   this.euler=new THREE.Euler();this.fix=new THREE.Quaternion(-Math.SQRT1_2,0,0,Math.SQRT1_2);this.screen=new THREE.Quaternion();this.axis=new THREE.Vector3(0,0,1);this.vector=new THREE.Vector3();
+  this.nativeSource=false;this.nativeTime=null;this.nativeDelta=new THREE.Quaternion();
   this.values={alpha:null,beta:null,gamma:null,acc:{x:0,y:0,z:0},rotationRate:{alpha:0,beta:0,gamma:0},interval:0};this.drag={x:0,y:0};this.lastEvent=0;this.lastMotion=0;
   addEventListener('deviceorientation',e=>{
+   if(this.nativeSource)return;
    if (![e.alpha,e.beta,e.gamma].every(Number.isFinite)) return;
    Object.assign(this.values,{alpha:e.alpha,beta:e.beta,gamma:e.gamma});this.lastEvent=performance.now();this.received=true;
    const angle=screen.orientation?.angle ?? window.orientation ?? 0;
@@ -17,17 +19,35 @@ export class GyroAim {
    if(this.pendingCenter){this.origin.copy(this.raw).invert();this.pendingCenter=false;}
   },{passive:true});
   addEventListener('devicemotion',e=>{
+   if(this.nativeSource)return;
    // acceleration, inte accelerationIncludingGravity: inga tyngdkraftsvärden integreras.
    for(const k of ['x','y','z']) this.values.acc[k]=Number.isFinite(e.acceleration?.[k])?e.acceleration[k]:0;
    for(const k of ['alpha','beta','gamma'])this.values.rotationRate[k]=Number.isFinite(e.rotationRate?.[k])?e.rotationRate[k]:0;
    this.values.interval=e.interval||0;this.lastMotion=performance.now();
   },{passive:true});
+  // Expo Gyroscope: x/y/z är rad/s. Samma axelnamn som rotationRate alpha/beta/gamma.
+  // Forskningsunderlaget 13.3–13.4: pitch=+x och yaw=-y efter skärmremappning.
+  addEventListener('ww2-native-gyro',e=>{
+   if(!window.ReactNativeWebView)return;
+   const d=e.detail;if(!d||![d.x,d.y,d.z,d.t].every(Number.isFinite))return;
+   if(!this.nativeSource){this.nativeSource=true;this.raw.identity();this.origin.identity();this.pendingCenter=false;this.nativeTime=null;this.values.acc={x:0,y:0,z:0};this.lastMotion=0;}
+   const elapsed=this.nativeTime===null?0:d.t-this.nativeTime;this.nativeTime=d.t;
+   this.lastEvent=performance.now();this.received=true;
+   this.values.rotationRate={alpha:d.x*180/Math.PI,beta:d.y*180/Math.PI,gamma:d.z*180/Math.PI};this.values.interval=elapsed*1000;
+   if(!this.active||elapsed<=0||elapsed>.25)return;
+   const a=rad(screen.orientation?.angle??window.orientation??0),c=Math.cos(a),s=Math.sin(a);
+   this.vector.set((d.x*c-d.y*s)*elapsed,-(d.x*s+d.y*c)*elapsed,-d.z*elapsed);
+   const len=this.vector.length();if(len)this.raw.multiply(this.nativeDelta.setFromAxisAngle(this.vector.normalize(),len)).normalize();
+  });
+  addEventListener('ww2-native-status',e=>{if(window.ReactNativeWebView&&!e.detail?.available)this.values.nativeStatus='saknas/nekades';});
   let pointer=null,last=null;
   canvas.addEventListener('pointerdown',e=>{pointer=e.pointerId;last=[e.clientX,e.clientY];canvas.setPointerCapture(pointer);});
   canvas.addEventListener('pointermove',e=>{if(e.pointerId!==pointer)return;this.drag.x-=(e.clientX-last[0])*config.dra_rad_px;this.drag.y-=(e.clientY-last[1])*config.dra_rad_px;this.drag.y=THREE.MathUtils.clamp(this.drag.y,-1.4,1.4);last=[e.clientX,e.clientY];});
   const end=()=>{pointer=null;};canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
  }
+ stop(){this.active=false;if(window.ReactNativeWebView)window.ReactNativeWebView.postMessage(JSON.stringify({type:'gyro-stop'}));}
  async start(){
+  if(window.ReactNativeWebView){this.active=true;this.center();window.ReactNativeWebView.postMessage(JSON.stringify({type:'gyro-start'}));return {orientation:'granted',motion:'granted'};}
   // Båda anropen görs direkt i samma användartryck, före första await.
   const permission=T=>{try{return typeof T?.requestPermission==='function'?T.requestPermission():Promise.resolve(T?'granted':'unavailable');}catch(e){return Promise.reject(e);}};
   const orientation=permission(window.DeviceOrientationEvent);const motion=permission(window.DeviceMotionEvent);
@@ -35,7 +55,7 @@ export class GyroAim {
   this.active=a.status==='fulfilled'&&a.value==='granted';this.center();
   return {orientation:a.status==='fulfilled'?a.value:'denied',motion:b.status==='fulfilled'?b.value:'denied'};
  }
- center(){if(this.received){this.origin.copy(this.raw).invert();this.pendingCenter=false;}else this.pendingCenter=true;this.drag={x:0,y:0};this.smooth.identity();}
+ center(){this.nativeTime=null;if(this.nativeSource){this.raw.identity();this.origin.identity();this.pendingCenter=false;}else if(this.received){this.origin.copy(this.raw).invert();this.pendingCenter=false;}else this.pendingCenter=true;this.drag={x:0,y:0};this.smooth.identity();}
  update(dt){
   const s=this.settings;
   if(this.active&&this.received){

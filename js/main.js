@@ -87,8 +87,8 @@ async function boot(){
  respawn();
  function targetUnderCrosshair(){scene.updateMatrixWorld(true);ray.setFromCamera(zero,camera);const list=[...occluders,...targets.filter(t=>t.alive&&(t.kind!=='soldat'||settings.brytare.fiender)).map(t=>t.hitbox)];const collision=ray.intersectObjects(list,true)[0];if(!collision)return null;return targets.find(t=>t.hitbox===collision.object)||null;}
  function shoot(weapon){
-  shots++;shotSound(weapon);haptics.shot(weapon.haptik);const target=targetUnderCrosshair();
-  if(target){hits++;hitUntil=performance.now()+160;if(settings.brytare.skada){target.hp--;if(target.hp<=0){target.alive=false;if(target.kind==='soldat'){runAction.stop();deadFor=.001;}else{target.root.traverse(n=>{if(n.isMesh&&n.material?.color){n.material.color.multiplyScalar(.45);}});}}}}
+  shots++;shotSound(weapon);haptics.shot(weapon.haptik,weapon.id);const target=targetUnderCrosshair();
+  if(target){haptics.hit();hits++;hitUntil=performance.now()+160;if(settings.brytare.skada){target.hp--;if(target.hp<=0){target.alive=false;if(target.kind==='soldat'){runAction.stop();deadFor=.001;}else{target.root.traverse(n=>{if(n.isMesh&&n.material?.color){n.material.color.multiplyScalar(.45);}});}}}}
   if(settings.brytare.effekter){camera.getWorldDirection(direction);const muzzle=new THREE.Vector3(.13,-.16,-.55).applyQuaternion(camera.quaternion).add(camera.position);fx.spela('mynningsflamma',{pos:muzzle,riktning:direction.clone(),kaliber_mm:weapon.kaliber_mm,mynningsbroms:false});}
   recoil=Math.min(.16,recoil+weapon.rekyl_rad*settings.skottkansla);shake=weapon.skak_rad*settings.skottkansla;recoilDecay=weapon.rekyl_avklingning;shakeMeters=weapon.skak_m*settings.skottkansla;
   if(settings.brytare.effekter){flash=weapon.blixt_styrka*settings.skottkansla;flashDuration=weapon.blixt_s;lightPeak=weapon.mynningsljus*settings.skottkansla;muzzleFlash.scale.setScalar(weapon.mynningsflamma_m);}
@@ -96,30 +96,32 @@ async function boot(){
  }
  function fire(){const now=performance.now();if(!started||now<cooldown||document.hidden)return false;void unlockAudio();const weapon={...weapons[selected]};cooldown=now+weapon.omladdning_ms;const token=++burstToken;shoot(weapon);queue=Array.from({length:weapon.salva-1},(_,i)=>({at:now+(i+1)*weapon.intervall_ms,weapon,token}));return true;}
  // Själva labeln täcker knappen, men inputen är ett syskon: ingen dubbel eventkedja.
- $('trigger').addEventListener('click',e=>{if(!fire())e.preventDefault();if(!settings.brytare.haptik)e.preventDefault();});
+ $('trigger').addEventListener('click',e=>{if(!fire())e.preventDefault();if(!settings.brytare.haptik||window.ReactNativeWebView)e.preventDefault();});
  $('trigger').addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();fire();}});
  $('fire').addEventListener('click',fire);
  $('weapon').onclick=()=>{selected=(selected+1)%weapons.length;$('weapon').textContent=weapons[selected].namn;};
  $('center').onclick=()=>{gyro.center();recoil=0;shake=0;shakeMeters=0;};
  function hideStart(){started=true;$('startPanel').hidden=true;last=performance.now();}
- $('manual').onclick=()=>{gyro.active=false;hideStart();void unlockAudio();$('status').textContent='Dra i bilden för att sikta · Centrera nollställer';};
+ $('manual').onclick=()=>{gyro.stop();hideStart();void unlockAudio();$('status').textContent='Dra i bilden för att sikta · Centrera nollställer';};
  $('start').disabled=false;
  $('start').onclick=()=>{const promise=gyro.start();void unlockAudio();hideStart();$('status').textContent='Väntar på sensorer…';promise.then(p=>{$('status').textContent=p.orientation==='granted'?'Gyro tillåtet · vänta på sensorvärden': 'Gyro nekades eller saknas · dra för att sikta';if(p.motion!=='granted')$('status').textContent+=' · rörelsedata saknas';}).catch(()=>{$('status').textContent='Sensorerna kunde inte starta · dra för att sikta';});};
  const settingsPanel=$('settings');function showSettings(show){settingsPanel.hidden=!show;$('settingsButton').setAttribute('aria-expanded',String(show));}
  $('settingsButton').onclick=()=>showSettings(settingsPanel.hidden);$('closeSettings').onclick=()=>showSettings(false);
- $('shotFeel').value=settings.skottkansla;function updateShotFeel(){settings.skottkansla=Number($('shotFeel').value);$('shotFeelValue').value=settings.skottkansla.toFixed(2)+'×';save();}updateShotFeel();$('shotFeel').oninput=updateShotFeel;
+ $('shotFeel').value=settings.skottkansla;function updateShotFeel(){settings.skottkansla=Number($('shotFeel').value);$('shotFeelValue').value=settings.skottkansla.toFixed(2)+'×';haptics.sync();save();}updateShotFeel();$('shotFeel').oninput=updateShotFeel;
  $('sensitivity').value=settings.kanslighet;function updateSensitivity(){settings.kanslighet=Number($('sensitivity').value);$('sensitivityValue').value=settings.kanslighet.toFixed(2)+'×';save();}updateSensitivity();$('sensitivity').oninput=updateSensitivity;
  for(const [id,key]of [['invertX','inverteraX'],['invertY','inverteraY'],['invertZ','inverteraZ']]){$(id).checked=!!settings[key];$(id).onchange=()=>{settings[key]=$(id).checked;save();};}
  let debugEnabled=!!saved.debug;function setDebug(){debugEnabled=$('showDebug').checked;$('debug').hidden=!debugEnabled;}$('showDebug').checked=debugEnabled;setDebug();$('showDebug').onchange=()=>{setDebug();save();};
  $('hapticStyle').value=settings.hapticStyle;$('hapticStyle').onchange=()=>{settings.hapticStyle=$('hapticStyle').value;save();};
  for(const [key,p]of Object.entries(hapticStyles)){const div=document.createElement('div');const title=document.createElement('label');title.textContent=p.namn;div.append(title);for(const [field,name,min,max,step]of [['styrka','Styrka',0,1,.05],['varaktighet_ms','Längd (ms)',1,100,1]]){const label=document.createElement('label'),output=document.createElement('output'),input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=p[field];output.value=p[field];label.append(name,output,input);input.oninput=()=>{p[field]=Number(input.value);output.value=input.value;save();};div.append(label);}$('hapticEditors').append(div);}
  const switchNames={skada:'Skada',fiender:'Framryckande soldat',ljud:'Ljud',effekter:'Ljus och rök',haptik:'Haptik',acceleration:'Rörelsesväng',occlusion:'Dölj skymda enheter',lod:'Avståndsdetaljer'};
- for(const key of Object.keys(settings.brytare)){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=settings.brytare[key];input.onchange=()=>{settings.brytare[key]=input.checked;save();};label.append(input,switchNames[key]);$('toggles').append(label);}
+ for(const key of Object.keys(settings.brytare)){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=settings.brytare[key];input.onchange=()=>{settings.brytare[key]=input.checked;haptics.sync();save();};label.append(input,switchNames[key]);$('toggles').append(label);}
  function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}addEventListener('resize',resize);resize();
  document.addEventListener('visibilitychange',()=>{queue=[];burstToken++;if(document.hidden){audio?.suspend();navigator.vibrate?.(0);}last=performance.now();});
  const snapshot={targetCenters:targets.map(t=>({kind:t.kind,center:t.hitbox.getWorldPosition(new THREE.Vector3()).toArray()})),ready:true,models:8,clip:clip.name,clipTracks:inPlace.tracks.length,clipMatches,modelLoadMs,rawBounds,modelScale:soldierScale,haptics:haptics.mode,shots:0,hits:0};
  // Läsbar diagnostik för automatiskt rökprov. Inga externa tjänster används.
  window.gyroDiagnostics=snapshot;
+ if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(JSON.stringify({type:'bridge-ready',version:1}));haptics.sync();}
+ addEventListener('ww2-native-lifecycle',e=>{if(!window.ReactNativeWebView)return;queue=[];burstToken++;last=performance.now();if(!e.detail?.active)audio?.suspend();else gyro.center();});
  $('status').textContent='Banan är laddad · 1 soldat, 2 Tiger, 2 hus';
  function loop(now){requestAnimationFrame(loop);if(now-renderTick<renderInterval-.5)return;renderTick=now-((now-renderTick)%renderInterval);const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;if(document.hidden)return;
   const orientation=gyro.update(dt);camera.quaternion.copy(orientation);
@@ -145,7 +147,7 @@ async function boot(){
    const f=n=>n==null?'—':Number(n).toFixed(1);$('debug').textContent=`α ${f(gyro.values.alpha)} β ${f(gyro.values.beta)} γ ${f(gyro.values.gamma)}\nacc ${f(a.x)} ${f(a.y)} ${f(a.z)} m/s²\nrot ${Object.values(gyro.values.rotationRate).map(f).join(' ')} °/s\nsensor ${f(gyro.values.interval)} ms · tex ${renderer.info.memory.textures} · JS ${performance.memory?(performance.memory.usedJSHeapSize/1048576).toFixed(1)+' MB':'saknas'}\n${gyro.active&&gyro.received?'gyro aktivt':'finger/ingen sensordata'}`;
    if(started&&gyro.active){if(gyro.received&&now-gyro.lastEvent<1500)$('status').textContent='Gyro aktivt · Centrera om riktningen driver';else $('status').textContent='Ingen färsk gyrosignal · dra för att sikta';}
   }
-  Object.assign(snapshot,{fps,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,textures:renderer.info.memory.textures,shots,hits,recoil,shake,skottkansla:settings.skottkansla,audioVoices:voices.length,enemyZ:enemy.root.position.z,enemyAlive:enemy.alive,animationTime:runAction.time,quaternion:camera.quaternion.toArray(),sensor:structuredClone(gyro.values),enemyCount});
+  Object.assign(snapshot,{fps,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,textures:renderer.info.memory.textures,shots,hits,recoil,shake,skottkansla:settings.skottkansla,audioVoices:voices.length,enemyZ:enemy.root.position.z,enemyAlive:enemy.alive,animationTime:runAction.time,quaternion:camera.quaternion.toArray(),sensor:structuredClone(gyro.values),sensorSource:gyro.nativeSource?'app':'webb',enemyCount});
  }
  requestAnimationFrame(loop);
 }

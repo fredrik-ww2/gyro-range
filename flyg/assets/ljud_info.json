@@ -3,18 +3,19 @@
     "handelse_id": "motor.tomgang",
     "fil": "motor_tomgang_A_mobil80.m4a",
     "kalla": "/workspace/ww2_assets/assets/audio/ljud_v1/motor.tomgang/motor_tomgang_A_mobil80.m4a",
-    "beskrivning": "[F] Generisk fordonsmotor som tillfällig ersättare. Inte ett P-51-motorljud.",
+    "beskrivning": "[F] Generisk fordonsmotor som tillfällig ersättare, inte Napier Sabre eller Merlin.",
     "loop": true,
     "loop_end_s": 3.992396,
     "uppmatt_lufs": -16.3,
     "topp_dbtp": -1.9
   },
   "skott": {
-    "handelse_id": "skott.kulspruta",
-    "fil": "../../assets/ljud/kulspruta_mg42_mobil80.m4a",
-    "beskrivning": "MG42 från befintliga skjutbanans mobilpaket. Tillfälligt flygplansvapenljud.",
-    "uppmatt_lufs": -15.9,
-    "topp_dbtp": -2.7
+    "handelse_id": "skott.kanon",
+    "fil": "skott_kanon_37mm_mobil80.m4a",
+    "kalla": "/workspace/ww2_assets/assets/audio/ljud_v2/skott.kanon/skott_kanon_37mm_mobil80.m4a",
+    "beskrivning": "[F] Tyngre kanonproxy från biblioteket. Inte en identifierad 20 mm Hispano. Haptikkrok behåller kind kulspruta.",
+    "uppmatt_lufs": -17.3,
+    "topp_dbtp": -1.6
   },
   "samtidiga_roster_max": 8,
   "lyssning": "Väntar på Fredriks iPhone-test"

@@ -1,8 +1,9 @@
 {
-  "version": "flyg-v1",
+  "version": "flyg-v2-typhoon",
   "modell": {
-    "fil": "./assets/p51_mustang.glb",
-    "spann_m": 11.28,
+    "namn": "Hawker Typhoon Mk Ib",
+    "fil": "./assets/typhoon_mkib.glb",
+    "spann_m": 12.67,
     "rotation_y": 3.14159265359
   },
   "brytare": {
@@ -17,20 +18,24 @@
   },
   "styrning": {
     "kanslighet": 1,
-    "utjamning_s": 0.18,
+    "utjamning_s": 0.0,
     "aterga_s": 0,
     "aterga_vila_s": 1,
     "aterga_trosk_dps": 3,
     "inverteraX": false,
     "inverteraY": false,
-    "inverteraZ": true,
+    "inverteraZ": false,
     "max_pitch": 0.55,
-    "max_roll": 0.9,
+    "max_roll": 1.308996939,
     "respons_s": 0.45,
-    "svang_rad_s": 0.55,
     "dodzon": 0.025,
     "dra_rad_px": 0.004,
-    "bank_tecken": "Mobilens vänsterlutning (+z i Expo) ger positiv bank och vänstersväng. Högerlutning (−z) ger negativ bank och högersväng. Flygplanet behåller bankningen när mobilen hålls lutad; nivellering sker först i utgångsläget."
+    "bank_tecken": "Stående iPhone/native: vänster roll z<0 → bank>0, heading ökar → vänster; höger z>0 → bank<0, heading minskar. Native vridning y>0 → vänster, y<0 → höger. Webb gamma<0 → vänster, gamma>0 → höger; alpha ökar → vänster. x>0/beta ökar → stig. Expo x/y/z i rad/s; t i sekunder.",
+    "bank_forstarkning": 1.4,
+    "kritisk_omega": 8,
+    "neutral_rad": 0.018,
+    "gyro_brus_rad_s": 0.022,
+    "yaw_andel": 0.8
   },
   "flyg": {
     "gas": 0.65,
@@ -43,9 +48,9 @@
     "kant_svang": 0.4
   },
   "kamera": {
-    "avstand": 55,
-    "framfor": 30,
-    "hojd": 5,
+    "avstand": 43,
+    "framfor": 22,
+    "hojd": 2.5,
     "lutning": 80,
     "utjamning_s": 0.3
   },
@@ -74,19 +79,82 @@
     "mal_mellanrum": 120,
     "lod_enkel_m": 350,
     "lod_billboard_m": 800,
-    "mal_svaj": 20
+    "mal_svaj": 20,
+    "konvergens_m": 300,
+    "kaliber_mm": 20,
+    "mynningar_typhoon": [
+      [
+        -2.1,
+        -0.15,
+        -2.5
+      ],
+      [
+        -2.85,
+        -0.15,
+        -2.5
+      ],
+      [
+        2.1,
+        -0.15,
+        -2.5
+      ],
+      [
+        2.85,
+        -0.15,
+        -2.5
+      ]
+    ],
+    "mynningar_p51": [
+      [
+        -2.4,
+        0,
+        -1.9
+      ],
+      [
+        2.4,
+        0,
+        -1.9
+      ]
+    ],
+    "sparljus_pool": 96,
+    "sparljus_ms": 820,
+    "sparljus_liv_s": 1.2
   },
   "ljud": {
     "roster": 8,
     "motor": "./assets/motor_tomgang_A_mobil80.m4a",
-    "skott": "../assets/ljud/kulspruta_mg42_mobil80.m4a",
+    "skott": "./assets/skott_kanon_37mm_mobil80.m4a",
     "motor_volym": 0.23,
-    "skott_volym": 0.65,
-    "motor_loop_end": 3.992396
+    "skott_volym": 0.38,
+    "motor_loop_end": 3.992396,
+    "skott_beskrivning": "37 mm kanonproxy [F], inte identifierad Hispano"
   },
   "budget": {
     "mal_fps": 30,
     "max_trianglar": 50000,
     "max_ritanrop": 100
+  },
+  "modeller": {
+    "typhoon": {
+      "namn": "Hawker Typhoon Mk Ib",
+      "fil": "./assets/typhoon_mkib.glb",
+      "spann_m": 12.67,
+      "rotation_y": 3.14159265359
+    },
+    "p51": {
+      "namn": "P-51 Mustang",
+      "fil": "./assets/p51_mustang.glb",
+      "spann_m": 11.28,
+      "rotation_y": 3.14159265359
+    }
+  },
+  "standardmodell": "typhoon",
+  "fysik": {
+    "g_ms2": 9.80665,
+    "svang_formel": "omega_rad_s = g_ms2 * tan(bank_rad) / fart_ms",
+    "lastfaktor_formel": "n = 1 / cos(bank_rad)",
+    "radie_formel": "R_m = fart_ms^2 / (g_ms2 * abs(tan(bank_rad)))",
+    "tecken": "Positiv bank = vänster vinge ned. Positiv heading vrider -Z-färdriktningen mot -X.",
+    "modell": "Koordinerad stationär sväng vid given sann fart; ingen full aerodynamisk stall- eller energimodell."
   }
 }

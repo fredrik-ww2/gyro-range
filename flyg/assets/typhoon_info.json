@@ -1,0 +1,21 @@
+{
+  "namn": "Hawker Typhoon Mk Ib XP-M",
+  "kalla": "Egen lågpolymodell byggd i Blender 4.2.3 utifrån uppdragsbeskrivningen och befintliga enhetsmått.",
+  "master": "/workspace/ww2_assets/_work/karantan/typhoon_mkib_v2/typhoon_mkib_master.glb",
+  "komprimering": "/workspace/ww2_assets/_work/komprimering/internt_prov/typhoon_mkib_master/20261107_232717Z_6782_INTERNT_PROV",
+  "LOD1": {
+    "byte": 33652,
+    "trianglar": 7838,
+    "ritanrop": 3,
+    "texturer": 0
+  },
+  "matt": {
+    "spann_m": 12.67,
+    "langd_m": 9.52,
+    "hojd_flyglage_m": 3.941
+  },
+  "riktning": "+Z fram, +Y upp",
+  "status": "Karantän, R19 återstår. R18 ger stopp: spännvidd behandlas som längd, flyglägets höjd jämförs med utfällt ställ. Inget infört i ordinarie bibliotek.",
+  "bildreferens": "Den angivna bilagan gick inte att läsa på boxen. Bildbeskrivningen användes.",
+  "modellval": "Typhoon standard, P-51 valbar, spelarens plan använder LOD1 på fast följkameraavstånd."
+}

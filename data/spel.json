@@ -8,7 +8,8 @@
     "haptik": true,
     "acceleration": true,
     "occlusion": true,
-    "lod": true
+    "lod": true,
+    "atergang": true
   },
   "kamera": {
     "fov": 60,
@@ -27,7 +28,10 @@
     "dra_rad_px": 0.004,
     "acc_sväng": 0.0018,
     "acc_max": 5,
-    "rekyl_avklingning": 15
+    "rekyl_avklingning": 15,
+    "aterga_s": 1.8,
+    "aterga_vila_s": 0.4,
+    "aterga_trosk_dps": 5
   },
   "fiende": {
     "start_m": 60,
@@ -106,7 +110,8 @@
   },
   "ljud": {
     "volym": 0.16,
-    "max_roster": 8
+    "max_roster": 8,
+    "fil_volym": 1.0
   },
   "ui": {
     "debug": false

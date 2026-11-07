@@ -3,3 +3,13 @@
 #shotFlash{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:0;background:radial-gradient(ellipse at center,transparent 30%,rgba(255,232,175,.9) 100%);will-change:opacity}
 
 *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+
+#scope,#irons{position:fixed;inset:0;pointer-events:none;display:none;z-index:1}
+body[data-sikte=kikare] #scope,body[data-sikte=jarnsikte] #irons{display:block}
+body[data-sikte=kikare] #ring,body[data-sikte=kikare] .cross,body[data-sikte=jarnsikte] #ring,body[data-sikte=jarnsikte] .cross{display:none}
+#scope{background:radial-gradient(circle at 50% 50%,transparent 0,transparent calc(44vmin - 1px),#1c140c 44vmin,#060606 calc(44vmin + 5px),#030303 100%)}
+#scope .lens{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,transparent 0,transparent 30vmin,rgba(0,0,0,.28) 41vmin,rgba(0,0,0,.6) 44vmin)}
+#scope svg{position:absolute;left:50%;top:50%;width:88vmin;height:88vmin;transform:translate(-50%,-50%);border-radius:50%;filter:drop-shadow(0 0 1px #0008)}
+#irons svg{position:absolute;inset:0;width:100%;height:100%}
+#hit{z-index:2}
+header,footer,#metrics,#debug{z-index:3}

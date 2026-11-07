@@ -22,12 +22,17 @@
     "small_hz": 2600,
     "small_s": 0.065,
     "eko_s": 0.085,
-    "eko_gain": 0.18
+    "eko_gain": 0.18,
+    "ljudfil": "assets/ljud/gevar_mobil80.m4a",
+    "ljud_start_s": 0.12,
+    "ljud_fil_s": 1.5,
+    "sikte": "kikare",
+    "zoom": 2.2
   },
   {
     "id": "kulspruta",
-    "namn": "Kulspruta · 5 skott",
-    "salva": 5,
+    "namn": "Kulspruta MG 42",
+    "salva": 1,
     "intervall_ms": 100,
     "omladdning_ms": 850,
     "rekyl_rad": 0.014,
@@ -47,6 +52,12 @@
     "small_hz": 4200,
     "small_s": 0.035,
     "eko_s": 0.06,
-    "eko_gain": 0.12
+    "eko_gain": 0.12,
+    "automat": true,
+    "ljudfil": "assets/ljud/kulspruta_mg42_mobil80.m4a",
+    "ljud_start_s": 0.05,
+    "ljud_fil_s": 0.34,
+    "sikte": "jarnsikte",
+    "zoom": 1.15
   }
 ]

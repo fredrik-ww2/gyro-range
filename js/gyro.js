@@ -7,7 +7,7 @@ export class GyroAim {
   this.settings=settings;this.config=config;this.active=false;this.received=false;this.pendingCenter=true;
   this.raw=new THREE.Quaternion();this.origin=new THREE.Quaternion();this.target=new THREE.Quaternion();this.smooth=new THREE.Quaternion();this.relative=new THREE.Quaternion();
   this.euler=new THREE.Euler();this.fix=new THREE.Quaternion(-Math.SQRT1_2,0,0,Math.SQRT1_2);this.screen=new THREE.Quaternion();this.axis=new THREE.Vector3(0,0,1);this.vector=new THREE.Vector3();
-  this.nativeSource=false;this.nativeTime=null;this.nativeDelta=new THREE.Quaternion();
+  this.nativeSource=false;this.prevRaw=new THREE.Quaternion();this.inv=new THREE.Quaternion();this.movedAt=0;this.nativeTime=null;this.nativeDelta=new THREE.Quaternion();
   this.values={alpha:null,beta:null,gamma:null,acc:{x:0,y:0,z:0},rotationRate:{alpha:0,beta:0,gamma:0},interval:0};this.drag={x:0,y:0};this.lastEvent=0;this.lastMotion=0;
   addEventListener('deviceorientation',e=>{
    if(this.nativeSource)return;
@@ -59,6 +59,11 @@ export class GyroAim {
  update(dt){
   const s=this.settings;
   if(this.active&&this.received){
+   // Återgång: när telefonen hållits still en stund glider utgångsläget mjukt mot nuvarande läge,
+   // så siktet sakta återvänder till mitten. Rörelse mäts ur själva orienteringen (alla källor).
+   const nowMs=performance.now();const dot=Math.min(1,Math.abs(this.prevRaw.dot(this.raw)));const speed=dt>0?THREE.MathUtils.radToDeg(2*Math.acos(dot))/dt:0;this.prevRaw.copy(this.raw);
+   if(speed>(s.aterga_trosk_dps??5))this.movedAt=nowMs;
+   if(s.brytare?.atergang!==false&&(s.aterga_s??0)>0&&nowMs-this.movedAt>(s.aterga_vila_s??.4)*1000){this.inv.copy(this.raw).invert();this.origin.slerp(this.inv,1-Math.exp(-dt/s.aterga_s)).normalize();}
    this.relative.multiplyQuaternions(this.origin,this.raw).normalize();
    if(this.relative.w<0)this.relative.set(-this.relative.x,-this.relative.y,-this.relative.z,-this.relative.w);
    // Kvaternionens rotationsvektor möjliggör känslighet/invertering utan Euler-gimbal.

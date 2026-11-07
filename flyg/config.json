@@ -1,0 +1,92 @@
+{
+  "version": "flyg-v1",
+  "modell": {
+    "fil": "./assets/p51_mustang.glb",
+    "spann_m": 11.28,
+    "rotation_y": 3.14159265359
+  },
+  "brytare": {
+    "gyro": true,
+    "nivellering": true,
+    "skjutning": true,
+    "mal": true,
+    "markskydd": true,
+    "haptik": true,
+    "ljud": true,
+    "skada": false
+  },
+  "styrning": {
+    "kanslighet": 1,
+    "utjamning_s": 0.18,
+    "aterga_s": 0,
+    "aterga_vila_s": 1,
+    "aterga_trosk_dps": 3,
+    "inverteraX": false,
+    "inverteraY": false,
+    "inverteraZ": true,
+    "max_pitch": 0.55,
+    "max_roll": 0.9,
+    "respons_s": 0.45,
+    "svang_rad_s": 0.55,
+    "dodzon": 0.025,
+    "dra_rad_px": 0.004,
+    "bank_tecken": "Mobilens vänsterlutning (+z i Expo) ger positiv bank och vänstersväng. Högerlutning (−z) ger negativ bank och högersväng. Flygplanet behåller bankningen när mobilen hålls lutad; nivellering sker först i utgångsläget."
+  },
+  "flyg": {
+    "gas": 0.65,
+    "min_fart": 32,
+    "max_fart": 105,
+    "start_hojd": 180,
+    "min_markfrigang": 28,
+    "max_hojd": 900,
+    "varld_radie": 2400,
+    "kant_svang": 0.4
+  },
+  "kamera": {
+    "avstand": 55,
+    "framfor": 30,
+    "hojd": 5,
+    "lutning": 80,
+    "utjamning_s": 0.3
+  },
+  "varld": {
+    "storlek": 6000,
+    "segment": 96,
+    "dimma_nara": 650,
+    "dimma_fjarran": 2300,
+    "pixelratio": 1.5,
+    "hojd_stor": 45,
+    "hojd_liten": 13,
+    "frekvens_stor": 0.002,
+    "frekvens_liten": 0.009,
+    "falt_textur_px": 1024,
+    "falt_rutor": 16,
+    "max_render_px": 420000
+  },
+  "vapen": {
+    "intervall_s": 0.12,
+    "rackvidd": 1300,
+    "traff_radie": 16,
+    "mal_antal": 8,
+    "mal_radie": 11,
+    "aterkomst_s": 4,
+    "mal_avstand": 360,
+    "mal_mellanrum": 120,
+    "lod_enkel_m": 350,
+    "lod_billboard_m": 800,
+    "mal_svaj": 20
+  },
+  "ljud": {
+    "roster": 8,
+    "motor": "./assets/motor_tomgang_A_mobil80.m4a",
+    "skott": "../assets/ljud/kulspruta_mg42_mobil80.m4a",
+    "motor_volym": 0.23,
+    "skott_volym": 0.65,
+    "motor_loop_end": 3.992396
+  },
+  "budget": {
+    "mal_fps": 30,
+    "max_trianglar": 50000,
+    "max_ritanrop": 100
+  }
+}

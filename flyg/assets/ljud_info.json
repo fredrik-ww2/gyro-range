@@ -1,0 +1,21 @@
+{
+  "motor": {
+    "handelse_id": "motor.tomgang",
+    "fil": "motor_tomgang_A_mobil80.m4a",
+    "kalla": "/workspace/ww2_assets/assets/audio/ljud_v1/motor.tomgang/motor_tomgang_A_mobil80.m4a",
+    "beskrivning": "[F] Generisk fordonsmotor som tillfällig ersättare. Inte ett P-51-motorljud.",
+    "loop": true,
+    "loop_end_s": 3.992396,
+    "uppmatt_lufs": -16.3,
+    "topp_dbtp": -1.9
+  },
+  "skott": {
+    "handelse_id": "skott.kulspruta",
+    "fil": "../../assets/ljud/kulspruta_mg42_mobil80.m4a",
+    "beskrivning": "MG42 från befintliga skjutbanans mobilpaket. Tillfälligt flygplansvapenljud.",
+    "uppmatt_lufs": -15.9,
+    "topp_dbtp": -2.7
+  },
+  "samtidiga_roster_max": 8,
+  "lyssning": "Väntar på Fredriks iPhone-test"
+}

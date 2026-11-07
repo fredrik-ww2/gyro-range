@@ -1,0 +1,68 @@
+{
+  "_om": "Värden för kamera_apple_zoom_v1.js (återanvändbar kameramodul, Apple Kartor-stil). Alla tal styr beteendet – inget är hårdkodat i modulen. Status per värde: BESLUTAT = ur EXEMPEL_ZOOM_KAMERA_LOD_v0_2 / installningar.json fas1, ARBETSVÄRDE = satt av byggaren 2026-10-27, får ändras efter Fredriks test.",
+  "version": "1.0",
+  "fov_vertikal_grader": 62,
+  "_fov": "BESLUTAT 30° i kartläge (justerbart 25–50°).",
+  "avstand": {
+    "d_min_m": 12,
+    "_d_min": "BESLUTAT: närmaste kartavstånd 106 m. Det som händer närmare än 106 m är ÖPPET och byggs inte.",
+    "d_max_m": 100,
+    "d_max_auto_marginal": 1.15,
+    "_d_max": "ARBETSVÄRDE: 'auto' = så långt ut att hela kartan ryms på skärmen (både stående och liggande telefon) gånger marginalen. Kan ersättas med ett tal i meter.",
+    "d_max_fast_m": 100
+  },
+  "start": {
+    "mal_xz_m": [
+      0,
+      0
+    ],
+    "d_m": 55,
+    "lutning_grader": 80,
+    "kurs_grader": 0,
+    "_start": "ARBETSVÄRDE: startvy över Villers-Bocage centrum, norr upp, lätt lutad så att terrängen syns direkt."
+  },
+  "lutning": {
+    "min_grader": 0,
+    "max_grader": 85,
+    "_max": "75° är också kartgester.js hårda tak (aldrig underifrån).",
+    "tak_efter_avstand": [
+      [
+        12,
+        85
+      ],
+      [
+        100,
+        85
+      ]
+    ],
+    "_tak": "ARBETSVÄRDE: högsta tillåtna lutning som funktion av avstånd d (interpoleras i log d). Vid utzoomning klämms lutningen mjukt mot taket; önskad lutning sparas och återkommer när man zoomar in igen.",
+    "klamning_tid_s": 0.2,
+    "_klamning_tid": "BESLUTAT intervall 0,15–0,25 s, tidsbaserad (oberoende av fps)."
+  },
+  "gester": {
+    "kartgester_pa": false,
+    "_kartgester": "Pek: kartgester.js v1.0 (oförändrad kopia). 1 finger = panorera, 2 fingrar nyp = zooma steglöst mot fingrarnas mitt, 2 fingrar vrid = kurs, 2 fingrar upp/ned = luta, dubbeltryck = zooma in, tvåfingertryck = zooma ut.",
+    "hjul_zoom_hastighet": 1.0,
+    "mus_dampning_pa": true,
+    "mus_dampning": 0.12,
+    "_mus": "Dator: hjul = zooma mot muspekaren, vänsterdrag = panorera, högerdrag = vrid/luta (OrbitControls via kartgester.js)."
+  },
+  "mark": {
+    "mal_foljer_mark_pa": false,
+    "mal_foljer_mark_tid_s": 0.15,
+    "min_hojd_over_mark_m": 8,
+    "_mark": "Målpunkten följer terrängens höjd mjukt; kameran hålls minst så här högt över marken."
+  },
+  "granser": {
+    "panorering_begransad_pa": false,
+    "marginal_m": 150,
+    "_granser": "Målpunkten hålls inom kartans yta plus marginalen."
+  },
+  "klipp": {
+    "near_andel_av_hojd": 0.001,
+    "near_min_m": 0.1,
+    "near_max_m": 0.5,
+    "far_faktor": 4,
+    "far_min_m": 2500
+  }
+}

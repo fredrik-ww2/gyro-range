@@ -9,7 +9,8 @@
     "acceleration": true,
     "occlusion": true,
     "lod": true,
-    "atergang": true
+    "atergang": true,
+    "horisont": true
   },
   "kamera": {
     "fov": 60,
@@ -29,8 +30,8 @@
     "acc_sväng": 0.0018,
     "acc_max": 5,
     "rekyl_avklingning": 15,
-    "aterga_s": 1.8,
-    "aterga_vila_s": 0.4,
+    "aterga_s": 3.0,
+    "aterga_vila_s": 0.8,
     "aterga_trosk_dps": 5
   },
   "fiende": {

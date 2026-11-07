@@ -73,6 +73,8 @@ export class GyroAim {
    const len=this.vector.length();this.target.setFromAxisAngle(len?this.vector.normalize():this.axis,len);
   }else this.target.identity();
   this.target.multiply(new THREE.Quaternion().setFromEuler(this.euler.set(this.drag.y,this.drag.x,0,'YXZ')));
+  // Rak horisont: ta bort all lutning åt sidan (roll), så bilden aldrig känns sned efter rörelser.
+  if(s.brytare?.horisont!==false){this.euler.setFromQuaternion(this.target,'YXZ');this.euler.z=0;this.target.setFromEuler(this.euler);}
   this.smooth.slerp(this.target,1-Math.exp(-dt/s.utjamning_s));return this.smooth;
  }
 }

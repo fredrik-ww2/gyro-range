@@ -53,9 +53,14 @@ export function skapaMark(THREE,scene,W){
  const fpos=farGeo.attributes.position,fbas=Float32Array.from(fpos.array),fcol=new Float32Array(fpos.count*3),fuv=farGeo.attributes.uv;
  farGeo.setAttribute('color',new THREE.BufferAttribute(fcol,3));
  const far=new THREE.Mesh(farGeo,new THREE.MeshLambertMaterial({map:textur,vertexColors:true}));scene.add(far);
- const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{top:{value:new THREE.Color(0x2c6496)},horisont:{value:new THREE.Color(0xc5d4d4)}},
+ const molnC=document.createElement('canvas');molnC.width=molnC.height=256;const mg=molnC.getContext('2d');mg.clearRect(0,0,256,256);
+ for(let i=0;i<46;i++){const x=hash(i,2)*256,y=hash(i,9)*256,r=18+hash(i,4)*28;const g=mg.createRadialGradient(x,y,2,x,y,r);g.addColorStop(0,'rgba(255,255,255,.85)');g.addColorStop(1,'rgba(255,255,255,0)');mg.fillStyle=g;mg.beginPath();mg.arc(x,y,r,0,Math.PI*2);mg.fill();}
+ const molnTex=new THREE.CanvasTexture(molnC);molnTex.colorSpace=THREE.SRGBColorSpace;molnTex.wrapS=molnTex.wrapT=THREE.RepeatWrapping;molnTex.repeat.set(8,8);
+ const moln=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:molnTex,transparent:true,opacity:.78,depthWrite:false,fog:false,side:THREE.DoubleSide}));
+ moln.rotation.x=-Math.PI/2;moln.scale.set(64000,64000,1);moln.renderOrder=-1;moln.frustumCulled=false;scene.add(moln);
+ const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{top:{value:new THREE.Color(0x2c6496)},horisont:{value:new THREE.Color(0xc5d4d4)},moln:{value:0}},
   vertexShader:'varying float h;void main(){h=normalize(position).y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-  fragmentShader:'uniform vec3 top,horisont;varying float h;void main(){float t=smoothstep(-0.04,0.58,h);gl_FragColor=vec4(mix(horisont,top,t),1.0);}'});
+  fragmentShader:'uniform vec3 top,horisont;uniform float moln;varying float h;void main(){float t=smoothstep(-0.02,0.38,h);vec3 c=mix(horisont,top,t);float band=smoothstep(0.05,-0.14,h)*smoothstep(-0.46,-0.08,h);c=mix(c,vec3(0.93,0.95,0.97),band*moln);gl_FragColor=vec4(c,1.0);}'} );
  const sky=new THREE.Mesh(new THREE.SphereGeometry(1,18,12),skyMat);sky.frustumCulled=false;sky.renderOrder=-1;scene.add(sky);
  const hackMat=new THREE.MeshLambertMaterial({color:0x243f28}),tradMat=new THREE.MeshLambertMaterial({color:0x3c6a34}),broMat=new THREE.MeshLambertMaterial({color:0x9a9486});
  const husGeo=enhet(new THREE.BoxGeometry(1,1,1));
@@ -112,16 +117,19 @@ export function skapaMark(THREE,scene,W){
   hack.count=nh;trad.count=nt;hus.count=nu;bro.count=nb;
   hack.instanceMatrix.needsUpdate=trad.instanceMatrix.needsUpdate=hus.instanceMatrix.needsUpdate=bro.instanceMatrix.needsUpdate=true;
  }
- function dimma(agl){
-  const k=Math.min(1,Math.max(0,agl/9000));
-  return {near:650+agl*.3,far:Math.min(76000,2400+agl*4.2),k};
- }
  function himmel(kamera,agl){
   sky.position.copy(kamera.position);sky.scale.setScalar(70000);
-  const d=dimma(agl),haze=new THREE.Color(0xc5d4d4).lerp(new THREE.Color(0x8eafc6),d.k*.45);
-  skyMat.uniforms.horisont.value.copy(haze);
+  moln.position.set(kamera.position.x,2200,kamera.position.z);moln.visible=agl>600;
+  const k=Math.min(1,Math.max(0,agl/11000));
+  const top=new THREE.Color(0x3a7eaf).lerp(new THREE.Color(0x071425),Math.pow(k,.8));
+  const hor=new THREE.Color(0xd7e4ee).lerp(new THREE.Color(0x4d6e86),k*.75);
+  skyMat.uniforms.top.value.copy(top);skyMat.uniforms.horisont.value.copy(hor);skyMat.uniforms.moln.value=agl>2800?1:0;
+  const iMoln=agl>1750&&agl<2650;
+  const near=iMoln?30:agl>3200?400:650+agl*.25;
+  const far=iMoln?520:agl>3200?Math.max(3200,agl*.7):Math.min(76000,2400+agl*4.2);
   const dold=agl>(W.traad_dold_over_m||1600);hack.visible=trad.visible=hus.visible=bro.visible=!dold;
-  return {near:d.near,far:d.far,farg:haze};
+  const farg=iMoln?new THREE.Color(0xd5dde4):agl>3200?new THREE.Color(0xc5d0d8):hor.clone();
+  return {near,far,farg,k};
  }
  place(0,0);
  return {hojd,place,himmel,ground,far,sky};

@@ -7,5 +7,5 @@ export function propellerSkiva(THREE,radie){
  const mat=new THREE.MeshBasicMaterial({map,transparent:true,opacity:.2,depthWrite:false,side:THREE.DoubleSide});
  return {mesh:new THREE.Mesh(new THREE.CircleGeometry(radie,32),mat),mat};
 }
-export function motorRpm(gas,motor){const t=Math.max(0,Math.min(1,gas));return motor.tomgang_rpm+t*(motor.max_rpm-motor.tomgang_rpm);}
-export function propVarv(gas,motor){return motorRpm(gas,motor)*motor.prop_utvaxling/60;}
+export function motorRpm(gas,motor,pitch=0.45,motorPa=true){if(!motorPa)return 0;const t=Math.max(0,Math.min(1,gas)),p=Math.max(0,Math.min(1,pitch));return motor.tomgang_rpm+t*(motor.max_rpm-motor.tomgang_rpm)*(0.68+0.32*(1-p));}
+export function propVarv(gas,motor,pitch,motorPa){return motorRpm(gas,motor,pitch,motorPa)*motor.prop_utvaxling/60;}

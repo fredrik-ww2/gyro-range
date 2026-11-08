@@ -4,9 +4,13 @@ Så här känns det nu att flyga Typhoonen. Världen är i meter. Siffror märkt
 
 ## Vad du ser
 
-Du sitter i en cockpit i grågrönt med nitar, en svart instrumentbräda och ett reflexsikte. Kapellet är en smal rundad båge över huvudet och ned längs sidorna, ungefär som Typhoons bubbelkapell. Inga stänger eller ramar korsar synfältet. Det enda i mitten är reflexsiktet: ringen och glaset. Propellern syns inte i siktet, så rutan är fri. Utanför siktet snurrar den som förut.
+Du sitter i en cockpit i grågrönt med nitar, en svart instrumentbräda och ett reflexsikte. Kapellet är en smal grön-grå ram, som en öppen ruta utan stänger i synfältet. Det enda i mitten är reflexsiktet: ringen och glaset. Propellern syns inte i siktet. I förstaperson syns händer i läderjacka, ben och pedaler. Instrumenten har svart tavla och mässingsring.
 
-Gasreglaget är två spakar bredvid varandra längst ner i mitten. De följs åt: uppåt är mer gas, nedåt är mindre, och de går att dra. Båda knopparna är svart bakelit med mässingskant. Reglaget är dolt tills flygningen har startat. Till vänster sitter Centrera som en tryckknapp och vyknappen som en vippbrytare, på en metallplåt. Vippbrytaren visar vyn du byter till, inte den du redan är i: Sikte eller Bakom. I siktet står det alltså Bakom, aldrig Cockpit. Till höger sitter avtryckaren i ett styrspaksgrepp. Den trycks in när du skjuter. Runt planet ligger ett lapptäcke av små åkrar, häckar, en flod, en rak väg med bro, byar med röda tak och odlingar. En Fw 190 anfaller. Den kan skjutas ner, och den kan skjuta ner dig. Då finns Flyg igen.
+Gasen är två spakar till vänster. De följs åt: uppåt är mer gas. Båda knopparna är svart bakelit. Bredvid sitter propellerstigningen: uppåt är finare blad och högre varv, nedåt är grövre blad. Till höger håller handen styrspaken, och avtryckaren sitter i greppet. Pedalerna längst ner är sidrodret. På marken bromsar de ett hjul så planet svänger vid taxning. Vippbrytaren visar vyn du byter till: Sikte eller Bakom. I siktet står det Bakom.
+
+Hjulspaken sitter nere till vänster. Grön lampa betyder nere och låst, röd betyder att hjulen rör sig. Ute hjul ger mer motstånd. Klaffen har lägena inne, start och land, med mer lyft och mer motstånd. Bränslemätaren sjunker när motorn går.
+
+Kallstart: slå på tändningen, pumpa två gånger och tryck Patron. Snabbstart hoppar över det och lyfter direkt. Bomberna är två stycken, 500 eller 1 000 pund. Fäll släpper en. Den faller och exploderar mot marken. Runt planet ligger ett lapptäcke av små åkrar, häckar, en flod, en rak väg med bro, byar med röda tak och odlingar. En Fw 190 anfaller. Den kan skjutas ner, och den kan skjuta ner dig. Då finns Flyg igen.
 
 ## Siktet
 
@@ -33,7 +37,7 @@ Luftmotståndet gör flygtiden längre än om kulan höll 880 m/s hela vägen. D
 
 Toppfarten nära marken är cirka 600 km/h. På ungefär 3 000 m är den cirka 650 km/h. Det är samma skala som vingarna: 12,67 m spännvidd och en värld i meter. Känslan av fart kommer av att åkrar, häckar och hus är små och ligger nära, och av en lätt skakning när det går fort tätt över marken.
 
-Luften blir tunnare med höjden, som förut. Motorns effekt börjar avta över 3 400 m, nu med skalhöjd 6 400 m [F], så planet kan ta sig upp mot ungefär 10 000 m. Där uppe är stigningen liten. Himlen är blåare högt upp och disig vid horisonten. Marken tar inte slut: den följer med, och långt borta ligger ett grovt plan med samma åkerbild.
+Luften blir tunnare med höjden. Motorns effekt börjar avta över 3 400 m, med skalhöjd 7 200 m [F], så det går att flyga över 10 000 m. Taket i modellen ligger kring 10 700 m och lite däröver. Där uppe är stigningen liten, himlen mörkare blå, och marken försvinner i dis och ett molntäcke längre ner. Höjdmätaren visar höjden i meter i fönstret.
 
 Höjdmätaren är en brittisk höjdmätare. Den långa visaren går ett varv på 1 000 fot (hundratal). Den korta går ett varv på 10 000 fot (tusental). I fönstret står höjden i meter. 0 m är båda visarna rakt upp. 152,4 m är 500 fot: lång visare rakt ner, kort visare ett halvt steg. 1 524 m är 5 000 fot: lång visare upp, kort visare rakt ner.
 

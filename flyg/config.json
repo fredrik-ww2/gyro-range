@@ -186,7 +186,7 @@
   "propellerverkningsgrad": 0.78,
   "statisk_dragkraft_n": 24000,
   "fullhojd_m": 3400,
-  "effekt_skalhojd_m": 6400,
+  "effekt_skalhojd_m": 7200,
   "trim_max_grad": 11,
   "alfa_per_rad_input": 0.35,
   "drag_max_grad": 15,
@@ -201,7 +201,7 @@
   "trim_n_min": 0.3,
   "trim_n_max": 1.6,
   "niva_k": 1.0,
-  "_om": "Typhoon Mk IB [F]. Effektskalhöjd 6 400 m så tjänstehöjden ligger kring 10 km. Se FLYG_V4.md."
+  "_om": "Typhoon Mk IB [F]. Effektskalhöjd 7 200 m så tjänstehöjden ligger kring 10 700 m. Se FLYG_V4.md."
  },
  "cockpit": {
   "oga_lokal": [

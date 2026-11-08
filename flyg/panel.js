@@ -9,8 +9,10 @@ function visare(ctx,x,y,grader,len,bredd){
  ctx.beginPath();ctx.moveTo(0,3);ctx.lineTo(0,-len);ctx.strokeStyle='#f4f1e6';ctx.lineWidth=bredd;ctx.lineCap='round';ctx.stroke();ctx.restore();
 }
 function tavla(ctx,x,y,r){
- ctx.beginPath();ctx.arc(x,y,r+5,0,Math.PI*2);ctx.fillStyle='#1a1c18';ctx.fill();
- ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle='#070808';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#d9d4c6';ctx.stroke();
+ ctx.beginPath();ctx.arc(x,y,r+8,0,Math.PI*2);ctx.fillStyle='#14110e';ctx.fill();
+ ctx.lineWidth=5;ctx.strokeStyle='#c6a56e';ctx.stroke();
+ ctx.beginPath();ctx.arc(x,y,r+1.5,0,Math.PI*2);ctx.strokeStyle='#0a0a0a';ctx.lineWidth=3.5;ctx.stroke();
+ ctx.beginPath();ctx.arc(x,y,r-1,0,Math.PI*2);ctx.fillStyle='#070808';ctx.fill();
 }
 function etikett(ctx,x,y,r,namn,px){
  ctx.fillStyle='#d5d0c2';ctx.font=(px||16)+'px monospace';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText(namn,x,y+r-12);

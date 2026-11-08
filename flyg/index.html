@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#172724">
 <link rel="icon" href="data:,">
 <title>Flygplan · Gyrotest</title>
-<link rel="stylesheet" href="./style.css?v=5">
+<link rel="stylesheet" href="./style.css?v=6">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
@@ -35,18 +35,24 @@
 <svg class="kapelldef" width="0" height="0" aria-hidden="true">
 <defs>
 <clipPath id="vaggarUr" clipPathUnits="objectBoundingBox">
-<path clip-rule="evenodd" d="M0,0 H1 V1 H0 Z M0.04,0.72 C0.04,0.34 0.14,0.15 0.5,0.118 C0.86,0.15 0.96,0.34 0.96,0.72 L0.96,0.84 L0.04,0.84 Z"/>
+<path clip-rule="evenodd" d="M0,0 H1 V1 H0 Z M0.06,0.70 L0.18,0.15 L0.82,0.15 L0.94,0.70 L0.94,0.84 L0.06,0.84 Z"/>
 </clipPath>
 </defs>
 </svg>
 <div id="cockpit" hidden>
 <div class="vaggar"></div>
 <svg class="huv" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-<path d="M4,72 C4,34 14,15 50,11.8 C86,15 96,34 96,72" fill="none" stroke="#121410" stroke-width="6.5" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
-<path d="M4,72 C4,34 14,15 50,11.8 C86,15 96,34 96,72" fill="none" stroke="#6d7268" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+<path d="M6,70 L18,15 L82,15 L94,70" fill="none" stroke="#3f4c42" stroke-width="6" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M6,70 L18,15 L82,15 L94,70" fill="none" stroke="#a3b49a" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>
 </svg>
 <div class="sikhuset"><div class="sikteglas"></div></div>
 <canvas id="panel" width="800" height="400" aria-label="Instrumentpanel"></canvas>
+<div id="forare" aria-hidden="true">
+<div class="arm vanster"><div class="manchett"></div><div class="hand"></div></div>
+<div class="arm hoger"><div class="manchett"></div><div class="hand"></div></div>
+<div class="ben vanster"><div class="kanga"></div></div>
+<div class="ben hoger"><div class="kanga"></div></div>
+</div>
 </div>
 <div id="gasreglage" hidden>
 <output id="gasValue">85%</output>
@@ -57,15 +63,36 @@
 </div>
 <input id="throttle" class="gas-dold" aria-label="Gas" type="range" min="0" max="1" step="0.01" value="0.85">
 </div>
+<div id="pitchreglage" hidden>
+<output id="pitchValue">Fin</output>
+<div class="kvadrant" id="pitchBana" aria-label="Propellerpitch">
+<div class="skala" aria-hidden="true"><b>FIN</b><b class="lag">GROV</b></div>
+<div class="spalt"><div class="spak" id="pitchSpak"><span class="knopp"></span><span class="arm"></span></div></div>
+</div>
+</div>
+<div id="pedaler" hidden>
+<button id="pedalV" type="button" aria-label="Vänster pedal"><span class="trampa"></span><span class="pedalnamn">Vänster</span></button>
+<button id="pedalH" type="button" aria-label="Höger pedal"><span class="trampa"></span><span class="pedalnamn">Höger</span></button>
+</div>
+<div id="system" hidden>
+<button id="hjul" type="button" class="metall" aria-label="Hjulen är uppe"><span class="lampa" id="hjulLampa"></span><span>Hjul</span></button>
+<button id="klaff" type="button" class="metall"><span id="klaffText">Inne</span><span>Klaff</span></button>
+<button id="bombVikt" type="button" class="metall" aria-label="500 pund"><span id="bombViktText">500</span><span>pund</span></button>
+<button id="fall" type="button" class="metall" aria-label="Fäll bomb"><span id="bombAntal">2</span><span>Fäll</span></button>
+<button id="tandning" type="button" class="metall" aria-pressed="false"><span class="vippa liten"><span class="vippa-arm"></span></span><span>Tändning</span></button>
+<button id="pump" type="button" class="metall"><span class="knappkropp liten"></span><span>Pump</span></button>
+<button id="patron" type="button" class="metall"><span class="knappkropp liten"></span><span>Patron</span></button>
+</div>
 <div id="fiendePil" hidden><div id="fiendePilSymbol">▲</div><div id="fiendePilText"></div></div>
 <div id="skada" aria-hidden="true"></div>
 <div id="hit" aria-hidden="true">×</div>
 <section id="startPanel" class="glass">
 <div class="eyebrow">HÅLL MOBILEN BEKVÄMT</div>
 <h2>Du är piloten.</h2>
-<p>Luta bakåt för att stiga, framåt för att dyka. Luta åt sidan för att banka och svänga. Gasreglaget sitter längst ner i mitten. Knappen Sikte byter till siktet. Där står det Bakom, och den byter till vyn bakom planet.</p>
-<button id="start" disabled>Starta med gyro</button>
-<button id="manual" disabled>Prova med finger</button>
+<p>Luta bakåt för att stiga, framåt för att dyka. Luta åt sidan för att banka. Gasen sitter till vänster, uppåt är mer. Pedalerna längst ner svänger på marken. Sikte byter till siktet. Där står det Bakom.</p>
+<button id="start" disabled>Snabbstart med gyro</button>
+<button id="manual" disabled>Snabbstart med finger</button>
+<button id="kall" disabled>Kallstart på marken</button>
 <p class="small">Planet kan stalla, störta och bli nedskjutet. En Fw 190 finns i luften.</p>
 </section>
 <section id="crashPanel" class="glass" hidden>
@@ -104,6 +131,6 @@
 </button>
 </div>
 </footer>
-<script type="module" src="./main.js?v=7"></script>
+<script type="module" src="./main.js?v=8"></script>
 </body>
 </html>

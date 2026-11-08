@@ -3,18 +3,19 @@
 #reticle{width:220px;height:220px;font:inherit;filter:none;text-shadow:none}#reticle svg{width:100%;height:100%}.reticle-light{filter:drop-shadow(0 0 3px #ff8d22)}.pilotButtons{display:grid;gap:6px}.pilotButtons button{min-width:81px;min-height:38px;padding:8px}#sight[aria-pressed=true]{color:#ffbc55;border-color:#ffbc55}select{padding:9px;border:1px solid #bec7b8;border-radius:8px;background:#21352f;color:#fff;font-size:13px}#settings>label{display:grid;gap:6px}#flightHud{letter-spacing:0;font-size:10px}.row h1{font-size:16px}@media(max-width:430px){header h1{max-width:130px;font-size:15px}#reticle{width:185px;height:185px}}
 
  /* Flygprov 04: cockpit, gasreglage, sikte */
-#gasreglage{position:fixed;z-index:5;left:50%;bottom:calc(6px + env(safe-area-inset-bottom));transform:translateX(-50%);width:104px;height:118px;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
-#gasBana{pointer-events:auto;touch-action:none;position:relative;flex:1;width:100%;border-radius:10px 10px 8px 8px;background:linear-gradient(180deg,#4a4338,#1c1915 55%,#2c2822);border:2px solid #cbb892;box-shadow:inset 0 0 0 3px #12100e,inset 0 8px 12px #0007;display:flex;justify-content:center;gap:14px;padding:8px 12px 7px 26px}
-#gasBana .skala{position:absolute;left:7px;top:7px;bottom:7px;width:10px;pointer-events:none}
-#gasBana .skala i{position:absolute;left:0;height:1px;width:8px;background:#e6d3a4}
+#gasreglage{position:fixed;z-index:5;left:8px;bottom:calc(8px + env(safe-area-inset-bottom));transform:none;width:86px;height:118px;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
+#pitchreglage{position:fixed;z-index:5;left:98px;bottom:calc(8px + env(safe-area-inset-bottom));width:58px;height:118px;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
+#gasBana,#pitchBana{pointer-events:auto;touch-action:none;position:relative;flex:1;width:100%;border-radius:10px 10px 8px 8px;background:linear-gradient(180deg,#4a4338,#1c1915 55%,#2c2822);border:2px solid #cbb892;box-shadow:inset 0 0 0 3px #12100e,inset 0 8px 12px #0007;display:flex;justify-content:center;gap:10px;padding:8px 8px 7px 22px}
+#gasBana .skala,#pitchBana .skala{position:absolute;left:4px;top:7px;bottom:7px;width:14px;pointer-events:none}
+#gasBana .skala i,#pitchBana .skala i{position:absolute;left:0;height:1px;width:8px;background:#e6d3a4}
 #gasBana .skala i:nth-child(1){top:16px}#gasBana .skala i:nth-child(2){top:34%}#gasBana .skala i:nth-child(3){top:52%}#gasBana .skala i:nth-child(4){top:70%}#gasBana .skala i:nth-child(5){bottom:14px}
-#gasBana .skala b{position:absolute;left:-2px;top:0;font:700 6px ui-monospace,monospace;color:#e6d3a4;letter-spacing:0}
-#gasBana .skala b.lag{top:auto;bottom:0}
+#gasBana .skala b,#pitchBana .skala b{position:absolute;left:-1px;top:0;font:700 6px ui-monospace,monospace;color:#e6d3a4;letter-spacing:0}
+#gasBana .skala b.lag,#pitchBana .skala b.lag{top:auto;bottom:0}
 .spalt{position:relative;width:18px;border-radius:8px;background:linear-gradient(90deg,#0b0a08,#322e28 48%,#0b0a08);box-shadow:inset 0 0 5px #000e,0 0 0 1px #6a5e4a}
 .spak{position:absolute;left:50%;width:7px;height:54%;top:calc((1 - var(--gas,.85)) * 42%);transform:translateX(-50%);pointer-events:none}
 .spak .arm{position:absolute;left:0;right:0;top:11px;bottom:0;border-radius:2px;background:linear-gradient(90deg,#8a7350,#f3e6c8 46%,#6a5438)}
 .spak .knopp,.spak .knopp.mork{position:absolute;left:50%;top:0;width:24px;height:16px;transform:translateX(-50%);border-radius:8px;background:radial-gradient(circle at 32% 28%,#4e4e4e,#161616 48%,#050505);border:1px solid #c4a574;box-shadow:inset 0 1px 0 #ffffff33,0 2px 0 #000c}
-#gasreglage output{font:700 9px ui-monospace,monospace;color:#f3ecda;text-shadow:0 1px 2px #000;letter-spacing:.3px}
+#gasreglage output,#pitchreglage output{font:700 9px ui-monospace,monospace;color:#f3ecda;text-shadow:0 1px 2px #000;letter-spacing:.3px}
 .gas-dold{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
 #fiendePil{position:fixed;z-index:5;width:max-content;max-width:46vw;margin-left:0;transform:translate(-50%,-50%);text-align:center;color:#ffe7a8;font:700 12px -apple-system,sans-serif;text-shadow:0 1px 3px #000;pointer-events:none;white-space:nowrap}
 #fiendePilSymbol{font-size:22px;line-height:1;display:inline-block}
@@ -23,9 +24,9 @@
 #cockpit{background:#0000}
 #cockpit .vaggar{position:absolute;inset:0;z-index:0;background-color:#8d9688;background-image:radial-gradient(circle,#4e5852 1.1px,transparent 1.3px);background-size:20px 16px;box-shadow:inset 0 0 90px #1c211c;-webkit-clip-path:url(#vaggarUr);clip-path:url(#vaggarUr)}
 #cockpit .huv{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
-#cockpit .sikhuset{position:absolute;left:50%;width:72px;height:16px;transform:translateX(-50%);bottom:max(36vh,calc(136px + 50vw + env(safe-area-inset-bottom)));background:linear-gradient(#2c2e26,#12140f);border:2px solid #5c604f;border-bottom:none;border-radius:5px 5px 0 0;z-index:3;box-shadow:0 8px 0 #12140f}
+#cockpit .sikhuset{position:absolute;left:50%;width:72px;height:16px;transform:translateX(-50%);bottom:max(38vh,calc(176px + 50vw + env(safe-area-inset-bottom)));background:linear-gradient(#2c2e26,#12140f);border:2px solid #8a8470;border-bottom:none;border-radius:5px 5px 0 0;z-index:3;box-shadow:0 8px 0 #12140f,0 10px 16px #0006}
 #cockpit .sikteglas{position:absolute;left:6px;right:6px;top:-24px;height:28px;background:linear-gradient(180deg,#d7ecff38,#ffffff18);border:1.5px solid #c5d0bc;border-radius:2px;transform:perspective(160px) rotateX(34deg);box-shadow:0 0 10px #d7ecff24}
-#panel{position:absolute;top:auto;left:0;right:0;bottom:calc(128px + env(safe-area-inset-bottom));width:100%;height:auto;aspect-ratio:2/1;max-height:36vh;z-index:2;pointer-events:none;background:transparent}
+#panel{position:absolute;top:auto;left:0;right:0;bottom:calc(168px + env(safe-area-inset-bottom));width:100%;height:auto;aspect-ratio:2/1;max-height:32vh;z-index:2;pointer-events:none;background:transparent}
 footer .row{justify-content:space-between;align-items:flex-end;width:100%}
 #flightHud{position:static;transform:none;width:auto;max-width:100%;margin:2px 0 0;z-index:2;text-align:left;font-size:10px;letter-spacing:0;opacity:.78;color:#e7e2d4;text-shadow:0 1px 2px #000;pointer-events:none}
 @media(max-height:520px){#gasreglage{height:96px;width:92px}#panel{max-height:30vh;bottom:calc(108px + env(safe-area-inset-bottom))}#cockpit .sikhuset{bottom:max(32vh,calc(116px + 50vw + env(safe-area-inset-bottom)))}}
@@ -53,3 +54,32 @@ body.cockpitvy header{background:none;text-shadow:0 1px 2px #000}body.cockpitvy 
 #fire .greppkula{position:absolute;left:50%;top:8px;width:18px;height:18px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#6a6a6a,#1a1a1a 70%);border:1px solid #c4a574}
 #fire.firing .avtryckare{transform:translateX(7px);background:linear-gradient(#fff6d8,#e0b15a);box-shadow:0 0 10px #e3c88e}
 #fire.firing .spakgrepp{transform:translateY(2px)}
+#system{position:fixed;z-index:6;left:8px;right:96px;bottom:calc(126px + env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;gap:4px;pointer-events:none}
+#system .metall{pointer-events:auto;min-width:44px;width:auto;min-height:40px;padding:2px 4px 1px;border:2px solid #bba57a;border-radius:6px;background:linear-gradient(180deg,#3c3830,#16140f);color:#e6d3a4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font:700 8px ui-monospace,monospace;line-height:1.05;box-shadow:inset 0 0 0 1px #000,0 2px 0 #000a}
+#system .metall:active{transform:translateY(1px)}
+#system .lampa{width:9px;height:9px;border-radius:50%;background:#1a1a1a;box-shadow:inset 0 0 0 1px #000,0 0 0 1px #5a5040}
+#system .lampa.gron{background:#37e56a;box-shadow:0 0 7px #37e56a}
+#system .lampa.rod{background:#ff3b2e;box-shadow:0 0 7px #ff3b2e}
+#system .vippa.liten{width:16px;height:22px;border-width:1px}
+#system .vippa.liten .vippa-arm{height:8px}
+#tandning[aria-pressed=true] .vippa-arm{top:10px}
+#system .knappkropp.liten{width:16px;height:16px;border-width:2px}
+#pedaler{position:fixed;z-index:6;left:50%;bottom:calc(4px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:8px}
+#pedaler button{width:62px;min-width:62px;min-height:52px;padding:4px;border:2px solid #8d8474;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,#4a463e,#1a1814);color:#e6d3a4;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:inset 0 0 0 1px #000,0 3px 0 #000}
+#pedaler .trampa{width:36px;height:14px;border-radius:3px;background:linear-gradient(#2a2a2a,#111);border:1px solid #c4a574;box-shadow:0 3px 0 #000}
+#pedaler button.ned .trampa{transform:translateY(3px);box-shadow:0 0 0 #000;background:#3a3428}
+#pedaler .pedalnamn{font:700 8px ui-monospace,monospace}
+#forare{position:absolute;inset:0;z-index:4;pointer-events:none}
+#forare .arm{position:absolute;bottom:0;height:16vh;width:24vw}
+#forare .arm.vanster{left:0;background:linear-gradient(200deg,#0000 8%,#6b3c28 30%,#4a2818 72%,#2c1810);border-radius:0 40% 0 0;box-shadow:inset -8px 0 12px #0004}
+#forare .arm.hoger{right:0;background:linear-gradient(160deg,#0000 8%,#6b3c28 30%,#4a2818 72%,#2c1810);border-radius:40% 0 0 0;box-shadow:inset 8px 0 12px #0004}
+#forare .manchett{position:absolute;top:8%;width:28px;height:12px;border-radius:4px;background:linear-gradient(#d7d3c8,#8d8a80);box-shadow:0 2px 0 #0006}
+#forare .arm.vanster .manchett{right:10%}
+#forare .arm.hoger .manchett{left:8%}
+#forare .hand{position:absolute;top:0;width:42px;height:26px;border-radius:14px 16px 10px 12px}
+#forare .arm.vanster .hand{right:0;background:radial-gradient(circle at 30% 30%,#efc39a,#c4845a 42%,#8a4e32 78%);box-shadow:inset 0 -4px 0 #6a3a24,2px 2px 0 #0005}
+#forare .arm.hoger .hand{left:0;background:radial-gradient(circle at 30% 30%,#efc39a,#c4845a 42%,#8a4e32 78%);box-shadow:inset 0 -4px 0 #6a3a24,-2px 2px 0 #0005}
+#forare .ben{position:absolute;bottom:0;width:14vw;height:13vh;background:linear-gradient(#d5d8e0,#9aa0ae 55%,#6e7482);border-radius:12px 12px 2px 2px;box-shadow:inset 0 0 0 1px #ffffff22}
+#forare .ben.vanster{left:33%}
+#forare .ben.hoger{right:33%}
+#forare .kanga{position:absolute;left:8%;right:8%;bottom:0;height:42%;border-radius:7px 7px 2px 2px;background:linear-gradient(#3a3a3a,#121212);border:1px solid #bba57a;box-shadow:inset 0 4px 0 #ffffff14}

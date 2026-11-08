@@ -4,7 +4,7 @@ import {
   Fog, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshStandardMaterial, ShaderMaterial, SphereGeometry,
   Sprite, SpriteMaterial, MOUSE, Raycaster, RingGeometry, Scene, TOUCH, Vector2, Vector3, WebGLRenderer
 } from 'three';
-import { byggLandskap, laddaMarkyta, markMaterial } from './markyta.js';
+import { laddaMarkyta, markMaterial, stallFilter } from './markyta.js';
 import { OrbitControls } from '../vendor/OrbitControls.js';
 import { skapaAppleKamera } from '../../../flyg/kamera/kamera_apple_zoom_v1.js';
 import { KAMERAVARDEN } from './kameravarden.js';
@@ -57,8 +57,8 @@ export async function monteraStall(el, { index, tillbaka }) {
   const scen = new Scene();
   scen.background = new Color('#d7e4cf');
   scen.fog = new Fog(0xd7e4cf, 70, 640);
-  scen.add(new HemisphereLight(0xc5ddf0, 0x5d6a48, 0.72));
-  const sol = new DirectionalLight(0xfff1d6, 1.85);
+  scen.add(new HemisphereLight(0xd5e6f4, 0x6a6248, 1.05));
+  const sol = new DirectionalLight(0xfff1d6, 0.72);
   sol.position.set(-260, 120, -70);
   scen.add(sol);
   const himmel = new Mesh(new SphereGeometry(2200, 20, 10), new ShaderMaterial({
@@ -116,6 +116,13 @@ export async function monteraStall(el, { index, tillbaka }) {
 
   const markyta = await laddaMarkyta().catch(() => null);
   const markMat = markyta ? markMaterial(markyta.textur) : null;
+  if (markyta) {
+    stallFilter(markyta.textur, renderer);
+    markyta.detalj.then(() => {
+      stallFilter(markyta.textur, renderer);
+      el.dataset.textur = '2048';
+    }).catch(() => { el.dataset.textur = '512'; });
+  }
   const terrang = await fetch(new URL('../data/varldar/villers_bocage/terrain.json', import.meta.url)).then((svar) => svar.json());
   const bas = new URL('../data/varldar/villers_bocage/', import.meta.url);
   const grova = terrang.chunkar.filter((ruta) => ruta.spacing_m === 50);
@@ -147,15 +154,9 @@ export async function monteraStall(el, { index, tillbaka }) {
     }
   }
   appliceraHojd();
-  let landskap = null;
-  function stallLandskap() {
-    if (landskap) landskap.removeFromParent();
-    if (!markyta?.proppar) return;
-    landskap = byggLandskap(markyta.proppar, hojd);
-    scen.add(landskap);
-  }
-  stallLandskap();
+  function stallLandskap() {}
   kam.sattVy({ mal: KAMERAVARDEN.start.mal_xz_m, d: KAMERAVARDEN.start.d_m, lutning: KAMERAVARDEN.start.lutning_grader, kurs: KAMERAVARDEN.start.kurs_grader });
+  el._kamera = kam;
   el.dataset.redo = 'mark';
   status.textContent = 'Tryck på marken för att ställa ut. 50 m på håll, 10 m nära kameran.';
 
@@ -233,8 +234,8 @@ export async function monteraStall(el, { index, tillbaka }) {
     kam.uppdatera(dt);
     himmel.position.copy(kam.kamera.position);
     const avstand = kam.lage().d || 150;
-    scen.fog.near = Math.max(36, avstand * 0.28);
-    scen.fog.far = Math.max(280, avstand * 3.2);
+    scen.fog.near = Math.max(120, avstand * 0.85);
+    scen.fog.far = Math.max(700, avstand * 5);
     if (nu - senast > 280) {
       senast = nu;
       synkLod();

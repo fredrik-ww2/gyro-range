@@ -171,7 +171,16 @@ try {
 
   await page.goto(BAS + '/verkstad/#stall', { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('[data-redo="mark"]', { timeout: 90000 });
+  await page.waitForSelector('[data-textur="2048"]', { timeout: 30000 });
   await page.waitForFunction(() => Number(document.querySelector('section[data-vy="stall"]').getAttribute('data-trianglar')) > 0);
+  await page.evaluate(() => {
+    document.querySelector('section[data-vy="stall"]')._kamera.sattVy({ mal: [-350, 200], d: 1200, lutning: 24, kurs: 8 });
+  });
+  await page.waitForTimeout(500);
+  await bild(page, '10-ovan');
+  await page.evaluate(() => {
+    document.querySelector('section[data-vy="stall"]')._kamera.sattVy({ mal: [-420, 280], d: 380, lutning: 42, kurs: 30 });
+  });
   await page.locator('[data-valj-enhet]').click();
   await page.locator('[data-ark] [data-enhet="sherman_m4_75"]').click();
   const duk = page.locator('section[data-vy="stall"] canvas');

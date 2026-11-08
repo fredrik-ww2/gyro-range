@@ -1,6 +1,7 @@
 import {
   MAPP_NAMN, NATION_ORDNING, NIVA_NAMN, TRUPP_ORDNING, checklista, esc, nationVisning, ritaChecklista, statusNamn, truppVisning
 } from './data.js';
+import { lasLandskap, mattLandskap, scenNyckel } from './formvarld.js';
 
 const RUBRIK = {
   'enheter/klara': 'Enheter',
@@ -64,8 +65,9 @@ export function monteraBibliotek(el, index, katalog, { oppnaEnhet, oppnaStall })
     const enhet = handelse.target.closest('[data-enhet]');
     if (enhet) oppnaEnhet(enhet.dataset.enhet);
     const varld = handelse.target.closest('[data-varld]');
-    if (varld) oppnaStall();
+    if (varld) oppnaStall(varld.dataset.varld);
   });
+  fyllFormVarldar(el);
 }
 
 function ritaOvrig(mapp) {
@@ -147,16 +149,68 @@ function ritaPost(rad) {
 }
 
 function ritaVarldar(mapp) {
-  if (!mapp.poster.length) return '<p class="tom">Tom mapp. Inget ligger här ännu.</p>';
-  return mapp.poster.map((post) => `
-    <button type="button" class="rad" data-varld="${esc(post.id)}">
+  const inbyggda = (mapp.poster || []).map((post) => {
+    if (post.id === 'villers_bocage') {
+      return `
+        <button type="button" class="rad" data-varld="villers_bocage">
+          <span>
+            <strong>Villers-Bocage</strong>
+            <small>2×2 km, flygfoto från 1944 färglagt som bocage.</small>
+          </span>
+          <em>Ställ ut</em>
+        </button>`;
+    }
+    return `
+      <button type="button" class="rad" data-varld="${esc(post.id)}">
+        <span><strong>${esc(post.id)}</strong></span>
+        <em>Ställ ut</em>
+      </button>`;
+  }).join('');
+  return `${inbyggda}
+    <div data-form-lista></div>
+    <p class="tom form-saknas" data-form-status>Läser världar från FORM satellit…</p>`;
+}
+
+async function fyllFormVarldar(el) {
+  const lista = el.querySelector('[data-form-lista]');
+  const status = el.querySelector('[data-form-status]');
+  const antal = el.querySelector('[data-mapp="varldar"] > summary small');
+  if (!lista || !status) return;
+  let varldar = [];
+  try {
+    varldar = await lasLandskap();
+  } catch {
+    varldar = [];
+  }
+  if (!el.isConnected) return;
+  if (!varldar.length) {
+    lista.innerHTML = '';
+    status.hidden = false;
+    status.innerHTML = 'Världar som byggs i FORM satellit dyker upp här. <a href="../satellit/">Öppna satellitbyggaren</a>';
+  } else {
+    status.hidden = true;
+    lista.innerHTML = varldar.map(ritaFormVarld).join('');
+  }
+  const inbyggda = el.querySelectorAll('[data-mapp="varldar"] > .mapp-innehall > [data-varld]').length;
+  if (antal) antal.textContent = String(inbyggda + varldar.length);
+  el.dataset.formVarldar = String(varldar.length);
+}
+
+function ritaFormVarld(post) {
+  const { bredd, djup } = mattLandskap(post);
+  const matt = `${avrundad(bredd)} × ${avrundad(djup)} m`;
+  return `
+    <button type="button" class="rad" data-varld="${esc(scenNyckel(post.id))}" data-form-namn="${esc(post.name)}">
       <span>
-        <strong>Villers-Bocage</strong>
-        <small>2×2 km, flygfoto från 1944 färglagt som bocage.</small>
+        <strong>${esc(post.name)}</strong>
+        <small>${matt} · från FORM satellit</small>
       </span>
       <em>Ställ ut</em>
-    </button>
-  `).join('');
+    </button>`;
+}
+
+function avrundad(meter) {
+  return Math.round(meter).toLocaleString('sv-SE');
 }
 
 function ordning(namn, lista) {

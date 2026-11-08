@@ -11,25 +11,47 @@ import { KAMERAVARDEN } from './kameravarden.js';
 import { klonaMall, laddaMall, laddaObjekt } from './modeller.js';
 import { esc, hamtaEnhet, placeringsNivaer, statusNamn, tal, truppVisning } from './data.js';
 import { lasScen, skrivScen } from './spara.js';
+import { byggFormMark, hamtaLandskap } from './formvarld.js';
 
-const VARLD = 'villers_bocage';
 const NAR_M = 250;
 const MODELL_NAR_M = 120;
 
-export async function monteraStall(el, { index, tillbaka }) {
+export async function monteraStall(el, { index, tillbaka, varld }) {
+  const valdVarld = varld?.typ === 'form'
+    ? varld
+    : { typ: 'villers', id: 'villers_bocage', namn: 'Villers-Bocage' };
+  const VARLD = valdVarld.typ === 'form' ? 'form:' + valdVarld.id : 'villers_bocage';
+  const varldNamn = valdVarld.namn || (valdVarld.typ === 'form' ? 'FORM-värld' : 'Villers-Bocage');
+  if (valdVarld.typ === 'form' && !valdVarld.post) {
+    el.innerHTML = `
+      <div class="stall">
+        <header class="topp stall-topp">
+          <button type="button" class="tillbaka" data-tillbaka>Bibliotek</button>
+          <div>
+            <p class="ogat">FORM satellit</p>
+            <h1>Ställ ut</h1>
+          </div>
+        </header>
+        <p class="varning">Den här världen finns inte i den här webbläsaren. Bygg den i FORM satellit, så dyker den upp under Världar.</p>
+      </div>`;
+    el.querySelector('[data-tillbaka]').addEventListener('click', tillbaka);
+    el.dataset.redo = 'saknas';
+    el.dataset.varld = VARLD;
+    return { visa() {}, passa() {}, stang() {} };
+  }
   const poster = new Map(index.enheter.map((post) => [post.id, post]));
   el.innerHTML = `
     <div class="stall">
       <header class="topp stall-topp">
         <button type="button" class="tillbaka" data-tillbaka>Bibliotek</button>
         <div>
-          <p class="ogat">Villers-Bocage</p>
+          <p class="ogat">${esc(varldNamn)}</p>
           <h1>Ställ ut</h1>
         </div>
         <p class="trirad"><span data-trianglar>0</span> trianglar</p>
       </header>
       <div class="stall-yta">
-        <canvas data-duk aria-label="Villers-Bocage. Ett finger flyttar vyn, nyp för att zooma."></canvas>
+        <canvas data-duk aria-label="${esc(varldNamn)}. Ett finger flyttar vyn, nyp för att zooma."></canvas>
         <p class="stall-status" data-status>Läser höjdterrängen…</p>
         <p class="hint stall-hint">Ett finger flyttar · nyp zoomar · två fingrar lutar</p>
         <div class="etikett-lager" data-etiketter></div>
@@ -95,50 +117,79 @@ export async function monteraStall(el, { index, tillbaka }) {
   const hojdRay = new Raycaster();
   const ned = new Vector3(0, -1, 0);
   const ur = new Vector3();
+  const reservHojd = valdVarld.typ === 'form' ? 0 : 145;
   function hojd(x, z) {
     ur.set(x, 420, z);
     hojdRay.set(ur, ned);
     hojdRay.far = 520;
     const traffar = hojdRay.intersectObjects(markMeshar, false);
-    return traffar.length ? traffar[0].point.y : 145;
+    return traffar.length ? traffar[0].point.y : reservHojd;
   }
 
+  const formMark = valdVarld.typ === 'form' ? await byggFormMark(valdVarld.post) : null;
+  const yta = formMark
+    ? { minX: -formMark.bredd / 2, maxX: formMark.bredd / 2, minZ: -formMark.djup / 2, maxZ: formMark.djup / 2 }
+    : { minX: -1000, maxX: 1000, minZ: -1000, maxZ: 1000 };
+  const startVy = formMark
+    ? { mal_xz_m: [0, 0], d_m: Math.max(42, Math.min(160, Math.max(formMark.bredd, formMark.djup) * 0.55)), lutning_grader: 52, kurs_grader: 28 }
+    : KAMERAVARDEN.start;
   const kam = await skapaAppleKamera({
     THREE,
     OrbitControls,
     renderer,
     markHojd: hojd,
-    yta: { minX: -1000, maxX: 1000, minZ: -1000, maxZ: 1000 },
-    varden: KAMERAVARDEN
+    yta,
+    varden: formMark
+      ? { ...KAMERAVARDEN, start: startVy, granser: { ...KAMERAVARDEN.granser, marginal_m: Math.min(120, Math.max(24, formMark.bredd * 0.12)) } }
+      : KAMERAVARDEN
   });
   kam.controls.touches.ONE = TOUCH.PAN;
   kam.controls.touches.TWO = TOUCH.DOLLY_ROTATE;
   kam.controls.mouseButtons.LEFT = MOUSE.PAN;
   kam.controls.screenSpacePanning = true;
 
-  const markyta = await laddaMarkyta().catch(() => null);
-  const markMat = markyta ? markMaterial(markyta.textur) : null;
-  if (markyta) {
-    stallFilter(markyta.textur, renderer);
-    markyta.detalj.then(() => {
+  let markMat = null;
+  let fina = [];
+  let medelHojd = 145;
+  let bas = null;
+  const husPaMark = [];
+  if (formMark) {
+    markGrupp.add(formMark.mark);
+    markMeshar.push(formMark.mark);
+    for (const hus of formMark.hus) {
+      markGrupp.add(hus);
+      husPaMark.push(hus);
+    }
+    el.dataset.textur = String(formMark.texturSida);
+    const punkter = formMark.mark.geometry.attributes.position;
+    let summa = 0;
+    for (let i = 0; i < punkter.count; i += 1) summa += punkter.getY(i);
+    medelHojd = punkter.count ? summa / punkter.count : 0;
+  } else {
+    const markyta = await laddaMarkyta().catch(() => null);
+    markMat = markyta ? markMaterial(markyta.textur) : null;
+    if (markyta) {
       stallFilter(markyta.textur, renderer);
-      el.dataset.textur = '2048';
-    }).catch(() => { el.dataset.textur = '512'; });
+      markyta.detalj.then(() => {
+        stallFilter(markyta.textur, renderer);
+        el.dataset.textur = '2048';
+      }).catch(() => { el.dataset.textur = '512'; });
+    }
+    const terrang = await fetch(new URL('../data/varldar/villers_bocage/terrain.json', import.meta.url)).then((svar) => svar.json());
+    bas = new URL('../data/varldar/villers_bocage/', import.meta.url);
+    const grova = terrang.chunkar.filter((ruta) => ruta.spacing_m === 50);
+    fina = terrang.chunkar.filter((ruta) => ruta.spacing_m === 10);
+    await ko(grova, 6, async (ruta) => {
+      const objekt = await laddaMark(new URL(ruta.fil, bas).href);
+      objekt.visible = true;
+      objekt.userData.ruta = ruta.id;
+      markGrupp.add(objekt);
+      rutor50.set(ruta.id, objekt);
+      objekt.traverse((nod) => { if (nod.isMesh) { forberedMark(nod); markMeshar.push(nod); } });
+      status.textContent = `Mark ${rutor50.size} av ${grova.length}`;
+    });
+    medelHojd = (terrang.hojdmin_m + terrang.hojdmax_m) / 2;
   }
-  const terrang = await fetch(new URL('../data/varldar/villers_bocage/terrain.json', import.meta.url)).then((svar) => svar.json());
-  const bas = new URL('../data/varldar/villers_bocage/', import.meta.url);
-  const grova = terrang.chunkar.filter((ruta) => ruta.spacing_m === 50);
-  const fina = terrang.chunkar.filter((ruta) => ruta.spacing_m === 10);
-  await ko(grova, 6, async (ruta) => {
-    const objekt = await laddaMark(new URL(ruta.fil, bas).href);
-    objekt.visible = true;
-    objekt.userData.ruta = ruta.id;
-    markGrupp.add(objekt);
-    rutor50.set(ruta.id, objekt);
-    objekt.traverse((nod) => { if (nod.isMesh) { forberedMark(nod); markMeshar.push(nod); } });
-    status.textContent = `Mark ${rutor50.size} av ${grova.length}`;
-  });
-  const medelHojd = (terrang.hojdmin_m + terrang.hojdmax_m) / 2;
   let hojdFaktor = 1.5;
   function appliceraHojd() {
     for (const mesh of markMeshar) {
@@ -156,11 +207,19 @@ export async function monteraStall(el, { index, tillbaka }) {
     }
   }
   appliceraHojd();
-  function stallLandskap() {}
-  kam.sattVy({ mal: KAMERAVARDEN.start.mal_xz_m, d: KAMERAVARDEN.start.d_m, lutning: KAMERAVARDEN.start.lutning_grader, kurs: KAMERAVARDEN.start.kurs_grader });
+  function stallLandskap() {
+    for (const hus of husPaMark) {
+      hus.position.set(hus.userData.markX, hojd(hus.userData.markX, hus.userData.markZ) + hus.userData.lyft, hus.userData.markZ);
+    }
+  }
+  stallLandskap();
+  kam.sattVy({ mal: startVy.mal_xz_m, d: startVy.d_m, lutning: startVy.lutning_grader, kurs: startVy.kurs_grader });
   el._kamera = kam;
   el.dataset.redo = 'mark';
-  status.textContent = 'Tryck på marken för att ställa ut. 50 m på håll, 10 m nära kameran.';
+  el.dataset.varld = VARLD;
+  status.textContent = formMark
+    ? 'Tryck på marken för att ställa ut.'
+    : 'Tryck på marken för att ställa ut. 50 m på håll, 10 m nära kameran.';
 
   const sparad = await lasScen(VARLD);
   if (sparad?.placeringar) {
@@ -657,9 +716,23 @@ export async function monteraStall(el, { index, tillbaka }) {
       cancelAnimationFrame(ram);
     }
   }
+  function stang() {
+    kor = false;
+    cancelAnimationFrame(ram);
+    removeEventListener('resize', passa);
+    renderer.dispose();
+    markGrupp.traverse((nod) => {
+      if (!nod.isMesh) return;
+      nod.geometry?.dispose();
+      const material = nod.material;
+      if (Array.isArray(material)) material.forEach((m) => m.dispose?.());
+      else material?.dispose?.();
+      material?.map?.dispose?.();
+    });
+  }
   visa(!el.hidden);
 
-  return { visa, passa };
+  return { visa, passa, stang };
 }
 
 function placeringId(objekt) {

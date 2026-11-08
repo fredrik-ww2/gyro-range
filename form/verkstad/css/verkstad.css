@@ -99,6 +99,14 @@ section[data-vy="stall"] { height: 100dvh; min-height: 0; overflow: hidden; padd
 .mapp summary small { color: var(--dämpad); font-weight: 600; }
 .mapp-innehall { padding: 0 8px 8px; }
 .tom, .tomrad { color: var(--dämpad); padding: 8px; }
+.form-saknas a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  margin-left: 4px;
+  color: #1f4d34;
+  font-weight: 700;
+}
 .rad {
   width: 100%;
   min-height: 64px;
@@ -113,6 +121,7 @@ section[data-vy="stall"] { height: 100dvh; min-height: 0; overflow: hidden; padd
   padding: 10px 8px;
 }
 .rad span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rad em { flex: none; font-style: normal; font-weight: 700; white-space: nowrap; color: #1f4d34; }
 .rad small, .saknasrad { color: var(--dämpad); font-size: 0.82rem; }
 .saknasrad { display: block; }
 .chip {

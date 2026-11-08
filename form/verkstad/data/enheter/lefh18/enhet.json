@@ -19,39 +19,6 @@
   "tidigare_underkannande_finns": false,
   "modeller": [
     {
-      "fil": "lefh18_pjas_web_mobil.glb",
-      "roll": "modell",
-      "lod": null,
-      "kallfil": "assets/asset_niva_1/enheter/artilleri/lefh18/lefh18_pjas_web_mobil.glb",
-      "bytes": 93220,
-      "sha256": "15f8c583435a43bc6dfd036dd858d4988680bff1282658b090b4000d8b570196",
-      "trianglar": 2708,
-      "material": 2,
-      "animationer": [
-        "Fire",
-        "Load_Cycle",
-        "Limber_Lift",
-        "Trails_Open",
-        "Trails_Close",
-        "Spades_Down",
-        "Spades_Up",
-        "Traverse",
-        "Elevate",
-        "Breech_Open",
-        "Breech_Close",
-        "Tow_Roll",
-        "Idle"
-      ],
-      "extensioner": [
-        "EXT_meshopt_compression",
-        "KHR_mesh_quantization"
-      ],
-      "externa_resurser": [],
-      "granskning": "ej nygranskad; se källmodellens protokoll",
-      "enhet": "meter",
-      "ladda_vid_start": false
-    },
-    {
       "fil": "lefh18_pjas_web_mobil_lod1_v2.glb",
       "roll": "modell",
       "lod": 1,
@@ -130,6 +97,74 @@
       "extensioner": [],
       "externa_resurser": [],
       "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "lefh18_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "lefh18_pjas_web_mobil_lod2_v2.glb",
+      "bytes": 93560,
+      "sha256": "7e6ccc1bc9d044218422ce2a68e8043c3e4e07f5cbdbf85a46409f691b1de3fd",
+      "trianglar": 1210,
+      "material": 2,
+      "animationer": [
+        "Fire",
+        "Idle",
+        "Limber_Lift",
+        "Load_Cycle",
+        "Trails_Close",
+        "Trails_Open",
+        "Spades_Down",
+        "Spades_Up",
+        "Traverse",
+        "Elevate",
+        "Breech_Close",
+        "Breech_Open",
+        "Tow_Roll"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "lefh18_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "lefh18_pjas_web_mobil_lod2_v2.glb",
+      "bytes": 93560,
+      "sha256": "7e6ccc1bc9d044218422ce2a68e8043c3e4e07f5cbdbf85a46409f691b1de3fd",
+      "trianglar": 1210,
+      "material": 2,
+      "animationer": [
+        "Fire",
+        "Idle",
+        "Limber_Lift",
+        "Load_Cycle",
+        "Trails_Close",
+        "Trails_Open",
+        "Spades_Down",
+        "Spades_Up",
+        "Traverse",
+        "Elevate",
+        "Breech_Close",
+        "Breech_Open",
+        "Tow_Roll"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
       "enhet": "meter",
       "ladda_vid_start": false
     }

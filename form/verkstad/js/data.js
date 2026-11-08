@@ -87,13 +87,27 @@ export function lattasteModell(modeller) {
   return lista.slice().sort((a, b) => (a.trianglar ?? 1e12) - (b.trianglar ?? 1e12) || (a.bytes || 0) - (b.bytes || 0))[0];
 }
 
+function riktigaModeller(modeller) {
+  return (modeller || []).filter((modell) => modell?.fil && modell.roll !== 'impostor' && (modell.trianglar || 0) > 80 && !/_bb\.glb$/i.test(modell.fil));
+}
+
+/** När- och fjärrnät för kartan. Den tunga originalfilen används bara om ingen mobil-LOD finns. */
+export function placeringsNivaer(modeller) {
+  const lista = riktigaModeller(modeller);
+  const mobil = lista.find((modell) => modell.anvandning === 'mobil' || /_mobil\.glb$/i.test(modell.fil)) || null;
+  const enkel = lista.find((modell) => modell.anvandning === 'enkel' || /_enkel\.glb$/i.test(modell.fil)) || null;
+  const latt = lista
+    .filter((modell) => modell !== mobil && modell !== enkel && (modell.trianglar || 0) <= 20000)
+    .sort((a, b) => (a.trianglar || 1e12) - (b.trianglar || 1e12))[0] || null;
+  return {
+    mobil: mobil || latt,
+    enkel: enkel || mobil || latt
+  };
+}
+
 /** Riktig nätmodell för utplacering. Hoppar över platta billboards om en mesh finns. */
 export function placeringsModell(modeller) {
-  const lista = (modeller || []).filter((modell) => modell?.fil);
-  const riktig = lista.filter((modell) => modell.role !== 'impostor' && (modell.trianglar || 0) > 80 && !/_bb\.glb$/i.test(modell.fil));
-  const kandidater = riktig.length ? riktig : [];
-  if (!kandidater.length) return null;
-  return kandidater.slice().sort((a, b) => (a.trianglar || 1e12) - (b.trianglar || 1e12) || (a.bytes || 0) - (b.bytes || 0))[0];
+  return placeringsNivaer(modeller).mobil;
 }
 
 export function modellAdress(enhetFil, modellFil) {

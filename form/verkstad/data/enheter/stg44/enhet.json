@@ -40,6 +40,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "stg44_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "stg44_ios.glb",
+      "bytes": 166188,
+      "sha256": "2502af2c07e7675a12ef2096a2736aabba741c6b92c051af8733dea7bb88515f",
+      "trianglar": 657,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "stg44_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "stg44_ios.glb",
+      "bytes": 166188,
+      "sha256": "2502af2c07e7675a12ef2096a2736aabba741c6b92c051af8733dea7bb88515f",
+      "trianglar": 657,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {

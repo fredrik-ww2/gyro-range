@@ -41,6 +41,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "mg42_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "mg42_pichuliru_ios.glb",
+      "bytes": 30204,
+      "sha256": "891f31d30151f776b124f0d6f3109d3ef2157bff3227d2b78d835a5105ce6e42",
+      "trianglar": 4285,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "mg42_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "mg42_pichuliru_ios.glb",
+      "bytes": 18872,
+      "sha256": "a914944dc6cb9a28b6538a4489994e37856953891965525168a5267ce14351e1",
+      "trianglar": 2201,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -111,7 +153,7 @@
         "kallstatus": "Finns"
       },
       "eldhastighet_skott_min": {
-        "varde": 1200.0,
+        "varde": 1200,
         "enhet": "skott/min",
         "ursprung": "kalla",
         "kallfil": "data/weapons/mg42.json",

@@ -40,6 +40,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "panzer_iii_j_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "panzer_iii_j_medium_ios.glb",
+      "bytes": 143240,
+      "sha256": "6d4cfba8c529df51bff87dc5a75acc3e958de91b29135034c6ba213796784a8c",
+      "trianglar": 9332,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "panzer_iii_j_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "panzer_iii_j_medium_ios.glb",
+      "bytes": 47984,
+      "sha256": "57c5355f7195fbc9e40166863fd9e7283323b075eb049663c107b6d653d30f72",
+      "trianglar": 2722,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -71,7 +113,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 40.0,
+        "varde": 40,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -106,7 +148,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 50.0,
+        "varde": 50,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -125,7 +167,7 @@
     },
     "pansar": {
       "fram": {
-        "varde": 50.0,
+        "varde": 50,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -144,7 +186,7 @@
         "kallvarde": "30"
       },
       "bak": {
-        "varde": 50.0,
+        "varde": 50,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

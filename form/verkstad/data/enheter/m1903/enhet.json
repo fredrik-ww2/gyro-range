@@ -41,6 +41,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "m1903_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "springfield_m1903_pichuliru_ios.glb",
+      "bytes": 23772,
+      "sha256": "6ba3b7436c6761bd65e413aa7773fafb47f59fa92a3dd740660161ed06a9f717",
+      "trianglar": 1673,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "m1903_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "springfield_m1903_pichuliru_ios.glb",
+      "bytes": 23772,
+      "sha256": "6ba3b7436c6761bd65e413aa7773fafb47f59fa92a3dd740660161ed06a9f717",
+      "trianglar": 1673,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {

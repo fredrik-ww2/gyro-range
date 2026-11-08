@@ -41,6 +41,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "gewehr43_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "gewehr43_pichuliru_ios.glb",
+      "bytes": 30788,
+      "sha256": "af51bb132388e61b715305e2261a3a6939625a78666d28e98cce3e3ba0771efc",
+      "trianglar": 2207,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "gewehr43_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "gewehr43_pichuliru_ios.glb",
+      "bytes": 30788,
+      "sha256": "af51bb132388e61b715305e2261a3a6939625a78666d28e98cce3e3ba0771efc",
+      "trianglar": 2207,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {

@@ -39,6 +39,46 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "gaz67_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "gaz67_jeep_ios.glb",
+      "bytes": 132412,
+      "sha256": "466da3772e917b09e2c2b9509968e2ce7f1daf61ab32f0db2b377f7eab5a13fb",
+      "trianglar": 12860,
+      "material": 10,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "gaz67_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "gaz67_jeep_ios.glb",
+      "bytes": 56540,
+      "sha256": "898fe718a065edfefffc4ddb286ba69f9608466acb7bfd6b0ebaee96ec86933f",
+      "trianglar": 2688,
+      "material": 10,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -70,7 +110,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 90.0,
+        "varde": 90,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -89,14 +129,14 @@
         "kallvarde": "?"
       },
       "skog": {
-        "varde": 9.0,
+        "varde": 9,
         "enhet": "km/h",
         "ursprung": "uppskattat",
         "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",
         "liknande_enhet": "m3a1_halftrack"
       },
       "by": {
-        "varde": 14.0,
+        "varde": 14,
         "enhet": "km/h",
         "ursprung": "uppskattat",
         "motivering": "70 procent av fältfart bland bebyggelse, utan vägbonus.",
@@ -121,7 +161,7 @@
     },
     "pansar": {
       "fram": {
-        "varde": 0.0,
+        "varde": 0,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -130,7 +170,7 @@
         "kallstatus": "overifierad"
       },
       "sida": {
-        "varde": 0.0,
+        "varde": 0,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -139,7 +179,7 @@
         "kallstatus": "overifierad"
       },
       "bak": {
-        "varde": 0.0,
+        "varde": 0,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

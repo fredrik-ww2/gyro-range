@@ -19,43 +19,6 @@
   "tidigare_underkannande_finns": true,
   "modeller": [
     {
-      "fil": "sfh18_pjas_web_mobil.glb",
-      "roll": "modell",
-      "lod": null,
-      "kallfil": "assets/asset_niva_1/enheter/artilleri/sfh18/sfh18_pjas_web_mobil.glb",
-      "bytes": 172636,
-      "sha256": "8033aa98835ecab727cf6641cab6d7ff2315fffb74f6b0e1ddf18b4e37c0af96",
-      "trianglar": 4908,
-      "material": 2,
-      "animationer": [
-        "Fire",
-        "Load_Cycle",
-        "Idle",
-        "Limber_Lift",
-        "Tow_Roll",
-        "Trails_Open",
-        "Trails_Close",
-        "Spades_Mount",
-        "Spades_Unmount",
-        "Barrel_To_Travel",
-        "Barrel_To_Battery",
-        "Traverse",
-        "Elevate",
-        "Breech_Open",
-        "Breech_Close",
-        "Ram_Shell",
-        "Insert_Charge"
-      ],
-      "extensioner": [
-        "EXT_meshopt_compression",
-        "KHR_mesh_quantization"
-      ],
-      "externa_resurser": [],
-      "granskning": "ej nygranskad; se källmodellens protokoll",
-      "enhet": "meter",
-      "ladda_vid_start": false
-    },
-    {
       "fil": "sfh18_pjas_web_mobil_lod1_v2.glb",
       "roll": "modell",
       "lod": 1,
@@ -144,6 +107,82 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "sfh18_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "sfh18_pjas_web_mobil_lod2_v2.glb",
+      "bytes": 157680,
+      "sha256": "a9cb918739152501f4d91a7bd1c407bcc130b1a5131a2deb891211dd2eee0e9d",
+      "trianglar": 1789,
+      "material": 2,
+      "animationer": [
+        "Fire",
+        "Idle",
+        "Limber_Lift",
+        "Load_Cycle",
+        "Tow_Roll",
+        "Barrel_To_Battery",
+        "Barrel_To_Travel",
+        "Breech_Close",
+        "Breech_Open",
+        "Elevate",
+        "Insert_Charge",
+        "Ram_Shell",
+        "Spades_Mount",
+        "Spades_Unmount",
+        "Trails_Close",
+        "Trails_Open",
+        "Traverse"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "sfh18_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "sfh18_pjas_web_mobil_lod2_v2.glb",
+      "bytes": 157680,
+      "sha256": "a9cb918739152501f4d91a7bd1c407bcc130b1a5131a2deb891211dd2eee0e9d",
+      "trianglar": 1789,
+      "material": 2,
+      "animationer": [
+        "Fire",
+        "Idle",
+        "Limber_Lift",
+        "Load_Cycle",
+        "Tow_Roll",
+        "Barrel_To_Battery",
+        "Barrel_To_Travel",
+        "Breech_Close",
+        "Breech_Open",
+        "Elevate",
+        "Insert_Charge",
+        "Ram_Shell",
+        "Spades_Mount",
+        "Spades_Unmount",
+        "Trails_Close",
+        "Trails_Open",
+        "Traverse"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -207,7 +246,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 150.0,
+        "varde": 150,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

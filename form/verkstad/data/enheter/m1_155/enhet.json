@@ -19,43 +19,6 @@
   "tidigare_underkannande_finns": false,
   "modeller": [
     {
-      "fil": "m1_155_pjas_web_mobil.glb",
-      "roll": "modell",
-      "lod": null,
-      "kallfil": "assets/asset_niva_1/enheter/artilleri/m1_155/m1_155_pjas_web_mobil.glb",
-      "bytes": 148268,
-      "sha256": "5ae1c763295849df4467fcfb1795f8a3b90609177d27679b2f019aedef8db30c",
-      "trianglar": 4712,
-      "material": 1,
-      "animationer": [
-        "Fire",
-        "Load_Cycle",
-        "Idle",
-        "Hitch_Lift",
-        "Jack_Lower",
-        "Jack_Raise",
-        "Tow_Roll",
-        "Traverse",
-        "Elevate",
-        "Breech_Open",
-        "Breech_Close",
-        "Ram_Shell",
-        "Insert_Charge",
-        "Trails_Open",
-        "Trails_Close",
-        "Spades_Down",
-        "Spades_Up"
-      ],
-      "extensioner": [
-        "EXT_meshopt_compression",
-        "KHR_mesh_quantization"
-      ],
-      "externa_resurser": [],
-      "granskning": "ej nygranskad; se källmodellens protokoll",
-      "enhet": "meter",
-      "ladda_vid_start": false
-    },
-    {
       "fil": "m1_155_pjas_web_mobil_lod1_v2.glb",
       "roll": "modell",
       "lod": 1,
@@ -144,6 +107,82 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "m1_155_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "m1_155_pjas_web_mobil_lod2_v2.glb",
+      "bytes": 132528,
+      "sha256": "5fd0dfe36c5e600005b5327735dc24a29c167330ccf6d4621c126606387a1ae9",
+      "trianglar": 1593,
+      "material": 1,
+      "animationer": [
+        "Fire",
+        "Hitch_Lift",
+        "Idle",
+        "Load_Cycle",
+        "Breech_Close",
+        "Breech_Open",
+        "Elevate",
+        "Insert_Charge",
+        "Jack_Lower",
+        "Jack_Raise",
+        "Ram_Shell",
+        "Tow_Roll",
+        "Traverse",
+        "Trails_Close",
+        "Trails_Open",
+        "Spades_Down",
+        "Spades_Up"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "m1_155_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "m1_155_pjas_web_mobil_lod2_v2.glb",
+      "bytes": 132528,
+      "sha256": "5fd0dfe36c5e600005b5327735dc24a29c167330ccf6d4621c126606387a1ae9",
+      "trianglar": 1593,
+      "material": 1,
+      "animationer": [
+        "Fire",
+        "Hitch_Lift",
+        "Idle",
+        "Load_Cycle",
+        "Breech_Close",
+        "Breech_Open",
+        "Elevate",
+        "Insert_Charge",
+        "Jack_Lower",
+        "Jack_Raise",
+        "Ram_Shell",
+        "Tow_Roll",
+        "Traverse",
+        "Trails_Close",
+        "Trails_Open",
+        "Spades_Down",
+        "Spades_Up"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -207,7 +246,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 155.0,
+        "varde": 155,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

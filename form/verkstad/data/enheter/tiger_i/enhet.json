@@ -50,6 +50,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "tiger_i_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "tiger_i_late_42manako_m_lod2.glb",
+      "bytes": 1046128,
+      "sha256": "32705b1022c5a3c5e3801bff566e399161212aa0af19fb7bbb33490eee683733",
+      "trianglar": 4646,
+      "material": 9,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_specular",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "tiger_i_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "tiger_i_late_42manako_m_lod2.glb",
+      "bytes": 991848,
+      "sha256": "a7cbf16105afb57c1eb988fa9ae2bf0e2aca95c02b313c2149133ff00e6af631",
+      "trianglar": 2903,
+      "material": 9,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_specular",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -81,7 +123,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 38.0,
+        "varde": 38,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -186,7 +228,7 @@
     },
     "traffchans_per_avstand": {
       "100": {
-        "varde": 1.0,
+        "varde": 1,
         "enhet": "andel",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/PRECISION_EXPORT.json",
@@ -198,7 +240,7 @@
         "anvandning": "referenskurva; motor måste räkna rörelse, sikt, avståndsfel och skytt separat"
       },
       "250": {
-        "varde": 1.0,
+        "varde": 1,
         "enhet": "andel",
         "ursprung": "uppskattat",
         "motivering": "Befintlig beräknad referenskurva ur precisionsregistret; inte uppmätt strid.",
@@ -211,7 +253,7 @@
         "anvandning": "referenskurva; motor måste räkna rörelse, sikt, avståndsfel och skytt separat"
       },
       "500": {
-        "varde": 1.0,
+        "varde": 1,
         "enhet": "andel",
         "ursprung": "uppskattat",
         "motivering": "Befintlig beräknad referenskurva ur precisionsregistret; inte uppmätt strid.",

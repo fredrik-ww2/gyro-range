@@ -19,41 +19,6 @@
   "tidigare_underkannande_finns": true,
   "modeller": [
     {
-      "fil": "pak40_pjas_web_mobil.glb",
-      "roll": "modell",
-      "lod": null,
-      "kallfil": "assets/asset_niva_1/enheter/artilleri/pak40/pak40_pjas_web_mobil.glb",
-      "bytes": 74808,
-      "sha256": "f9cc5ad684ec98f7bc1688514f4c900966236fea00dd86de6ac0d3a0f0893ff2",
-      "trianglar": 2226,
-      "material": 2,
-      "animationer": [
-        "Limber_Lift",
-        "Limber_Drop",
-        "Fire",
-        "Spades_Seat",
-        "Hit",
-        "Apron_Down",
-        "Apron_Up",
-        "Trails_Open",
-        "Trails_Close",
-        "Traverse",
-        "Elevate",
-        "Tow_Roll",
-        "Breech_Open",
-        "Breech_Close",
-        "Load_Cycle"
-      ],
-      "extensioner": [
-        "EXT_meshopt_compression",
-        "KHR_mesh_quantization"
-      ],
-      "externa_resurser": [],
-      "granskning": "ej nygranskad; se källmodellens protokoll",
-      "enhet": "meter",
-      "ladda_vid_start": false
-    },
-    {
       "fil": "pak40_pjas_web_mobil_lod1_v2.glb",
       "roll": "modell",
       "lod": 1,
@@ -138,6 +103,78 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "pak40_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "pak40_pjas_web_mobil_lod2_v2.glb",
+      "bytes": 70096,
+      "sha256": "9bcdd1466b8819d311b1d03a86e66e5e2fb6613146b24e20baa9cb39aea067e1",
+      "trianglar": 900,
+      "material": 2,
+      "animationer": [
+        "Fire",
+        "Hit",
+        "Limber_Drop",
+        "Limber_Lift",
+        "Spades_Seat",
+        "Apron_Down",
+        "Apron_Up",
+        "Trails_Close",
+        "Trails_Open",
+        "Traverse",
+        "Elevate",
+        "Breech_Close",
+        "Breech_Open",
+        "Load_Cycle",
+        "Tow_Roll"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "pak40_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "pak40_pjas_web_mobil_lod2_v2.glb",
+      "bytes": 70096,
+      "sha256": "9bcdd1466b8819d311b1d03a86e66e5e2fb6613146b24e20baa9cb39aea067e1",
+      "trianglar": 900,
+      "material": 2,
+      "animationer": [
+        "Fire",
+        "Hit",
+        "Limber_Drop",
+        "Limber_Lift",
+        "Spades_Seat",
+        "Apron_Down",
+        "Apron_Up",
+        "Trails_Close",
+        "Trails_Open",
+        "Traverse",
+        "Elevate",
+        "Breech_Close",
+        "Breech_Open",
+        "Load_Cycle",
+        "Tow_Roll"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -209,7 +246,7 @@
         "kallstatus": "Finns"
       },
       "eldhastighet_skott_min": {
-        "varde": 14.0,
+        "varde": 14,
         "enhet": "skott/min",
         "ursprung": "kalla",
         "kallfil": "data/weapons/pak40.json",

@@ -39,6 +39,46 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "panzerfaust_60_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "panzerfaust_60_ios.glb",
+      "bytes": 9528,
+      "sha256": "afd942cf1c078069bb4fca6d62bb3bd217874ce91c3e9fd00075aeade1293035",
+      "trianglar": 204,
+      "material": 3,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "panzerfaust_60_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "panzerfaust_60_ios.glb",
+      "bytes": 9528,
+      "sha256": "afd942cf1c078069bb4fca6d62bb3bd217874ce91c3e9fd00075aeade1293035",
+      "trianglar": 204,
+      "material": 3,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -101,7 +141,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 50.0,
+        "varde": 50,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

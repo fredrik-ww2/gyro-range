@@ -40,6 +40,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "leichttraktor_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "leichttraktor_light_ios.glb",
+      "bytes": 128180,
+      "sha256": "e001d1490d7568cf95ed9123fe946162091a8766710821aae92cfd0fef04350e",
+      "trianglar": 10208,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "leichttraktor_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "leichttraktor_light_ios.glb",
+      "bytes": 40884,
+      "sha256": "5b941080f8a63eac219db89a86ce9104cab62e76ba1c126c77d6d8e08dc33aed",
+      "trianglar": 2707,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -71,7 +113,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 30.0,
+        "varde": 30,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -103,7 +145,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 37.0,
+        "varde": 37,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -122,7 +164,7 @@
     },
     "pansar": {
       "fram": {
-        "varde": 14.0,
+        "varde": 14,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -131,7 +173,7 @@
         "kallstatus": "overifierad"
       },
       "sida": {
-        "varde": 8.0,
+        "varde": 8,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -140,7 +182,7 @@
         "kallstatus": "overifierad"
       },
       "bak": {
-        "varde": 14.0,
+        "varde": 14,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

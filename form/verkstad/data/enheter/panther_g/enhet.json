@@ -51,6 +51,46 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "panther_g_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "panther_g_dan11l11l_m_lod4.glb",
+      "bytes": 1543544,
+      "sha256": "28b3a7cdcfbd58690d6848ee54c1ededb96605e2a3429edf4068b36bd6e06ee2",
+      "trianglar": 5143,
+      "material": 7,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "panther_g_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "panther_g_dan11l11l_m_lod4.glb",
+      "bytes": 1513760,
+      "sha256": "c80f6d878b2286275ea0df91a940a1f513b02ff119f57b9d5b910cc1c47b7634",
+      "trianglar": 2793,
+      "material": 7,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -82,7 +122,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 46.0,
+        "varde": 46,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -134,7 +174,7 @@
     },
     "pansar": {
       "fram": {
-        "varde": 80.0,
+        "varde": 80,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -143,7 +183,7 @@
         "kallstatus": "Finns"
       },
       "sida": {
-        "varde": 50.0,
+        "varde": 50,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -152,7 +192,7 @@
         "kallstatus": "Finns"
       },
       "bak": {
-        "varde": 40.0,
+        "varde": 40,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -198,7 +238,7 @@
         "liknande_enhet": "panzer_iv_h"
       },
       "500": {
-        "varde": 1.0,
+        "varde": 1,
         "enhet": "andel",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/PRECISION_EXPORT.json",
@@ -210,7 +250,7 @@
         "anvandning": "referenskurva; motor måste räkna rörelse, sikt, avståndsfel och skytt separat"
       },
       "1000": {
-        "varde": 1.0,
+        "varde": 1,
         "enhet": "andel",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/PRECISION_EXPORT.json",
@@ -222,7 +262,7 @@
         "anvandning": "referenskurva; motor måste räkna rörelse, sikt, avståndsfel och skytt separat"
       },
       "1500": {
-        "varde": 1.0,
+        "varde": 1,
         "enhet": "andel",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/PRECISION_EXPORT.json",

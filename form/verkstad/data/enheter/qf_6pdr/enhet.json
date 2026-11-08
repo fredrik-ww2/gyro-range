@@ -47,6 +47,64 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "qf_6pdr_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "qf_6pdr_pjas_web.glb",
+      "bytes": 36752,
+      "sha256": "8956349b24a1d3a75c39ead7cb0b9c8dcda6fcc92fef5a9a9b543d369dc5c4d3",
+      "trianglar": 872,
+      "material": 1,
+      "animationer": [
+        "Fire",
+        "Hit",
+        "Idle",
+        "Trails_Open",
+        "Trails_Close",
+        "Traverse",
+        "Elevate",
+        "Tow_Roll"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "qf_6pdr_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "qf_6pdr_pjas_web.glb",
+      "bytes": 36752,
+      "sha256": "8956349b24a1d3a75c39ead7cb0b9c8dcda6fcc92fef5a9a9b543d369dc5c4d3",
+      "trianglar": 872,
+      "material": 1,
+      "animationer": [
+        "Fire",
+        "Hit",
+        "Idle",
+        "Trails_Open",
+        "Trails_Close",
+        "Traverse",
+        "Elevate",
+        "Tow_Roll"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -110,7 +168,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 57.0,
+        "varde": 57,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

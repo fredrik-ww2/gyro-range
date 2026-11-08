@@ -51,6 +51,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "luchs_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "panzer_ii_luchs_42manako_m_lod2.glb",
+      "bytes": 1942384,
+      "sha256": "7eca295629c2d6d281a30e26f60dcf0b879e19358a4b31799108911a45bad58d",
+      "trianglar": 3744,
+      "material": 7,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_specular",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "luchs_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "panzer_ii_luchs_42manako_m_lod2.glb",
+      "bytes": 1921100,
+      "sha256": "b061f4cc19f9444e31a1382f82c238896f8607e9da00df92f60bf24c3f19ede9",
+      "trianglar": 2972,
+      "material": 7,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_specular",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -82,7 +124,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 60.0,
+        "varde": 60,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -114,7 +156,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 20.0,
+        "varde": 20,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -143,7 +185,7 @@
         "kallvarde": "30 (10–25°)"
       },
       "sida": {
-        "varde": 20.0,
+        "varde": 20,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -152,7 +194,7 @@
         "kallstatus": "overifierad"
       },
       "bak": {
-        "varde": 20.0,
+        "varde": 20,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

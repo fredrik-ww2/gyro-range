@@ -56,6 +56,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "sten_mk2_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "sten_pichuliru_ios.glb",
+      "bytes": 51660,
+      "sha256": "5be73e3c9695441c15c26ccdfdc7eff72ba5069bb80dd115d097266d85881b17",
+      "trianglar": 3743,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "sten_mk2_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "sten_pichuliru_ios.glb",
+      "bytes": 16920,
+      "sha256": "bfbfcbc955334186367b0f9214f427c4a7545e8d8a7e5938a0ce39f1064ccf96",
+      "trianglar": 2217,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -118,7 +160,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 9.0,
+        "varde": 9,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

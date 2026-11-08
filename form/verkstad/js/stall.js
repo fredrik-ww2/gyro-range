@@ -9,11 +9,12 @@ import { OrbitControls } from '../vendor/OrbitControls.js';
 import { skapaAppleKamera } from '../../../flyg/kamera/kamera_apple_zoom_v1.js';
 import { KAMERAVARDEN } from './kameravarden.js';
 import { klonaMall, laddaMall, laddaObjekt } from './modeller.js';
-import { esc, hamtaEnhet, placeringsModell, statusNamn, tal, truppVisning } from './data.js';
+import { esc, hamtaEnhet, placeringsNivaer, statusNamn, tal, truppVisning } from './data.js';
 import { lasScen, skrivScen } from './spara.js';
 
 const VARLD = 'villers_bocage';
 const NAR_M = 250;
+const MODELL_NAR_M = 120;
 
 export async function monteraStall(el, { index, tillbaka }) {
   const poster = new Map(index.enheter.map((post) => [post.id, post]));
@@ -292,6 +293,16 @@ export async function monteraStall(el, { index, tillbaka }) {
       const grov = rutor50.get(ruta.id);
       if (grov) grov.visible = !(nära && finns);
     }
+    for (const post of placeringar) {
+      if (!post.nara) continue;
+      const modellAvstand = kamera.distanceTo(post.grupp.position);
+      const nara = modellAvstand < MODELL_NAR_M;
+      post.nara.visible = nara || post.fjarr === post.nara;
+      if (post.fjarr && post.fjarr !== post.nara) post.fjarr.visible = !nara;
+      post.lod = nara ? 'mobil' : 'enkel';
+      const rad = el.querySelector(`[data-placering="${post.id}"]`);
+      if (rad) rad.dataset.lod = post.lod;
+    }
   }
 
   function skalaValjare() {}
@@ -400,12 +411,22 @@ export async function monteraStall(el, { index, tillbaka }) {
     if (meta) {
       try {
         const pack = await hamtaEnhet(meta.fil);
-        const modell = placeringsModell(pack.visning.modeller);
-        if (modell) {
-          const mall = await laddaMall(renderer, meta.fil, modell);
-          kropp = klonaMall(mall);
-          grupp.add(kropp);
-          riktaOchSatt(kropp);
+        const nivaer = placeringsNivaer(pack.visning.modeller);
+        if (nivaer.mobil) {
+          const nara = klonaMall(await laddaMall(renderer, meta.fil, nivaer.mobil));
+          grupp.add(nara);
+          const yaw = riktaOchSatt(nara);
+          let fjarr = nara;
+          if (nivaer.enkel && nivaer.enkel.fil !== nivaer.mobil.fil) {
+            fjarr = klonaMall(await laddaMall(renderer, meta.fil, nivaer.enkel));
+            grupp.add(fjarr);
+            riktaOchSatt(fjarr, yaw);
+            fjarr.visible = false;
+          }
+          rad.nara = nara;
+          rad.fjarr = fjarr;
+          rad.lod = 'mobil';
+          kropp = nara;
           rad.visning = 'modell';
         }
       } catch {
@@ -450,17 +471,19 @@ export async function monteraStall(el, { index, tillbaka }) {
     return grupp;
   }
 
-  function riktaOchSatt(objekt) {
+  function riktaOchSatt(objekt, yaw) {
     objekt.rotation.y = 0;
     objekt.position.y = 0;
     objekt.updateWorldMatrix(true, true);
     let box = new Box3().setFromObject(objekt);
     const storlek = box.getSize(new Vector3());
-    if (storlek.x > storlek.z * 1.2) objekt.rotation.y = Math.PI / 2;
+    if (yaw == null) yaw = storlek.x > storlek.z * 1.2 ? Math.PI / 2 : 0;
+    objekt.rotation.y = yaw;
     objekt.updateWorldMatrix(true, true);
     box = new Box3().setFromObject(objekt);
     const parentY = objekt.parent ? objekt.parent.getWorldPosition(new Vector3()).y : 0;
     objekt.position.y -= box.min.y - parentY;
+    return yaw;
   }
 
   function passaRing(rad) {
@@ -579,7 +602,7 @@ export async function monteraStall(el, { index, tillbaka }) {
       const namn = poster.get(post.enhet)?.namn || post.enhet;
       const meta = poster.get(post.enhet);
       const statusText = meta ? statusNamn(meta.status) : 'Under utveckling';
-      return `<li data-placering="${esc(post.id)}" data-enhet-id="${esc(post.enhet)}" data-visning="${esc(post.visning || '')}" data-x="${runda(post.x)}" data-z="${runda(post.z)}" data-sida="${esc(post.sida)}">
+      return `<li data-placering="${esc(post.id)}" data-enhet-id="${esc(post.enhet)}" data-visning="${esc(post.visning || '')}" data-lod="${esc(post.lod || '')}" data-x="${runda(post.x)}" data-z="${runda(post.z)}" data-sida="${esc(post.sida)}">
         <button type="button" data-id="${esc(post.id)}" data-handling="valj"><strong>${esc(namn)}</strong><small>${post.sida === 'bla' ? 'Blå' : 'Röd'} · ${esc(statusText)}</small></button>
         <button type="button" data-id="${esc(post.id)}" data-handling="flytta">Flytta</button>
         <button type="button" data-id="${esc(post.id)}" data-handling="tabort">Ta bort</button>

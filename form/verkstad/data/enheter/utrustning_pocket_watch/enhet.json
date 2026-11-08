@@ -53,6 +53,50 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "utrustning_pocket_watch_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "pocket_watch_web_ios.glb",
+      "bytes": 715644,
+      "sha256": "909d5a066e37dbf5f943821a6efd5bc97866ca64e2365b34c777d93d2a141d6c",
+      "trianglar": 4498,
+      "material": 2,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_transmission",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "utrustning_pocket_watch_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "pocket_watch_web_ios.glb",
+      "bytes": 695660,
+      "sha256": "9e263ecb0d9f3c4ce8e39bcd0af038f71518e52964b11e9b916cb9e526cbfa48",
+      "trianglar": 2397,
+      "material": 2,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_transmission",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -94,7 +138,7 @@
         "liknande_enhet": "utrustning_vintage_binocular"
       },
       "skog": {
-        "varde": 0.0,
+        "varde": 0,
         "enhet": "km/h",
         "ursprung": "uppskattat",
         "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",

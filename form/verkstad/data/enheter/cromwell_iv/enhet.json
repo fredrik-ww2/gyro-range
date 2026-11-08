@@ -51,6 +51,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "cromwell_iv_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "cromwell_iv_42manako_m_lod2.glb",
+      "bytes": 1065580,
+      "sha256": "28cdbaa6302877cb41b4bd18556e247f7480908cf5efcf557a6a4eefe8c21d0d",
+      "trianglar": 2425,
+      "material": 5,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_specular",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "cromwell_iv_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "cromwell_iv_42manako_m_lod2.glb",
+      "bytes": 1065580,
+      "sha256": "28cdbaa6302877cb41b4bd18556e247f7480908cf5efcf557a6a4eefe8c21d0d",
+      "trianglar": 2425,
+      "material": 5,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_specular",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -82,7 +124,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 55.0,
+        "varde": 55,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -117,7 +159,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 75.0,
+        "varde": 75,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -136,7 +178,7 @@
     },
     "pansar": {
       "fram": {
-        "varde": 64.0,
+        "varde": 64,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

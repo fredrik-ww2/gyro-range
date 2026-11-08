@@ -53,6 +53,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "utrustning_vintage_binocular_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "vintage_binocular_web_ios.glb",
+      "bytes": 853756,
+      "sha256": "abd47b88c5b64c539d469486a82bb843d5e3a45b88fc788a2c886a306818a3d1",
+      "trianglar": 4499,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "utrustning_vintage_binocular_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "vintage_binocular_web_ios.glb",
+      "bytes": 829720,
+      "sha256": "351974c9e4e907dda90d5024b369a6f394b0c235374459554a0df62edfb72586",
+      "trianglar": 2396,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -94,7 +136,7 @@
         "liknande_enhet": "utrustning_vintage_binocular"
       },
       "skog": {
-        "varde": 0.0,
+        "varde": 0,
         "enhet": "km/h",
         "ursprung": "uppskattat",
         "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",

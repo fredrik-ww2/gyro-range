@@ -59,6 +59,88 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "m10_gmc_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "m10_gmc_mobil_web_ios.glb",
+      "bytes": 1512968,
+      "sha256": "ddd6aceb39e551c5f4b56eb2d993a0e6cd17b47143fa299788edf5b85f9e296d",
+      "trianglar": 11427,
+      "material": 2,
+      "animationer": [
+        "Cross_Ditch",
+        "Idle",
+        "Bump_Rough",
+        "Fire",
+        "Hit",
+        "Hatch_Open",
+        "Hatch_Close",
+        "Hatch_AsstDriver_Open",
+        "Hatch_Driver_Open",
+        "Turret_Traverse",
+        "Turret_Travel_Rear",
+        "Gun_Elevate",
+        "Track_Forward",
+        "Track_Backward",
+        "Turn_Left",
+        "Turn_Right",
+        "Brake_Nod",
+        "Start_Squat",
+        "Hard_Brake"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "m10_gmc_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "m10_gmc_mobil_web_ios.glb",
+      "bytes": 1396300,
+      "sha256": "e3d6c5b8bcdd9691089980c2d99601d8ab703dbdf6b63b50e7fbc583f1bec766",
+      "trianglar": 2708,
+      "material": 2,
+      "animationer": [
+        "Cross_Ditch",
+        "Idle",
+        "Bump_Rough",
+        "Fire",
+        "Hit",
+        "Hatch_Open",
+        "Hatch_Close",
+        "Hatch_AsstDriver_Open",
+        "Hatch_Driver_Open",
+        "Turret_Traverse",
+        "Turret_Travel_Rear",
+        "Gun_Elevate",
+        "Track_Forward",
+        "Track_Backward",
+        "Turn_Left",
+        "Turn_Right",
+        "Brake_Nod",
+        "Start_Squat",
+        "Hard_Brake"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -92,7 +174,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 48.0,
+        "varde": 48,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -111,14 +193,14 @@
         "kallvarde": "20"
       },
       "skog": {
-        "varde": 9.0,
+        "varde": 9,
         "enhet": "km/h",
         "ursprung": "uppskattat",
         "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",
         "liknande_enhet": "m3a1_halftrack"
       },
       "by": {
-        "varde": 14.0,
+        "varde": 14,
         "enhet": "km/h",
         "ursprung": "uppskattat",
         "motivering": "70 procent av fältfart bland bebyggelse, utan vägbonus.",
@@ -146,7 +228,7 @@
     },
     "pansar": {
       "fram": {
-        "varde": 38.0,
+        "varde": 38,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -155,7 +237,7 @@
         "kallstatus": "Finns"
       },
       "sida": {
-        "varde": 19.0,
+        "varde": 19,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -164,7 +246,7 @@
         "kallstatus": "Finns"
       },
       "bak": {
-        "varde": 19.0,
+        "varde": 19,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

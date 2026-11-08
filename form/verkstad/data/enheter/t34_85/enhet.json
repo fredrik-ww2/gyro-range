@@ -62,6 +62,94 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "t34_85_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "t34_85_v2b_web_ios.glb",
+      "bytes": 1852236,
+      "sha256": "a1e0d0a677dc647c1917aa921c02351733a34829b1db927aa3597819177c0b7f",
+      "trianglar": 11526,
+      "material": 2,
+      "animationer": [
+        "Cross_Ditch",
+        "Demo_Stopp_Svang",
+        "Brake_Nod",
+        "Hard_Brake",
+        "Start_Squat",
+        "Bump_Rough",
+        "Hit",
+        "Hatch_Close",
+        "Hatch_Open",
+        "Hatch_Driver_Open",
+        "Track_Forward",
+        "Track_Backward",
+        "Turn_Right",
+        "Arc_Slip_Left",
+        "Arc_Slip_Right",
+        "Turn_Left",
+        "Turret_Traverse",
+        "Gun_Elevate",
+        "Fire",
+        "Hatch_Commander_Open",
+        "Hatch_Loader_Open",
+        "Idle"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "t34_85_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "t34_85_v2b_web_ios.glb",
+      "bytes": 1808664,
+      "sha256": "a12c93d8741867122303feca55b3c1c149d2bdefbeabb7f19f3fcfe1464d2c40",
+      "trianglar": 2909,
+      "material": 2,
+      "animationer": [
+        "Cross_Ditch",
+        "Demo_Stopp_Svang",
+        "Brake_Nod",
+        "Hard_Brake",
+        "Start_Squat",
+        "Bump_Rough",
+        "Hit",
+        "Hatch_Close",
+        "Hatch_Open",
+        "Hatch_Driver_Open",
+        "Track_Forward",
+        "Track_Backward",
+        "Turn_Right",
+        "Arc_Slip_Left",
+        "Arc_Slip_Right",
+        "Turn_Left",
+        "Turret_Traverse",
+        "Gun_Elevate",
+        "Fire",
+        "Hatch_Commander_Open",
+        "Hatch_Loader_Open",
+        "Idle"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -95,7 +183,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 55.0,
+        "varde": 55,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -147,7 +235,7 @@
     },
     "pansar": {
       "fram": {
-        "varde": 45.0,
+        "varde": 45,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -156,7 +244,7 @@
         "kallstatus": "Finns"
       },
       "sida": {
-        "varde": 45.0,
+        "varde": 45,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -165,7 +253,7 @@
         "kallstatus": "overifierad"
       },
       "bak": {
-        "varde": 47.0,
+        "varde": 47,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

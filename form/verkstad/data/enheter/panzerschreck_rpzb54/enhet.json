@@ -54,6 +54,46 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "panzerschreck_rpzb54_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "panzerschreck_rpzb54_ios.glb",
+      "bytes": 11172,
+      "sha256": "85dbcf2c00b47e2ba290062631c3af69e8d7b5b336469f7e5fa60c1cf2adb22c",
+      "trianglar": 260,
+      "material": 3,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "panzerschreck_rpzb54_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "panzerschreck_rpzb54_ios.glb",
+      "bytes": 11172,
+      "sha256": "85dbcf2c00b47e2ba290062631c3af69e8d7b5b336469f7e5fa60c1cf2adb22c",
+      "trianglar": 260,
+      "material": 3,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {

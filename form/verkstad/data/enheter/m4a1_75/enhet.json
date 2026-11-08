@@ -51,6 +51,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "m4a1_75_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "m4a1_75_rhino_late_42manako_m_lod2.glb",
+      "bytes": 2944192,
+      "sha256": "91f160dac2d6297373440cef1f3842307a7ceba9e5ee88a13543193a39f7308c",
+      "trianglar": 3515,
+      "material": 16,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_specular",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "m4a1_75_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "m4a1_75_rhino_late_42manako_m_lod2.glb",
+      "bytes": 2909920,
+      "sha256": "68ad04ccdd1a8d37314acd2b48d45699b024f724f2114aa23ca548fcd72a1b37",
+      "trianglar": 2854,
+      "material": 16,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_specular",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -82,7 +124,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 34.0,
+        "varde": 34,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -117,7 +159,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 75.0,
+        "varde": 75,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -156,7 +198,7 @@
         "kallvarde": "skrov 38–51 / torn 51"
       },
       "bak": {
-        "varde": 38.0,
+        "varde": 38,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

@@ -51,6 +51,48 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "m3_halftrack_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "m3_halftrack_42manako_m_lod2.glb",
+      "bytes": 1778208,
+      "sha256": "fe93201163395ffc11a08e0f6b56a3f1ee25bc6a89b858d73d29d45bb8999ec7",
+      "trianglar": 3193,
+      "material": 9,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_specular",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "m3_halftrack_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "m3_halftrack_42manako_m_lod2.glb",
+      "bytes": 1752568,
+      "sha256": "1644b161feea43fd682e8a3c8559dc9a5999f61001cc03a784ee20721f059f1e",
+      "trianglar": 2786,
+      "material": 9,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_materials_specular",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -96,14 +138,14 @@
         "liknande_enhet": "m3a1_halftrack"
       },
       "skog": {
-        "varde": 9.0,
+        "varde": 9,
         "enhet": "km/h",
         "ursprung": "uppskattat",
         "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",
         "liknande_enhet": "m3a1_halftrack"
       },
       "by": {
-        "varde": 14.0,
+        "varde": 14,
         "enhet": "km/h",
         "ursprung": "uppskattat",
         "motivering": "70 procent av fältfart bland bebyggelse, utan vägbonus.",

@@ -52,6 +52,46 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "sherman_vc_firefly_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "sherman_firefly_barking_dogo_v3_pbr_lod4_uv.glb",
+      "bytes": 4310624,
+      "sha256": "2510ed2c80b4439eabdc6a6d938b49c9e3a75162308bc0f42dafbf9661310d66",
+      "trianglar": 6991,
+      "material": 8,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "sherman_vc_firefly_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "sherman_firefly_barking_dogo_v3_pbr_lod4_uv.glb",
+      "bytes": 4107312,
+      "sha256": "8c95e2eab5804bce68649f7ec4277e70f68d3931ee4f636bc0e21b75a3604629",
+      "trianglar": 2735,
+      "material": 8,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -83,7 +123,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 40.0,
+        "varde": 40,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

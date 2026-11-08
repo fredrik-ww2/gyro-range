@@ -74,6 +74,96 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "panzer_iv_h_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "panzer_iv_h_v2b_v2_pbr_lod2.glb",
+      "bytes": 3571980,
+      "sha256": "1f0e6858567b44131ab7daf9f82d8b8b4dfeea2e034fc7926030b5433079dce3",
+      "trianglar": 2877,
+      "material": 2,
+      "animationer": [
+        "Cross_Ditch",
+        "Demo_Stopp_Svang",
+        "Bump_Rough",
+        "Fire",
+        "Hit",
+        "Idle",
+        "Start",
+        "Stop",
+        "Hatch_Close",
+        "Hatch_Driver_Open",
+        "Hatch_Open",
+        "Hatch_RadioOp_Open",
+        "Turret_Traverse_Hand",
+        "Turret_Traverse",
+        "Gun_Elevate",
+        "Hatch_Commander_Open",
+        "Hatch_Gunner_Open",
+        "Hatch_Loader_Open",
+        "Track_Forward",
+        "Arc_Slip_Left",
+        "Arc_Slip_Right",
+        "Track_Backward",
+        "Turn_Left",
+        "Turn_Right"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "panzer_iv_h_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "panzer_iv_h_v2b_v2_pbr_lod2.glb",
+      "bytes": 3571980,
+      "sha256": "1f0e6858567b44131ab7daf9f82d8b8b4dfeea2e034fc7926030b5433079dce3",
+      "trianglar": 2877,
+      "material": 2,
+      "animationer": [
+        "Cross_Ditch",
+        "Demo_Stopp_Svang",
+        "Bump_Rough",
+        "Fire",
+        "Hit",
+        "Idle",
+        "Start",
+        "Stop",
+        "Hatch_Close",
+        "Hatch_Driver_Open",
+        "Hatch_Open",
+        "Hatch_RadioOp_Open",
+        "Turret_Traverse_Hand",
+        "Turret_Traverse",
+        "Gun_Elevate",
+        "Hatch_Commander_Open",
+        "Hatch_Gunner_Open",
+        "Hatch_Loader_Open",
+        "Track_Forward",
+        "Arc_Slip_Left",
+        "Arc_Slip_Right",
+        "Track_Backward",
+        "Turn_Left",
+        "Turn_Right"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -107,7 +197,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 38.0,
+        "varde": 38,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -159,7 +249,7 @@
     },
     "pansar": {
       "fram": {
-        "varde": 80.0,
+        "varde": 80,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -168,7 +258,7 @@
         "kallstatus": "Finns"
       },
       "sida": {
-        "varde": 30.0,
+        "varde": 30,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -177,7 +267,7 @@
         "kallstatus": "Finns"
       },
       "bak": {
-        "varde": 20.0,
+        "varde": 20,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -216,7 +306,7 @@
         "liknande_enhet": "panzer_iv_h"
       },
       "250": {
-        "varde": 1.0,
+        "varde": 1,
         "enhet": "andel",
         "ursprung": "uppskattat",
         "motivering": "Befintlig beräknad referenskurva ur precisionsregistret; inte uppmätt strid.",

@@ -50,6 +50,70 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "flak36_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "flak36_pjas_web.glb",
+      "bytes": 34816,
+      "sha256": "1c73d4417ccc9d0b98700a67edaa16bf9576d0b0c402b362bb2c05d4742fd65f",
+      "trianglar": 1152,
+      "material": 1,
+      "animationer": [
+        "Outriggers_Fold",
+        "Outriggers_Deploy",
+        "Traverse",
+        "Hit",
+        "Idle",
+        "Elevate",
+        "Breech_Open",
+        "Breech_Close",
+        "Fire_v1",
+        "Fire_Recoil",
+        "Fire"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "flak36_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "flak36_pjas_web.glb",
+      "bytes": 34816,
+      "sha256": "1c73d4417ccc9d0b98700a67edaa16bf9576d0b0c402b362bb2c05d4742fd65f",
+      "trianglar": 1152,
+      "material": 1,
+      "animationer": [
+        "Outriggers_Fold",
+        "Outriggers_Deploy",
+        "Traverse",
+        "Hit",
+        "Idle",
+        "Elevate",
+        "Breech_Open",
+        "Breech_Close",
+        "Fire_v1",
+        "Fire_Recoil",
+        "Fire"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -113,7 +177,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 88.0,
+        "varde": 88,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

@@ -39,6 +39,46 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "kar98k_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "kar98k_ios.glb",
+      "bytes": 34696,
+      "sha256": "cd56e03f7d2b1235fe3a0750d637671296f1fa9d7d63b9a8c6fd6a5f3fcadf13",
+      "trianglar": 1108,
+      "material": 3,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "kar98k_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "kar98k_ios.glb",
+      "bytes": 34696,
+      "sha256": "cd56e03f7d2b1235fe3a0750d637671296f1fa9d7d63b9a8c6fd6a5f3fcadf13",
+      "trianglar": 1108,
+      "material": 3,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {

@@ -39,6 +39,46 @@
       "granskning": "ej nygranskad; se källmodellens protokoll",
       "enhet": "meter",
       "ladda_vid_start": false
+    },
+    {
+      "fil": "t12_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "mobil",
+      "kallfil": "t12_prototype_medium_ios.glb",
+      "bytes": 107592,
+      "sha256": "8dd3633422a1b0f7334b20e74c8a38a1a0f6114aa84781613324ae3987598cc7",
+      "trianglar": 11992,
+      "material": 3,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "t12_enkel.glb",
+      "roll": "modell",
+      "lod": null,
+      "anvandning": "enkel",
+      "kallfil": "t12_prototype_medium_ios.glb",
+      "bytes": 31892,
+      "sha256": "8fa66630c61c755a310670b0ea0ff8567276b83f5457dcc8b84fe14f94501bcb",
+      "trianglar": 2709,
+      "material": 3,
+      "animationer": [],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "Förenklad med weld, meshoptimizer simplify och meshopt. Texturer högst 1024 px.",
+      "enhet": "meter",
+      "ladda_vid_start": false
     }
   ],
   "fastpunkter": {
@@ -70,7 +110,7 @@
   "spelvarden": {
     "fart_per_terrang": {
       "vag": {
-        "varde": 26.0,
+        "varde": 26,
         "enhet": "km/h",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -105,7 +145,7 @@
     },
     "eldkraft": {
       "kaliber_mm": {
-        "varde": 45.0,
+        "varde": 45,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -124,7 +164,7 @@
     },
     "pansar": {
       "fram": {
-        "varde": 22.0,
+        "varde": 22,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
@@ -133,7 +173,7 @@
         "kallstatus": "overifierad"
       },
       "sida": {
-        "varde": 12.0,
+        "varde": 12,
         "enhet": "mm",
         "ursprung": "kalla",
         "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",

@@ -8,7 +8,7 @@ export class GyroAim {
   this.raw=new THREE.Quaternion();this.origin=new THREE.Quaternion();this.target=new THREE.Quaternion();this.smooth=new THREE.Quaternion();this.relative=new THREE.Quaternion();
   this.euler=new THREE.Euler();this.fix=new THREE.Quaternion(-Math.SQRT1_2,0,0,Math.SQRT1_2);this.screen=new THREE.Quaternion();this.axis=new THREE.Vector3(0,0,1);this.vector=new THREE.Vector3();
   this.nativeSource=false;this.prevRaw=new THREE.Quaternion();this.inv=new THREE.Quaternion();this.movedAt=0;this.nativeTime=null;this.nativeDelta=new THREE.Quaternion();
-  this.values={alpha:null,beta:null,gamma:null,acc:{x:0,y:0,z:0},rotationRate:{alpha:0,beta:0,gamma:0},interval:0};this.drag={x:0,y:0};this.lastEvent=0;this.lastMotion=0;
+  this.values={alpha:null,beta:null,gamma:null,acc:{x:0,y:0,z:0},rotationRate:{alpha:0,beta:0,gamma:0},interval:0};this.drag={x:0,y:0};this.dragQuat=new THREE.Quaternion();this.lastEvent=0;this.lastMotion=0;
   addEventListener('deviceorientation',e=>{
    if(this.nativeSource)return;
    if (![e.alpha,e.beta,e.gamma].every(Number.isFinite)) return;
@@ -72,7 +72,7 @@ export class GyroAim {
    this.vector.x*=s.kanslighet*(s.inverteraX?-1:1);this.vector.y*=s.kanslighet*(s.inverteraY?-1:1);this.vector.z*=s.kanslighet*(s.inverteraZ?-1:1);
    const len=this.vector.length();this.target.setFromAxisAngle(len?this.vector.normalize():this.axis,len);
   }else this.target.identity();
-  this.target.multiply(new THREE.Quaternion().setFromEuler(this.euler.set(this.drag.y,this.drag.x,0,'YXZ')));
+  this.target.multiply(this.dragQuat.setFromEuler(this.euler.set(this.drag.y,this.drag.x,0,'YXZ')));
   // Rak horisont: ta bort all lutning åt sidan (roll), så bilden aldrig känns sned efter rörelser.
   if(s.brytare?.horisont!==false){this.euler.setFromQuaternion(this.target,'YXZ');this.euler.z=0;this.target.setFromEuler(this.euler);}
   this.smooth.slerp(this.target,1-Math.exp(-dt/s.utjamning_s));return this.smooth;

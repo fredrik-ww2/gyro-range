@@ -1,5 +1,5 @@
 {
- "version": "flyg-v3-fysik",
+ "version": "flyg-v4",
  "modell": {
   "namn": "Hawker Typhoon Mk Ib",
   "fil": "./assets/typhoon_mkib.glb",
@@ -12,6 +12,7 @@
   "skjutning": true,
   "mal": true,
   "markskydd": false,
+  "led": true,
   "haptik": true,
   "ljud": true,
   "skada": false,
@@ -40,7 +41,7 @@
  },
  "flyg": {
   "gas": 0.85,
-  "start_hojd": 120,
+  "start_hojd": 75,
   "min_markfrigang": 0,
   "varld_radie": 2400,
   "kant_svang": 0.4
@@ -53,20 +54,26 @@
   "utjamning_s": 0.3
  },
  "varld": {
-  "storlek": 20000,
-  "segment": 110,
-  "dimma_nara": 900,
-  "dimma_fjarran": 4200,
+  "storlek": 12000,
+  "segment": 70,
+  "dimma_nara": 650,
+  "dimma_fjarran": 2800,
   "pixelratio": 1.5,
-  "hojd_stor": 45,
-  "hojd_liten": 13,
+  "hojd_stor": 22,
+  "hojd_liten": 6,
   "frekvens_stor": 0.002,
   "frekvens_liten": 0.009,
   "falt_textur_px": 1024,
   "falt_rutor": 16,
   "max_render_px": 420000,
-  "dimma_max": 9000,
-  "omcentrera_m": 1500,
+  "dimma_max": 76000,
+  "lang_m": 80000,
+  "lang_segment": 20,
+  "scen_radie_m": 420,
+  "hacker_max": 480,
+  "trad_max": 360,
+  "hus_max": 120,
+  "omcentrera_m": 200,
   "traad_antal": 900,
   "traad_radie_m": 2600,
   "traad_cell_m": 55,
@@ -124,7 +131,8 @@
   ],
   "sparljus_pool": 96,
   "sparljus_ms": 820,
-  "sparljus_liv_s": 1.2
+  "sparljus_liv_s": 2.2,
+  "mynningar_fw190": [[-2.3, 0.05, -1.7], [-3.5, 0.1, -1.15], [2.3, 0.05, -1.7], [3.5, 0.1, -1.15]]
  },
  "ljud": {
   "roster": 8,
@@ -178,7 +186,7 @@
   "propellerverkningsgrad": 0.78,
   "statisk_dragkraft_n": 24000,
   "fullhojd_m": 3400,
-  "effekt_skalhojd_m": 5200,
+  "effekt_skalhojd_m": 6400,
   "trim_max_grad": 11,
   "alfa_per_rad_input": 0.35,
   "drag_max_grad": 15,
@@ -186,14 +194,14 @@
   "alfa_tau_s": 0.25,
   "roll_omega": 5,
   "min_fart_ms": 12,
-  "start_hojd_m": 120,
+  "start_hojd_m": 75,
   "start_fart_ms": 125,
   "stall_nos_rad_s": 0.7,
   "max_banvinkel_rad": 1.45,
   "trim_n_min": 0.3,
   "trim_n_max": 1.6,
   "niva_k": 1.0,
-  "_om": "Typhoon Mk IB [F]: massa ca 5 200 kg, vingyta 25,9 m², Sabre ca 2 180 hk ≈ 1 625 kW. Se FLYG_V3_FYSIK.md."
+  "_om": "Typhoon Mk IB [F]. Effektskalhöjd 6 400 m så tjänstehöjden ligger kring 10 km. Se FLYG_V4.md."
  },
  "cockpit": {
   "oga_lokal": [
@@ -203,12 +211,40 @@
   ],
   "fov_grader": 68,
   "ring_radie_mil": 50,
-  "ring_kommentar": "GM2-ring i Mk II-sikte: radie 50 mil [F]; mittpunkten sätts på vingkanonernas konvergenspunkt 300 m fram.",
+  "ring_kommentar": "GM2-ringen räknas i ballistik.js: full ledvinkel för 120 m/s korsande mål på 200 m. Mittpunkten ligger i oändligheten längs nosaxeln.",
   "nara_m": 0.3
  },
  "krasch": {
   "laddning_g": 4000,
   "brand_skala": 1.6,
   "kontakt_m": 1.2
+ },
+ "motor": {
+  "tomgang_rpm": 800,
+  "max_rpm": 3700,
+  "prop_utvaxling": 0.45,
+  "boost_tom_psi": -4,
+  "boost_full_psi": 7
+ },
+ "ballistik": {
+  "mynning_ms": 880,
+  "massa_kg": 0.13,
+  "kaliber_m": 0.02,
+  "cd": 0.42,
+  "referensfart_ms": 120,
+  "referensavstand_m": 200,
+  "avstand_m": [100, 200, 300, 400]
+ },
+ "motstandare": {
+  "fil": "./assets/fw190_mobil.glb",
+  "namn": "Focke-Wulf Fw 190",
+  "spann_m": 10.5,
+  "langd_m": 9.0,
+  "rotation_y": 3.14159265359,
+  "hp": 30,
+  "spelare_hp": 24,
+  "traff_radie_m": 7,
+  "start_avstand_m": 260,
+  "skott_intervall_s": 0.16
  }
 }

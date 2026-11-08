@@ -267,7 +267,12 @@ svg .axel { stroke: #d5decc; stroke-width: 1; }
   font-size: 0.75rem;
   line-height: 1.3;
 }
-.stall-panel { background: var(--papper); border-top: 1px solid var(--linje); padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); max-height: 32dvh; overflow: auto; }
+.stall-panel { background: var(--papper); border-top: 1px solid var(--linje); padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); max-height: 38dvh; overflow: auto; }
+.terrangkort { margin: 8px 0; padding: 8px 10px; background: white; border: 1px solid var(--linje); border-radius: 12px; }
+.terrangkort h2, .terrangkort h3 { font-size: 0.95rem; margin: 8px 0 4px; }
+.terrangkort h2 { margin-top: 0; }
+.terrangkort p { margin: 0 0 4px; font-size: 0.82rem; line-height: 1.35; }
+.terrangkort .fargforklaring { margin: 0 0 8px; }
 .mattlista { list-style: none; margin: 8px 16px; padding: 0; display: grid; gap: 6px; }
 .mattlista li, .stridstabell td.matt-gron, .stridstabell td.matt-gul, .stridstabell td.matt-rod {
   display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 10px; background: white;

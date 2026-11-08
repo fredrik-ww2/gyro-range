@@ -1,0 +1,493 @@
+{
+  "schema": "form.verkstad.terrang.v1",
+  "enheter": {
+    "langd": "m",
+    "skydd": "Andel av verkan som stoppas. 0 är inget skydd, 1 stoppar hela verkan.",
+    "forflyttning": "Andel av normal fart. 1 är oförändrad, 0 är ofarbar.",
+    "insyn": "Andel som syns igenom. 0 är tätt, 1 är öppet."
+  },
+  "kallor_saknas": [
+    "SKYDDSVARDEN_UPPSKATTNINGAR_v1.md",
+    "TILLAGG_SKYDDSVARDEN_v1.json",
+    "GRUNDLAG_v1_4_r2.md",
+    "TERRANGBYGGE_REGISTER.md"
+  ],
+  "notering": "Alla tal är uppskattade i verkstaden. De fyra källfilerna fanns inte i repot eller bland bilagorna, så inget tal är kopierat därifrån. Gul färg betyder uppskattat.",
+  "form_etikett": {
+    "0": "ang",
+    "1": "skog",
+    "2": "aker",
+    "3": "vag",
+    "4": "hus_sten",
+    "5": "vatten"
+  },
+  "tom_mark": "ang",
+  "typer": [
+    {
+      "id": "ang",
+      "namn": "Äng",
+      "grupp": "mark",
+      "hojd_m": 0.3,
+      "radie_m": 14,
+      "skydd": {
+        "handeldvapen": { "staende": 0, "knaende": 0.05, "liggande": 0.15 },
+        "splitter": { "staende": 0, "knaende": 0.05, "liggande": 0.2 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 1,
+      "dold_position": false,
+      "forflyttning": { "fot": 0.95, "hjul": 0.75, "band": 0.9 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "aker",
+      "namn": "Åker",
+      "grupp": "mark",
+      "hojd_m": 0.4,
+      "radie_m": 14,
+      "skydd": {
+        "handeldvapen": { "staende": 0, "knaende": 0.1, "liggande": 0.25 },
+        "splitter": { "staende": 0.05, "knaende": 0.1, "liggande": 0.3 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 0.95,
+      "dold_position": false,
+      "forflyttning": { "fot": 0.85, "hjul": 0.45, "band": 0.8 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "skog",
+      "namn": "Skog",
+      "grupp": "mark",
+      "hojd_m": 8,
+      "radie_m": 16,
+      "skydd": {
+        "handeldvapen": { "staende": 0.25, "knaende": 0.4, "liggande": 0.55 },
+        "splitter": { "staende": 0.15, "knaende": 0.3, "liggande": 0.45 },
+        "pansarbrytande": { "staende": 0.05, "knaende": 0.05, "liggande": 0.05 }
+      },
+      "insyn": 0.35,
+      "dold_position": true,
+      "forflyttning": { "fot": 0.55, "hjul": 0.15, "band": 0.45 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "buskage",
+      "namn": "Buskage",
+      "grupp": "hinder",
+      "hojd_m": 1.4,
+      "radie_m": 2.5,
+      "skydd": {
+        "handeldvapen": { "staende": 0.1, "knaende": 0.25, "liggande": 0.4 },
+        "splitter": { "staende": 0.05, "knaende": 0.15, "liggande": 0.3 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 0.4,
+      "dold_position": true,
+      "forflyttning": { "fot": 0.7, "hjul": 0.2, "band": 0.6 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "hack_bocage",
+      "namn": "Häck och bocage",
+      "grupp": "hinder",
+      "hojd_m": 2.2,
+      "radie_m": 4,
+      "skydd": {
+        "handeldvapen": { "staende": 0.7, "knaende": 0.85, "liggande": 0.95 },
+        "splitter": { "staende": 0.55, "knaende": 0.75, "liggande": 0.9 },
+        "pansarbrytande": { "staende": 0.15, "knaende": 0.2, "liggande": 0.25 }
+      },
+      "insyn": 0.15,
+      "dold_position": true,
+      "forflyttning": { "fot": 0.3, "hjul": 0, "band": 0.35 },
+      "blockerar_sikt": true,
+      "blockerar_skjutlinje": true,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "stenmur",
+      "namn": "Stenmur",
+      "grupp": "hinder",
+      "hojd_m": 1.2,
+      "radie_m": 3,
+      "skydd": {
+        "handeldvapen": { "staende": 0.4, "knaende": 0.85, "liggande": 0.98 },
+        "splitter": { "staende": 0.35, "knaende": 0.8, "liggande": 0.95 },
+        "pansarbrytande": { "staende": 0.1, "knaende": 0.1, "liggande": 0.1 }
+      },
+      "insyn": 0.05,
+      "dold_position": true,
+      "forflyttning": { "fot": 0, "hjul": 0, "band": 0 },
+      "blockerar_sikt": true,
+      "blockerar_skjutlinje": true,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "trastaket",
+      "namn": "Trästaket",
+      "grupp": "hinder",
+      "hojd_m": 1.1,
+      "radie_m": 3,
+      "skydd": {
+        "handeldvapen": { "staende": 0.15, "knaende": 0.35, "liggande": 0.5 },
+        "splitter": { "staende": 0.1, "knaende": 0.2, "liggande": 0.35 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 0.7,
+      "dold_position": false,
+      "forflyttning": { "fot": 0.5, "hjul": 0, "band": 0.75 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "hus_sten",
+      "namn": "Hus i sten",
+      "grupp": "hinder",
+      "hojd_m": 6,
+      "radie_m": 6,
+      "skydd": {
+        "handeldvapen": { "staende": 0.9, "knaende": 0.95, "liggande": 0.98 },
+        "splitter": { "staende": 0.75, "knaende": 0.85, "liggande": 0.9 },
+        "pansarbrytande": { "staende": 0.35, "knaende": 0.35, "liggande": 0.35 }
+      },
+      "insyn": 0.05,
+      "dold_position": true,
+      "forflyttning": { "fot": 0, "hjul": 0, "band": 0 },
+      "blockerar_sikt": true,
+      "blockerar_skjutlinje": true,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "hus_tra",
+      "namn": "Hus i trä",
+      "grupp": "hinder",
+      "hojd_m": 5,
+      "radie_m": 5,
+      "skydd": {
+        "handeldvapen": { "staende": 0.55, "knaende": 0.7, "liggande": 0.8 },
+        "splitter": { "staende": 0.4, "knaende": 0.55, "liggande": 0.65 },
+        "pansarbrytande": { "staende": 0.05, "knaende": 0.05, "liggande": 0.05 }
+      },
+      "insyn": 0.2,
+      "dold_position": true,
+      "forflyttning": { "fot": 0, "hjul": 0, "band": 0 },
+      "blockerar_sikt": true,
+      "blockerar_skjutlinje": true,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "ruin",
+      "namn": "Ruin",
+      "grupp": "hinder",
+      "hojd_m": 2,
+      "radie_m": 5,
+      "skydd": {
+        "handeldvapen": { "staende": 0.6, "knaende": 0.75, "liggande": 0.85 },
+        "splitter": { "staende": 0.45, "knaende": 0.6, "liggande": 0.75 },
+        "pansarbrytande": { "staende": 0.15, "knaende": 0.15, "liggande": 0.15 }
+      },
+      "insyn": 0.35,
+      "dold_position": true,
+      "forflyttning": { "fot": 0.5, "hjul": 0.1, "band": 0.35 },
+      "blockerar_sikt": true,
+      "blockerar_skjutlinje": true,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "krater",
+      "namn": "Krater",
+      "grupp": "hinder",
+      "hojd_m": 0,
+      "djup_m": 1.5,
+      "radie_m": 4,
+      "skydd": {
+        "handeldvapen": { "staende": 0.2, "knaende": 0.55, "liggande": 0.8 },
+        "splitter": { "staende": 0.35, "knaende": 0.6, "liggande": 0.85 },
+        "pansarbrytande": { "staende": 0.05, "knaende": 0.05, "liggande": 0.05 }
+      },
+      "insyn": 0.8,
+      "dold_position": true,
+      "forflyttning": { "fot": 0.6, "hjul": 0.15, "band": 0.55 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": "liggande",
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "dike",
+      "namn": "Dike",
+      "grupp": "hinder",
+      "hojd_m": 0,
+      "djup_m": 1.2,
+      "radie_m": 3,
+      "skydd": {
+        "handeldvapen": { "staende": 0.35, "knaende": 0.7, "liggande": 0.9 },
+        "splitter": { "staende": 0.4, "knaende": 0.65, "liggande": 0.85 },
+        "pansarbrytande": { "staende": 0, "knaende": 0.05, "liggande": 0.05 }
+      },
+      "insyn": 0.75,
+      "dold_position": true,
+      "forflyttning": { "fot": 0.45, "hjul": 0, "band": 0.5 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": "liggande",
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "vag",
+      "namn": "Väg",
+      "grupp": "mark",
+      "hojd_m": 0,
+      "radie_m": 8,
+      "skydd": {
+        "handeldvapen": { "staende": 0, "knaende": 0, "liggande": 0.05 },
+        "splitter": { "staende": 0, "knaende": 0, "liggande": 0.05 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 1,
+      "dold_position": false,
+      "forflyttning": { "fot": 1, "hjul": 1, "band": 1 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "grusvag",
+      "namn": "Grusväg",
+      "grupp": "mark",
+      "hojd_m": 0,
+      "radie_m": 8,
+      "skydd": {
+        "handeldvapen": { "staende": 0, "knaende": 0, "liggande": 0.05 },
+        "splitter": { "staende": 0, "knaende": 0, "liggande": 0.05 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 1,
+      "dold_position": false,
+      "forflyttning": { "fot": 0.95, "hjul": 0.85, "band": 0.95 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "bro",
+      "namn": "Bro",
+      "grupp": "hinder",
+      "hojd_m": 1,
+      "radie_m": 6,
+      "skydd": {
+        "handeldvapen": { "staende": 0, "knaende": 0.05, "liggande": 0.1 },
+        "splitter": { "staende": 0, "knaende": 0.05, "liggande": 0.1 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 1,
+      "dold_position": false,
+      "forflyttning": { "fot": 1, "hjul": 1, "band": 0.9 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "vatten",
+      "namn": "Vatten",
+      "grupp": "mark",
+      "hojd_m": 0,
+      "djup_m": 1.5,
+      "radie_m": 10,
+      "skydd": {
+        "handeldvapen": { "staende": 0, "knaende": 0.1, "liggande": 0.2 },
+        "splitter": { "staende": 0.05, "knaende": 0.15, "liggande": 0.35 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 1,
+      "dold_position": false,
+      "forflyttning": { "fot": 0.25, "hjul": 0, "band": 0.2 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "sumpmark",
+      "namn": "Sumpmark",
+      "grupp": "mark",
+      "hojd_m": 0.2,
+      "radie_m": 12,
+      "skydd": {
+        "handeldvapen": { "staende": 0, "knaende": 0.05, "liggande": 0.1 },
+        "splitter": { "staende": 0, "knaende": 0.05, "liggande": 0.15 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 0.9,
+      "dold_position": false,
+      "forflyttning": { "fot": 0.35, "hjul": 0, "band": 0.4 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "taggtrad",
+      "namn": "Taggtråd",
+      "grupp": "hinder",
+      "hojd_m": 1.2,
+      "radie_m": 3,
+      "skydd": {
+        "handeldvapen": { "staende": 0, "knaende": 0.05, "liggande": 0.1 },
+        "splitter": { "staende": 0, "knaende": 0.05, "liggande": 0.1 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 0.85,
+      "dold_position": false,
+      "forflyttning": { "fot": 0.15, "hjul": 0.3, "band": 0.85 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "stridsvagnshinder",
+      "namn": "Stridsvagnshinder",
+      "grupp": "hinder",
+      "hojd_m": 1.1,
+      "radie_m": 4,
+      "skydd": {
+        "handeldvapen": { "staende": 0.2, "knaende": 0.45, "liggande": 0.6 },
+        "splitter": { "staende": 0.15, "knaende": 0.35, "liggande": 0.5 },
+        "pansarbrytande": { "staende": 0.05, "knaende": 0.05, "liggande": 0.05 }
+      },
+      "insyn": 0.6,
+      "dold_position": false,
+      "forflyttning": { "fot": 0.7, "hjul": 0, "band": 0 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "minfalt",
+      "namn": "Minfält",
+      "grupp": "hinder",
+      "hojd_m": 0,
+      "radie_m": 8,
+      "skydd": {
+        "handeldvapen": { "staende": 0, "knaende": 0, "liggande": 0 },
+        "splitter": { "staende": 0, "knaende": 0, "liggande": 0 },
+        "pansarbrytande": { "staende": 0, "knaende": 0, "liggande": 0 }
+      },
+      "insyn": 0.95,
+      "dold_position": false,
+      "forflyttning": { "fot": 0.5, "hjul": 0.4, "band": 0.4 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 45,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "sandsack",
+      "namn": "Sandsäcksvärn",
+      "grupp": "hinder",
+      "hojd_m": 1.1,
+      "radie_m": 2.5,
+      "skydd": {
+        "handeldvapen": { "staende": 0.75, "knaende": 0.95, "liggande": 0.98 },
+        "splitter": { "staende": 0.6, "knaende": 0.85, "liggande": 0.95 },
+        "pansarbrytande": { "staende": 0.1, "knaende": 0.1, "liggande": 0.1 }
+      },
+      "insyn": 0.1,
+      "dold_position": true,
+      "forflyttning": { "fot": 0.8, "hjul": 0, "band": 0.5 },
+      "blockerar_sikt": true,
+      "blockerar_skjutlinje": true,
+      "kan_forstoras": true,
+      "skada_vid_intrad": 0,
+      "stallning_spel": null,
+      "ursprung": "uppskattat"
+    },
+    {
+      "id": "skyttegrav",
+      "namn": "Skyttegrav",
+      "grupp": "hinder",
+      "hojd_m": 0,
+      "djup_m": 1.8,
+      "radie_m": 3,
+      "skydd": {
+        "handeldvapen": { "staende": 0.85, "knaende": 0.95, "liggande": 0.98 },
+        "splitter": { "staende": 0.7, "knaende": 0.9, "liggande": 0.95 },
+        "pansarbrytande": { "staende": 0.05, "knaende": 0.05, "liggande": 0.05 }
+      },
+      "insyn": 0.5,
+      "dold_position": true,
+      "forflyttning": { "fot": 0.7, "hjul": 0, "band": 0.25 },
+      "blockerar_sikt": false,
+      "blockerar_skjutlinje": false,
+      "kan_forstoras": false,
+      "skada_vid_intrad": 0,
+      "stallning_spel": "knaende",
+      "ursprung": "uppskattat"
+    }
+  ]
+}

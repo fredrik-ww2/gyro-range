@@ -12,6 +12,7 @@ import { klonaMall, laddaMall, laddaObjekt } from './modeller.js';
 import { esc, hamtaEnhet, placeringsNivaer, statusNamn, tal, truppVisning } from './data.js';
 import { lasScen, skrivScen } from './spara.js';
 import { byggFormMark, hamtaLandskap } from './formvarld.js';
+import { byggFormSkog } from './formskog.js';
 
 const NAR_M = 250;
 const MODELL_NAR_M = 120;
@@ -40,6 +41,7 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
     return { visa() {}, passa() {}, stang() {} };
   }
   const poster = new Map(index.enheter.map((post) => [post.id, post]));
+  const startFaktor = valdVarld.typ === 'form' ? 1 : 1.5;
   el.innerHTML = `
     <div class="stall">
       <header class="topp stall-topp">
@@ -60,7 +62,7 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
         <p data-vald>Välj en enhet, tryck på marken och välj sida.</p>
         <div class="radknappar">
           <button type="button" class="knapp primar" data-valj-enhet>Välj enhet</button>
-          <button type="button" class="knapp" data-hojd aria-pressed="true">Höjd 1,5×</button>
+          <button type="button" class="knapp" data-hojd aria-pressed="${startFaktor === 1.5 ? 'true' : 'false'}">${startFaktor === 1.5 ? 'Höjd 1,5×' : 'Höjd vanlig'}</button>
           <button type="button" class="knapp" data-flytta hidden>Flytta</button>
           <button type="button" class="knapp fara" data-tabort hidden>Ta bort</button>
         </div>
@@ -127,11 +129,15 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
   }
 
   const formMark = valdVarld.typ === 'form' ? await byggFormMark(valdVarld.post) : null;
+  const skog = formMark ? await byggFormSkog(valdVarld.post) : null;
   const yta = formMark
     ? { minX: -formMark.bredd / 2, maxX: formMark.bredd / 2, minZ: -formMark.djup / 2, maxZ: formMark.djup / 2 }
     : { minX: -1000, maxX: 1000, minZ: -1000, maxZ: 1000 };
+  const spann = formMark ? Math.max(formMark.bredd, formMark.djup) : 0;
   const startVy = formMark
-    ? { mal_xz_m: [0, 0], d_m: Math.max(42, Math.min(160, Math.max(formMark.bredd, formMark.djup) * 0.55)), lutning_grader: 52, kurs_grader: 28 }
+    ? (spann > 300
+      ? { mal_xz_m: [0, 0], d_m: Math.min(560, spann * 0.85), lutning_grader: 46, kurs_grader: 38 }
+      : { mal_xz_m: [0, 0], d_m: Math.max(48, spann * 0.42), lutning_grader: 58, kurs_grader: 28 })
     : KAMERAVARDEN.start;
   const kam = await skapaAppleKamera({
     THREE,
@@ -159,6 +165,13 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
     for (const hus of formMark.hus) {
       markGrupp.add(hus);
       husPaMark.push(hus);
+    }
+    if (skog) {
+      markGrupp.add(skog.grupp);
+      el.dataset.trad = String(skog.antal);
+      el.dataset.skogMeshar = String(skog.meshar);
+      el.dataset.texturer = String(skog.texturer);
+      el.dataset.lod = skog.antal ? '3d+impostor' : 'ingen';
     }
     el.dataset.textur = String(formMark.texturSida);
     const punkter = formMark.mark.geometry.attributes.position;
@@ -190,7 +203,7 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
     });
     medelHojd = (terrang.hojdmin_m + terrang.hojdmax_m) / 2;
   }
-  let hojdFaktor = 1.5;
+  let hojdFaktor = startFaktor;
   function appliceraHojd() {
     for (const mesh of markMeshar) {
       const pos = mesh.geometry.attributes.position;
@@ -205,8 +218,22 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
       mesh.geometry.computeVertexNormals();
       mesh.geometry.computeBoundingSphere();
     }
+    if (formMark) {
+      const pos = formMark.mark.geometry.attributes.position;
+      let minY = Infinity;
+      let maxY = -Infinity;
+      for (let i = 0; i < pos.count; i += 1) {
+        const y = pos.getY(i);
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+      el.dataset.hojdmin = minY.toFixed(2);
+      el.dataset.hojdmax = maxY.toFixed(2);
+      el.dataset.hojdspann = (maxY - minY).toFixed(2);
+    }
   }
   appliceraHojd();
+  skog?.tillampaHojd(hojdFaktor, medelHojd);
   function stallLandskap() {
     for (const hus of husPaMark) {
       hus.position.set(hus.userData.markX, hojd(hus.userData.markX, hus.userData.markZ) + hus.userData.lyft, hus.userData.markZ);
@@ -236,6 +263,8 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
     knapp.setAttribute('aria-pressed', hojdFaktor === 1.5 ? 'true' : 'false');
     knapp.textContent = hojdFaktor === 1.5 ? 'Höjd 1,5×' : 'Höjd vanlig';
     appliceraHojd();
+    skog?.tillampaHojd(hojdFaktor, medelHojd);
+    skog?.uppdatera(kam.kamera, true);
     stallLandskap();
     for (const post of placeringar) post.grupp.position.y = hojd(post.x, post.z);
   });
@@ -302,10 +331,15 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
       synkLod();
       skalaValjare();
     }
+    if (skog) {
+      skog.uppdatera(kam.kamera);
+      el.dataset.nara = String(skog.nara);
+    }
     placeraEtiketter();
     renderer.render(scen, kam.kamera);
     const tri = renderer.info.render.triangles;
     el.dataset.trianglar = String(tri);
+    el.dataset.anrop = String(renderer.info.render.calls);
     el.querySelector('[data-trianglar]').textContent = tal(tri, 0);
   }
 
@@ -661,7 +695,7 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
       const namn = poster.get(post.enhet)?.namn || post.enhet;
       const meta = poster.get(post.enhet);
       const statusText = meta ? statusNamn(meta.status) : 'Under utveckling';
-      return `<li data-placering="${esc(post.id)}" data-enhet-id="${esc(post.enhet)}" data-visning="${esc(post.visning || '')}" data-lod="${esc(post.lod || '')}" data-x="${runda(post.x)}" data-z="${runda(post.z)}" data-sida="${esc(post.sida)}">
+      return `<li data-placering="${esc(post.id)}" data-enhet-id="${esc(post.enhet)}" data-visning="${esc(post.visning || '')}" data-lod="${esc(post.lod || '')}" data-x="${runda(post.x)}" data-z="${runda(post.z)}" data-y="${runda(post.grupp.position.y)}" data-sida="${esc(post.sida)}">
         <button type="button" data-id="${esc(post.id)}" data-handling="valj"><strong>${esc(namn)}</strong><small>${post.sida === 'bla' ? 'Blå' : 'Röd'} · ${esc(statusText)}</small></button>
         <button type="button" data-id="${esc(post.id)}" data-handling="flytta">Flytta</button>
         <button type="button" data-id="${esc(post.id)}" data-handling="tabort">Ta bort</button>
@@ -720,19 +754,34 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
     kor = false;
     cancelAnimationFrame(ram);
     removeEventListener('resize', passa);
+    släpp(markGrupp);
     renderer.dispose();
-    markGrupp.traverse((nod) => {
-      if (!nod.isMesh) return;
-      nod.geometry?.dispose();
-      const material = nod.material;
-      if (Array.isArray(material)) material.forEach((m) => m.dispose?.());
-      else material?.dispose?.();
-      material?.map?.dispose?.();
-    });
   }
   visa(!el.hidden);
 
   return { visa, passa, stang };
+}
+
+function släpp(rot) {
+  const geometrier = new Set();
+  const material = new Set();
+  const texturer = new Set();
+  rot.traverse((nod) => {
+    if (!nod.isMesh) return;
+    if (nod.isInstancedMesh) nod.dispose();
+    if (nod.geometry) geometrier.add(nod.geometry);
+    const lista = Array.isArray(nod.material) ? nod.material : [nod.material];
+    for (const mat of lista) {
+      if (!mat) continue;
+      material.add(mat);
+      for (const varde of Object.values(mat)) {
+        if (varde?.isTexture) texturer.add(varde);
+      }
+    }
+  });
+  for (const geo of geometrier) geo.dispose();
+  for (const mat of material) mat.dispose();
+  for (const tex of texturer) tex.dispose();
 }
 
 function placeringId(objekt) {

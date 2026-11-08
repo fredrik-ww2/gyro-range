@@ -1,29 +1,22 @@
 /* Satellitvärldar som gamla FORM sparar i IndexedDB (form-landscapes-v1).
-   Höjden räknas med samma formel som satellitbyggaren. Markbilden är den sparade bilden. */
+   Höjden är satellitbyggarens egen funktion. Markbilden är den sparade bilden. */
 
 import {
   BoxGeometry, CanvasTexture, LinearFilter, LinearMipmapLinearFilter, Mesh, MeshStandardMaterial, PlaneGeometry
 } from 'three';
+import { d as hojdForm } from '../../_next/static/chunks/analysis-CmgwIY0R.js';
 
 const DB = 'form-landscapes-v1';
 const VERSION = 1;
 const BUTIK = 'projects';
 const MAX_SIDA = 2048;
-const SEGMENT = 80;
 
 export function scenNyckel(id) {
   return 'form:' + id;
 }
 
 export function hojdPa(x, z, installningar) {
-  const fas = (installningar.heightSeed ?? installningar.seed) * 0.37;
-  const bredd = installningar.widthMeters;
-  return installningar.relief * (
-    Math.sin(x / (bredd * 0.3) + fas) * 0.35
-    + Math.cos(z / (bredd * 0.27) - fas) * 0.32
-    + Math.sin((x + z) / (bredd * 0.11) + fas) * 0.13
-    + Math.sin(x * 0.43 + Math.cos(z * 0.35)) * Math.cos(z * 0.39) * 0.045
-  );
+  return hojdForm(x, z, installningar);
 }
 
 export function mattLandskap(post) {
@@ -89,8 +82,7 @@ export async function hamtaLandskap(id) {
 export async function byggFormMark(post) {
   const { bredd, djup } = mattLandskap(post);
   const textur = await texturFranBild(post.image);
-  const segX = bredd >= djup ? SEGMENT : Math.max(12, Math.round(SEGMENT * bredd / djup));
-  const segZ = djup >= bredd ? SEGMENT : Math.max(12, Math.round(SEGMENT * djup / bredd));
+  const { segX, segZ } = markSegment(post, bredd, djup);
   const geometri = new PlaneGeometry(bredd, djup, segX, segZ);
   geometri.rotateX(-Math.PI / 2);
   const punkter = geometri.attributes.position;
@@ -106,6 +98,12 @@ export async function byggFormMark(post) {
   mark.castShadow = false;
   const hus = post.analysis.buildings.map((husPost, index) => byggHus(husPost, bredd, djup, index));
   return { mark, hus, bredd, djup, texturSida: textur.userData.sida };
+}
+
+function markSegment(post, bredd, djup) {
+  const lang = post.settings.detail === 'high' ? 176 : 128;
+  const kort = Math.max(1, Math.min(256, Math.round(lang * djup / bredd)));
+  return { segX: lang, segZ: kort };
 }
 
 function byggHus(husPost, bredd, djup, index) {

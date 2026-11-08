@@ -4,7 +4,9 @@ Så här känns det nu att flyga Typhoonen. Världen är i meter. Siffror märkt
 
 ## Vad du ser
 
-Du sitter i en cockpit i grågrönt med nitar, en svart instrumentbräda och ett reflexsikte. Gasreglaget är två spakar bredvid varandra längst ner i mitten. De följs åt: uppåt är mer gas, nedåt är mindre, och de går att dra. Reglaget är dolt tills flygningen har startat. Spaken i mitten har ett runt grepp. Runt planet ligger ett lapptäcke av små åkrar, häckar, en flod, en rak väg med bro, byar med röda tak och odlingar. En Fw 190 anfaller. Den kan skjutas ner, och den kan skjuta ner dig. Då finns Flyg igen.
+Du sitter i en cockpit i grågrönt med nitar, en svart instrumentbräda och ett reflexsikte. Kapellet är en smal rundad båge över huvudet och ned längs sidorna, ungefär som Typhoons bubbelkapell. Inga stänger eller ramar korsar synfältet. Det enda i mitten är reflexsiktet: ringen och glaset. Propellern syns inte i siktet, så rutan är fri. Utanför siktet snurrar den som förut.
+
+Gasreglaget är två spakar bredvid varandra längst ner i mitten. De följs åt: uppåt är mer gas, nedåt är mindre, och de går att dra. Båda knopparna är svart bakelit med mässingskant. Reglaget är dolt tills flygningen har startat. Till vänster sitter Centrera som en tryckknapp och vyknappen som en vippbrytare, på en metallplåt. Vippbrytaren visar vyn du byter till, inte den du redan är i: Sikte eller Bakom. I siktet står det alltså Bakom, aldrig Cockpit. Till höger sitter avtryckaren i ett styrspaksgrepp. Den trycks in när du skjuter. Runt planet ligger ett lapptäcke av små åkrar, häckar, en flod, en rak väg med bro, byar med röda tak och odlingar. En Fw 190 anfaller. Den kan skjutas ner, och den kan skjuta ner dig. Då finns Flyg igen.
 
 ## Siktet
 
@@ -35,7 +37,9 @@ Luften blir tunnare med höjden, som förut. Motorns effekt börjar avta över 3
 
 Höjdmätaren är en brittisk höjdmätare. Den långa visaren går ett varv på 1 000 fot (hundratal). Den korta går ett varv på 10 000 fot (tusental). I fönstret står höjden i meter. 0 m är båda visarna rakt upp. 152,4 m är 500 fot: lång visare rakt ner, kort visare ett halvt steg. 1 524 m är 5 000 fot: lång visare upp, kort visare rakt ner.
 
-Övriga instrument på den svarta tavlan ritas om ungefär tio gånger i sekunden, på en enda bild, inte som egna tredimensionella mätare. Fart, höjd, varvtal och stigning kommer från flygningen. Varvtalet är 800 varv i tomgång och 3 700 vid fullgas [F]. Propellern snurrar med 0,45 gånger det varvtalet och blir en suddig skiva när gasen är hög.
+Instrumenten sitter som på RAF:s standardpanel, den så kallade sexpackan, under siktet. Överst: fartmätare, konstgjord horisont och stigningsmätare. Under: höjdmätare, kursvisare och sväng- och snedlägesvisare. Boost, olja, varvtal och bränsle sitter på sidorna. Inget ligger ovanpå tavlan. Raden med km/h, m, m/s och avstånd till Fw 190 ligger uppe vid statusraden, liten, inte över instrumenten.
+
+Tavlan ritas om ungefär tio gånger i sekunden, på en enda bild, inte som egna tredimensionella mätare. Fart, höjd, varvtal och stigning kommer från flygningen. Varvtalet är 800 varv i tomgång och 3 700 vid fullgas [F]. Propellern snurrar med 0,45 gånger det varvtalet och blir en suddig skiva när gasen är hög.
 
 ## Fw 190
 

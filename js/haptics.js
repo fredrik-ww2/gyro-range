@@ -18,6 +18,12 @@ export function createHaptics(styles, settings) {
       if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:tung?'nedslag':'huk',strength:Math.max(.5,strength())*(tung?1.35:1)}));return;}
       if(typeof navigator.vibrate==='function')navigator.vibrate(tung?[14,24,18]:16);
     },
+    puls(niva=0.2){
+      const n=Math.max(0,Math.min(1.5,Number(niva)||0));
+      if(!settings.brytare.haptik||!n)return;
+      if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:n>.6?'skott':'kram',strength:n}));return;}
+      if(typeof navigator.vibrate==='function')navigator.vibrate(Math.round(8+n*28));
+    },
     step(){
       if(!settings.brytare.haptik)return;
       if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:'steg',strength:Math.max(0.35,strength())}));return;}

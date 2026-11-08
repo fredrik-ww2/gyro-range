@@ -1,0 +1,23 @@
+import { gangFartFranLutning, kroppFartRad, hoftMalRad, benFoljer, skapaKnyck } from '../js/rorelse.js';
+import { skakAmplitud, rorelseStyrka } from '../js/gang.js';
+import { STANDARD } from '../js/styrning.js';
+const fel=[];
+const k=(n,v)=>v||fel.push(n);
+const g=STANDARD.gang;
+k('gång dödzon', gangFartFranLutning(2*Math.PI/180,g)===0);
+k('gång ökar', gangFartFranLutning(20*Math.PI/180,g)>gangFartFranLutning(8*Math.PI/180,g));
+k('vrid dödzon', kroppFartRad(0.02,STANDARD.kropp)===0);
+k('vrid känslig', Math.abs(kroppFartRad(0.4,STANDARD.kropp))>0.5);
+k('höft tak', Math.abs(hoftMalRad(2,STANDARD.overkropp))<=90*Math.PI/180+1e-6);
+const folj=benFoljer(80*Math.PI/180,STANDARD.overkropp,.1);
+k('ben följer', Math.abs(folj.hoft)<80*Math.PI/180&&folj.kropp>0);
+k('skak kvar', skakAmplitud(0.002,0,0,1,0)>0);
+k('skak kram', skakAmplitud(0.002,1,1,1,1)===0);
+k('nu rörelse', rorelseStyrka({sikteRadS:2.5})>rorelseStyrka({sikteRadS:.2}));
+const k1=skapaKnyck();
+k('knyck ett steg', k1.steg(180,120)===true&&k1.steg(180,120)===false);
+k('knyck igen', k1.steg(20,120)===false&&k1.steg(180,120)===true);
+k('lugn lutning', skapaKnyck().steg(40,120)===false);
+k('knyck skild från huka', STANDARD.gang.knyck_dps!==STANDARD.stallning.grans_dps);
+if(fel.length){console.error(fel.join('\n'));process.exit(1);}
+console.log('rorelse-ok');

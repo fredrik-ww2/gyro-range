@@ -33,7 +33,7 @@ export function skapaDetektor(){
   avbryt(){lage='vila';kravLangsam=false;sparrTill=0;},
   steg(t,tipp,vrid,kanslighet){
    historik.push({t,tipp,vrid});meter(t);
-   const tr=KANS[kanslighet]||null;
+   const tr=typeof kanslighet==='number'?{tipp:kanslighet,vrid:kanslighet*.9}:(KANS[kanslighet]||null);
    if(!tr){if(lage==='ser'){lage='vila';return {typ:'slapp'};}return null;}
    if(t<sparrTill)return null;
    if(kravLangsam){if(Math.abs(tipp)<80&&vrid<80)kravLangsam=false;else return null;}

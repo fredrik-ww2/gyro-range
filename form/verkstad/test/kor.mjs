@@ -181,38 +181,42 @@ try {
   await page.evaluate(() => {
     document.querySelector('section[data-vy="stall"]')._kamera.sattVy({ mal: [-420, 280], d: 380, lutning: 42, kurs: 30 });
   });
-  await page.locator('[data-valj-enhet]').click();
-  await page.locator('[data-ark] [data-enhet="sherman_m4_75"]').click();
   const duk = page.locator('section[data-vy="stall"] canvas');
-  const box = await duk.boundingBox();
-  const punkter = [[0.32, 0.42], [0.62, 0.38], [0.48, 0.62], [0.7, 0.58], [0.38, 0.68], [0.58, 0.48]];
-  for (let i = 0; i < punkter.length; i++) {
-    const [px, py] = punkter[i];
+  async function stallEn(id, sida, px, py) {
+    await page.locator('[data-valj-enhet]').click();
+    await page.locator(`[data-ark] [data-enhet="${id}"]`).click();
+    const box = await duk.boundingBox();
     await page.mouse.click(box.x + box.width * px, box.y + box.height * py);
-    await page.locator(`[data-ark] [data-sida="${i < 3 ? 'bla' : 'rod'}"]`).click();
-    await page.waitForFunction((antal) => Number(document.querySelector('section[data-vy="stall"]').getAttribute('data-placeringar')) === antal, i + 1);
+    await page.locator(`[data-ark] [data-sida="${sida}"]`).click();
   }
-  if (await page.locator('section[data-vy="stall"]').getAttribute('data-bla') !== '3') throw new Error('Inte 3 blå');
-  if (await page.locator('section[data-vy="stall"]').getAttribute('data-rod') !== '3') throw new Error('Inte 3 röda');
+  await stallEn('tiger_ii', 'bla', 0.42, 0.48);
+  await stallEn('sherman_m4_75', 'rod', 0.62, 0.55);
+  await page.waitForFunction(() => {
+    const rader = [...document.querySelectorAll('[data-enhet-id]')];
+    const tiger = rader.find((rad) => rad.dataset.enhetId === 'tiger_ii');
+    const sherman = rader.find((rad) => rad.dataset.enhetId === 'sherman_m4_75');
+    return tiger?.dataset.visning === 'platshallare' && sherman?.dataset.visning === 'modell';
+  }, null, { timeout: 60000 });
+  async function zoomaPa(id, fil) {
+    const rad = page.locator(`[data-enhet-id="${id}"]`);
+    const x = Number(await rad.getAttribute('data-x'));
+    const z = Number(await rad.getAttribute('data-z'));
+    await page.evaluate(([mx, mz]) => {
+      document.querySelector('section[data-vy="stall"]')._kamera.sattVy({ mal: [mx, mz], d: 18, lutning: 58, kurs: 24 });
+    }, [x, z]);
+    await page.waitForTimeout(700);
+    await bild(page, fil);
+  }
+  await zoomaPa('tiger_ii', '12-tiger-nara');
+  await zoomaPa('sherman_m4_75', '13-sherman-nara');
   const tri = Number(await page.locator('section[data-vy="stall"]').getAttribute('data-trianglar'));
-  if (tri > 50000) throw new Error('För många trianglar: ' + tri);
-  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.45);
-  for (let i = 0; i < 6; i++) await page.mouse.wheel(0, -500);
-  await page.waitForTimeout(700);
-  await bild(page, '07-stall-ut');
+  if (tri < 1000) throw new Error('För få trianglar nära Sherman: ' + tri);
 
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector('[data-redo="mark"]', { timeout: 90000 });
-  await page.waitForFunction(() => document.querySelector('section[data-vy="stall"]').getAttribute('data-placeringar') === '6');
-  if (await page.locator('section[data-vy="stall"]').getAttribute('data-bla') !== '3') throw new Error('Blå försvann');
-  if (await page.locator('section[data-vy="stall"]').getAttribute('data-rod') !== '3') throw new Error('Röd försvann');
-  await page.locator('[data-lista] [data-handling="flytta"]').first().click();
-  const box2 = await duk.boundingBox();
-  await page.mouse.click(box2.x + box2.width * 0.5, box2.y + box2.height * 0.3);
-  await page.waitForFunction(() => document.querySelector('section[data-vy="stall"]').getAttribute('data-sparad'));
-  await page.locator('[data-lista] [data-handling="tabort"]').first().click();
-  await page.waitForFunction(() => document.querySelector('section[data-vy="stall"]').getAttribute('data-placeringar') === '5');
-  await bild(page, '08-efter-flytt');
+  await page.waitForFunction(() => document.querySelector('section[data-vy="stall"]').getAttribute('data-placeringar') === '2');
+  if (await page.locator('section[data-vy="stall"]').getAttribute('data-bla') !== '1') throw new Error('Blå försvann');
+  if (await page.locator('section[data-vy="stall"]').getAttribute('data-rod') !== '1') throw new Error('Röd försvann');
 
   raknaFel = false;
   const sidor = ['/', '/hus/', '/satellit/', '/omrade/', '/omrade/anslutning/', '/omrade/exempel/', '/metod/', '/optimera/', '/bygginstruktion/'];

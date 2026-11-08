@@ -1,7 +1,7 @@
 /* Flygfotot är detaljen. Färgen är en mjuk, lågfrekvent ton, inte ett rutmönster. */
 
 import {
-  CanvasTexture, LinearFilter, LinearMipmapLinearFilter, MeshStandardMaterial
+  CanvasTexture, LinearFilter, LinearMipmapLinearFilter, MeshStandardMaterial, RepeatWrapping
 } from 'three';
 
 const CELL = 40;
@@ -30,7 +30,83 @@ export function stallFilter(textur, renderer) {
 }
 
 export function markMaterial(textur) {
-  return new MeshStandardMaterial({ map: textur, roughness: 1, metalness: 0 });
+  const detalj = detaljTextur();
+  const material = new MeshStandardMaterial({ map: textur, roughness: 1, metalness: 0 });
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.markDetalj = { value: detalj };
+    const vertex = shader.vertexShader
+      .replace('#include <uv_pars_vertex>', '#include <uv_pars_vertex>\nvarying vec3 vMarkWorld;')
+      .replace('#include <project_vertex>', 'vMarkWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;\n#include <project_vertex>');
+    const fragment = shader.fragmentShader
+      .replace('#include <uv_pars_fragment>', '#include <uv_pars_fragment>\nuniform sampler2D markDetalj;\nvarying vec3 vMarkWorld;')
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        float markAvstand = distance(vMarkWorld.xz, cameraPosition.xz);
+        float markNar = smoothstep(150.0, 24.0, markAvstand);
+        vec3 markKorn = texture2D(markDetalj, vMarkWorld.xz * 0.42).rgb;
+        diffuseColor.rgb *= mix(vec3(1.0), markKorn, markNar * 0.55);`);
+    if (vertex === shader.vertexShader || fragment === shader.fragmentShader) {
+      console.error('Markdetaljen kunde inte kopplas in i markshaderen');
+    }
+    shader.vertexShader = vertex;
+    shader.fragmentShader = fragment;
+  };
+  material.customProgramCacheKey = () => 'mark-foto-detalj-v2';
+  return material;
+}
+
+function detaljTextur() {
+  const n = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = n;
+  canvas.height = n;
+  const rit = canvas.getContext('2d');
+  const bild = rit.createImageData(n, n);
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      const korn = periodBrus(x / n, y / n);
+      const v = Math.max(0, Math.min(255, (0.72 + korn * 0.46) * 255));
+      const i = (y * n + x) * 4;
+      bild.data[i] = Math.min(255, v * 1.05);
+      bild.data[i + 1] = v;
+      bild.data[i + 2] = Math.max(0, v * 0.82);
+      bild.data[i + 3] = 255;
+    }
+  }
+  rit.putImageData(bild, 0, 0);
+  const textur = new CanvasTexture(canvas);
+  textur.wrapS = RepeatWrapping;
+  textur.wrapT = RepeatWrapping;
+  textur.magFilter = LinearFilter;
+  textur.minFilter = LinearMipmapLinearFilter;
+  textur.generateMipmaps = true;
+  textur.colorSpace = 'srgb';
+  textur.anisotropy = 8;
+  textur.needsUpdate = true;
+  return textur;
+}
+
+function periodBrus(u, v) {
+  const g = 24;
+  const x = u * g;
+  const y = v * g;
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const fx = x - x0;
+  const fy = y - y0;
+  const sx = fx * fx * (3 - 2 * fx);
+  const sy = fy * fy * (3 - 2 * fy);
+  const a = hash2(x0, y0);
+  const b = hash2(x0 + 1, y0);
+  const c = hash2(x0, y0 + 1);
+  const d = hash2(x0 + 1, y0 + 1);
+  return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+}
+
+function hash2(x, y) {
+  const ix = ((x % 24) + 24) % 24;
+  const iy = ((y % 24) + 24) % 24;
+  const n = Math.sin(ix * 127.1 + iy * 311.7) * 43758.5453;
+  return n - Math.floor(n);
 }
 
 function rita(fil) {

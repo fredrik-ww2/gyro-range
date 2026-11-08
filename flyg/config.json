@@ -1,160 +1,214 @@
 {
-  "version": "flyg-v2-typhoon",
-  "modell": {
-    "namn": "Hawker Typhoon Mk Ib",
-    "fil": "./assets/typhoon_mkib.glb",
-    "spann_m": 12.67,
-    "rotation_y": 3.14159265359
+ "version": "flyg-v3-fysik",
+ "modell": {
+  "namn": "Hawker Typhoon Mk Ib",
+  "fil": "./assets/typhoon_mkib.glb",
+  "spann_m": 12.67,
+  "rotation_y": 3.14159265359
+ },
+ "brytare": {
+  "gyro": true,
+  "nivellering": true,
+  "skjutning": true,
+  "mal": true,
+  "markskydd": false,
+  "haptik": true,
+  "ljud": true,
+  "skada": false,
+  "krasch": true
+ },
+ "styrning": {
+  "kanslighet": 1,
+  "utjamning_s": 0.0,
+  "aterga_s": 0,
+  "aterga_vila_s": 1,
+  "aterga_trosk_dps": 3,
+  "inverteraX": false,
+  "inverteraY": false,
+  "inverteraZ": false,
+  "max_pitch": 0.55,
+  "max_roll": 1.308996939,
+  "respons_s": 0.45,
+  "dodzon": 0.025,
+  "dra_rad_px": 0.004,
+  "bank_tecken": "Stående iPhone/native: vänster roll z<0 → bank>0, heading ökar → vänster; höger z>0 → bank<0, heading minskar. Native vridning y>0 → vänster, y<0 → höger. Webb gamma<0 → vänster, gamma>0 → höger; alpha ökar → vänster. x>0/beta ökar → stig. Expo x/y/z i rad/s; t i sekunder.",
+  "bank_forstarkning": 1.4,
+  "kritisk_omega": 8,
+  "neutral_rad": 0.018,
+  "gyro_brus_rad_s": 0.022,
+  "yaw_andel": 0.8
+ },
+ "flyg": {
+  "gas": 0.85,
+  "start_hojd": 120,
+  "min_markfrigang": 0,
+  "varld_radie": 2400,
+  "kant_svang": 0.4
+ },
+ "kamera": {
+  "avstand": 26,
+  "framfor": 10,
+  "hojd": 2.0,
+  "lutning": 80,
+  "utjamning_s": 0.3
+ },
+ "varld": {
+  "storlek": 20000,
+  "segment": 110,
+  "dimma_nara": 900,
+  "dimma_fjarran": 4200,
+  "pixelratio": 1.5,
+  "hojd_stor": 45,
+  "hojd_liten": 13,
+  "frekvens_stor": 0.002,
+  "frekvens_liten": 0.009,
+  "falt_textur_px": 1024,
+  "falt_rutor": 16,
+  "max_render_px": 420000,
+  "dimma_max": 9000,
+  "omcentrera_m": 1500,
+  "traad_antal": 900,
+  "traad_radie_m": 2600,
+  "traad_cell_m": 55,
+  "traad_dold_over_m": 1800,
+  "traad_tathet": 0.11,
+  "falt_m": 210
+ },
+ "vapen": {
+  "intervall_s": 0.12,
+  "rackvidd": 1300,
+  "traff_radie": 16,
+  "mal_antal": 8,
+  "mal_radie": 11,
+  "aterkomst_s": 4,
+  "mal_avstand": 360,
+  "mal_mellanrum": 120,
+  "lod_enkel_m": 350,
+  "lod_billboard_m": 800,
+  "mal_svaj": 20,
+  "konvergens_m": 300,
+  "kaliber_mm": 20,
+  "mynningar_typhoon": [
+   [
+    -2.1,
+    -0.15,
+    -2.5
+   ],
+   [
+    -2.85,
+    -0.15,
+    -2.5
+   ],
+   [
+    2.1,
+    -0.15,
+    -2.5
+   ],
+   [
+    2.85,
+    -0.15,
+    -2.5
+   ]
+  ],
+  "mynningar_p51": [
+   [
+    -2.4,
+    0,
+    -1.9
+   ],
+   [
+    2.4,
+    0,
+    -1.9
+   ]
+  ],
+  "sparljus_pool": 96,
+  "sparljus_ms": 820,
+  "sparljus_liv_s": 1.2
+ },
+ "ljud": {
+  "roster": 8,
+  "motor": "./assets/motor_tomgang_A_mobil80.m4a",
+  "skott": "./assets/skott_kanon_37mm_mobil80.m4a",
+  "motor_volym": 0.23,
+  "skott_volym": 0.38,
+  "motor_loop_end": 3.992396,
+  "skott_beskrivning": "37 mm kanonproxy [F], inte identifierad Hispano"
+ },
+ "budget": {
+  "mal_fps": 30,
+  "max_trianglar": 50000,
+  "max_ritanrop": 100
+ },
+ "modeller": {
+  "typhoon": {
+   "namn": "Hawker Typhoon Mk Ib",
+   "fil": "./assets/typhoon_mkib.glb",
+   "spann_m": 12.67,
+   "rotation_y": 3.14159265359
   },
-  "brytare": {
-    "gyro": true,
-    "nivellering": true,
-    "skjutning": true,
-    "mal": true,
-    "markskydd": true,
-    "haptik": true,
-    "ljud": true,
-    "skada": false
-  },
-  "styrning": {
-    "kanslighet": 1,
-    "utjamning_s": 0.0,
-    "aterga_s": 0,
-    "aterga_vila_s": 1,
-    "aterga_trosk_dps": 3,
-    "inverteraX": false,
-    "inverteraY": false,
-    "inverteraZ": false,
-    "max_pitch": 0.55,
-    "max_roll": 1.308996939,
-    "respons_s": 0.45,
-    "dodzon": 0.025,
-    "dra_rad_px": 0.004,
-    "bank_tecken": "Stående iPhone/native: vänster roll z<0 → bank>0, heading ökar → vänster; höger z>0 → bank<0, heading minskar. Native vridning y>0 → vänster, y<0 → höger. Webb gamma<0 → vänster, gamma>0 → höger; alpha ökar → vänster. x>0/beta ökar → stig. Expo x/y/z i rad/s; t i sekunder.",
-    "bank_forstarkning": 1.4,
-    "kritisk_omega": 8,
-    "neutral_rad": 0.018,
-    "gyro_brus_rad_s": 0.022,
-    "yaw_andel": 0.8
-  },
-  "flyg": {
-    "gas": 0.65,
-    "min_fart": 32,
-    "max_fart": 105,
-    "start_hojd": 180,
-    "min_markfrigang": 28,
-    "max_hojd": 900,
-    "varld_radie": 2400,
-    "kant_svang": 0.4
-  },
-  "kamera": {
-    "avstand": 43,
-    "framfor": 22,
-    "hojd": 2.5,
-    "lutning": 80,
-    "utjamning_s": 0.3
-  },
-  "varld": {
-    "storlek": 6000,
-    "segment": 96,
-    "dimma_nara": 650,
-    "dimma_fjarran": 2300,
-    "pixelratio": 1.5,
-    "hojd_stor": 45,
-    "hojd_liten": 13,
-    "frekvens_stor": 0.002,
-    "frekvens_liten": 0.009,
-    "falt_textur_px": 1024,
-    "falt_rutor": 16,
-    "max_render_px": 420000
-  },
-  "vapen": {
-    "intervall_s": 0.12,
-    "rackvidd": 1300,
-    "traff_radie": 16,
-    "mal_antal": 8,
-    "mal_radie": 11,
-    "aterkomst_s": 4,
-    "mal_avstand": 360,
-    "mal_mellanrum": 120,
-    "lod_enkel_m": 350,
-    "lod_billboard_m": 800,
-    "mal_svaj": 20,
-    "konvergens_m": 300,
-    "kaliber_mm": 20,
-    "mynningar_typhoon": [
-      [
-        -2.1,
-        -0.15,
-        -2.5
-      ],
-      [
-        -2.85,
-        -0.15,
-        -2.5
-      ],
-      [
-        2.1,
-        -0.15,
-        -2.5
-      ],
-      [
-        2.85,
-        -0.15,
-        -2.5
-      ]
-    ],
-    "mynningar_p51": [
-      [
-        -2.4,
-        0,
-        -1.9
-      ],
-      [
-        2.4,
-        0,
-        -1.9
-      ]
-    ],
-    "sparljus_pool": 96,
-    "sparljus_ms": 820,
-    "sparljus_liv_s": 1.2
-  },
-  "ljud": {
-    "roster": 8,
-    "motor": "./assets/motor_tomgang_A_mobil80.m4a",
-    "skott": "./assets/skott_kanon_37mm_mobil80.m4a",
-    "motor_volym": 0.23,
-    "skott_volym": 0.38,
-    "motor_loop_end": 3.992396,
-    "skott_beskrivning": "37 mm kanonproxy [F], inte identifierad Hispano"
-  },
-  "budget": {
-    "mal_fps": 30,
-    "max_trianglar": 50000,
-    "max_ritanrop": 100
-  },
-  "modeller": {
-    "typhoon": {
-      "namn": "Hawker Typhoon Mk Ib",
-      "fil": "./assets/typhoon_mkib.glb",
-      "spann_m": 12.67,
-      "rotation_y": 3.14159265359
-    },
-    "p51": {
-      "namn": "P-51 Mustang",
-      "fil": "./assets/p51_mustang.glb",
-      "spann_m": 11.28,
-      "rotation_y": 3.14159265359
-    }
-  },
-  "standardmodell": "typhoon",
-  "fysik": {
-    "g_ms2": 9.80665,
-    "svang_formel": "omega_rad_s = g_ms2 * tan(bank_rad) / fart_ms",
-    "lastfaktor_formel": "n = 1 / cos(bank_rad)",
-    "radie_formel": "R_m = fart_ms^2 / (g_ms2 * abs(tan(bank_rad)))",
-    "tecken": "Positiv bank = vänster vinge ned. Positiv heading vrider -Z-färdriktningen mot -X.",
-    "modell": "Koordinerad stationär sväng vid given sann fart; ingen full aerodynamisk stall- eller energimodell."
+  "p51": {
+   "namn": "P-51 Mustang",
+   "fil": "./assets/p51_mustang.glb",
+   "spann_m": 11.28,
+   "rotation_y": 3.14159265359
   }
+ },
+ "standardmodell": "typhoon",
+ "fysik": {
+  "g_ms2": 9.80665,
+  "svang_formel": "omega_rad_s = g_ms2 * tan(bank_rad) / fart_ms",
+  "lastfaktor_formel": "n = 1 / cos(bank_rad)",
+  "radie_formel": "R_m = fart_ms^2 / (g_ms2 * abs(tan(bank_rad)))",
+  "tecken": "Positiv bank = vänster vinge ned. Positiv heading vrider -Z-färdriktningen mot -X.",
+  "modell": "Punktmassemodell flygprov 03: fart, anfallsvinkel, lyft, motstånd, dragkraft, tyngd, stall, energi. Se flight-model.js och FLYG_V3_FYSIK.md."
+ },
+ "aero": {
+  "massa_kg": 5170,
+  "vingyta_m2": 25.9,
+  "cl_alfa_per_rad": 5.0,
+  "alfa_noll_grad": -2,
+  "alfa_kritisk_grad": 16,
+  "stall_cl_andel": 0.65,
+  "stall_cd_extra": 0.12,
+  "stall_vingfall_rad": 0.5,
+  "cd0": 0.0165,
+  "k_inducerat": 0.065,
+  "motoreffekt_w": 1625000,
+  "propellerverkningsgrad": 0.78,
+  "statisk_dragkraft_n": 24000,
+  "fullhojd_m": 3400,
+  "effekt_skalhojd_m": 5200,
+  "trim_max_grad": 11,
+  "alfa_per_rad_input": 0.35,
+  "drag_max_grad": 15,
+  "tryck_max_grad": 9,
+  "alfa_tau_s": 0.25,
+  "roll_omega": 5,
+  "min_fart_ms": 12,
+  "start_hojd_m": 120,
+  "start_fart_ms": 125,
+  "stall_nos_rad_s": 0.7,
+  "max_banvinkel_rad": 1.45,
+  "trim_n_min": 0.3,
+  "trim_n_max": 1.6,
+  "niva_k": 1.0,
+  "_om": "Typhoon Mk IB [F]: massa ca 5 200 kg, vingyta 25,9 m², Sabre ca 2 180 hk ≈ 1 625 kW. Se FLYG_V3_FYSIK.md."
+ },
+ "cockpit": {
+  "oga_lokal": [
+   0,
+   1.05,
+   0.6
+  ],
+  "fov_grader": 68,
+  "ring_radie_mil": 50,
+  "ring_kommentar": "GM2-ring i Mk II-sikte: radie 50 mil [F]; mittpunkten sätts på vingkanonernas konvergenspunkt 300 m fram.",
+  "nara_m": 0.3
+ },
+ "krasch": {
+  "laddning_g": 4000,
+  "brand_skala": 1.6,
+  "kontakt_m": 1.2
+ }
 }

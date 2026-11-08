@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "område": "Villers-Bocage",
+  "källa": "IGN – Photothèque Nationale, mission C1513-0181, bild 106G1262_4039–4043; luckfyllnad IGN ortofoto 1947 Calvados",
+  "år": [
+    1944,
+    1947
+  ],
+  "datum_huvud": "1944-07-06",
+  "anmärkning": "Befintlig georefererad komposit återanvänd. Hela utsnittet ligger inom ursprunglig v1-ruta; ingen 1945-yta. Exakt andel 1947 i detta utsnitt inte separat uppmätt. Inte ett rent foto från juni 1944.",
+  "crs": "EPSG:32630",
+  "bbox_utm": [
+    670450,
+    5438340,
+    672450,
+    5440340
+  ],
+  "lokala_gränser": {
+    "x": [
+      -1000,
+      1000
+    ],
+    "z": [
+      -1000,
+      1000
+    ]
+  },
+  "pixel_0_0": {
+    "hörn": "nordväst",
+    "pixelkant_utm": [
+      670450,
+      5440340
+    ],
+    "pixelkant_lokalt_xz": [
+      -1000,
+      -1000
+    ],
+    "pixelcentrum_utm_2048": [
+      670450.48828125,
+      5440339.51171875
+    ]
+  },
+  "radordning": "norr till söder",
+  "kolumnordning": "väster till öster",
+  "pixelstorlek_m": {
+    "markbild_2048.jpg": 0.9765625,
+    "markbild_512.jpg": 3.90625
+  },
+  "uv": {
+    "u": "(x + 1000) / 2000",
+    "v_bild_rad": "(z + 1000) / 2000",
+    "anmärkning": "Bildens övre kant är norr. Anpassa texturens flipY till visaren; ingen spegling i bildfilen."
+  },
+  "georeferens": {
+    "underlag": "foto_ost.py och flygfotovy_villers_bocage_v2_ost/data/meta.json",
+    "källruta_nordväst_utm": [
+      670426,
+      5440540
+    ],
+    "källpixel_m": 0.5,
+    "beskärning_pixel_xywh": [
+      48,
+      400,
+      4000,
+      4000
+    ],
+    "rutor": "t_{kolumn}_{rad}.jpg, 6 kolumner och 5 rader, 1024 px per ruta",
+    "ursprunglig_georeferering_rms_m": "1,5–1,7 enligt befintliga metadata; inte ommätt"
+  },
+  "kontroll": {
+    "översiktskorrelation": 0.9914580853703081,
+    "höjdfält": "heightfield_1m.f32, 2001 x 2001, samma bbox och nord-sydordning",
+    "kontrollbild": "markbild_kontroll.png i arbetsmappen",
+    "status": "Visuellt jämförd med höjdskuggning: västra dalstråket och norra ravinen passar grovt. Ingen axelspegling eller grov förskjutning syns. Nutida höjdfält har senare vägskärningar; historiska fotot har tydliga ton- och mosaiksömmar. Ingen oberoende kontrollpunktsmätning gjord."
+  }
+}

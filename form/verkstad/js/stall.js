@@ -1,15 +1,15 @@
 import * as THREE from 'three';
 import {
-  BackSide, CanvasTexture, CircleGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide,
-  Fog, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshStandardMaterial, ShaderMaterial, SphereGeometry,
-  Sprite, SpriteMaterial, MOUSE, Raycaster, RingGeometry, Scene, TOUCH, Vector2, Vector3, WebGLRenderer
+  BackSide, Box3, BoxGeometry, CircleGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide,
+  Fog, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshStandardMaterial, ShaderMaterial,
+  MOUSE, Raycaster, RingGeometry, Scene, SphereGeometry, TOUCH, Vector2, Vector3, WebGLRenderer
 } from 'three';
 import { laddaMarkyta, markMaterial, stallFilter } from './markyta.js';
 import { OrbitControls } from '../vendor/OrbitControls.js';
 import { skapaAppleKamera } from '../../../flyg/kamera/kamera_apple_zoom_v1.js';
 import { KAMERAVARDEN } from './kameravarden.js';
-import { klonaMall, laddaMall, laddaObjekt, lattasteModell } from './modeller.js';
-import { esc, hamtaEnhet, statusNamn, tal } from './data.js';
+import { klonaMall, laddaMall, laddaObjekt } from './modeller.js';
+import { esc, hamtaEnhet, placeringsModell, statusNamn, tal, truppVisning } from './data.js';
 import { lasScen, skrivScen } from './spara.js';
 
 const VARLD = 'villers_bocage';
@@ -31,6 +31,7 @@ export async function monteraStall(el, { index, tillbaka }) {
         <canvas data-duk aria-label="Villers-Bocage. Ett finger flyttar vyn, nyp för att zooma."></canvas>
         <p class="stall-status" data-status>Läser höjdterrängen…</p>
         <p class="hint stall-hint">Ett finger flyttar · nyp zoomar · två fingrar lutar</p>
+        <div class="etikett-lager" data-etiketter></div>
       </div>
       <div class="stall-panel">
         <p data-vald>Välj en enhet, tryck på marken och välj sida.</p>
@@ -241,6 +242,7 @@ export async function monteraStall(el, { index, tillbaka }) {
       synkLod();
       skalaValjare();
     }
+    placeraEtiketter();
     renderer.render(scen, kam.kamera);
     const tri = renderer.info.render.triangles;
     el.dataset.trianglar = String(tri);
@@ -292,16 +294,43 @@ export async function monteraStall(el, { index, tillbaka }) {
     }
   }
 
-  function skalaValjare() {
-    const d = kam.lage().d || 100;
+  function skalaValjare() {}
+
+  function placeraEtiketter() {
+    const lager = el.querySelector('[data-etiketter]');
+    if (!lager) return;
+    const bredd = lager.clientWidth || 1;
+    const hojdPx = lager.clientHeight || 1;
+    const punkt = new Vector3();
     for (const post of placeringar) {
-      if (post.pinne) post.pinne.position.y = 3.2;
-      if (post.etikett) {
-        const bredd = Math.min(36, Math.max(12, d * 0.16));
-        post.etikett.scale.set(bredd, bredd * 0.25, 1);
-        post.etikett.position.y = 8 + bredd * 0.08;
+      const tagg = post.tagg;
+      if (!tagg) continue;
+      punkt.copy(post.grupp.position);
+      punkt.y += post.etikettHojd || 2.4;
+      punkt.project(kam.kamera);
+      if (punkt.z > 1) {
+        tagg.style.visibility = 'hidden';
+        continue;
       }
-      if (post.valjare) post.valjare.scale.set(Math.max(1.4, d * 0.012), 1, Math.max(1.4, d * 0.012));
+      const avstand = kam.kamera.position.distanceTo(post.grupp.position);
+      const skala = Math.min(1, Math.max(0.62, avstand / 170));
+      tagg.style.visibility = 'visible';
+      tagg.style.transform = `scale(${skala})`;
+      const x = (punkt.x * 0.5 + 0.5) * bredd;
+      const y = (-punkt.y * 0.5 + 0.5) * hojdPx;
+      const lagerRect = lager.getBoundingClientRect();
+      const statusRect = el.querySelector('[data-status]')?.getBoundingClientRect();
+      const hintRect = el.querySelector('.stall-hint')?.getBoundingClientRect();
+      const toppMarg = statusRect ? Math.max(6, statusRect.bottom - lagerRect.top + 6) : 6;
+      const bottenMarg = hintRect ? Math.max(6, lagerRect.bottom - hintRect.top + 6) : 6;
+      const layoutBredd = tagg.offsetWidth || 72;
+      const layoutHojd = tagg.offsetHeight || 18;
+      const halv = layoutBredd * skala * 0.5;
+      const visH = layoutHojd * skala;
+      const xKlam = Math.max(6 + halv, Math.min(bredd - 6 - halv, x));
+      const botten = Math.max(toppMarg + visH, Math.min(hojdPx - bottenMarg, y - 8));
+      tagg.style.left = (xKlam - layoutBredd / 2) + 'px';
+      tagg.style.top = (botten - layoutHojd) + 'px';
     }
   }
 
@@ -346,43 +375,51 @@ export async function monteraStall(el, { index, tillbaka }) {
     const grupp = new Group();
     grupp.userData.placering = id;
     grupp.position.set(x, hojd(x, z), z);
-    const farg = rad.sida === 'rod' ? 0xb42323 : rad.sida === 'bla' ? 0x2458c9 : 0x8a8474;
-    const ring = new Mesh(new RingGeometry(5.2, 7.1, 28), new MeshBasicMaterial({ color: farg, side: DoubleSide }));
+    const fargHex = rad.sida === 'rod' ? 0xb42323 : rad.sida === 'bla' ? 0x2458c9 : 0x8a8474;
+    const ring = new Mesh(new RingGeometry(1.35, 1.55, 40), new MeshBasicMaterial({ color: fargHex, side: DoubleSide, depthWrite: false, depthTest: false }));
     ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 1.1;
-    const skugga = new Mesh(new CircleGeometry(2.3, 10), new MeshBasicMaterial({ color: 0x1b241c, transparent: true, opacity: 0.28, depthWrite: false }));
+    ring.position.y = 0.2;
+    ring.renderOrder = 2;
+    const skugga = new Mesh(new CircleGeometry(1.4, 12), new MeshBasicMaterial({ color: 0x1b241c, transparent: true, opacity: 0.28, depthWrite: false }));
     skugga.rotation.x = -Math.PI / 2;
-    skugga.position.y = 0.12;
+    skugga.position.y = 0.08;
     skugga.name = 'skuggproxy';
-    const pinne = new Mesh(new SphereGeometry(1.15, 10, 8), new MeshBasicMaterial({ color: farg }));
-    pinne.position.y = 3.2;
-    const etikett = textEtikett(poster.get(rad.enhet)?.namn || rad.enhet, rad.sida === 'rod' ? '#b42323' : '#2458c9');
-    const valjare = new Mesh(new CylinderGeometry(2.2, 2.2, 3.2, 6, 1, true), new MeshBasicMaterial({ colorWrite: false, depthWrite: false }));
-    valjare.position.y = 1.6;
+    const valjare = new Mesh(new CylinderGeometry(1.1, 1.1, 2.2, 6, 1, true), new MeshBasicMaterial({ colorWrite: false, depthWrite: false }));
+    valjare.position.y = 1.2;
     valjare.userData.placering = id;
-    grupp.add(skugga, ring, pinne, etikett, valjare);
+    grupp.add(skugga, ring, valjare);
     enhetsGrupp.add(grupp);
     rad.grupp = grupp;
     rad.ring = ring;
-    rad.pinne = pinne;
-    rad.etikett = etikett;
     rad.skugga = skugga;
     rad.valjare = valjare;
+    rad.tagg = skapaEtikett(poster.get(rad.enhet)?.namn || rad.enhet, rad.sida);
     placeringar.push(rad);
-    skalaValjare();
     const meta = poster.get(rad.enhet);
+    let kropp = null;
     if (meta) {
       try {
         const pack = await hamtaEnhet(meta.fil);
-        const modell = lattasteModell(pack.visning.modeller);
+        const modell = placeringsModell(pack.visning.modeller);
         if (modell) {
           const mall = await laddaMall(renderer, meta.fil, modell);
-          grupp.add(klonaMall(mall));
-        } else grupp.add(token());
+          kropp = klonaMall(mall);
+          grupp.add(kropp);
+          riktaOchSatt(kropp);
+          rad.visning = 'modell';
+        }
       } catch {
-        grupp.add(token());
+        kropp = null;
       }
-    } else grupp.add(token());
+    }
+    if (!kropp) {
+      kropp = platshallare(meta ? (await hamtaEnhet(meta.fil).catch(() => null))?.visning : null);
+      grupp.add(kropp);
+      rad.visning = 'platshallare';
+    }
+    rad.kropp = kropp;
+    kropp.traverse?.((nod) => { nod.renderOrder = 3; });
+    passaRing(rad);
     if (fragaSida) {
       await valjSida(rad);
     } else {
@@ -391,10 +428,60 @@ export async function monteraStall(el, { index, tillbaka }) {
     return rad;
   }
 
-  function token() {
-    const kropp = new Mesh(new CylinderGeometry(0.45, 0.55, 1.7, 6), new MeshStandardMaterial({ color: 0x8d9284 }));
-    kropp.position.y = 0.85;
-    return kropp;
+  function platshallare(enhet) {
+    const trupp = truppVisning(enhet || {});
+    const grupp = new Group();
+    const matta = new MeshStandardMaterial({ color: 0x6d7268, roughness: 0.9, metalness: 0.02 });
+    if (trupp === 'Infanteri') {
+      const kropp = new Mesh(new BoxGeometry(0.42, 1.05, 0.26), matta);
+      kropp.position.y = 0.72;
+      const huvud = new Mesh(new BoxGeometry(0.22, 0.24, 0.22), matta);
+      huvud.position.y = 1.38;
+      grupp.add(kropp, huvud);
+    } else {
+      const skrov = new Mesh(new BoxGeometry(3.2, 1.15, 6.4), matta);
+      skrov.position.y = 0.72;
+      const torn = new Mesh(new BoxGeometry(1.8, 0.72, 2.2), matta);
+      torn.position.set(0, 1.58, -0.25);
+      const eldror = new Mesh(new BoxGeometry(0.18, 0.18, 2.8), matta);
+      eldror.position.set(0, 1.7, 2.3);
+      grupp.add(skrov, torn, eldror);
+    }
+    return grupp;
+  }
+
+  function riktaOchSatt(objekt) {
+    objekt.rotation.y = 0;
+    objekt.position.y = 0;
+    objekt.updateWorldMatrix(true, true);
+    let box = new Box3().setFromObject(objekt);
+    const storlek = box.getSize(new Vector3());
+    if (storlek.x > storlek.z * 1.2) objekt.rotation.y = Math.PI / 2;
+    objekt.updateWorldMatrix(true, true);
+    box = new Box3().setFromObject(objekt);
+    const parentY = objekt.parent ? objekt.parent.getWorldPosition(new Vector3()).y : 0;
+    objekt.position.y -= box.min.y - parentY;
+  }
+
+  function passaRing(rad) {
+    const box = new Box3().setFromObject(rad.kropp);
+    const storlek = box.getSize(new Vector3());
+    const radie = Math.max(0.9, Math.max(storlek.x, storlek.z) * 0.68);
+    const tjock = Math.max(0.07, Math.min(0.18, radie * 0.045));
+    rad.ring.geometry.dispose();
+    rad.ring.geometry = new RingGeometry(Math.max(0.2, radie - tjock), radie, 48);
+    rad.skugga.scale.setScalar(radie / 1.4);
+    rad.valjare.scale.set(Math.max(0.8, radie / 1.6), 1, Math.max(0.8, radie / 1.6));
+    rad.etikettHojd = Math.max(1.6, storlek.y + 0.4);
+  }
+
+  function skapaEtikett(namn, sida) {
+    const lager = el.querySelector('[data-etiketter]');
+    const tagg = document.createElement('div');
+    tagg.className = 'enhets-etikett ' + (sida === 'rod' ? 'rod' : sida === 'bla' ? 'bla' : 'neutral');
+    tagg.textContent = namn;
+    lager.append(tagg);
+    return tagg;
   }
 
   function valjSida(rad) {
@@ -420,15 +507,10 @@ export async function monteraStall(el, { index, tillbaka }) {
         }
         if (!sida) return;
         rad.sida = sida;
-        const farg = sida === 'rod' ? 0xb42323 : 0x2458c9;
-        rad.ring.material.color.set(farg);
-        rad.pinne.material.color.set(farg);
-        const ny = textEtikett(poster.get(rad.enhet)?.namn || rad.enhet, sida === 'rod' ? '#b42323' : '#2458c9');
-        ny.position.copy(rad.etikett.position);
-        ny.scale.copy(rad.etikett.scale);
-        rad.etikett.removeFromParent();
-        rad.grupp.add(ny);
-        rad.etikett = ny;
+        rad.ring.material.color.set(sida === 'rod' ? 0xb42323 : 0x2458c9);
+        if (rad.tagg) {
+          rad.tagg.className = 'enhets-etikett ' + (sida === 'rod' ? 'rod' : 'bla');
+        }
         ark.hidden = true;
         await spara();
         valj(rad.id);
@@ -465,6 +547,7 @@ export async function monteraStall(el, { index, tillbaka }) {
     if (indexRad < 0) return;
     const [post] = placeringar.splice(indexRad, 1);
     post.grupp.removeFromParent();
+    post.tagg?.remove();
     if (valdPlacering?.id === id) valdPlacering = null;
     el.querySelector('[data-flytta]').hidden = true;
     el.querySelector('[data-tabort]').hidden = true;
@@ -496,7 +579,7 @@ export async function monteraStall(el, { index, tillbaka }) {
       const namn = poster.get(post.enhet)?.namn || post.enhet;
       const meta = poster.get(post.enhet);
       const statusText = meta ? statusNamn(meta.status) : 'Under utveckling';
-      return `<li data-placering="${esc(post.id)}" data-x="${runda(post.x)}" data-z="${runda(post.z)}" data-sida="${esc(post.sida)}">
+      return `<li data-placering="${esc(post.id)}" data-enhet-id="${esc(post.enhet)}" data-visning="${esc(post.visning || '')}" data-x="${runda(post.x)}" data-z="${runda(post.z)}" data-sida="${esc(post.sida)}">
         <button type="button" data-id="${esc(post.id)}" data-handling="valj"><strong>${esc(namn)}</strong><small>${post.sida === 'bla' ? 'Blå' : 'Röd'} · ${esc(statusText)}</small></button>
         <button type="button" data-id="${esc(post.id)}" data-handling="flytta">Flytta</button>
         <button type="button" data-id="${esc(post.id)}" data-handling="tabort">Ta bort</button>
@@ -577,26 +660,6 @@ function avstandTillRuta(punkt, bounds) {
 
 function runda(talVarde) {
   return Math.round(talVarde * 100) / 100;
-}
-
-function textEtikett(namn, farg) {
-  const yta = document.createElement('canvas');
-  yta.width = 512;
-  yta.height = 128;
-  const rit = yta.getContext('2d');
-  rit.fillStyle = 'rgba(247,248,243,0.94)';
-  rit.fillRect(0, 16, 512, 96);
-  rit.fillStyle = farg;
-  rit.fillRect(0, 16, 16, 96);
-  rit.fillStyle = '#24382d';
-  rit.font = 'bold 54px Arial';
-  rit.fillText(String(namn).slice(0, 22), 32, 82);
-  const textur = new CanvasTexture(yta);
-  textur.colorSpace = 'srgb';
-  const sprite = new Sprite(new SpriteMaterial({ map: textur, transparent: true, depthWrite: false }));
-  sprite.position.y = 9;
-  sprite.scale.set(16, 4, 1);
-  return sprite;
 }
 
 async function ko(lista, bredd, arbete) {

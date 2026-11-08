@@ -17,7 +17,7 @@ export const KAMERAVARDEN = {
     klamning_tid_s: 0.45
   },
   avstand: {
-    d_min_m: 18,
+    d_min_m: 16,
     d_max_m: 'auto',
     d_max_auto_marginal: 1.2,
     d_max_fast_m: 6000

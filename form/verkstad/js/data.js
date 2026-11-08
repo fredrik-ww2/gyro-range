@@ -87,6 +87,15 @@ export function lattasteModell(modeller) {
   return lista.slice().sort((a, b) => (a.trianglar ?? 1e12) - (b.trianglar ?? 1e12) || (a.bytes || 0) - (b.bytes || 0))[0];
 }
 
+/** Riktig nätmodell för utplacering. Hoppar över platta billboards om en mesh finns. */
+export function placeringsModell(modeller) {
+  const lista = (modeller || []).filter((modell) => modell?.fil);
+  const riktig = lista.filter((modell) => modell.role !== 'impostor' && (modell.trianglar || 0) > 80 && !/_bb\.glb$/i.test(modell.fil));
+  const kandidater = riktig.length ? riktig : [];
+  if (!kandidater.length) return null;
+  return kandidater.slice().sort((a, b) => (a.trianglar || 1e12) - (b.trianglar || 1e12) || (a.bytes || 0) - (b.bytes || 0))[0];
+}
+
 export function modellAdress(enhetFil, modellFil) {
   return new URL(modellFil, enhetAdress(enhetFil));
 }

@@ -75,7 +75,7 @@ export async function laddaObjekt(renderer, url) {
       const rot = gltf.scene || gltf.scenes?.[0];
       rot.traverse((nod) => {
         const namn = (nod.name || '').toLowerCase();
-        if (/effekt|muzzle|mynnings|smoke|flame|gascloud|swastika|hakkors|sigrune|ssrune/.test(namn)) nod.visible = false;
+        if (/effekt|muzzle|mynnings|smoke|flame|gascloud|swastika|hakkors|sigrune|ssrune|interior|opening|destroyed|removed/.test(namn)) nod.visible = false;
         if (nod.isMesh) {
           nod.frustumCulled = true;
           nod.castShadow = false;
@@ -100,7 +100,21 @@ export async function laddaMall(renderer, enhetFil, modell) {
   return laddaObjekt(renderer, url);
 }
 
-/* Sketchfab-modeller har flera option-varianter i samma scen. Bara den tyngsta syns, annars z-fightar kjolar och skrov. */
+function triangelAntal(noder) {
+  let tri = 0;
+  for (const nod of noder) {
+    nod.traverse((barn) => {
+      if (!barn.isMesh || !barn.geometry) return;
+      const index = barn.geometry.index;
+      tri += index ? index.count / 3 : (barn.geometry.attributes.position?.count || 0) / 3;
+    });
+  }
+  return tri;
+}
+
+/* Sketchfab-modeller lägger flera option-varianter i samma scen.
+   Variant a är grundutförandet. Den används när den har riktig geometri.
+   Annars den tyngsta, så en tom platshållare inte vinner. */
 function doljAlternativ(rot) {
   const grupper = new Map();
   rot.traverse((nod) => {
@@ -115,20 +129,19 @@ function doljAlternativ(rot) {
   });
   for (const varianter of grupper.values()) {
     if (varianter.size < 2) continue;
-    let bast = null;
-    let bastTri = -1;
-    for (const [variant, noder] of varianter) {
-      let tri = 0;
-      for (const nod of noder) {
-        nod.traverse((barn) => {
-          if (!barn.isMesh || !barn.geometry) return;
-          const index = barn.geometry.index;
-          tri += index ? index.count / 3 : (barn.geometry.attributes.position?.count || 0) / 3;
-        });
-      }
-      if (tri > bastTri || (tri === bastTri && variant === 'a')) {
-        bastTri = tri;
-        bast = variant;
+    let maxTri = 0;
+    for (const noder of varianter.values()) maxTri = Math.max(maxTri, triangelAntal(noder));
+    const aTri = varianter.has('a') ? triangelAntal(varianter.get('a')) : 0;
+    let bast = 'a';
+    if (!(aTri >= 3 && aTri >= maxTri * 0.35)) {
+      bast = null;
+      let bastTri = -1;
+      for (const [variant, noder] of varianter) {
+        const tri = triangelAntal(noder);
+        if (tri > bastTri) {
+          bastTri = tri;
+          bast = variant;
+        }
       }
     }
     for (const [variant, noder] of varianter) {

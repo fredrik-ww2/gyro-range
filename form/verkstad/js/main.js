@@ -105,7 +105,7 @@ async function start() {
     [index, beteende] = await Promise.all([hamtaIndex(), hamtaBeteende()]);
     bibliotekEl.innerHTML = '<p class="ledtext">Läser enheterna…</p>';
     katalog = await byggKatalog(index);
-    monteraBibliotek(bibliotekEl, index, katalog, { oppnaEnhet, oppnaStall });
+    monteraBibliotek(bibliotekEl, index, katalog, { oppnaEnhet, oppnaStall, beteende });
     addEventListener('hashchange', () => { visaFranHash().catch(visaFel); });
     await visaFranHash();
   } catch (fel) {

@@ -16,7 +16,7 @@ import { byggFormMark, hamtaLandskap } from './formvarld.js';
 import { byggFormSkog } from './formskog.js';
 
 const NAR_M = 250;
-const MODELL_NAR_M = 120;
+const MODELL_NAR_M = 220;
 
 export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
   const valdVarld = varld?.typ === 'form'
@@ -375,6 +375,12 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
     const dt = Math.min(0.1, (nu - senastTid) / 1000);
     senastTid = nu;
     kam.uppdatera(dt);
+    const kamerAvstand = kam.lage().d || 40;
+    const near = Math.max(0.04, Math.min(0.3, kamerAvstand * 0.012));
+    if (Math.abs(kam.kamera.near - near) > 0.02) {
+      kam.kamera.near = near;
+      kam.kamera.updateProjectionMatrix();
+    }
     himmel.position.copy(kam.kamera.position);
     const avstand = kam.lage().d || 150;
     scen.fog.near = Math.max(120, avstand * 0.85);

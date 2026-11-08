@@ -2,6 +2,9 @@
 #topbar{position:absolute;left:0;right:0;top:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:calc(env(safe-area-inset-top) + 48px);padding:env(safe-area-inset-top) 10px 0;pointer-events:none}
 #topbar>*{pointer-events:auto}
 #weaponPose{min-height:44px;padding:8px 12px;font-size:14px;font-weight:650}
+#stallning{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 4px);transform:translateX(-50%);text-align:center;pointer-events:none;color:rgba(240,243,234,.78);text-shadow:0 1px 2px #000a;max-width:46vw}
+#stallning b{display:block;font-size:11px;letter-spacing:.16em;font-weight:650;text-transform:uppercase}
+#stallning small{display:block;margin-top:1px;font-size:10px;letter-spacing:.04em;opacity:.72}
 #menuButton{width:44px;height:44px;padding:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;flex:none}
 #menuButton span{display:block;width:18px;height:2px;border-radius:1px;background:currentColor;transition:transform .18s ease,opacity .18s ease}
 #menuButton[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
@@ -12,6 +15,9 @@
 #menu h3{margin:12px 0 4px;font-size:11px;letter-spacing:.16em;font-weight:700;color:var(--lime)}
 #menu section:first-child h3{margin-top:4px}
 #menu button{width:100%;text-align:left;margin-top:6px}
+#menu .menu-label{display:block;margin-top:12px;font-size:13px}
+#menu select{display:block;width:100%;margin:6px 0 0}
+#diveMeter{font-size:12px;margin:8px 0 0;color:#b7c4bb}
 .statrow{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:3px 0}
 .statrow b{font-weight:650;color:var(--lime)}
 #status{font-size:12px;line-height:1.4;color:#b7c4bb;min-height:0;margin:8px 0 0}

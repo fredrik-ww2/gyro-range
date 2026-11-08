@@ -8,7 +8,8 @@ export class GyroAim {
   this.raw=new THREE.Quaternion();this.origin=new THREE.Quaternion();this.target=new THREE.Quaternion();this.smooth=new THREE.Quaternion();this.relative=new THREE.Quaternion();
   this.euler=new THREE.Euler();this.fix=new THREE.Quaternion(-Math.SQRT1_2,0,0,Math.SQRT1_2);this.screen=new THREE.Quaternion();this.axis=new THREE.Vector3(0,0,1);this.vector=new THREE.Vector3();
   this.nativeSource=false;this.prevRaw=new THREE.Quaternion();this.inv=new THREE.Quaternion();this.movedAt=0;this.nativeTime=null;this.nativeDelta=new THREE.Quaternion();
-  this.values={alpha:null,beta:null,gamma:null,acc:{x:0,y:0,z:0},rotationRate:{alpha:0,beta:0,gamma:0},interval:0};this.drag={x:0,y:0};this.dragQuat=new THREE.Quaternion();this.lastEvent=0;this.lastMotion=0;
+  this.values={alpha:null,beta:null,gamma:null,acc:{x:0,y:0,z:0},rotationRate:{alpha:0,beta:0,gamma:0},interval:0,pitchNedDps:0,vridHogerDps:0};this.drag={x:0,y:0};this.dragQuat=new THREE.Quaternion();this.lastEvent=0;this.lastMotion=0;
+  this.aimHold=new THREE.Quaternion();this.heldRelative=new THREE.Quaternion();this.rateQ=new THREE.Quaternion();this.aimHeld=false;this.snap=false;this.fartRedo=false;
   addEventListener('deviceorientation',e=>{
    if(this.nativeSource)return;
    if (![e.alpha,e.beta,e.gamma].every(Number.isFinite)) return;
@@ -30,7 +31,7 @@ export class GyroAim {
   addEventListener('ww2-native-gyro',e=>{
    if(!window.ReactNativeWebView)return;
    const d=e.detail;if(!d||![d.x,d.y,d.z,d.t].every(Number.isFinite))return;
-   if(!this.nativeSource){this.nativeSource=true;this.raw.identity();this.origin.identity();this.pendingCenter=false;this.nativeTime=null;this.values.acc={x:0,y:0,z:0};this.lastMotion=0;}
+   if(!this.nativeSource){this.nativeSource=true;this.raw.identity();this.origin.identity();this.pendingCenter=false;this.nativeTime=null;this.values.acc={x:0,y:0,z:0};this.lastMotion=0;this.fartRedo=false;}
    const elapsed=this.nativeTime===null?0:d.t-this.nativeTime;this.nativeTime=d.t;
    this.lastEvent=performance.now();this.received=true;
    this.values.rotationRate={alpha:d.x*180/Math.PI,beta:d.y*180/Math.PI,gamma:d.z*180/Math.PI};this.values.interval=elapsed*1000;
@@ -55,14 +56,33 @@ export class GyroAim {
   this.active=a.status==='fulfilled'&&a.value==='granted';this.center();
   return {orientation:a.status==='fulfilled'?a.value:'denied',motion:b.status==='fulfilled'?b.value:'denied'};
  }
- center(){this.nativeTime=null;if(this.nativeSource){this.raw.identity();this.origin.identity();this.pendingCenter=false;}else if(this.received){this.origin.copy(this.raw).invert();this.pendingCenter=false;}else this.pendingCenter=true;this.drag={x:0,y:0};this.smooth.identity();}
+ center(){this.nativeTime=null;this.fartRedo=false;if(this.nativeSource){this.raw.identity();this.origin.identity();this.pendingCenter=false;}else if(this.received){this.origin.copy(this.raw).invert();this.pendingCenter=false;}else this.pendingCenter=true;this.drag={x:0,y:0};this.smooth.identity();}
+ // Test och köade gester matar samma fält som sensorn. Positiv tipp är framåt/nedåt, positiv vridning är åt höger.
+ mataGest(pitchNedDps,vridHogerDps){this._injPitch=pitchNedDps;this._injTwist=vridHogerDps;this._inj=true;}
+ hallSikte(){if(this.aimHeld)return;this.aimHeld=true;this.aimHold.copy(this.smooth);this.heldRelative.copy(this.relative);}
+ bekraftaSikte(){if(!this.aimHeld)return;this.inv.copy(this.raw).invert();this.origin.copy(this.heldRelative).multiply(this.inv).normalize();this.smooth.copy(this.aimHold);this.target.copy(this.aimHold);this.aimHeld=false;this.prevRaw.copy(this.raw);this.fartRedo=true;}
+ slappSikte(){if(!this.aimHeld)return;this.aimHeld=false;this.snap=true;this.prevRaw.copy(this.raw);}
+ mataFart(dt){
+  if(this._inj){this.values.pitchNedDps=this._injPitch;this.values.vridHogerDps=this._injTwist;this._inj=false;return Math.max(Math.abs(this._injPitch),this._injTwist);}
+  if(!this.received||!(dt>0)){this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
+  if(!this.fartRedo){this.prevRaw.copy(this.raw);this.fartRedo=true;this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
+  this.rateQ.copy(this.prevRaw).invert().multiply(this.raw);
+  if(this.rateQ.w<0)this.rateQ.set(-this.rateQ.x,-this.rateQ.y,-this.rateQ.z,-this.rateQ.w);
+  const w=THREE.MathUtils.clamp(this.rateQ.w,-1,1),ang=2*Math.acos(w);this.prevRaw.copy(this.raw);
+  if(ang>1.2){this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
+  const sin=Math.sqrt(Math.max(0,1-w*w)),k=(sin>1e-6?ang/sin:2)*(180/Math.PI)/dt;
+  this.values.pitchNedDps=this.rateQ.x*k;this.values.vridHogerDps=Math.max(-this.rateQ.y*k,Math.abs(this.rateQ.z*k));
+  return THREE.MathUtils.radToDeg(ang)/dt;
+ }
  update(dt){
   const s=this.settings;
+  const speed=this.mataFart(dt),nowMs=performance.now();
+  if(speed>(s.aterga_trosk_dps??5))this.movedAt=nowMs;
+  if(this.aimHeld){this.smooth.copy(this.aimHold);return this.smooth;}
+  const jump=this.snap;this.snap=false;
   if(this.active&&this.received){
    // Återgång: när telefonen hållits still en stund glider utgångsläget mjukt mot nuvarande läge,
    // så siktet sakta återvänder till mitten. Rörelse mäts ur själva orienteringen (alla källor).
-   const nowMs=performance.now();const dot=Math.min(1,Math.abs(this.prevRaw.dot(this.raw)));const speed=dt>0?THREE.MathUtils.radToDeg(2*Math.acos(dot))/dt:0;this.prevRaw.copy(this.raw);
-   if(speed>(s.aterga_trosk_dps??5))this.movedAt=nowMs;
    if(s.brytare?.atergang!==false&&(s.aterga_s??0)>0&&nowMs-this.movedAt>(s.aterga_vila_s??.4)*1000){this.inv.copy(this.raw).invert();this.origin.slerp(this.inv,1-Math.exp(-dt/s.aterga_s)).normalize();}
    this.relative.multiplyQuaternions(this.origin,this.raw).normalize();
    if(this.relative.w<0)this.relative.set(-this.relative.x,-this.relative.y,-this.relative.z,-this.relative.w);
@@ -75,6 +95,6 @@ export class GyroAim {
   this.target.multiply(this.dragQuat.setFromEuler(this.euler.set(this.drag.y,this.drag.x,0,'YXZ')));
   // Rak horisont: ta bort all lutning åt sidan (roll), så bilden aldrig känns sned efter rörelser.
   if(s.brytare?.horisont!==false){this.euler.setFromQuaternion(this.target,'YXZ');this.euler.z=0;this.target.setFromEuler(this.euler);}
-  this.smooth.slerp(this.target,1-Math.exp(-dt/s.utjamning_s));return this.smooth;
+  if(jump)this.smooth.copy(this.target);else this.smooth.slerp(this.target,1-Math.exp(-dt/s.utjamning_s));return this.smooth;
  }
 }

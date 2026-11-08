@@ -12,6 +12,12 @@ export function createHaptics(styles, settings) {
     },
     hit(){if(native())send('hit');},
     // Ett steg. Appen får en egen puls via samma WebView-brygga som skotten.
+    impact(kraft=1){
+      if(!settings.brytare.haptik)return;
+      const tung=kraft>1;
+      if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:tung?'nedslag':'huk',strength:Math.max(.5,strength())*(tung?1.35:1)}));return;}
+      if(typeof navigator.vibrate==='function')navigator.vibrate(tung?[14,24,18]:16);
+    },
     step(){
       if(!settings.brytare.haptik)return;
       if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:'steg',strength:Math.max(0.35,strength())}));return;}

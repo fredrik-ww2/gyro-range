@@ -4,6 +4,7 @@ import {MeshoptDecoder} from './vendor/loaders/meshopt_decoder.module.js';
 import {mergeGeometries} from './vendor/utils/BufferGeometryUtils.js';
 import {GyroAim} from './gyro.js';
 import {createHaptics} from './haptics.js';
+import {skapaDetektor,nastaStallning,simulera,STALLNING_NAMN} from './stallning.js';
 import {skapaEffekterV2d} from '../assets/effekter/effekter_v2d.js';
 const $=id=>document.getElementById(id);
 const loadJSON=async p=>{const r=await fetch(new URL('../data/'+p,import.meta.url));if(!r.ok)throw Error(p+': '+r.status);return r.json();};
@@ -15,6 +16,7 @@ async function boot(){
  let saved={};try{saved=JSON.parse(localStorage.getItem('gyro_faltprov_v1')||'{}');}catch{}
  const settings={...cfg.styrning,...saved.styrning,brytare:{...cfg.brytare,...saved.brytare},hapticStyle:saved.hapticStyle||'auto'};
  settings.kanslighet=THREE.MathUtils.clamp(Number(settings.kanslighet)||1,.25,3);
+ if(!['av','lag','normal','hog'].includes(settings.kastaKanslighet))settings.kastaKanslighet='normal';
  settings.skottkansla=Number.isFinite(Number(settings.skottkansla))?THREE.MathUtils.clamp(Number(settings.skottkansla),0,2):1;
  const hapticStyles=structuredClone(hapticDefaults);
  for(const k of Object.keys(hapticStyles)){const s=saved.haptik?.[k];if(s){hapticStyles[k].styrka=THREE.MathUtils.clamp(Number(s.styrka)||0,0,1);hapticStyles[k].varaktighet_ms=THREE.MathUtils.clamp(Number(s.varaktighet_ms)||12,1,100);}}
@@ -273,7 +275,7 @@ async function boot(){
  }
  function applyWeaponTransform(raise){
   const up=rifleP+climbP+hastyP+settleX+bobPitch,roll=settleZ+bobRoll;
-  weaponPivot.position.set(basePivot.x,basePivot.y+(1-raise)*.06+bobY,basePivot.z-(1-raise)*.4);
+  weaponPivot.position.set(basePivot.x,basePivot.y+(1-raise)*.06+bobY+(eyeY-OGA.staende),basePivot.z-(1-raise)*.4);
   if(raise>.999&&up===0&&roll===0){weaponPivot.quaternion.copy(aimQuat);return;}
   weaponPivot.quaternion.copy(lowQuat).slerp(aimQuat,raise);
   if(up!==0||roll!==0){recoilEuler.set(-up,0,roll,'YXZ');weaponPivot.quaternion.multiply(recoilQ.setFromEuler(recoilEuler));}
@@ -444,6 +446,8 @@ async function boot(){
  $('settingsButton').onclick=()=>{closeMenu();showSettings(true);};$('closeSettings').onclick=()=>showSettings(false);
  $('weaponPose').onclick=()=>setPose(poseTo<.5);syncPoseUi();
  $('center').onclick=()=>{gyro.center();rifle=null;rifleP=0;climb=0;climbP=0;climbBack=null;hastyT=null;hastyP=0;settleT=null;settleX=settleZ=0;};
+ $('diveSense').value=settings.kastaKanslighet;$('diveSense').onchange=()=>{settings.kastaKanslighet=$('diveSense').value;if(settings.kastaKanslighet==='av'){detektor.avbryt();gyro.slappSikte();}save();};
+ $('standUp').onclick=()=>{if(stallning!=='staende')startStallning('staende');};
  $('shotFeel').value=settings.skottkansla;function updateShotFeel(){settings.skottkansla=Number($('shotFeel').value);$('shotFeelValue').value=settings.skottkansla.toFixed(2)+'×';haptics.sync();save();}updateShotFeel();$('shotFeel').oninput=updateShotFeel;
  $('returnTime').value=settings.aterga_s;function updateReturn(){settings.aterga_s=Number($('returnTime').value);$('returnValue').value=settings.aterga_s.toFixed(1)+' s';save();}updateReturn();$('returnTime').oninput=updateReturn;
  $('sensitivity').value=settings.kanslighet;function updateSensitivity(){settings.kanslighet=Number($('sensitivity').value);$('sensitivityValue').value=settings.kanslighet.toFixed(2)+'×';save();}updateSensitivity();$('sensitivity').oninput=updateSensitivity;
@@ -554,9 +558,57 @@ async function boot(){
   weaponPivot.getWorldPosition(point);breechWY=point.y;point.project(camera);breechNdcY=point.y;
   muzzleObj.getWorldPosition(tmp);muzzleWY=tmp.y;muzzleWZ=tmp.z;tmp.project(camera);muzzleNdcY=tmp.y;
  }
+ const OGA={staende:cfg.kamera.hojd_m,hukande:1.05,liggande:0.38};
+ let stallning='staende',eyeFrom=OGA.staende,eyeTo=OGA.staende,eyeT=1,eyeDur=.6,eyeY=OGA.staende,impactT=null,impactArm=false,impactAmp=0;
+ const detektor=skapaDetektor(),gestKo=[];
+ function smoothEye(){const u=eyeDur<=0?1:Math.min(1,eyeT/eyeDur),s=u*u*(3-2*u);return eyeFrom+(eyeTo-eyeFrom)*s;}
+ function syncStallningUi(){$('stallningNamn').textContent=STALLNING_NAMN[stallning];$('standUp').disabled=stallning==='staende';}
+ function startStallning(namn){
+  if(!OGA[namn]||namn===stallning&&Math.abs(eyeTo-OGA[namn])<.001&&eyeT>=eyeDur)return;
+  eyeFrom=smoothEye();eyeTo=OGA[namn];eyeT=0;eyeDur=.6;impactArm=eyeTo<eyeFrom-.02;impactAmp=namn==='liggande'?.05:.028;stallning=namn;syncStallningUi();
+ }
+ function uppdateraOga(dt){
+  if(eyeT<eyeDur)eyeT=Math.min(eyeDur,eyeT+dt);
+  eyeY=smoothEye();
+  if(impactArm&&eyeT>=eyeDur){impactArm=false;impactT=0;haptics.impact(stallning==='liggande'?1.6:1);}
+  if(impactT!=null){impactT+=dt;eyeY-=Math.sin(Math.min(1,impactT/.16)*Math.PI)*impactAmp;if(impactT>.2)impactT=null;}
+ }
+ function tillampaGest(kod){
+  if(!kod)return;
+  if(kod.typ==='hall'){gyro.hallSikte();return;}
+  if(kod.typ==='slapp'){gyro.slappSikte();return;}
+  gyro.bekraftaSikte();
+  const nasta=nastaStallning(stallning,kod.typ);
+  if(nasta!==stallning)startStallning(nasta);
+ }
+ function mataGestKo(dt){if(!gestKo.length)return;const s=gestKo[0];gyro.mataGest(s.tipp,s.vrid);s.left-=dt;if(s.left<=0)gestKo.shift();}
+ function stallningSteg(dt){
+  tillampaGest(detektor.steg(performance.now()/1000,gyro.values.pitchNedDps||0,gyro.values.vridHogerDps||0,settings.kastaKanslighet));
+  uppdateraOga(dt);
+  const m=detektor.visning(),text=`Tippning ${m.tipp}°/s · Vridning ${m.vrid}°/s`,kort=`${m.tipp}°/s · ${m.vrid}°/s`;
+  if($('diveMeter').textContent!==text)$('diveMeter').textContent=text;
+  if($('stallMeter').textContent!==kort)$('stallMeter').textContent=kort;
+ }
+ syncStallningUi();
+ window.gyroGest={
+  simulera(prover,kanslighet=settings.kastaKanslighet,start=stallning){return simulera(prover,kanslighet,start);},
+  sätt(namn){startStallning(namn);},
+  kö(delar){for(const d of delar)gestKo.push({left:d.ms/1000,tipp:d.tipp,vrid:d.vrid});},
+  nollstall(){detektor.avbryt();gestKo.length=0;},
+  läge(){return {stallning,eyeY,kanslighet:settings.kastaKanslighet,meter:detektor.visning(),namn:$('stallningNamn').textContent,meterText:$('diveMeter').textContent};},
+  provaSikte(){
+   gyro.active=true;gyro.received=true;gyro.raw.identity();gyro.prevRaw.identity();gyro.origin.identity();gyro.fartRedo=true;gyro.aimHeld=false;
+   gyro.update(.016);const fore=gyro.smooth.clone();gyro.hallSikte();
+   gyro.raw.setFromAxisAngle(new THREE.Vector3(1,0,0),.9);const underHall=gyro.update(.016).angleTo(fore);
+   gyro.bekraftaSikte();const efter=gyro.update(.016).angleTo(fore);
+   gyro.raw.identity();gyro.origin.identity();gyro.fartRedo=false;gyro.aimHeld=false;return {underHall,efter};
+  }
+ };
  function loop(now){requestAnimationFrame(loop);if(now-renderTick<renderInterval-.5)return;renderTick=now-((now-renderTick)%renderInterval);const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;if(document.hidden)return;
   const raise=updatePose(dt);updateHead(dt);updateBob(dt);updateRifle(dt);updateHasty(dt);updateSettle(dt);
+  mataGestKo(dt);
   player.quaternion.copy(gyro.update(dt));
+  stallningSteg(dt);
   const firing=holding&&!!weapons[selected].automat;updateClimb(dt,firing);applyStick(dt);applyWeaponTransform(raise);
   const kick=(rifleP+climbP)*.22;kickEuler.set(-kick,0,0,'YXZ');kickQuat.setFromEuler(kickEuler);
   camera.quaternion.copy(player.quaternion).multiply(headQuat);if(kick!==0)camera.quaternion.multiply(kickQuat);
@@ -564,7 +616,7 @@ async function boot(){
   const clamp=v=>THREE.MathUtils.clamp(v,-cfg.styrning.acc_max,cfg.styrning.acc_max);
   const sway=settings.brytare.acceleration&&freshMotion?cfg.styrning.acc_sväng:0;
   if(sway){motion.set(clamp(a.y)*sway,clamp(a.x)*sway,clamp(a.z)*sway,'YXZ');camera.quaternion.multiply(recoilQuat.setFromEuler(motion));}
-  camera.position.set(player.position.x+clamp(a.x)*sway,cfg.kamera.hojd_m+clamp(a.y)*sway+bobY*.22,player.position.z+clamp(a.z)*sway);
+  camera.position.set(player.position.x+clamp(a.x)*sway,eyeY+clamp(a.y)*sway+bobY*.22,player.position.z+clamp(a.z)*sway);
   sun.position.set(player.position.x-16,30,player.position.z+12);sun.target.position.set(player.position.x,0,player.position.z-16);sun.target.updateMatrixWorld();
   flash*=Math.exp(-dt/(flashDuration||.075));if(flash<.001)flash=0;$('shotFlash').style.opacity=String(Math.min(.85,flash));muzzleLight.intensity=lightPeak*flash;muzzleFlash.material.opacity=Math.min(.9,flash*2);muzzleFlash.rotation.z=shots*2.4;
   const enemy=targets[0];enemy.root.visible=settings.brytare.fiender;
@@ -582,10 +634,10 @@ async function boot(){
   const closeness=1-THREE.MathUtils.clamp(nearest/cfg.sikte.ring_vinkel_grad,0,1);const ringSize=THREE.MathUtils.lerp(cfg.sikte.ring_max_px,cfg.sikte.ring_min_px,closeness);$('ring').style.width=$('ring').style.height=ringSize+'px';$('ring').style.opacity=String(1-closeness*.75);$('aim').style.color=target?'#ff7463':'#eff4d5';$('hit').style.opacity=now<hitUntil?'1':'0';if(!$('reload').hidden)$('reload').textContent=now<cooldown?'LADDAR':'REDO';
   placeSights();
   renderer.render(scene,camera);frames++;if(now-measureTime>600){fps=Math.round(frames*1000/(now-measureTime));frames=0;measureTime=now;refreshStats();
-   const f=n=>n==null?'—':Number(n).toFixed(1);$('debug').textContent=`α ${f(gyro.values.alpha)} β ${f(gyro.values.beta)} γ ${f(gyro.values.gamma)}\nacc ${f(a.x)} ${f(a.y)} ${f(a.z)} m/s²\nrot ${Object.values(gyro.values.rotationRate).map(f).join(' ')} °/s\nsensor ${f(gyro.values.interval)} ms · tex ${renderer.info.memory.textures} · JS ${performance.memory?(performance.memory.usedJSHeapSize/1048576).toFixed(1)+' MB':'saknas'}\n${gyro.active&&gyro.received?'gyro aktivt':'finger/ingen sensordata'}`;
+   const f=n=>n==null?'—':Number(n).toFixed(1);$('debug').textContent=`α ${f(gyro.values.alpha)} β ${f(gyro.values.beta)} γ ${f(gyro.values.gamma)}\nacc ${f(a.x)} ${f(a.y)} ${f(a.z)} m/s²\nrot ${Object.values(gyro.values.rotationRate).map(f).join(' ')} °/s\ntipp ${f(gyro.values.pitchNedDps)} · vrid ${f(gyro.values.vridHogerDps)} °/s · ${STALLNING_NAMN[stallning]}\nsensor ${f(gyro.values.interval)} ms · tex ${renderer.info.memory.textures} · JS ${performance.memory?(performance.memory.usedJSHeapSize/1048576).toFixed(1)+' MB':'saknas'}\n${gyro.active&&gyro.received?'gyro aktivt':'finger/ingen sensordata'}`;
    if(started&&gyro.active){if(gyro.received&&now-gyro.lastEvent<1500)$('status').textContent='Gyro aktivt. Centrera i menyn om riktningen driver.';else $('status').textContent='Ingen färsk gyrosignal. Dra längst ner för att sikta.';}
   }
-  Object.assign(snapshot,{fps,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,textures:renderer.info.memory.textures,shots,hits,recoil:rifleP+climbP,shake:Math.abs(hastyP),skottkansla:settings.skottkansla,audioVoices:voices.length,enemyZ:enemy.root.position.z,enemyAlive:enemy.alive,animationTime:runAction.time,quaternion:camera.quaternion.toArray(),sensor:structuredClone(gyro.values),sensorSource:gyro.nativeSource?'app':'webb',enemyCount,headYawDeg:head.yaw*180/Math.PI,headPitchDeg:head.pitch*180/Math.PI,pose:raiseValue(),poseTarget:poseTo,weaponId:weapons[selected].id,casingAlive,clinks,clinkReady,rendered:true,aimNdcX,aimNdcY,breechNdcY,muzzleNdcY,breechWY,muzzleWY,muzzleWZ,playerX:player.position.x,playerZ:player.position.z});
+  Object.assign(snapshot,{fps,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,textures:renderer.info.memory.textures,shots,hits,recoil:rifleP+climbP,shake:Math.abs(hastyP),skottkansla:settings.skottkansla,audioVoices:voices.length,enemyZ:enemy.root.position.z,enemyAlive:enemy.alive,animationTime:runAction.time,quaternion:camera.quaternion.toArray(),sensor:structuredClone(gyro.values),sensorSource:gyro.nativeSource?'app':'webb',enemyCount,headYawDeg:head.yaw*180/Math.PI,headPitchDeg:head.pitch*180/Math.PI,pose:raiseValue(),poseTarget:poseTo,weaponId:weapons[selected].id,casingAlive,clinks,clinkReady,rendered:true,aimNdcX,aimNdcY,breechNdcY,muzzleNdcY,breechWY,muzzleWY,muzzleWZ,playerX:player.position.x,playerZ:player.position.z,stallning,eyeY,diveTipp:detektor.visning().tipp,diveVrid:detektor.visning().vrid});
  }
  requestAnimationFrame(loop);
 }

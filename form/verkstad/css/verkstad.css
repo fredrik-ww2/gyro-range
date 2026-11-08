@@ -1,0 +1,200 @@
+:root {
+  --bläck: #24382d;
+  --dämpad: #5e6d5d;
+  --linje: #d5decc;
+  --papper: #f7f8f3;
+  --yta: #ffffff;
+  --fält: #e7eee4;
+  --fyll: #2f6a45;
+  --gul: #f3d98a;
+  --gul-text: #6a4b00;
+  --källa: #e5efe6;
+  --källa-text: #1f4d34;
+  --egen: #ece8e1;
+  --egen-text: #3c3832;
+  --blå: #2458c9;
+  --röd: #b42323;
+  --skugga: 0 10px 30px rgba(28, 40, 30, 0.08);
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--bläck);
+  background: #f3f6ef;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: #f3f6ef; }
+button, a, input { font: inherit; touch-action: manipulation; }
+button { color: inherit; }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: 1.55rem; line-height: 1.15; }
+h2 { font-size: 1.05rem; }
+h3 { font-size: 1rem; font-weight: 700; }
+[hidden] { display: none !important; }
+
+#app > section { min-height: 100dvh; padding-bottom: 32px; }
+section[data-vy="stall"] { height: 100dvh; min-height: 0; overflow: hidden; padding: 0; }
+
+.topp {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top)) 16px 12px;
+  background: var(--papper);
+  border-bottom: 1px solid var(--linje);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+.topp h1 { font-size: 1.35rem; }
+.ogat { color: var(--dämpad); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.tillbaka, .knapp, .textknapp {
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--linje);
+  background: var(--yta);
+  padding: 0 14px;
+  text-decoration: none;
+  color: var(--bläck);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.knapp.primar { background: var(--bläck); color: #f7f6ef; border-color: var(--bläck); }
+.knapp.bla { background: var(--blå); color: white; border-color: var(--blå); width: 100%; }
+.knapp.rod { background: var(--röd); color: white; border-color: var(--röd); width: 100%; }
+.knapp.fara { background: #fff; color: var(--röd); border-color: #e7c1c1; }
+.textknapp { background: transparent; border-color: transparent; min-height: 44px; text-decoration: underline; text-underline-offset: 3px; }
+.ledtext, .fin, .varning, .sammanfattning { padding: 0 16px; }
+.ledtext { margin: 14px 0; line-height: 1.4; }
+.fin { color: var(--dämpad); font-size: 0.86rem; line-height: 1.35; margin-top: 6px; }
+.varning { background: #fff8e8; border: 1px solid #ead79a; border-radius: 12px; margin: 12px 16px; padding: 12px; line-height: 1.35; }
+
+.sokfalt { display: block; margin: 0 16px 12px; font-size: 0.85rem; color: var(--dämpad); }
+.sokfalt input, .ark-kort input[type="search"] {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--linje);
+  padding: 0 14px;
+  background: white;
+  font-size: 1rem;
+}
+
+.trad { padding: 0 12px 24px; }
+.grupprubrik { margin: 18px 4px 8px; }
+.mapp { background: var(--yta); border: 1px solid var(--linje); border-radius: 16px; margin: 8px 0; box-shadow: var(--skugga); }
+.mapp summary {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.mapp summary::-webkit-details-marker { display: none; }
+.mapp summary small { color: var(--dämpad); font-weight: 600; }
+.mapp-innehall { padding: 0 8px 8px; }
+.tom, .tomrad { color: var(--dämpad); padding: 8px; }
+.rad {
+  width: 100%;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  border: 0;
+  border-top: 1px solid var(--linje);
+  background: transparent;
+  padding: 10px 8px;
+}
+.rad span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rad small, .saknasrad { color: var(--dämpad); font-size: 0.82rem; }
+.saknasrad { display: block; }
+.chip {
+  flex: none;
+  border-radius: 999px;
+  padding: 6px 8px;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 700;
+  max-width: 42%;
+  text-align: right;
+}
+.chip-arbete { background: #f8efd4; color: #6a4b00; }
+.chip-klar { background: #e5f3e4; color: #1d5a32; }
+
+.statusrad { padding: 12px 16px 0; }
+.saknaslista { margin: 8px 16px 0; padding-left: 18px; }
+.saknaslista li { margin: 4px 0; }
+
+.forhands { margin: 12px 16px; background: var(--yta); border-radius: 16px; border: 1px solid var(--linje); overflow: hidden; }
+.forhands-yta { height: 240px; background: #e4ece3; }
+.forhands-yta canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+.hint { color: var(--dämpad); font-size: 0.82rem; padding: 8px 12px 10px; }
+
+.flikar { display: flex; gap: 8px; padding: 8px 16px; position: sticky; top: 70px; background: #f3f6ef; z-index: 2; }
+.flikar button { flex: 1; min-height: 48px; border-radius: 12px; border: 1px solid var(--linje); background: white; }
+.flikar button[aria-selected="true"] { background: var(--bläck); color: white; border-color: var(--bläck); }
+
+.grafgrupp, .stapelblock { margin: 12px 16px; background: var(--yta); border: 1px solid var(--linje); border-radius: 16px; padding: 12px; }
+.grafgrupp .stapelblock { margin: 10px 0 0; padding: 0; border: 0; background: transparent; }
+.stapelhuvud { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.stapelhuvud strong { font-size: 1.25rem; margin-left: auto; }
+.stapel { height: 22px; background: var(--fält); border-radius: 999px; overflow: hidden; margin: 10px 0 4px; }
+.stapel i { display: block; height: 100%; background: var(--fyll); border-radius: inherit; }
+input[type="range"] { width: 100%; height: 44px; accent-color: #2f6a45; }
+.radknappar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.marke { border-radius: 999px; padding: 3px 8px; font-size: 0.75rem; font-weight: 700; }
+.marke-uppskattat { background: var(--gul); color: var(--gul-text); }
+.marke-kalla { background: var(--källa); color: var(--källa-text); }
+.marke-anvandarbestamd { background: var(--egen); color: var(--egen-text); }
+.historik { min-height: 1em; color: var(--dämpad); font-size: 0.8rem; }
+.sammanfattning { font-size: 1.15rem; padding: 8px 0; }
+
+svg path { fill: none; stroke: #2f6a45; stroke-width: 3; }
+svg circle { fill: #2f6a45; }
+svg text { fill: #5e6d5d; font-size: 11px; font-family: Arial, sans-serif; }
+svg .axel { stroke: #d5decc; stroke-width: 1; }
+.silhuett { width: 100%; height: auto; }
+.silhuett text { fill: #24382d; font-size: 12px; font-weight: 700; }
+.regler { padding-left: 18px; }
+.regler li { margin: 8px 0; line-height: 1.35; }
+.sparrad { min-height: 1.2em; padding: 8px 16px 0; color: #1f4d34; }
+
+.stall { height: 100%; display: flex; flex-direction: column; }
+.stall-topp { position: relative; }
+.stall-topp h1 { font-size: 1.2rem; }
+.trirad { margin-left: auto; color: var(--dämpad); font-size: 0.75rem; text-align: right; }
+.stall-yta { position: relative; flex: 1; min-height: 180px; }
+.stall-yta canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+.stall-status, .stall-hint {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  margin: 0;
+  background: rgba(247, 248, 243, 0.92);
+  border-radius: 12px;
+  padding: 8px 10px;
+  pointer-events: none;
+}
+.stall-status { top: 8px; }
+.stall-hint { bottom: 8px; }
+.stall-panel { background: var(--papper); border-top: 1px solid var(--linje); padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); max-height: 32dvh; overflow: auto; }
+.placeringar { list-style: none; margin: 8px 0 0; padding: 0; }
+.placeringar li { display: flex; gap: 6px; align-items: center; min-height: 52px; border-top: 1px solid var(--linje); }
+.placeringar li button { min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--linje); background: white; }
+.placeringar li button:first-child { flex: 1; text-align: left; background: transparent; border: 0; min-height: 48px; display: flex; flex-direction: column; align-items: flex-start; }
+.placeringar small { color: var(--dämpad); }
+.ark { position: fixed; inset: 0; background: rgba(20, 28, 22, 0.45); z-index: 8; display: flex; align-items: flex-end; }
+.ark-kort { background: var(--papper); width: 100%; border-radius: 18px 18px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; max-height: 86dvh; }
+.ark-lang { overflow: auto; }
+.ark-kort h2 { font-size: 1.3rem; }
+
+@media (min-width: 900px) {
+  #app > section[data-vy="bibliotek"], #app > section[data-vy="kort"] { max-width: 760px; margin: 0 auto; }
+}

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {
   BackSide, Box3, BoxGeometry, CircleGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide,
-  Fog, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshStandardMaterial, ShaderMaterial,
+  Fog, Group, HemisphereLight,   BufferGeometry, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, MeshStandardMaterial, ShaderMaterial,
   MOUSE, Raycaster, RingGeometry, Scene, SphereGeometry, TOUCH, Vector2, Vector3, WebGLRenderer
 } from 'three';
 import { laddaMarkyta, markMaterial, stallFilter } from './markyta.js';
@@ -56,14 +56,22 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
       <div class="stall-yta">
         <canvas data-duk aria-label="${esc(varldNamn)}. Ett finger flyttar vyn, nyp för att zooma."></canvas>
         <p class="stall-status" data-status>Läser höjdterrängen…</p>
+        <details class="terrangruta" data-terrangruta>
+          <summary>Terräng på mobil</summary>
+          <dl data-terrangmatt></dl>
+        </details>
         <p class="hint stall-hint">Ett finger flyttar · nyp zoomar · två fingrar lutar</p>
         <div class="etikett-lager" data-etiketter></div>
       </div>
+      <p class="lodmatare" data-lodmatare>Mätare väntar…</p>
       <div class="stall-panel">
         <p data-vald>Välj en enhet, tryck på marken och välj sida.</p>
         <div class="radknappar">
           <button type="button" class="knapp primar" data-valj-enhet>Välj enhet</button>
           <button type="button" class="knapp" data-hojd aria-pressed="${startFaktor === 1.5 ? 'true' : 'false'}">${startFaktor === 1.5 ? 'Höjd 1,5×' : 'Höjd vanlig'}</button>
+          <button type="button" class="knapp" data-fagel>Fågelperspektiv</button>
+          <button type="button" class="knapp" data-klar hidden>Klar</button>
+          <button type="button" class="knapp" data-tillbaka-lage hidden>Tillbaka</button>
           <button type="button" class="knapp" data-flytta hidden>Flytta</button>
           <button type="button" class="knapp fara" data-tabort hidden>Ta bort</button>
         </div>
@@ -113,6 +121,12 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
   let valdEnhet = null;
   let valdPlacering = null;
   let flyttaId = null;
+  let spellage = 'stall';
+  let fagelSparad = null;
+  let mjuk = null;
+  let matareMal = { typ: 'mark' };
+  let fps = 0;
+  const skottMat = new LineBasicMaterial({ color: 0xffe08a });
   let kor = false;
   let ram = 0;
   let senast = 0;
@@ -257,6 +271,44 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
     }
   }
   ritaLista();
+  fyllTerrang();
+
+  el.querySelector('[data-fagel]').addEventListener('click', () => {
+    const knapp = el.querySelector('[data-fagel]');
+    const nu = kam.lage();
+    if (fagelSparad) {
+      mjukTill({ mal: fagelSparad.mal, d: fagelSparad.d, lutning: fagelSparad.lutning, kurs: fagelSparad.kurs });
+      fagelSparad = null;
+      knapp.textContent = 'Fågelperspektiv';
+      knapp.setAttribute('aria-pressed', 'false');
+      return;
+    }
+    fagelSparad = { mal: [nu.mal[0], nu.mal[2]], d: nu.d, lutning: nu.lutning, kurs: nu.kurs };
+    const span = Math.max(yta.maxX - yta.minX, yta.maxZ - yta.minZ);
+    mjukTill({
+      mal: [0, 0],
+      d: Math.min(kam.dMax * 0.9, Math.max(80, span * 0.72)),
+      lutning: 8,
+      kurs: nu.kurs
+    });
+    knapp.textContent = 'Tillbaka till vyn';
+    knapp.setAttribute('aria-pressed', 'true');
+  });
+  el.querySelector('[data-klar]').addEventListener('click', () => {
+    spara();
+    oppnaKlar();
+  });
+  el.querySelector('[data-tillbaka-lage]').addEventListener('click', () => {
+    spellage = 'stall';
+    for (const post of placeringar) {
+      post.hp = 100;
+      post.grupp.visible = true;
+      if (post.tagg) post.tagg.style.visibility = '';
+    }
+    el.querySelector('[data-tillbaka-lage]').hidden = true;
+    status.textContent = 'Tillbaka till utplacering.';
+    ritaLista();
+  });
 
   el.querySelector('[data-hojd]').addEventListener('click', () => {
     const knapp = el.querySelector('[data-hojd]');
@@ -336,12 +388,174 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
       skog.uppdatera(kam.kamera);
       el.dataset.nara = String(skog.nara);
     }
+    if (mjuk) stegMjuk(nu);
+    if (spellage === 'spel') spelaSteg(dt);
+    fps = fps ? fps * 0.9 + (dt > 0 ? 0.1 / dt : fps) : (dt > 0 ? 1 / dt : 0);
     placeraEtiketter();
     renderer.render(scen, kam.kamera);
     const tri = renderer.info.render.triangles;
     el.dataset.trianglar = String(tri);
     el.dataset.anrop = String(renderer.info.render.calls);
+    el.dataset.fps = fps.toFixed(0);
     el.querySelector('[data-trianglar]').textContent = tal(tri, 0);
+    ritaMatare(tri);
+  }
+
+  function mjukTill(mal) {
+    const nu = kam.lage();
+    mjuk = {
+      start: { mal: [nu.mal[0], nu.mal[2]], d: nu.d, lutning: nu.lutning, kurs: nu.kurs },
+      mal,
+      t0: performance.now()
+    };
+  }
+
+  function stegMjuk(nu) {
+    const t = Math.min(1, (nu - mjuk.t0) / 700);
+    const s = t * t * (3 - 2 * t);
+    const a = mjuk.start;
+    const b = mjuk.mal;
+    kam.sattVy({
+      mal: [a.mal[0] + (b.mal[0] - a.mal[0]) * s, a.mal[1] + (b.mal[1] - a.mal[1]) * s],
+      d: a.d + (b.d - a.d) * s,
+      lutning: a.lutning + (b.lutning - a.lutning) * s,
+      kurs: a.kurs + (b.kurs - a.kurs) * s
+    });
+    if (t >= 1) mjuk = null;
+  }
+
+  function markTri() {
+    let antal = 0;
+    for (const mesh of markMeshar) {
+      const geo = mesh.geometry;
+      if (!geo) continue;
+      antal += geo.index ? geo.index.count / 3 : (geo.attributes.position?.count || 0) / 3;
+    }
+    return Math.round(antal);
+  }
+
+  function fyllTerrang() {
+    const lista = el.querySelector('[data-terrangmatt]');
+    if (!lista) return;
+    const rutor = formMark ? (skog?.meshar || 0) + 1 : rutor50.size;
+    const lodNivaer = formMark ? (skog ? 3 : 1) : 2;
+    const texturer = formMark ? (skog ? 4 : 1) : 1;
+    const vaxter = skog?.antal || 0;
+    el.dataset.terrangLod = String(lodNivaer);
+    el.dataset.terrangRutor = String(rutor);
+    lista.innerHTML = `
+      <div><dt>Trianglar i marken</dt><dd>${tal(markTri(), 0)}</dd></div>
+      <div><dt>LOD-nivåer</dt><dd>${lodNivaer}</dd></div>
+      <div><dt>Rutor</dt><dd>${rutor}</dd></div>
+      <div><dt>Texturer</dt><dd>${texturer}</dd></div>
+      <div><dt>Växter</dt><dd data-vaxter>${tal(vaxter, 0)}</dd></div>
+      <div><dt>Ritanrop</dt><dd data-terrang-anrop>0</dd></div>
+      <div><dt>Bilder per sekund</dt><dd data-terrang-fps>0</dd></div>`;
+  }
+
+  function ritaMatare(tri) {
+    const rad = el.querySelector('[data-lodmatare]');
+    const anrop = el.querySelector('[data-terrang-anrop]');
+    const fpsRad = el.querySelector('[data-terrang-fps]');
+    if (anrop) anrop.textContent = el.dataset.anrop || '0';
+    if (fpsRad) fpsRad.textContent = el.dataset.fps || '0';
+    if (!rad) return;
+    let extra = 'Mark · en nivå';
+    if (matareMal.typ === 'enhet') {
+      const post = placeringar.find((rad) => rad.id === matareMal.id);
+      if (post) {
+        const namn = poster.get(post.enhet)?.namn || post.enhet;
+        const avstand = Math.round(kam.kamera.position.distanceTo(post.grupp.position));
+        const niva = post.lod === 'mobil' ? 'närbild' : 'enkel';
+        extra = `${namn} · ${niva} · ${avstand} m`;
+      }
+    } else if (formMark && skog) {
+      const d = kam.lage().d || 0;
+      extra = d < 80 ? 'Mark och nära träd i 3D' : 'Mark och träd som skyltar';
+    } else if (!formMark) {
+      extra = 'Mark · 50 m, 10 m nära';
+    }
+    rad.textContent = `${el.dataset.fps || '0'} bilder/s · ${el.dataset.anrop || '0'} anrop · ${tal(tri, 0)} trianglar · ${extra}`;
+  }
+
+  function oppnaKlar() {
+    const ark = el.querySelector('[data-ark]');
+    ark.hidden = false;
+    ark.innerHTML = `
+      <div class="ark-kort" role="dialog" aria-label="Klar">
+        <h2>Sparat</h2>
+        <p>Enheterna ligger kvar på kartan.</p>
+        <button type="button" class="knapp primar" data-testa-grafik>Testa grafik</button>
+        <button type="button" class="knapp" data-spela>Spela och testa</button>
+        <p class="fin">Spela och testa är en första version. Enheterna går mot varandra och skjuter. Det är inte ett färdigt slag.</p>
+        <button type="button" class="textknapp" data-stang>Stäng</button>
+      </div>`;
+    ark.onclick = (handelse) => {
+      if (handelse.target.closest('[data-stang]')) { ark.hidden = true; return; }
+      if (handelse.target.closest('[data-testa-grafik]')) {
+        spellage = 'grafik';
+        ark.hidden = true;
+        el.querySelector('[data-tillbaka-lage]').hidden = false;
+        el.querySelector('[data-klar]').hidden = true;
+        status.textContent = 'Fri kamera. Ingen strid.';
+        return;
+      }
+      if (handelse.target.closest('[data-spela]')) {
+        spellage = 'spel';
+        for (const post of placeringar) post.hp = post.hp || 100;
+        ark.hidden = true;
+        el.querySelector('[data-tillbaka-lage]').hidden = false;
+        el.querySelector('[data-klar]').hidden = true;
+        status.textContent = 'Första version. De går mot varandra och skjuter.';
+      }
+    };
+  }
+
+  function spelaSteg(dt) {
+    const levande = (sida) => placeringar.filter((post) => post.sida === sida && (post.hp ?? 100) > 0);
+    if (!levande('bla').length || !levande('rod').length) {
+      status.textContent = !levande('bla').length && !levande('rod').length
+        ? 'Båda sidor är slut. Första version.'
+        : (levande('bla').length ? 'Blå sida kvar. Första version.' : 'Röd sida kvar. Första version.');
+      return;
+    }
+    for (const post of placeringar) {
+      if (!post.sida || (post.hp ?? 100) <= 0) continue;
+      const fiender = levande(post.sida === 'bla' ? 'rod' : 'bla');
+      if (!fiender.length) continue;
+      let mal = fiender[0];
+      let bast = Infinity;
+      for (const fiende of fiender) {
+        const avstand = Math.hypot(fiende.x - post.x, fiende.z - post.z);
+        if (avstand < bast) { bast = avstand; mal = fiende; }
+      }
+      if (bast > 14) {
+        const steg = Math.min(bast - 12, 7 * dt);
+        post.x += ((mal.x - post.x) / bast) * steg;
+        post.z += ((mal.z - post.z) / bast) * steg;
+        post.grupp.position.set(post.x, hojd(post.x, post.z), post.z);
+      }
+      post.sedanSkott = (post.sedanSkott || 0) + dt;
+      if (bast < 220 && post.sedanSkott > 1.1) {
+        post.sedanSkott = 0;
+        mal.hp = (mal.hp ?? 100) - 34;
+        visaSkott(post, mal);
+        if (mal.hp <= 0) mal.grupp.visible = false;
+      }
+    }
+  }
+
+  function visaSkott(fran, till) {
+    const geo = new BufferGeometry().setFromPoints([
+      new Vector3(fran.x, fran.grupp.position.y + 1.5, fran.z),
+      new Vector3(till.x, till.grupp.position.y + 1.2, till.z)
+    ]);
+    const linje = new Line(geo, skottMat);
+    scen.add(linje);
+    setTimeout(() => {
+      linje.removeFromParent();
+      geo.dispose();
+    }, 160);
   }
 
   function forberedMark(nod) {
@@ -459,8 +673,13 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
       return;
     }
     if (!markTraff) return;
+    if (spellage !== 'stall') {
+      matareMal = { typ: 'mark' };
+      return;
+    }
     if (valdEnhet) stallUt({ enhet: valdEnhet, x: markTraff.point.x, z: markTraff.point.z, yaw: 0 }, true);
     else if (traffad) valj(traffad);
+    else matareMal = { typ: 'mark' };
   }
 
   async function stallUt(post, fragaSida) {
@@ -646,6 +865,7 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
     if (valdPlacering) {
       const namn = poster.get(valdPlacering.enhet)?.namn || valdPlacering.enhet;
       status.textContent = namn + ' är vald. Flytta eller ta bort.';
+      matareMal = { typ: 'enhet', id: valdPlacering.id };
     }
     ritaLista();
   }
@@ -692,6 +912,8 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
     el.dataset.bla = String(bla);
     el.dataset.rod = String(rod);
     el.dataset.placeringar = String(klara.length);
+    const klarKnapp = el.querySelector('[data-klar]');
+    if (klarKnapp) klarKnapp.hidden = spellage !== 'stall' || klara.length < 1;
     el.querySelector('[data-lista]').innerHTML = klara.map((post) => {
       const namn = poster.get(post.enhet)?.namn || post.enhet;
       const meta = poster.get(post.enhet);

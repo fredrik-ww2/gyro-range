@@ -6,8 +6,8 @@ import {
 import { skrivOverrid } from './spara.js';
 import { klonaMall, laddaMall } from './modeller.js';
 import {
-  NIVA_NAMN, TERRANG, checklista, esc, fartSammanfattning, hamta, lattasteModell,
-  markeText, reglageSteg, reglageTak, ritaChecklista, statusNamn, stapelAndel, svarAndel, tal
+  NIVA_NAMN, TERRANG, checklista, esc, fartSammanfattning, hamta, mobilRapport, placeringsNivaer,
+  markeText, reglageSteg, reglageTak, ritaChecklista, statusNamn, stapelAndel, stridsrader, svarAndel, tal
 } from './data.js';
 
 const AVSTAND = ['100', '250', '500', '1000', '1500', '2000'];
@@ -15,7 +15,7 @@ const AVSTAND = ['100', '250', '500', '1000', '1500', '2000'];
 export function monteraKort(el, { original, overrid, visning, beteende, tillbaka }) {
   if (el._stopp) el._stopp();
   const enhet = visning;
-  const modell = lattasteModell(enhet.modeller);
+  const modell = narModell(enhet.modeller);
   const startCheck = checklista(enhet);
   const niva = startCheck.niva === 'klar' ? 'Klar' : (NIVA_NAMN[startCheck.niva] || '');
   el.innerHTML = `
@@ -34,14 +34,17 @@ export function monteraKort(el, { original, overrid, visning, beteende, tillbaka
     <div class="forhands" data-forhands>
       <div class="forhands-yta" data-yta></div>
       <p class="hint" data-modellrad>${modell
-        ? `Lättaste detaljnivån · ${tal(modell.trianglar, 0)} trianglar${(modell.trianglar || 0) <= 12 || modell.roll === 'impostor' ? ' · förenklad platshållare' : ''}`
+        ? `Närbild · ${tal(modell.trianglar, 0)} trianglar${(modell.trianglar || 0) <= 12 || modell.roll === 'impostor' ? ' · förenklad platshållare' : ''}`
         : 'Ingen 3D-modell levererad.'}</p>
     </div>
     <div class="flikar" role="tablist">
-      <button type="button" role="tab" id="tab-varden" aria-selected="true" aria-controls="panel-varden" data-tab="varden">Värden</button>
+      <button type="button" role="tab" id="tab-varden" aria-selected="true" aria-controls="panel-varden" data-tab="varden">Stridsvärden</button>
       <button type="button" role="tab" id="tab-beteende" aria-selected="false" aria-controls="panel-beteende" data-tab="beteende">Beteende</button>
+      <button type="button" role="tab" id="tab-mobil" aria-selected="false" aria-controls="panel-mobil" data-tab="mobil">Mobil</button>
+      <button type="button" role="tab" id="tab-saknas" aria-selected="false" aria-controls="panel-saknas" data-tab="saknas">Saknas</button>
     </div>
     <div id="panel-varden" role="tabpanel" aria-labelledby="tab-varden" data-panel="varden">
+      ${stridsTabell(enhet)}
       ${stapelBlock('Fart på väg', 'fart_per_terrang.vag', enhet, { enhetText: 'km/h' })}
       <section class="grafgrupp">
         <h2>Eldkraft</h2>
@@ -77,7 +80,17 @@ export function monteraKort(el, { original, overrid, visning, beteende, tillbaka
       </section>
     </div>
     <div id="panel-beteende" role="tabpanel" aria-labelledby="tab-beteende" data-panel="beteende" hidden>
+      <h2>Individbeteende som finns</h2>
+      <p class="fin">Det här är de gemensamma reglerna enheten kan följa. En egen regelbok för just den här enheten finns inte.</p>
       ${beteendePanel(enhet, beteende, overrid)}
+    </div>
+    <div id="panel-mobil" role="tabpanel" aria-labelledby="tab-mobil" data-panel="mobil" hidden>
+      <h2>Mobilanpassning</h2>
+      ${mobilPanel(enhet)}
+    </div>
+    <div id="panel-saknas" role="tabpanel" aria-labelledby="tab-saknas" data-panel="saknas" hidden>
+      <h2>Vad saknas för att bli färdig</h2>
+      ${saknasPanel(enhet, startCheck)}
     </div>
     <p class="sparrad" data-sparrad aria-live="polite"></p>
     <p class="fin">Fastpunkter: ${esc(fastpunktText(enhet.fastpunkter))}. Effekter kopplas bara via det gemensamma biblioteket och spelas inte här.</p>
@@ -102,8 +115,7 @@ export function monteraKort(el, { original, overrid, visning, beteende, tillbaka
     knapp.addEventListener('click', () => {
       const namn = knapp.dataset.tab;
       el.querySelectorAll('[data-tab]').forEach((annan) => annan.setAttribute('aria-selected', annan === knapp ? 'true' : 'false'));
-      el.querySelector('[data-panel="varden"]').hidden = namn !== 'varden';
-      el.querySelector('[data-panel="beteende"]').hidden = namn !== 'beteende';
+      el.querySelectorAll('[data-panel]').forEach((panel) => { panel.hidden = panel.dataset.panel !== namn; });
     });
   });
 
@@ -339,8 +351,12 @@ export function monteraKort(el, { original, overrid, visning, beteende, tillbaka
   }
 }
 
+function narModell(modeller) {
+  return placeringsNivaer(modeller).mobil || null;
+}
+
 function startaForhands(yta, enhet, original) {
-  const modell = lattasteModell(enhet.modeller);
+  const modell = narModell(enhet.modeller);
   if (!modell || !yta) return () => {};
   let stopp = false;
   let renderer;
@@ -407,6 +423,55 @@ function startaForhands(yta, enhet, original) {
     renderer?.forceContextLoss?.();
     renderer?.domElement.remove();
   };
+}
+
+function mattRad(namn, text, farg) {
+  return `<li class="matt-${esc(farg)}" data-matt="${esc(namn)}"><span>${esc(namn)}</span><strong>${esc(text)}</strong></li>`;
+}
+
+function mobilPanel(enhet) {
+  const rapport = mobilRapport(enhet);
+  const nivaer = rapport.rader.map((rad) => mattRad(rad.namn, rad.text, rad.farg)).join('');
+  return `
+    <ul class="mattlista" data-mobil>
+      ${nivaer}
+      ${mattRad('LOD-nivåer', String(rapport.antalNivaer) + ' av 3', rapport.nivaFarg)}
+      ${mattRad('Texturer', rapport.texturText, rapport.texturFarg)}
+      ${mattRad('Filstorlek', rapport.bytesText, rapport.bytesFarg)}
+      ${mattRad('Komprimering', rapport.komprimering, rapport.komprimeringFarg)}
+      ${mattRad('Skuggproxy', rapport.skuggproxy, rapport.skuggFarg)}
+    </ul>
+    <p class="fin">Grönt är inom gränsen för en enhet på iPhone. Gult är tätt. Rött är för tungt eller saknas.</p>`;
+}
+
+function stridsTabell(enhet) {
+  const rader = stridsrader(enhet).map((rad) => `
+    <tr data-strid="${esc(rad.stig)}" data-marke="${esc(rad.marke)}">
+      <td>${esc(rad.stig)}</td>
+      <td>${esc(rad.text)}</td>
+      <td class="matt-${esc(rad.farg)}">${esc(rad.marke)}</td>
+    </tr>`).join('');
+  return `
+    <section class="grafgrupp" data-stridstabell>
+      <h2>Alla stridsvärden</h2>
+      <p class="fin">Källa är hämtat. Uppskattat är en gissning. Saknas betyder att värdet inte finns.</p>
+      <table class="stridstabell"><tbody>${rader}</tbody></table>
+    </section>`;
+}
+
+function saknasPanel(enhet, check) {
+  const finns = check.punkter.filter((punkt) => punkt.ok);
+  const saknas = check.punkter.filter((punkt) => !punkt.ok);
+  const extra = (enhet.saknas || []).map((rad) => `<li class="saknas">${esc(rad)}</li>`).join('');
+  return `
+    <section data-saknas-panel>
+      <h3>Finns</h3>
+      <ul>${finns.map((punkt) => `<li class="ok">${esc(punkt.text)}</li>`).join('') || '<li>Inget är ikryssat ännu.</li>'}</ul>
+      <h3>Saknas</h3>
+      <ul>${saknas.map((punkt) => `<li class="saknas">${esc(punkt.text)}</li>`).join('') || '<li>Inget saknas på checklistan.</li>'}</ul>
+      ${extra ? `<h3>Övrigt som datapaketet nämner</h3><ul>${extra}</ul>` : ''}
+      <p class="fin">Eget individbeteende för just den här enheten saknas. De gemensamma reglerna ligger under Beteende.</p>
+    </section>`;
 }
 
 function stapelBlock(rubrik, sokvag, enhet, extra = {}) {

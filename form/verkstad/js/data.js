@@ -344,6 +344,96 @@ export function checklista(enhet) {
   return { punkter, niva, uppskattade, klara, totalt: punkter.length, status: niva === 'klar' ? 'klar' : 'under_utveckling' };
 }
 
+const MOBIL_TRI = { nar: [8000, 20000], enkel: [4000, 12000], skylt: [32, 400] };
+
+function fargMotGrans(varde, gron, gul) {
+  if (varde == null || !Number.isFinite(varde)) return 'gul';
+  if (varde <= gron) return 'gron';
+  if (varde <= gul) return 'gul';
+  return 'rod';
+}
+
+/** Mobilrad för enhetskortet. Gränserna är R62 för en enhet på iPhone, inte hela kartan. */
+export function mobilRapport(enhet) {
+  const modeller = enhet?.modeller || [];
+  const nivaer = placeringsNivaer(modeller);
+  const skylt = modeller.find((modell) => modell.roll === 'impostor' || /_bb\.glb$/i.test(modell.fil || '')) || null;
+  const kedja = [
+    ['Närbild', nivaer.mobil, MOBIL_TRI.nar],
+    ['Enkel', nivaer.enkel && nivaer.enkel.fil !== nivaer.mobil?.fil ? nivaer.enkel : null, MOBIL_TRI.enkel],
+    ['Skylt', skylt, MOBIL_TRI.skylt]
+  ];
+  const rader = kedja.map(([namn, modell, grans]) => {
+    const tri = modell?.trianglar ?? null;
+    return {
+      namn,
+      text: modell ? tal(tri, 0) + ' trianglar' : 'saknas',
+      farg: modell ? fargMotGrans(tri, grans[0], grans[1]) : 'rod',
+      fil: modell?.fil || '',
+      bytes: modell?.bytes || 0
+    };
+  });
+  const antalNivaer = rader.filter((rad) => rad.text !== 'saknas').length;
+  const mobil = nivaer.mobil;
+  const material = mobil?.material ?? null;
+  const bytes = mobil?.bytes || 0;
+  const ext = mobil?.extensioner || [];
+  const harMeshopt = ext.some((namn) => /meshopt/i.test(namn));
+  const harDraco = ext.some((namn) => /draco/i.test(namn));
+  const harKtx = ext.some((namn) => /ktx|basis/i.test(namn));
+  const komprimering = [
+    harDraco ? 'Draco' : null,
+    harMeshopt ? 'meshopt' : null,
+    harKtx ? 'KTX2' : null
+  ].filter(Boolean).join(', ') || 'ingen';
+  return {
+    rader,
+    antalNivaer,
+    nivaFarg: antalNivaer >= 3 ? 'gron' : antalNivaer === 2 ? 'gul' : 'rod',
+    material,
+    materialFarg: material == null ? 'gul' : fargMotGrans(material, 8, 16),
+    texturText: 'Storlek i pixlar står inte i datapaketet. Material: ' + (material ?? 'okänt') + '.',
+    texturFarg: material == null ? 'gul' : fargMotGrans(material, 8, 16),
+    bytes,
+    bytesText: bytes ? (bytes / 1e6).toFixed(1).replace('.', ',') + ' MB' : 'okänd',
+    bytesFarg: bytes ? fargMotGrans(bytes, 2e6, 5e6) : 'gul',
+    komprimering,
+    komprimeringFarg: harDraco || harMeshopt ? (harKtx ? 'gron' : 'gul') : 'rod',
+    skuggproxy: 'Ja i Ställ ut, en platt skiva under enheten. Nej i själva modellfilen.',
+    skuggFarg: 'gul'
+  };
+}
+
+export function stridsrader(enhet) {
+  const funna = new Map();
+  (function ga(nod, stig) {
+    if (!nod || typeof nod !== 'object') return;
+    if (Object.prototype.hasOwnProperty.call(nod, 'varde')) {
+      funna.set(stig, nod);
+      return;
+    }
+    for (const [nyckel, barn] of Object.entries(nod)) {
+      if (nyckel === 'andringshistorik') continue;
+      ga(barn, stig ? stig + '.' + nyckel : nyckel);
+    }
+  })(enhet?.spelvarden || {}, '');
+  const ordning = [...HUVUDVARDEN];
+  for (const stig of funna.keys()) if (!ordning.includes(stig)) ordning.push(stig);
+  return ordning.map((stig) => {
+    const nod = funna.get(stig);
+    if (!nod || nod.varde == null || nod.varde === '') {
+      return { stig, text: 'saknas', marke: 'saknas', farg: 'rod' };
+    }
+    const marke = nod.ursprung === 'kalla' ? 'källa' : nod.ursprung === 'anvandarbestamd' ? 'bestämd av dig' : 'uppskattat';
+    return {
+      stig,
+      text: tal(nod.varde, nod.enhet === 'andel' ? 2 : undefined) + (nod.enhet && nod.enhet !== 'andel' ? ' ' + nod.enhet : ''),
+      marke,
+      farg: nod.ursprung === 'uppskattat' ? 'gul' : 'gron'
+    };
+  });
+}
+
 export function statusNamn(status) {
   if (status === 'klar') return 'Klar';
   return 'Under utveckling';

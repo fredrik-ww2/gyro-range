@@ -236,7 +236,41 @@ svg .axel { stroke: #d5decc; stroke-width: 1; }
 }
 .stall-status { top: 8px; }
 .stall-hint { bottom: 8px; }
+.terrangruta {
+  position: absolute;
+  top: 52px;
+  left: 10px;
+  right: 10px;
+  z-index: 3;
+  background: rgba(247, 248, 243, 0.94);
+  border-radius: 12px;
+  max-width: 280px;
+}
+.terrangruta summary { min-height: 44px; padding: 8px 12px; font-weight: 700; cursor: pointer; }
+.terrangruta dl { margin: 0; padding: 0 12px 10px; display: grid; gap: 4px; }
+.terrangruta div { display: flex; justify-content: space-between; gap: 8px; }
+.terrangruta dt { color: var(--dämpad); }
+.terrangruta dd { margin: 0; font-weight: 700; }
+.lodmatare {
+  margin: 0;
+  padding: 6px 12px;
+  background: #24382d;
+  color: #f4f7ef;
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
 .stall-panel { background: var(--papper); border-top: 1px solid var(--linje); padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); max-height: 32dvh; overflow: auto; }
+.mattlista { list-style: none; margin: 8px 16px; padding: 0; display: grid; gap: 6px; }
+.mattlista li, .stridstabell td.matt-gron, .stridstabell td.matt-gul, .stridstabell td.matt-rod {
+  display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 10px; background: white;
+}
+.matt-gron { box-shadow: inset 4px 0 0 #1d6b3a; }
+.matt-gul { box-shadow: inset 4px 0 0 #b58112; }
+.matt-rod { box-shadow: inset 4px 0 0 #a12424; }
+.stridstabell { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.stridstabell td { padding: 6px 4px; border-top: 1px solid var(--linje); vertical-align: top; }
+.flikar { flex-wrap: wrap; }
+.flikar button { flex: 1 1 42%; }
 .placeringar { list-style: none; margin: 8px 0 0; padding: 0; }
 .placeringar li { display: flex; gap: 6px; align-items: center; min-height: 52px; border-top: 1px solid var(--linje); }
 .placeringar li button { min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--linje); background: white; }

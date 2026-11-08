@@ -81,9 +81,14 @@ export async function laddaObjekt(renderer, url) {
           nod.castShadow = false;
           nod.receiveShadow = false;
           const material = Array.isArray(nod.material) ? nod.material : [nod.material];
-          for (const mat of material) if (mat) mat.side = 2;
+          for (const mat of material) {
+            if (!mat) continue;
+            mat.side = 2;
+            if (mat.alphaTest > 0) mat.depthWrite = true;
+          }
         }
       });
+      doljAlternativ(rot);
       return rot;
     })));
   }
@@ -93,6 +98,44 @@ export async function laddaObjekt(renderer, url) {
 export async function laddaMall(renderer, enhetFil, modell) {
   const url = modellAdress(enhetFil, modell.fil).href;
   return laddaObjekt(renderer, url);
+}
+
+/* Sketchfab-modeller har flera option-varianter i samma scen. Bara den tyngsta syns, annars z-fightar kjolar och skrov. */
+function doljAlternativ(rot) {
+  const grupper = new Map();
+  rot.traverse((nod) => {
+    const traff = (nod.name || '').match(/^(.*?)-option([a-z])/i);
+    if (!traff) return;
+    const nyckel = traff[1].toLowerCase();
+    const variant = traff[2].toLowerCase();
+    if (!grupper.has(nyckel)) grupper.set(nyckel, new Map());
+    const varianter = grupper.get(nyckel);
+    if (!varianter.has(variant)) varianter.set(variant, []);
+    varianter.get(variant).push(nod);
+  });
+  for (const varianter of grupper.values()) {
+    if (varianter.size < 2) continue;
+    let bast = null;
+    let bastTri = -1;
+    for (const [variant, noder] of varianter) {
+      let tri = 0;
+      for (const nod of noder) {
+        nod.traverse((barn) => {
+          if (!barn.isMesh || !barn.geometry) return;
+          const index = barn.geometry.index;
+          tri += index ? index.count / 3 : (barn.geometry.attributes.position?.count || 0) / 3;
+        });
+      }
+      if (tri > bastTri || (tri === bastTri && variant === 'a')) {
+        bastTri = tri;
+        bast = variant;
+      }
+    }
+    for (const [variant, noder] of varianter) {
+      if (variant === bast) continue;
+      for (const nod of noder) nod.visible = false;
+    }
+  }
 }
 
 export function klonaMall(mall) {

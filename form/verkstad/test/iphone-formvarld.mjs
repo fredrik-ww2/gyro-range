@@ -52,11 +52,11 @@ function server() {
   });
 }
 
-async function vanta(sida, fn, ms = 20000) {
+async function vanta(sida, fn, ms = 20000, arg) {
   const start = Date.now();
   let senast = '';
   while (Date.now() - start < ms) {
-    senast = await sida.evaluate(fn);
+    senast = await sida.evaluate(fn, arg);
     if (senast === true || senast === 'ok') return;
     await new Promise((r) => setTimeout(r, 200));
   }
@@ -157,7 +157,14 @@ const webblasare = await puppeteer.launch({
 });
 const sida = await webblasare.newPage();
 sida.on('console', (meddelande) => {
-  if (meddelande.type() === 'error') fel.push(meddelande.text());
+  if (meddelande.type() !== 'error') return;
+  const text = meddelande.text();
+  if (text.startsWith('Failed to load resource') && text.includes('404')) return;
+  fel.push(text);
+});
+sida.on('response', (svar) => {
+  if (svar.status() !== 404 || svar.url().includes('/cdn-cgi/')) return;
+  fel.push('404 ' + svar.url());
 });
 sida.on('pageerror', (err) => fel.push(String(err)));
 await sida.emulate({
@@ -207,6 +214,11 @@ try {
     if (stall.dataset.varld !== 'form:11111111-2222-4333-8444-555555555555') return 'varld=' + stall.dataset.varld;
     const sidaPx = Number(stall.dataset.textur || 0);
     if (!sidaPx || sidaPx > 2048) return 'textur=' + stall.dataset.textur;
+    if (stall.dataset.trad !== '2') return 'trad=' + stall.dataset.trad;
+    if (!(Number(stall.dataset.hojdspann) > 1)) return 'spann=' + stall.dataset.hojdspann;
+    if (stall.dataset.lod !== '3d+impostor') return 'lod=' + stall.dataset.lod;
+    if (stall.dataset.texturer !== '3') return 'texturer=' + stall.dataset.texturer;
+    if (!(Number(stall.dataset.trianglar) > 1000)) return 'tri=' + stall.dataset.trianglar;
     return true;
   }, 30000);
 
@@ -227,7 +239,14 @@ try {
   await sida.click('[data-ark]:not([hidden]) [data-sida="rod"]');
   await vanta(sida, () => {
     const stall = document.querySelector('section[data-vy="stall"]');
-    return stall?.dataset.bla === '1' && stall?.dataset.rod === '1' ? true : `bla=${stall?.dataset.bla} rod=${stall?.dataset.rod}`;
+    if (!(stall?.dataset.bla === '1' && stall?.dataset.rod === '1')) return `bla=${stall?.dataset.bla} rod=${stall?.dataset.rod}`;
+    const min = Number(stall.dataset.hojdmin);
+    const max = Number(stall.dataset.hojdmax);
+    const y = [...stall.querySelectorAll('[data-placering]')].map((nod) => Number(nod.dataset.y));
+    if (y.length !== 2 || y.some((varde) => !Number.isFinite(varde) || varde < min - 0.4 || varde > max + 0.4)) {
+      return 'enhetens höjd ' + y.join(',') + ' utanför ' + min + '…' + max;
+    }
+    return true;
   });
   await new Promise((r) => setTimeout(r, 600));
   await sida.screenshot({ path: join(ART, 'utstallda-enheter-form-varld.png') });
@@ -240,6 +259,8 @@ try {
     if (sidor.join(',') !== 'bla,rod') return 'sidor=' + sidor.join(',');
     return true;
   }, 30000);
+
+  await jamforSkog(sida, bas);
 
   await sida.goto(bas + '/verkstad/#stall', { waitUntil: 'domcontentloaded' });
   await vanta(sida, () => {
@@ -256,4 +277,89 @@ try {
 } finally {
   await webblasare.close();
   http.close();
+}
+
+async function jamforSkog(sida, bas) {
+  await sida.goto(bas + '/satellit/', { waitUntil: 'domcontentloaded' });
+  await vanta(sida, () => {
+    const knapp = [...document.querySelectorAll('.land-samples button')].find((nod) => nod.textContent.includes('Skog'));
+    if (!knapp) return 'ingen testbild';
+    if (knapp.disabled) return 'visaren inte redo';
+    return true;
+  }, 60000);
+  await sida.evaluate(() => {
+    [...document.querySelectorAll('.land-samples button')].find((nod) => nod.textContent.includes('Skog')).click();
+  });
+  await vanta(sida, () => {
+    const text = (document.querySelector('.land-result strong')?.innerText || '').replace(/\u00a0|\u202f/g, ' ');
+    const traff = text.match(/(\d[\d\s]*)\s*träd/);
+    if (!traff) return 'bygger: ' + text.slice(0, 80);
+    const antal = Number(traff[1].replace(/\s/g, ''));
+    if (antal < 1000) return 'för få träd ' + antal;
+    return true;
+  }, 120000);
+  const tradAntal = await sida.evaluate(() => {
+    const text = (document.querySelector('.land-result strong')?.innerText || '').replace(/\u00a0|\u202f/g, ' ');
+    return Number(text.match(/(\d[\d\s]*)\s*träd/)[1].replace(/\s/g, ''));
+  });
+  await sida.evaluate(() => {
+    [...document.querySelectorAll('.land-view-modes button')].find((nod) => nod.textContent.includes('Snedvy'))?.click();
+    const ratt = document.getElementById('camera-tilt');
+    const satt = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    satt.call(ratt, '28');
+    ratt.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await new Promise((r) => setTimeout(r, 800));
+  const vy = await sida.$('.land-viewport');
+  if (vy) await vy.evaluate((nod) => nod.scrollIntoView({ block: 'center' }));
+  await new Promise((r) => setTimeout(r, 500));
+  await sida.screenshot({ path: join(ART, 'form-skog-snedvy.png') });
+
+  const lank = await sida.evaluate(() => {
+    const a = document.getElementById('verkstad-ingang-host')?.shadowRoot?.querySelector('a');
+    return { href: a?.href || '', text: a?.textContent || '' };
+  });
+  if (!lank.text.includes('Ställ ut den här världen')) throw new Error('Ställ ut saknas: ' + lank.text);
+  if (!lank.href.includes('#stall/form/')) throw new Error('Ställ ut pekar fel: ' + lank.href);
+
+  await sida.goto(lank.href, { waitUntil: 'domcontentloaded' });
+  await vanta(sida, (antal) => {
+    const stall = document.querySelector('section[data-vy="stall"]');
+    if (!stall || stall.dataset.redo !== 'mark') return 'redo=' + stall?.dataset.redo;
+    if (stall.dataset.trad !== String(antal)) return 'trad ' + stall.dataset.trad + ' mot FORM ' + antal;
+    if (!(Number(stall.dataset.hojdspann) > 0.4)) return 'platt spann=' + stall.dataset.hojdspann;
+    if (stall.dataset.lod !== '3d+impostor') return 'lod=' + stall.dataset.lod;
+    if (Number(stall.dataset.texturer) > 4) return 'texturer=' + stall.dataset.texturer;
+    if (!(Number(stall.dataset.trianglar) > 20000)) return 'tri=' + stall.dataset.trianglar;
+    return true;
+  }, 90000, tradAntal);
+  await sida.evaluate(() => {
+    document.querySelector('section[data-vy="stall"]')._kamera.sattVy({ mal: [0, 0], d: 520, lutning: 46, kurs: 38 });
+  });
+  await new Promise((r) => setTimeout(r, 700));
+  await sida.screenshot({ path: join(ART, 'stall-ut-skog.png') });
+  await sida.evaluate(() => {
+    document.querySelector('section[data-vy="stall"]')._kamera.sattVy({ mal: [12, -20], d: 42, lutning: 66, kurs: 16 });
+  });
+  await new Promise((r) => setTimeout(r, 700));
+  await sida.screenshot({ path: join(ART, 'stall-ut-skog-nara.png') });
+
+  await sida.evaluate(() => {
+    const stall = document.querySelector('section[data-vy="stall"]');
+    stall._kamera.sattVy({ mal: [180, 220], d: 36, lutning: 70, kurs: 45 });
+  });
+  await new Promise((r) => setTimeout(r, 600));
+  const cull = await sida.evaluate(() => {
+    const stall = document.querySelector('section[data-vy="stall"]');
+    return {
+      anrop: Number(stall.dataset.anrop),
+      rutor: Number(stall.dataset.skogMeshar),
+      nara: Number(stall.dataset.nara),
+      tri: Number(stall.dataset.trianglar)
+    };
+  });
+  if (!(cull.rutor >= 4)) throw new Error('för få trädrutor ' + JSON.stringify(cull));
+  if (!(cull.anrop > 0 && cull.anrop < cull.rutor)) throw new Error('frustum culling syns inte ' + JSON.stringify(cull));
+  if (!(cull.nara > 0)) throw new Error('nära 3D-träd saknas ' + JSON.stringify(cull));
+  console.log('skog', tradAntal, 'cull', JSON.stringify(cull));
 }

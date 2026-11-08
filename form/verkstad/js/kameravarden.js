@@ -39,9 +39,9 @@ export const KAMERAVARDEN = {
     far_faktor: 4
   },
   start: {
-    mal_xz_m: [0, 0],
-    d_m: 720,
-    lutning_grader: 52,
-    kurs_grader: 20
+    mal_xz_m: [-520, 380],
+    d_m: 150,
+    lutning_grader: 45,
+    kurs_grader: 38
   }
 };

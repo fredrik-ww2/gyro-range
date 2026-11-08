@@ -18,6 +18,8 @@ const TYPER = {
   '.svg': 'image/svg+xml',
   '.wasm': 'application/wasm',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
   '.webp': 'image/webp'
 };
 
@@ -73,31 +75,51 @@ const browser = await chromium.launch({
 });
 const context = await browser.newContext({
   viewport: { width: 390, height: 844 },
-  deviceScaleFactor: 2,
+  deviceScaleFactor: 3,
   isMobile: true,
   hasTouch: true,
-  userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'
+  userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1'
 });
 const page = await context.newPage();
 bevaka(page, 'verkstad');
 
 try {
-  await page.goto(BAS + '/verkstad/#bibliotek', { waitUntil: 'networkidle' });
+  await page.goto(BAS + '/verkstad/#bibliotek', { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('[data-redo="bibliotek"]', { timeout: 60000 });
   await page.waitForSelector('[data-mapp="enheter/klara"][data-tom="true"]');
   const tom = await page.locator('[data-mapp="enheter/klara"]').innerText();
   if (!tom.includes('Tom mapp')) throw new Error('Klara-mappen saknar tomtext: ' + tom);
-  for (const id of ['stilar', 'forband', 'intelligens', 'regler', 'scenarier', 'resultat', 'enheter/under_utveckling/1_nastan_klar']) {
+  for (const id of ['stilar', 'forband', 'intelligens', 'regler', 'scenarier', 'resultat']) {
     await page.waitForSelector(`[data-mapp="${id}"][data-tom="true"]`);
   }
+  const nara = Number(await page.locator('[data-mapp="enheter/under_utveckling/1_nastan_klar"]').getAttribute('data-antal'));
+  if (nara < 1) throw new Error('Nästan klar blev tom: ' + nara);
+  await page.locator('[data-mapp="enheter/under_utveckling/2_halvvags"]').evaluate((el) => {
+    el.open = true;
+    const nation = el.querySelector('[data-nation="Tyskland"]');
+    nation.open = true;
+    nation.querySelector('[data-trupp="Stridsvagn"]').open = true;
+    nation.scrollIntoView();
+  });
+  await page.waitForSelector('[data-mapp="enheter/under_utveckling/2_halvvags"] [data-nation="Tyskland"] [data-trupp="Stridsvagn"] [data-checklista]');
   await bild(page, '01-bibliotek');
 
-  await page.locator('[data-mapp="enheter/under_utveckling/3_tidigt_skede"] summary').click();
+  await page.locator('[data-mapp="enheter/under_utveckling/3_tidigt_skede"]').evaluate((el) => {
+    el.open = true;
+    const nation = el.querySelector('[data-nation="Tyskland"]');
+    nation.open = true;
+    nation.querySelector('[data-trupp="Stridsvagn"]').open = true;
+  });
   await page.locator('[data-enhet="tiger_ii"]').click();
   await page.waitForSelector('.statusrad[data-status="under_utveckling"]');
-  const tidig = await page.locator('[data-saknas]').innerText();
-  if (!/modell/i.test(tidig)) throw new Error('Tiger II saknar inte modelltext: ' + tidig);
+  await page.locator('section[data-vy="kort"]').getByRole('heading', { name: 'Saknas för att bli klar' }).waitFor();
+  const modellPunkt = page.locator('section[data-vy="kort"] [data-punkt="modell"]');
+  if (await modellPunkt.getAttribute('data-ok') !== 'false') throw new Error('Tiger II visade modell som klar');
+  const skadaPunkt = page.locator('section[data-vy="kort"] [data-punkt="skada"]');
+  if (await skadaPunkt.getAttribute('data-ok') !== 'false') throw new Error('Skada var ikryssad');
   if (await page.locator('[data-status="klar"]').count()) throw new Error('En enhet visades som klar');
-  await bild(page, '02-under-utveckling');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await bild(page, '02-checklista');
 
   await page.goto(BAS + '/verkstad/#enhet/sherman_m4_75', { waitUntil: 'networkidle' });
   await page.waitForSelector('[data-falt="fart_per_terrang.vag"]');

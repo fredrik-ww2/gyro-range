@@ -10,7 +10,11 @@ Endast data och kopierade tillgångar. Ingen UI-, spel-, ljud- eller beslutskod 
 
 ## Enhet
 id, namn, nation, typ, kategori, status, utvecklingsniva, saknas, modeller, fastpunkter och spelvarden.
-status är klar eller under_utveckling. Nivåer: 1_nastan_klar, 2_halvvags, 3_tidigt_skede. I detta paket är inga enheter klara eller nästan klara: integration och funktion är inte belagd. Registerposter utan fysisk modell listas öppet som tidigt skede. Modeller är inte samma sak som fungerande spelenheter. Tidigare underkännanden skrivs inte om till godkända.
+status är klar eller under_utveckling. Nivåer: 1_nastan_klar, 2_halvvags, 3_tidigt_skede. Fältet utvecklingsniva i index och enhet.json är paketets ursprungliga placering. Verkstadens mappar räknas i stället från checklistan, så att vägen till klar syns och inte är hårdkodad.
+
+Klar kräver att hela checklistan är ikryssad: 3D-modell, LOD-kedja, mobilanpassad fil, alla huvudvärden med källa eller godkända av användaren, skada och genomslag, ljud, effektfästpunkter, animation när den är relevant, provspel och granskning på riktig iPhone. Skada och genomslag finns inte i datan och är därför alltid okryssad. Ingen enhet får visas som klar bara för att en modell finns.
+
+Nästan klar kräver ikryssad modell, LOD-kedja och mobilanpassad fil, och att animation inte står som saknad när den är relevant. Det som fortfarande får vara öppet är uppskattade huvudvärden, ljud, provspel, iPhone-granskning, skada/genomslag och omätta fästpunkter. De syns okryssade. Saknas LOD, mobilfil eller animation hamnar enheten i Halvvägs om den har modell, annars i Tidigt skede. Tidigare underkännanden skrivs inte om till godkända.
 
 ### Värdeobjekt
 Varje spelvärde: varde (nummer), enhet och ursprung = kalla | uppskattat | anvandarbestamd. kalla har kallfil och kallfalt (JSON-pointer eller dokumentavsnitt). kallstatus anger källans egen osäkerhet; källa betyder inte nygranskad historisk sanning. uppskattat har motivering och liknande_enhet; startvärdena är provisoriska, inte order eller belagda fakta. Ändring i UI ska få ursprung anvandarbestamd och behålla tidigare värde i ändringshistorik.

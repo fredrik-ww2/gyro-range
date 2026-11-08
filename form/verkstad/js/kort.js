@@ -6,8 +6,8 @@ import {
 import { skrivOverrid } from './spara.js';
 import { klonaMall, laddaMall } from './modeller.js';
 import {
-  NIVA_NAMN, TERRANG, esc, fartSammanfattning, hamta, lattasteModell,
-  markeText, reglageSteg, reglageTak, statusNamn, stapelAndel, svarAndel, tal
+  NIVA_NAMN, TERRANG, checklista, esc, fartSammanfattning, hamta, lattasteModell,
+  markeText, reglageSteg, reglageTak, ritaChecklista, statusNamn, stapelAndel, svarAndel, tal
 } from './data.js';
 
 const AVSTAND = ['100', '250', '500', '1000', '1500', '2000'];
@@ -16,7 +16,8 @@ export function monteraKort(el, { original, overrid, visning, beteende, tillbaka
   if (el._stopp) el._stopp();
   const enhet = visning;
   const modell = lattasteModell(enhet.modeller);
-  const niva = NIVA_NAMN[enhet.utvecklingsniva] || '';
+  const startCheck = checklista(enhet);
+  const niva = startCheck.niva === 'klar' ? 'Klar' : (NIVA_NAMN[startCheck.niva] || '');
   el.innerHTML = `
     <header class="topp">
       <button type="button" class="tillbaka" data-tillbaka>Bibliotek</button>
@@ -25,11 +26,11 @@ export function monteraKort(el, { original, overrid, visning, beteende, tillbaka
         <h1>${esc(enhet.namn)}</h1>
       </div>
     </header>
-    <p class="statusrad" data-status="${esc(enhet.status)}" data-niva="${esc(enhet.utvecklingsniva || '')}">
-      <span class="chip ${enhet.status === 'klar' ? 'chip-klar' : 'chip-arbete'}">${esc(statusNamn(enhet.status))}${niva ? ' · ' + esc(niva) : ''}</span>
+    <p class="statusrad" data-status="${esc(startCheck.status)}" data-niva="${esc(startCheck.niva)}">
+      <span class="chip ${startCheck.status === 'klar' ? 'chip-klar' : 'chip-arbete'}">${esc(statusNamn(startCheck.status))}${niva && startCheck.status !== 'klar' ? ' · ' + esc(niva) : ''}</span>
     </p>
-    <p class="varning">En 3D-modell gör inte enheten färdig. Statusen kommer från datan.</p>
-    ${enhet.saknas?.length ? `<ul class="saknaslista" data-saknas>${enhet.saknas.map((rad) => `<li>${esc(rad)}</li>`).join('')}</ul>` : ''}
+    <p class="varning">En 3D-modell gör inte enheten färdig. Vägen till klar står i checklistan.</p>
+    <div data-check-hallare>${ritaChecklista(startCheck)}</div>
     <div class="forhands" data-forhands>
       <div class="forhands-yta" data-yta></div>
       <p class="hint" data-modellrad>${modell
@@ -256,6 +257,21 @@ export function monteraKort(el, { original, overrid, visning, beteende, tillbaka
     }
     if (sokvag.startsWith('traffchans')) ritaKurva();
     if (sokvag.startsWith('pansar')) ritaPansar();
+    uppdateraChecklista();
+  }
+
+  function uppdateraChecklista() {
+    const check = checklista(enhet);
+    const hallare = el.querySelector('[data-check-hallare]');
+    if (hallare) hallare.innerHTML = ritaChecklista(check);
+    const chip = el.querySelector('.statusrad .chip');
+    const namn = check.niva === 'klar' ? 'Klar' : (NIVA_NAMN[check.niva] || '');
+    if (chip) chip.textContent = statusNamn(check.status) + (namn && check.status !== 'klar' ? ' · ' + namn : '');
+    const rad = el.querySelector('.statusrad');
+    if (rad) {
+      rad.dataset.status = check.status;
+      rad.dataset.niva = check.niva;
+    }
   }
 
   function ritaKurva() {

@@ -1,0 +1,249 @@
+{
+  "schema": "form.verkstad.enhet.v1",
+  "id": "cromwell_iv",
+  "namn": "Cromwell IV",
+  "nation": "Storbritannien",
+  "typ": "fordon",
+  "kategori": "Stridsvagnar",
+  "status": "under_utveckling",
+  "utvecklingsniva": "2_halvvags",
+  "saknas": [
+    "animationer och verifierad rörelse",
+    "fastpunkter för mynning eller avgas",
+    "ljudkoppling",
+    "provspelad komplett spelenhet",
+    "spelvärden: provning av uppskattningar",
+    "R62: culling, instancing och skuggproxy i kommande motor",
+    "Kvalitetskontroll av vald modell och mobiltest på riktig iPhone"
+  ],
+  "modell_ar_inte_spelenhet": true,
+  "modellstatus_kallregister": "saknas",
+  "tidigare_underkannande_finns": false,
+  "modeller": [
+    {
+      "fil": "cromwell_iv_42manako_m_lod2.glb",
+      "roll": "modell",
+      "lod": 2,
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/cromwell_iv_42manako_m_lod2.glb",
+      "bytes": 1139956,
+      "sha256": "d6a3ea0f97cad42c85880d63396f9d7c281b031fb3adaa3e00059c5d7766579d",
+      "trianglar": 2425,
+      "material": 5,
+      "animationer": [],
+      "extensioner": [],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "cromwell_iv_42manako_m_bb.glb",
+      "roll": "impostor",
+      "lod": null,
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/cromwell_iv_42manako_m_bb.glb",
+      "bytes": 58736,
+      "sha256": "2c54b815dea795265d58ebec2fa7cd5e756551d5c6f4d1e1c3088df793f1236a",
+      "trianglar": 4,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    }
+  ],
+  "fastpunkter": {
+    "mynning": {
+      "nod": null,
+      "position_m": null,
+      "tillamplig": true,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen entydig fastpunkt hittad i slutlig modell. Måste mätas, ingen påhittad position.",
+      "liknande_enhet": "panzer_iv_h",
+      "status": "saknas"
+    },
+    "avgas": {
+      "nod": null,
+      "position_m": null,
+      "tillamplig": true,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen entydig fastpunkt hittad i slutlig modell. Måste mätas, ingen påhittad position.",
+      "liknande_enhet": "panzer_iv_h",
+      "status": "saknas"
+    }
+  },
+  "effekter": {
+    "gemensamt_bibliotek": "ww2_assets/assets/effects/ateranvandbara/EFFEKTKATALOG.md",
+    "regel": "R15",
+    "inbaddade_effekter_anvands_inte": true,
+    "status": "referens, inte kopplat i detta datapaket"
+  },
+  "spelvarden": {
+    "fart_per_terrang": {
+      "vag": {
+        "varde": 55.0,
+        "enhet": "km/h",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Storbritannien/Stridsvagnar/enheter/2/fart_vag_kmh",
+        "kallvarde": "55",
+        "kallstatus": "overifierad"
+      },
+      "falt": {
+        "varde": 18,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "Fält skiljs från ospecificerad terräng; antaget normalvärde på torr framkomlig mark, ej maximal fart.",
+        "liknande_enhet": "panzer_iv_h",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Storbritannien/Stridsvagnar/enheter/2/fart_terrang_kmh",
+        "kallvarde": "29"
+      },
+      "skog": {
+        "varde": 8.1,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "by": {
+        "varde": 12.6,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "70 procent av fältfart bland bebyggelse, utan vägbonus.",
+        "liknande_enhet": "panzer_iv_h"
+      }
+    },
+    "eldkraft": {
+      "kaliber_mm": {
+        "varde": 75.0,
+        "enhet": "mm",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Storbritannien/Stridsvagnar/enheter/2/huvudbevapning",
+        "kallvarde": "75 mm OQF Mk V (L/36,5); 64 skott; dessutom 2 × 7,92 mm Besa med 4 950 skott",
+        "kallstatus": "[K-AH]",
+        "tolkning": "Första beväpningens kaliber; patronhylsans längd och antal kulsprutor räknas inte som kaliber."
+      },
+      "eldhastighet_skott_min": {
+        "varde": 6,
+        "enhet": "skott/min",
+        "ursprung": "uppskattat",
+        "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+        "liknande_enhet": "panzer_iv_h"
+      }
+    },
+    "pansar": {
+      "fram": {
+        "varde": 64.0,
+        "enhet": "mm",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Storbritannien/Stridsvagnar/enheter/2/pansar_fram_mm",
+        "kallvarde": "64 (skrov fram); torn fram 76,7",
+        "kallstatus": "[K-AH]"
+      },
+      "sida": {
+        "varde": 30,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "bak": {
+        "varde": 30,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "topp": {
+        "varde": 20,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ungefärlig takplåt för vagnfamiljen; exakt variant och plåt måste källkontrolleras.",
+        "liknande_enhet": "panzer_iv_h"
+      }
+    },
+    "rackvidd": {
+      "varde": 1800,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+      "liknande_enhet": "panzer_iv_h"
+    },
+    "upptackbarhet": {
+      "varde": 1200,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Referensavstånd för upptäckt i dagsljus på öppen mark, inte en uppmätt konstant; terräng och rörelse ska modifiera.",
+      "liknande_enhet": "panzer_iv_h"
+    },
+    "traffchans_per_avstand": {
+      "100": {
+        "varde": 0.812,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "250": {
+        "varde": 0.759,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "500": {
+        "varde": 0.677,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "1000": {
+        "varde": 0.54,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "1500": {
+        "varde": 0.43,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "2000": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "cromwell_iv"
+      }
+    },
+    "beteendeprofil": {
+      "modul": "../../beteende/standard.json",
+      "profil": "besattning",
+      "nation": "Storbritannien",
+      "ursprung": "uppskattat",
+      "motivering": "Gemensam dataprofil; nationella regler måste laddas separat. Ingen AI eller beslutskod ingår.",
+      "liknande_enhet": "panzer_iv_h"
+    }
+  },
+  "enhetsregister": {
+    "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+    "post": "/lander/Storbritannien/Stridsvagnar/enheter/2",
+    "id": "cromwell_iv"
+  },
+  "mobil": {
+    "lat_laddning": true,
+    "culling": "frustum och occlusion i motor",
+    "ateranvand_texturer": true,
+    "skuggproxy": "genereras vid första start i motor",
+    "lod_val": "skärmstorlek i pixlar, mjuk toning",
+    "instancing": "endast om modellen och animationerna stöder det"
+  }
+}

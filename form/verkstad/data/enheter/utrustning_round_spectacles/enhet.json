@@ -1,0 +1,237 @@
+{
+  "schema": "form.verkstad.enhet.v1",
+  "id": "utrustning_round_spectacles",
+  "namn": "Glasögon",
+  "nation": "gemensam",
+  "typ": "utrustning",
+  "kategori": "Utrustning",
+  "status": "under_utveckling",
+  "utvecklingsniva": "2_halvvags",
+  "saknas": [
+    "LOD-kedja",
+    "ljudkoppling",
+    "provspelad komplett spelenhet",
+    "spelvärden: provning av uppskattningar",
+    "R62: culling, instancing och skuggproxy i kommande motor",
+    "Kvalitetskontroll av vald modell och mobiltest på riktig iPhone"
+  ],
+  "modell_ar_inte_spelenhet": true,
+  "modellstatus_kallregister": "ej angivet",
+  "tidigare_underkannande_finns": false,
+  "modeller": [
+    {
+      "fil": "round_spectacles_web_ios.glb",
+      "roll": "modell",
+      "lod": null,
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/round_spectacles/round_spectacles_web_ios.glb",
+      "bytes": 852792,
+      "sha256": "991c4fb4948b349eb46be10bd517ca665493761c82c7ef5d2d648e282cff9db3",
+      "trianglar": 11754,
+      "material": 2,
+      "animationer": [],
+      "extensioner": [
+        "KHR_draco_mesh_compression",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "round_spectacles_v2_pbr_mobil_bb.glb",
+      "roll": "impostor",
+      "lod": null,
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/round_spectacles/round_spectacles_v2_pbr_mobil_bb.glb",
+      "bytes": 18720,
+      "sha256": "de881a508c411e313bce4799f9ca89a3fc08e72bfbd411342fb7b5651283d525",
+      "trianglar": 4,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    }
+  ],
+  "fastpunkter": {
+    "mynning": {
+      "nod": null,
+      "tillamplig": false,
+      "ursprung": "uppskattat",
+      "motivering": "Inget eldvapen för denna utrustning.",
+      "liknande_enhet": "utrustning_vintage_binocular"
+    },
+    "avgas": {
+      "nod": null,
+      "tillamplig": false,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen motor eller avgas för denna typ.",
+      "liknande_enhet": "utrustning_vintage_binocular"
+    }
+  },
+  "effekter": {
+    "gemensamt_bibliotek": "ww2_assets/assets/effects/ateranvandbara/EFFEKTKATALOG.md",
+    "regel": "R15",
+    "inbaddade_effekter_anvands_inte": true,
+    "status": "referens, inte kopplat i detta datapaket"
+  },
+  "spelvarden": {
+    "fart_per_terrang": {
+      "vag": {
+        "varde": 0,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "utrustning_vintage_binocular"
+      },
+      "falt": {
+        "varde": 0,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "Fält skiljs från ospecificerad terräng; antaget normalvärde på torr framkomlig mark, ej maximal fart.",
+        "liknande_enhet": "utrustning_vintage_binocular"
+      },
+      "skog": {
+        "varde": 0.0,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",
+        "liknande_enhet": "utrustning_vintage_binocular"
+      },
+      "by": {
+        "varde": 0,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "70 procent av fältfart bland bebyggelse, utan vägbonus.",
+        "liknande_enhet": "utrustning_vintage_binocular"
+      }
+    },
+    "eldkraft": {
+      "kaliber_mm": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+        "liknande_enhet": "utrustning_vintage_binocular"
+      },
+      "eldhastighet_skott_min": {
+        "varde": 0,
+        "enhet": "skott/min",
+        "ursprung": "uppskattat",
+        "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+        "liknande_enhet": "utrustning_vintage_binocular"
+      }
+    },
+    "pansar": {
+      "fram": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "utrustning_vintage_binocular"
+      },
+      "sida": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "utrustning_vintage_binocular"
+      },
+      "bak": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "utrustning_vintage_binocular"
+      },
+      "topp": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "utrustning_vintage_binocular"
+      }
+    },
+    "rackvidd": {
+      "varde": 0,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+      "liknande_enhet": "utrustning_vintage_binocular"
+    },
+    "upptackbarhet": {
+      "varde": 150,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Referensavstånd för upptäckt i dagsljus på öppen mark, inte en uppmätt konstant; terräng och rörelse ska modifiera.",
+      "liknande_enhet": "utrustning_vintage_binocular"
+    },
+    "traffchans_per_avstand": {
+      "100": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "utrustning_round_spectacles"
+      },
+      "250": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "utrustning_round_spectacles"
+      },
+      "500": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "utrustning_round_spectacles"
+      },
+      "1000": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "utrustning_round_spectacles"
+      },
+      "1500": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "utrustning_round_spectacles"
+      },
+      "2000": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "utrustning_round_spectacles"
+      }
+    },
+    "beteendeprofil": {
+      "modul": "../../beteende/standard.json",
+      "profil": "utrustning",
+      "nation": "gemensam",
+      "ursprung": "uppskattat",
+      "motivering": "Gemensam dataprofil; nationella regler måste laddas separat. Ingen AI eller beslutskod ingår.",
+      "liknande_enhet": "utrustning_vintage_binocular"
+    }
+  },
+  "enhetsregister": {
+    "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+    "post": null,
+    "id": null
+  },
+  "mobil": {
+    "lat_laddning": true,
+    "culling": "frustum och occlusion i motor",
+    "ateranvand_texturer": true,
+    "skuggproxy": "genereras vid första start i motor",
+    "lod_val": "skärmstorlek i pixlar, mjuk toning",
+    "instancing": "endast om modellen och animationerna stöder det"
+  }
+}

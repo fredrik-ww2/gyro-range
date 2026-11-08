@@ -1,0 +1,2140 @@
+{
+  "version": "1.0",
+  "område": "Villers-Bocage",
+  "crs": "EPSG:32630",
+  "kalla_crs": "EPSG:2154",
+  "hojdsystem": "NGF-IGN69",
+  "origo_kallkoordinater": {
+    "E": 671450,
+    "N": 5439340,
+    "H": 0
+  },
+  "origo_lambert93": [
+    433302.4614484429,
+    6893187.869381758
+  ],
+  "axlar": {
+    "x": "ost: E - 671450",
+    "y": "upp: höjd NGF-IGN69",
+    "z": "soder: 5439340 - N"
+  },
+  "enhet": "meter",
+  "storlek_m": [
+    2000,
+    2000
+  ],
+  "bbox_utm": [
+    670450,
+    5438340,
+    672450,
+    5440340
+  ],
+  "rutstorlek_m": 1,
+  "rader": 2001,
+  "kolumner": 2001,
+  "radordning": "norr till söder",
+  "datatype": "float32 little-endian",
+  "hojdmin_m": 105.79354858398438,
+  "hojdmax_m": 184.42153930664062,
+  "hojdskillnad_m": 78.62799072265625,
+  "nodata": 0,
+  "kalla": "IGN LiDAR HD MNT 0,5 m; lokala ursprungsrutor",
+  "sampling": "bilinjär i källans pixelcentrum efter EPSG:32630 till EPSG:2154",
+  "tid": "nutida mark; exakt mätdatum inte verifierat",
+  "skirt_m": 10,
+  "skirt_anmarkning": "Enbart visuell kantkjol; ingår inte i höjdfält eller uppmätt markomfång.",
+  "chunkstorlek_m": 250,
+  "chunkar": [
+    {
+      "id": "r00_00",
+      "spacing_m": 50,
+      "fil": "lod_50m/r00_00.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -1000,
+        97.91162872314453,
+        -1000,
+        -750,
+        125.00756072998047,
+        -750
+      ]
+    },
+    {
+      "id": "r00_01",
+      "spacing_m": 50,
+      "fil": "lod_50m/r00_01.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -750,
+        113.5744400024414,
+        -1000,
+        -500,
+        139.70822143554688,
+        -750
+      ]
+    },
+    {
+      "id": "r00_02",
+      "spacing_m": 50,
+      "fil": "lod_50m/r00_02.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -500,
+        123.62002563476562,
+        -1000,
+        -250,
+        158.45916748046875,
+        -750
+      ]
+    },
+    {
+      "id": "r00_03",
+      "spacing_m": 50,
+      "fil": "lod_50m/r00_03.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -250,
+        135.67620849609375,
+        -1000,
+        0,
+        169.1414337158203,
+        -750
+      ]
+    },
+    {
+      "id": "r00_04",
+      "spacing_m": 50,
+      "fil": "lod_50m/r00_04.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        0,
+        146.4777069091797,
+        -1000,
+        250,
+        172.73985290527344,
+        -750
+      ]
+    },
+    {
+      "id": "r00_05",
+      "spacing_m": 50,
+      "fil": "lod_50m/r00_05.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        250,
+        152.9536590576172,
+        -1000,
+        500,
+        173.39010620117188,
+        -750
+      ]
+    },
+    {
+      "id": "r00_06",
+      "spacing_m": 50,
+      "fil": "lod_50m/r00_06.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        500,
+        154.366943359375,
+        -1000,
+        750,
+        174.9264678955078,
+        -750
+      ]
+    },
+    {
+      "id": "r00_07",
+      "spacing_m": 50,
+      "fil": "lod_50m/r00_07.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        750,
+        158.489013671875,
+        -1000,
+        1000,
+        182.64283752441406,
+        -750
+      ]
+    },
+    {
+      "id": "r01_00",
+      "spacing_m": 50,
+      "fil": "lod_50m/r01_00.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -1000,
+        107.39958953857422,
+        -750,
+        -750,
+        132.75244140625,
+        -500
+      ]
+    },
+    {
+      "id": "r01_01",
+      "spacing_m": 50,
+      "fil": "lod_50m/r01_01.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -750,
+        115.00756072998047,
+        -750,
+        -500,
+        153.71893310546875,
+        -500
+      ]
+    },
+    {
+      "id": "r01_02",
+      "spacing_m": 50,
+      "fil": "lod_50m/r01_02.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -500,
+        129.70822143554688,
+        -750,
+        -250,
+        169.71566772460938,
+        -500
+      ]
+    },
+    {
+      "id": "r01_03",
+      "spacing_m": 50,
+      "fil": "lod_50m/r01_03.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -250,
+        148.45916748046875,
+        -750,
+        0,
+        177.41830444335938,
+        -500
+      ]
+    },
+    {
+      "id": "r01_04",
+      "spacing_m": 50,
+      "fil": "lod_50m/r01_04.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        0,
+        159.1414337158203,
+        -750,
+        250,
+        179.0767822265625,
+        -500
+      ]
+    },
+    {
+      "id": "r01_05",
+      "spacing_m": 50,
+      "fil": "lod_50m/r01_05.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        250,
+        162.6576385498047,
+        -750,
+        500,
+        179.0051727294922,
+        -500
+      ]
+    },
+    {
+      "id": "r01_06",
+      "spacing_m": 50,
+      "fil": "lod_50m/r01_06.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        500,
+        161.7420654296875,
+        -750,
+        750,
+        177.20437622070312,
+        -500
+      ]
+    },
+    {
+      "id": "r01_07",
+      "spacing_m": 50,
+      "fil": "lod_50m/r01_07.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        750,
+        162.86346435546875,
+        -750,
+        1000,
+        183.37327575683594,
+        -500
+      ]
+    },
+    {
+      "id": "r02_00",
+      "spacing_m": 50,
+      "fil": "lod_50m/r02_00.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -1000,
+        115.064208984375,
+        -500,
+        -750,
+        146.45797729492188,
+        -250
+      ]
+    },
+    {
+      "id": "r02_01",
+      "spacing_m": 50,
+      "fil": "lod_50m/r02_01.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -750,
+        122.75244140625,
+        -500,
+        -500,
+        154.15338134765625,
+        -250
+      ]
+    },
+    {
+      "id": "r02_02",
+      "spacing_m": 50,
+      "fil": "lod_50m/r02_02.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -500,
+        138.71759033203125,
+        -500,
+        -250,
+        169.71566772460938,
+        -250
+      ]
+    },
+    {
+      "id": "r02_03",
+      "spacing_m": 50,
+      "fil": "lod_50m/r02_03.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -250,
+        152.08139038085938,
+        -500,
+        0,
+        177.41830444335938,
+        -250
+      ]
+    },
+    {
+      "id": "r02_04",
+      "spacing_m": 50,
+      "fil": "lod_50m/r02_04.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        0,
+        157.20985412597656,
+        -500,
+        250,
+        179.0767822265625,
+        -250
+      ]
+    },
+    {
+      "id": "r02_05",
+      "spacing_m": 50,
+      "fil": "lod_50m/r02_05.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        250,
+        156.416259765625,
+        -500,
+        500,
+        179.0051727294922,
+        -250
+      ]
+    },
+    {
+      "id": "r02_06",
+      "spacing_m": 50,
+      "fil": "lod_50m/r02_06.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        500,
+        159.1842041015625,
+        -500,
+        750,
+        178.2505645751953,
+        -250
+      ]
+    },
+    {
+      "id": "r02_07",
+      "spacing_m": 50,
+      "fil": "lod_50m/r02_07.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        750,
+        163.02841186523438,
+        -500,
+        1000,
+        183.65435791015625,
+        -250
+      ]
+    },
+    {
+      "id": "r03_00",
+      "spacing_m": 50,
+      "fil": "lod_50m/r03_00.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -1000,
+        102.94050598144531,
+        -250,
+        -750,
+        144.56907653808594,
+        0
+      ]
+    },
+    {
+      "id": "r03_01",
+      "spacing_m": 50,
+      "fil": "lod_50m/r03_01.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -750,
+        111.8136978149414,
+        -250,
+        -500,
+        151.22000122070312,
+        0
+      ]
+    },
+    {
+      "id": "r03_02",
+      "spacing_m": 50,
+      "fil": "lod_50m/r03_02.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -500,
+        121.36323547363281,
+        -250,
+        -250,
+        162.08139038085938,
+        0
+      ]
+    },
+    {
+      "id": "r03_03",
+      "spacing_m": 50,
+      "fil": "lod_50m/r03_03.glb",
+      "bytes": 3292,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -250,
+        142.7787322998047,
+        -250,
+        0,
+        169.354736328125,
+        0
+      ]
+    },
+    {
+      "id": "r03_04",
+      "spacing_m": 50,
+      "fil": "lod_50m/r03_04.glb",
+      "bytes": 3292,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        0,
+        148.1305389404297,
+        -250,
+        250,
+        169.354736328125,
+        0
+      ]
+    },
+    {
+      "id": "r03_05",
+      "spacing_m": 50,
+      "fil": "lod_50m/r03_05.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        250,
+        151.79310607910156,
+        -250,
+        500,
+        173.71356201171875,
+        0
+      ]
+    },
+    {
+      "id": "r03_06",
+      "spacing_m": 50,
+      "fil": "lod_50m/r03_06.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        500,
+        159.47848510742188,
+        -250,
+        750,
+        179.0293426513672,
+        0
+      ]
+    },
+    {
+      "id": "r03_07",
+      "spacing_m": 50,
+      "fil": "lod_50m/r03_07.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        750,
+        161.8168182373047,
+        -250,
+        1000,
+        181.36837768554688,
+        0
+      ]
+    },
+    {
+      "id": "r04_00",
+      "spacing_m": 50,
+      "fil": "lod_50m/r04_00.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -1000,
+        119.10548400878906,
+        0,
+        -750,
+        145.42018127441406,
+        250
+      ]
+    },
+    {
+      "id": "r04_01",
+      "spacing_m": 50,
+      "fil": "lod_50m/r04_01.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -750,
+        129.92941284179688,
+        0,
+        -500,
+        146.73948669433594,
+        250
+      ]
+    },
+    {
+      "id": "r04_02",
+      "spacing_m": 50,
+      "fil": "lod_50m/r04_02.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -500,
+        132.86891174316406,
+        0,
+        -250,
+        154.35096740722656,
+        250
+      ]
+    },
+    {
+      "id": "r04_03",
+      "spacing_m": 50,
+      "fil": "lod_50m/r04_03.glb",
+      "bytes": 3292,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -250,
+        134.6391143798828,
+        0,
+        0,
+        160.61123657226562,
+        250
+      ]
+    },
+    {
+      "id": "r04_04",
+      "spacing_m": 50,
+      "fil": "lod_50m/r04_04.glb",
+      "bytes": 3288,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        0,
+        142.533203125,
+        0,
+        250,
+        168.7476806640625,
+        250
+      ]
+    },
+    {
+      "id": "r04_05",
+      "spacing_m": 50,
+      "fil": "lod_50m/r04_05.glb",
+      "bytes": 3292,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        250,
+        151.79310607910156,
+        0,
+        500,
+        173.5510711669922,
+        250
+      ]
+    },
+    {
+      "id": "r04_06",
+      "spacing_m": 50,
+      "fil": "lod_50m/r04_06.glb",
+      "bytes": 3292,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        500,
+        162.5492706298828,
+        0,
+        750,
+        176.76040649414062,
+        250
+      ]
+    },
+    {
+      "id": "r04_07",
+      "spacing_m": 50,
+      "fil": "lod_50m/r04_07.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        750,
+        154.95712280273438,
+        0,
+        1000,
+        176.76040649414062,
+        250
+      ]
+    },
+    {
+      "id": "r05_00",
+      "spacing_m": 50,
+      "fil": "lod_50m/r05_00.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -1000,
+        116.17516326904297,
+        250,
+        -750,
+        141.64866638183594,
+        500
+      ]
+    },
+    {
+      "id": "r05_01",
+      "spacing_m": 50,
+      "fil": "lod_50m/r05_01.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -750,
+        116.17516326904297,
+        250,
+        -500,
+        146.81704711914062,
+        500
+      ]
+    },
+    {
+      "id": "r05_02",
+      "spacing_m": 50,
+      "fil": "lod_50m/r05_02.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -500,
+        133.20867919921875,
+        250,
+        -250,
+        156.87559509277344,
+        500
+      ]
+    },
+    {
+      "id": "r05_03",
+      "spacing_m": 50,
+      "fil": "lod_50m/r05_03.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -250,
+        143.49986267089844,
+        250,
+        0,
+        164.9014434814453,
+        500
+      ]
+    },
+    {
+      "id": "r05_04",
+      "spacing_m": 50,
+      "fil": "lod_50m/r05_04.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        0,
+        150.61123657226562,
+        250,
+        250,
+        171.18423461914062,
+        500
+      ]
+    },
+    {
+      "id": "r05_05",
+      "spacing_m": 50,
+      "fil": "lod_50m/r05_05.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        250,
+        158.33151245117188,
+        250,
+        500,
+        173.65443420410156,
+        500
+      ]
+    },
+    {
+      "id": "r05_06",
+      "spacing_m": 50,
+      "fil": "lod_50m/r05_06.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        500,
+        161.5156707763672,
+        250,
+        750,
+        174.21841430664062,
+        500
+      ]
+    },
+    {
+      "id": "r05_07",
+      "spacing_m": 50,
+      "fil": "lod_50m/r05_07.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        750,
+        148.19271850585938,
+        250,
+        1000,
+        174.1638641357422,
+        500
+      ]
+    },
+    {
+      "id": "r06_00",
+      "spacing_m": 50,
+      "fil": "lod_50m/r06_00.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -1000,
+        102.49178314208984,
+        500,
+        -750,
+        139.4368438720703,
+        750
+      ]
+    },
+    {
+      "id": "r06_01",
+      "spacing_m": 50,
+      "fil": "lod_50m/r06_01.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -750,
+        116.17516326904297,
+        500,
+        -500,
+        150.12863159179688,
+        750
+      ]
+    },
+    {
+      "id": "r06_02",
+      "spacing_m": 50,
+      "fil": "lod_50m/r06_02.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -500,
+        136.40943908691406,
+        500,
+        -250,
+        159.42605590820312,
+        750
+      ]
+    },
+    {
+      "id": "r06_03",
+      "spacing_m": 50,
+      "fil": "lod_50m/r06_03.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -250,
+        146.12770080566406,
+        500,
+        0,
+        168.3641357421875,
+        750
+      ]
+    },
+    {
+      "id": "r06_04",
+      "spacing_m": 50,
+      "fil": "lod_50m/r06_04.glb",
+      "bytes": 3292,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        0,
+        154.9014434814453,
+        500,
+        250,
+        172.13644409179688,
+        750
+      ]
+    },
+    {
+      "id": "r06_05",
+      "spacing_m": 50,
+      "fil": "lod_50m/r06_05.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        250,
+        160.67274475097656,
+        500,
+        500,
+        173.0330352783203,
+        750
+      ]
+    },
+    {
+      "id": "r06_06",
+      "spacing_m": 50,
+      "fil": "lod_50m/r06_06.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        500,
+        156.3919219970703,
+        500,
+        750,
+        174.21841430664062,
+        750
+      ]
+    },
+    {
+      "id": "r06_07",
+      "spacing_m": 50,
+      "fil": "lod_50m/r06_07.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        750,
+        153.0471954345703,
+        500,
+        1000,
+        174.1638641357422,
+        750
+      ]
+    },
+    {
+      "id": "r07_00",
+      "spacing_m": 50,
+      "fil": "lod_50m/r07_00.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -1000,
+        105.27153778076172,
+        750,
+        -750,
+        143.70252990722656,
+        1000
+      ]
+    },
+    {
+      "id": "r07_01",
+      "spacing_m": 50,
+      "fil": "lod_50m/r07_01.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -750,
+        127.47140502929688,
+        750,
+        -500,
+        153.25477600097656,
+        1000
+      ]
+    },
+    {
+      "id": "r07_02",
+      "spacing_m": 50,
+      "fil": "lod_50m/r07_02.glb",
+      "bytes": 3300,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -500,
+        140.12863159179688,
+        750,
+        -250,
+        162.03221130371094,
+        1000
+      ]
+    },
+    {
+      "id": "r07_03",
+      "spacing_m": 50,
+      "fil": "lod_50m/r07_03.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        -250,
+        149.42605590820312,
+        750,
+        0,
+        169.91017150878906,
+        1000
+      ]
+    },
+    {
+      "id": "r07_04",
+      "spacing_m": 50,
+      "fil": "lod_50m/r07_04.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        0,
+        157.44430541992188,
+        750,
+        250,
+        172.05413818359375,
+        1000
+      ]
+    },
+    {
+      "id": "r07_05",
+      "spacing_m": 50,
+      "fil": "lod_50m/r07_05.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        250,
+        158.23648071289062,
+        750,
+        500,
+        172.3556671142578,
+        1000
+      ]
+    },
+    {
+      "id": "r07_06",
+      "spacing_m": 50,
+      "fil": "lod_50m/r07_06.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        500,
+        150.05516052246094,
+        750,
+        750,
+        171.7863311767578,
+        1000
+      ]
+    },
+    {
+      "id": "r07_07",
+      "spacing_m": 50,
+      "fil": "lod_50m/r07_07.glb",
+      "bytes": 3296,
+      "trianglar": 90,
+      "marktrianglar": 50,
+      "bounds": [
+        750,
+        142.7108154296875,
+        750,
+        1000,
+        170.2840118408203,
+        1000
+      ]
+    },
+    {
+      "id": "r00_00",
+      "spacing_m": 10,
+      "fil": "lod_10m/r00_00.glb",
+      "bytes": 36912,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -1000,
+        95.84228515625,
+        -1000,
+        -750,
+        125.00756072998047,
+        -750
+      ]
+    },
+    {
+      "id": "r00_01",
+      "spacing_m": 10,
+      "fil": "lod_10m/r00_01.glb",
+      "bytes": 36912,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -750,
+        113.34165954589844,
+        -1000,
+        -500,
+        139.70822143554688,
+        -750
+      ]
+    },
+    {
+      "id": "r00_02",
+      "spacing_m": 10,
+      "fil": "lod_10m/r00_02.glb",
+      "bytes": 36912,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -500,
+        123.62002563476562,
+        -1000,
+        -250,
+        158.45916748046875,
+        -750
+      ]
+    },
+    {
+      "id": "r00_03",
+      "spacing_m": 10,
+      "fil": "lod_10m/r00_03.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -250,
+        135.67620849609375,
+        -1000,
+        0,
+        169.1414337158203,
+        -750
+      ]
+    },
+    {
+      "id": "r00_04",
+      "spacing_m": 10,
+      "fil": "lod_10m/r00_04.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        0,
+        146.4777069091797,
+        -1000,
+        250,
+        172.73985290527344,
+        -750
+      ]
+    },
+    {
+      "id": "r00_05",
+      "spacing_m": 10,
+      "fil": "lod_10m/r00_05.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        250,
+        152.9536590576172,
+        -1000,
+        500,
+        173.39010620117188,
+        -750
+      ]
+    },
+    {
+      "id": "r00_06",
+      "spacing_m": 10,
+      "fil": "lod_10m/r00_06.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        500,
+        154.366943359375,
+        -1000,
+        750,
+        174.9264678955078,
+        -750
+      ]
+    },
+    {
+      "id": "r00_07",
+      "spacing_m": 10,
+      "fil": "lod_10m/r00_07.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        750,
+        158.489013671875,
+        -1000,
+        1000,
+        182.64283752441406,
+        -750
+      ]
+    },
+    {
+      "id": "r01_00",
+      "spacing_m": 10,
+      "fil": "lod_10m/r01_00.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -1000,
+        107.39958953857422,
+        -750,
+        -750,
+        132.75244140625,
+        -500
+      ]
+    },
+    {
+      "id": "r01_01",
+      "spacing_m": 10,
+      "fil": "lod_10m/r01_01.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -750,
+        115.00756072998047,
+        -750,
+        -500,
+        154.8497314453125,
+        -500
+      ]
+    },
+    {
+      "id": "r01_02",
+      "spacing_m": 10,
+      "fil": "lod_10m/r01_02.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -500,
+        129.70822143554688,
+        -750,
+        -250,
+        169.71566772460938,
+        -500
+      ]
+    },
+    {
+      "id": "r01_03",
+      "spacing_m": 10,
+      "fil": "lod_10m/r01_03.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -250,
+        148.45916748046875,
+        -750,
+        0,
+        177.41830444335938,
+        -500
+      ]
+    },
+    {
+      "id": "r01_04",
+      "spacing_m": 10,
+      "fil": "lod_10m/r01_04.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        0,
+        159.1414337158203,
+        -750,
+        250,
+        179.67974853515625,
+        -500
+      ]
+    },
+    {
+      "id": "r01_05",
+      "spacing_m": 10,
+      "fil": "lod_10m/r01_05.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        250,
+        162.6576385498047,
+        -750,
+        500,
+        179.06044006347656,
+        -500
+      ]
+    },
+    {
+      "id": "r01_06",
+      "spacing_m": 10,
+      "fil": "lod_10m/r01_06.glb",
+      "bytes": 36896,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        500,
+        161.21255493164062,
+        -750,
+        750,
+        177.25,
+        -500
+      ]
+    },
+    {
+      "id": "r01_07",
+      "spacing_m": 10,
+      "fil": "lod_10m/r01_07.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        750,
+        162.69667053222656,
+        -750,
+        1000,
+        183.8676300048828,
+        -500
+      ]
+    },
+    {
+      "id": "r02_00",
+      "spacing_m": 10,
+      "fil": "lod_10m/r02_00.glb",
+      "bytes": 36912,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -1000,
+        114.74813842773438,
+        -500,
+        -750,
+        146.57115173339844,
+        -250
+      ]
+    },
+    {
+      "id": "r02_01",
+      "spacing_m": 10,
+      "fil": "lod_10m/r02_01.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -750,
+        122.75244140625,
+        -500,
+        -500,
+        154.17022705078125,
+        -250
+      ]
+    },
+    {
+      "id": "r02_02",
+      "spacing_m": 10,
+      "fil": "lod_10m/r02_02.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -500,
+        138.71759033203125,
+        -500,
+        -250,
+        169.71566772460938,
+        -250
+      ]
+    },
+    {
+      "id": "r02_03",
+      "spacing_m": 10,
+      "fil": "lod_10m/r02_03.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -250,
+        152.08139038085938,
+        -500,
+        0,
+        177.49456787109375,
+        -250
+      ]
+    },
+    {
+      "id": "r02_04",
+      "spacing_m": 10,
+      "fil": "lod_10m/r02_04.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        0,
+        156.78746032714844,
+        -500,
+        250,
+        179.862060546875,
+        -250
+      ]
+    },
+    {
+      "id": "r02_05",
+      "spacing_m": 10,
+      "fil": "lod_10m/r02_05.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        250,
+        156.2100830078125,
+        -500,
+        500,
+        179.80206298828125,
+        -250
+      ]
+    },
+    {
+      "id": "r02_06",
+      "spacing_m": 10,
+      "fil": "lod_10m/r02_06.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        500,
+        158.30978393554688,
+        -500,
+        750,
+        178.36865234375,
+        -250
+      ]
+    },
+    {
+      "id": "r02_07",
+      "spacing_m": 10,
+      "fil": "lod_10m/r02_07.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        750,
+        162.90296936035156,
+        -500,
+        1000,
+        183.79330444335938,
+        -250
+      ]
+    },
+    {
+      "id": "r03_00",
+      "spacing_m": 10,
+      "fil": "lod_10m/r03_00.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -1000,
+        101.97117614746094,
+        -250,
+        -750,
+        144.56907653808594,
+        0
+      ]
+    },
+    {
+      "id": "r03_01",
+      "spacing_m": 10,
+      "fil": "lod_10m/r03_01.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -750,
+        110.48603057861328,
+        -250,
+        -500,
+        151.7105712890625,
+        0
+      ]
+    },
+    {
+      "id": "r03_02",
+      "spacing_m": 10,
+      "fil": "lod_10m/r03_02.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -500,
+        120.80747985839844,
+        -250,
+        -250,
+        162.26617431640625,
+        0
+      ]
+    },
+    {
+      "id": "r03_03",
+      "spacing_m": 10,
+      "fil": "lod_10m/r03_03.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -250,
+        142.34034729003906,
+        -250,
+        0,
+        169.3550567626953,
+        0
+      ]
+    },
+    {
+      "id": "r03_04",
+      "spacing_m": 10,
+      "fil": "lod_10m/r03_04.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        0,
+        148.12498474121094,
+        -250,
+        250,
+        170.03123474121094,
+        0
+      ]
+    },
+    {
+      "id": "r03_05",
+      "spacing_m": 10,
+      "fil": "lod_10m/r03_05.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        250,
+        151.31744384765625,
+        -250,
+        500,
+        174.1453857421875,
+        0
+      ]
+    },
+    {
+      "id": "r03_06",
+      "spacing_m": 10,
+      "fil": "lod_10m/r03_06.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        500,
+        159.47848510742188,
+        -250,
+        750,
+        180.24069213867188,
+        0
+      ]
+    },
+    {
+      "id": "r03_07",
+      "spacing_m": 10,
+      "fil": "lod_10m/r03_07.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        750,
+        161.8168182373047,
+        -250,
+        1000,
+        182.65289306640625,
+        0
+      ]
+    },
+    {
+      "id": "r04_00",
+      "spacing_m": 10,
+      "fil": "lod_10m/r04_00.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -1000,
+        119.10548400878906,
+        0,
+        -750,
+        146.0021209716797,
+        250
+      ]
+    },
+    {
+      "id": "r04_01",
+      "spacing_m": 10,
+      "fil": "lod_10m/r04_01.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -750,
+        129.40594482421875,
+        0,
+        -500,
+        149.29942321777344,
+        250
+      ]
+    },
+    {
+      "id": "r04_02",
+      "spacing_m": 10,
+      "fil": "lod_10m/r04_02.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -500,
+        131.24156188964844,
+        0,
+        -250,
+        154.5052032470703,
+        250
+      ]
+    },
+    {
+      "id": "r04_03",
+      "spacing_m": 10,
+      "fil": "lod_10m/r04_03.glb",
+      "bytes": 36900,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -250,
+        134.37496948242188,
+        0,
+        0,
+        160.61123657226562,
+        250
+      ]
+    },
+    {
+      "id": "r04_04",
+      "spacing_m": 10,
+      "fil": "lod_10m/r04_04.glb",
+      "bytes": 36896,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        0,
+        142.533203125,
+        0,
+        250,
+        169.15867614746094,
+        250
+      ]
+    },
+    {
+      "id": "r04_05",
+      "spacing_m": 10,
+      "fil": "lod_10m/r04_05.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        250,
+        151.79310607910156,
+        0,
+        500,
+        174.0094757080078,
+        250
+      ]
+    },
+    {
+      "id": "r04_06",
+      "spacing_m": 10,
+      "fil": "lod_10m/r04_06.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        500,
+        162.32369995117188,
+        0,
+        750,
+        176.76040649414062,
+        250
+      ]
+    },
+    {
+      "id": "r04_07",
+      "spacing_m": 10,
+      "fil": "lod_10m/r04_07.glb",
+      "bytes": 36900,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        750,
+        154.856201171875,
+        0,
+        1000,
+        176.944580078125,
+        250
+      ]
+    },
+    {
+      "id": "r05_00",
+      "spacing_m": 10,
+      "fil": "lod_10m/r05_00.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -1000,
+        115.95081329345703,
+        250,
+        -750,
+        141.64866638183594,
+        500
+      ]
+    },
+    {
+      "id": "r05_01",
+      "spacing_m": 10,
+      "fil": "lod_10m/r05_01.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -750,
+        113.70973205566406,
+        250,
+        -500,
+        148.1818389892578,
+        500
+      ]
+    },
+    {
+      "id": "r05_02",
+      "spacing_m": 10,
+      "fil": "lod_10m/r05_02.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -500,
+        132.6416015625,
+        250,
+        -250,
+        156.87559509277344,
+        500
+      ]
+    },
+    {
+      "id": "r05_03",
+      "spacing_m": 10,
+      "fil": "lod_10m/r05_03.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -250,
+        143.03350830078125,
+        250,
+        0,
+        165.01524353027344,
+        500
+      ]
+    },
+    {
+      "id": "r05_04",
+      "spacing_m": 10,
+      "fil": "lod_10m/r05_04.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        0,
+        150.5158233642578,
+        250,
+        250,
+        171.24122619628906,
+        500
+      ]
+    },
+    {
+      "id": "r05_05",
+      "spacing_m": 10,
+      "fil": "lod_10m/r05_05.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        250,
+        158.1422119140625,
+        250,
+        500,
+        174.0094757080078,
+        500
+      ]
+    },
+    {
+      "id": "r05_06",
+      "spacing_m": 10,
+      "fil": "lod_10m/r05_06.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        500,
+        161.36770629882812,
+        250,
+        750,
+        174.94873046875,
+        500
+      ]
+    },
+    {
+      "id": "r05_07",
+      "spacing_m": 10,
+      "fil": "lod_10m/r05_07.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        750,
+        148.19271850585938,
+        250,
+        1000,
+        174.1638641357422,
+        500
+      ]
+    },
+    {
+      "id": "r06_00",
+      "spacing_m": 10,
+      "fil": "lod_10m/r06_00.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -1000,
+        100.88148498535156,
+        500,
+        -750,
+        140.22618103027344,
+        750
+      ]
+    },
+    {
+      "id": "r06_01",
+      "spacing_m": 10,
+      "fil": "lod_10m/r06_01.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -750,
+        113.70973205566406,
+        500,
+        -500,
+        150.16693115234375,
+        750
+      ]
+    },
+    {
+      "id": "r06_02",
+      "spacing_m": 10,
+      "fil": "lod_10m/r06_02.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -500,
+        136.40943908691406,
+        500,
+        -250,
+        159.4878692626953,
+        750
+      ]
+    },
+    {
+      "id": "r06_03",
+      "spacing_m": 10,
+      "fil": "lod_10m/r06_03.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -250,
+        145.4490509033203,
+        500,
+        0,
+        169.12281799316406,
+        750
+      ]
+    },
+    {
+      "id": "r06_04",
+      "spacing_m": 10,
+      "fil": "lod_10m/r06_04.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        0,
+        154.9014434814453,
+        500,
+        250,
+        172.29144287109375,
+        750
+      ]
+    },
+    {
+      "id": "r06_05",
+      "spacing_m": 10,
+      "fil": "lod_10m/r06_05.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        250,
+        160.56170654296875,
+        500,
+        500,
+        173.4485321044922,
+        750
+      ]
+    },
+    {
+      "id": "r06_06",
+      "spacing_m": 10,
+      "fil": "lod_10m/r06_06.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        500,
+        155.58396911621094,
+        500,
+        750,
+        174.4486846923828,
+        750
+      ]
+    },
+    {
+      "id": "r06_07",
+      "spacing_m": 10,
+      "fil": "lod_10m/r06_07.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        750,
+        153.0471954345703,
+        500,
+        1000,
+        174.1638641357422,
+        750
+      ]
+    },
+    {
+      "id": "r07_00",
+      "spacing_m": 10,
+      "fil": "lod_10m/r07_00.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -1000,
+        105.01606750488281,
+        750,
+        -750,
+        143.70252990722656,
+        1000
+      ]
+    },
+    {
+      "id": "r07_01",
+      "spacing_m": 10,
+      "fil": "lod_10m/r07_01.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -750,
+        126.430908203125,
+        750,
+        -500,
+        153.25477600097656,
+        1000
+      ]
+    },
+    {
+      "id": "r07_02",
+      "spacing_m": 10,
+      "fil": "lod_10m/r07_02.glb",
+      "bytes": 36908,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -500,
+        140.12863159179688,
+        750,
+        -250,
+        162.03221130371094,
+        1000
+      ]
+    },
+    {
+      "id": "r07_03",
+      "spacing_m": 10,
+      "fil": "lod_10m/r07_03.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        -250,
+        149.42605590820312,
+        750,
+        0,
+        170.0756072998047,
+        1000
+      ]
+    },
+    {
+      "id": "r07_04",
+      "spacing_m": 10,
+      "fil": "lod_10m/r07_04.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        0,
+        157.44430541992188,
+        750,
+        250,
+        172.27996826171875,
+        1000
+      ]
+    },
+    {
+      "id": "r07_05",
+      "spacing_m": 10,
+      "fil": "lod_10m/r07_05.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        250,
+        156.25479125976562,
+        750,
+        500,
+        172.4165802001953,
+        1000
+      ]
+    },
+    {
+      "id": "r07_06",
+      "spacing_m": 10,
+      "fil": "lod_10m/r07_06.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        500,
+        150.05516052246094,
+        750,
+        750,
+        171.7996063232422,
+        1000
+      ]
+    },
+    {
+      "id": "r07_07",
+      "spacing_m": 10,
+      "fil": "lod_10m/r07_07.glb",
+      "bytes": 36904,
+      "trianglar": 1450,
+      "marktrianglar": 1250,
+      "bounds": [
+        750,
+        142.7108154296875,
+        750,
+        1000,
+        170.2840118408203,
+        1000
+      ]
+    }
+  ],
+  "LOD_laddordning_m": [
+    50,
+    10
+  ],
+  "texturer": 0,
+  "material": 1,
+  "planerade_zoner": {
+    "A": [
+      -500,
+      -300,
+      500,
+      300
+    ],
+    "B": [
+      -900,
+      -900,
+      900,
+      900
+    ],
+    "C": "yttre 100 m kant"
+  },
+  "status": "Tekniskt byggd, ej oberoende granskad",
+  "geoidmodell": "SAKNAS – ingen separat omräkning gjord; källans NGF-IGN69 behålls",
+  "origo_anmarkning": "Vågrätt origo är områdets mitt. Y behåller källans höjd över NGF-IGN69; ingen vertikal överdrift.",
+  "mobilpaket": {
+    "kallmanifest_sha256": "34bc6d51dfe640356d536b00c31b4f0f080eabc30d1423bf45b46921cc2f2965",
+    "kallmapp": "/workspace/terrain_db/Normandie_1944/terrang/villers_bocage_R50_v1_20261108",
+    "levererade_nivaer_m": [
+      50,
+      10
+    ],
+    "hojdfalt_ingår": false,
+    "saknas": [
+      "gång- och körbarhet",
+      "kollision",
+      "marktyper och material",
+      "vägar och vatten",
+      "sikt- och skyddsdata",
+      "1944-anpassning",
+      "enhetsutplacering"
+    ],
+    "status": "tom höjdterräng, inte spelklar"
+  }
+}

@@ -1,0 +1,473 @@
+{
+  "schema": "form.verkstad.kallregister.v1",
+  "modeller": [
+    {
+      "kallfil": "assets/models/weapons/pistols/walther_p38_pichuliru_ios.glb",
+      "fil": "enheter/walther_p38/walther_p38_pichuliru_ios.glb",
+      "sha256": "0802767bd5f0ef291173c2cd3a984280207e0d3e6dc4761ff52b367bf8335280"
+    },
+    {
+      "kallfil": "assets/animations/infantry/riflemen/rifleman_france_ww2_web_ios.glb",
+      "fil": "enheter/france_rifleman/rifleman_france_ww2_web_ios.glb",
+      "sha256": "c7fbc271c67ddcc65efad926b44b0ddbfca58d02c72f75b525801a2edcfc47ac"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/lefh18/lefh18_pjas_web_mobil.glb",
+      "fil": "enheter/lefh18/lefh18_pjas_web_mobil.glb",
+      "sha256": "15f8c583435a43bc6dfd036dd858d4988680bff1282658b090b4000d8b570196"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/lefh18/lefh18_pjas_web_mobil_lod1_v2.glb",
+      "fil": "enheter/lefh18/lefh18_pjas_web_mobil_lod1_v2.glb",
+      "sha256": "3e9d4970dd1f31963272fa44f895c45ca6d972c72fd7d1bc9928c2301e8ed992"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/lefh18/lefh18_pjas_web_mobil_lod2_v2.glb",
+      "fil": "enheter/lefh18/lefh18_pjas_web_mobil_lod2_v2.glb",
+      "sha256": "e48021201923bdda8ee5302f0a0c2d00ee4b64c089fbc3cb5b5aecc953e83210"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/lefh18/lefh18_pjas_web_mobil_bb.glb",
+      "fil": "enheter/lefh18/lefh18_pjas_web_mobil_bb.glb",
+      "sha256": "2d0c17848adab930067579043437f02d8fbc32fe5c25918966611ea3d8030c21"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/pak40/pak40_pjas_web_mobil.glb",
+      "fil": "enheter/pak40/pak40_pjas_web_mobil.glb",
+      "sha256": "f9cc5ad684ec98f7bc1688514f4c900966236fea00dd86de6ac0d3a0f0893ff2"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/pak40/pak40_pjas_web_mobil_lod1_v2.glb",
+      "fil": "enheter/pak40/pak40_pjas_web_mobil_lod1_v2.glb",
+      "sha256": "c5c88407f0ebf34c183c6cc789637742d5fb24370f79f448d644f14f0f6af5a5"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/pak40/pak40_pjas_web_mobil_lod2_v2.glb",
+      "fil": "enheter/pak40/pak40_pjas_web_mobil_lod2_v2.glb",
+      "sha256": "715a7fd643b256eb023227decd3bf4a883d6ce82653f62f1b835188f00c5d9ca"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/pak40/pak40_pjas_web_mobil_bb.glb",
+      "fil": "enheter/pak40/pak40_pjas_web_mobil_bb.glb",
+      "sha256": "6c63cc44eba944db712579d785673081ce03209920f38ee9cb28ff847f30404c"
+    },
+    {
+      "kallfil": "assets/models/weapons/machine_guns/bar_m1918_pichuliru_ios.glb",
+      "fil": "enheter/bar_m1918a2/bar_m1918_pichuliru_ios.glb",
+      "sha256": "d6d8bdd7bc119bf989f2bf292eafa8401c896efd92c19e128044628de8ed8cc5"
+    },
+    {
+      "kallfil": "assets/models/weapons/launchers/panzerschreck_rpzb54_ios.glb",
+      "fil": "enheter/panzerschreck_rpzb54/panzerschreck_rpzb54_ios.glb",
+      "sha256": "d751ae345edda5a05444dd35c526a0cf0da82353181d89262a4d0bd941e3c4c5"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/vapen/panzerschreck_tactical_beard/panzerschreck_tactical_beard_v2_pbr_bb.glb",
+      "fil": "enheter/panzerschreck_rpzb54/panzerschreck_tactical_beard_v2_pbr_bb.glb",
+      "sha256": "be53b403068491cf6b6fe602397c0a1b6b8c8900763983553ee150df315cb5bc"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/panzer_ii_luchs_42manako_m_lod2.glb",
+      "fil": "enheter/luchs/panzer_ii_luchs_42manako_m_lod2.glb",
+      "sha256": "47a92dea237d64d3785411fca1684e438835afd507c9dbe9f8f6776083059a1d"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/panzer_ii_luchs_42manako_m_bb.glb",
+      "fil": "enheter/luchs/panzer_ii_luchs_42manako_m_bb.glb",
+      "sha256": "a3d3429821fd30c2f7ad1034ef8a1d9ac92239531d7d583ecfe6378576b6bddc"
+    },
+    {
+      "kallfil": "assets/models/weapons/pistols/mauser_c96_pichuliru_ios.glb",
+      "fil": "enheter/mauser_c96/mauser_c96_pichuliru_ios.glb",
+      "sha256": "d286ca729861d2577a0ff85c6066d600a5677eb2e7f8ba2d8ad3a5996bc3c1f6"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/qf_6pdr/qf_6pdr_pjas_web.glb",
+      "fil": "enheter/qf_6pdr/qf_6pdr_pjas_web.glb",
+      "sha256": "e2874ed4a85e6b4acf82a4286ba8637be5a9eb291e64229ea0ab2d4470373235"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/sherman_m4_barking_dogo/sherman_m4_barking_dogo_ios.glb",
+      "fil": "enheter/sherman_m4_75/sherman_m4_barking_dogo_ios.glb",
+      "sha256": "333ef9c61eb7bf42699dc1404a0d395c8a7841ac17941fe207b03a2ed5eef2e6"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/sherman_m4_barking_dogo/sherman_m4_barking_dogo_v3_pbr_bb.glb",
+      "fil": "enheter/sherman_m4_75/sherman_m4_barking_dogo_v3_pbr_bb.glb",
+      "sha256": "96f65d72590f3e20e0c6b044efddbe6c5aa3c370c106abd919df7240e04d7c01"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/tiger_i_late_42manako_m_lod2.glb",
+      "fil": "enheter/tiger_i/tiger_i_late_42manako_m_lod2.glb",
+      "sha256": "8db93b627a52abf23fb9df76282c67fe807e5526a6177960be8860d5105b3473"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/tiger_i_late_42manako_m_bb.glb",
+      "fil": "enheter/tiger_i/tiger_i_late_42manako_m_bb.glb",
+      "sha256": "1e4ac7f4d9e4dc071f98c5f5b6739d8313b7eb4d672c1d636bc1be097d2796b2"
+    },
+    {
+      "kallfil": "assets/models/units/tanks/usa/m10_gmc_mobil_web_ios.glb",
+      "fil": "enheter/m10_gmc/m10_gmc_mobil_web_ios.glb",
+      "sha256": "57a5e0d2358d6eca06cf3545edf055ecf9468b0d1695d1b36731fa2523e71acd"
+    },
+    {
+      "kallfil": "assets/animations/infantry/riflemen/rifleman_uk_ww2_web_ios.glb",
+      "fil": "enheter/uk_rifleman/rifleman_uk_ww2_web_ios.glb",
+      "sha256": "b701a9a59c830df7ded2aede3045e754a9822297d85f307da204656c88d9f252"
+    },
+    {
+      "kallfil": "assets/models/weapons/machine_guns/mg42_pichuliru_ios.glb",
+      "fil": "enheter/mg42/mg42_pichuliru_ios.glb",
+      "sha256": "0a4cf538c56a160b9282716ab56eedcd617303a66ba4632828a1f314bb0b17d3"
+    },
+    {
+      "kallfil": "assets/models/units/tanks/usa/sherman_m4a3e8_mobil_web_ios.glb",
+      "fil": "enheter/m4a3e8/sherman_m4a3e8_mobil_web_ios.glb",
+      "sha256": "3aa7190330bff078de2c0617c0efb0ec68870b69c7b21155d655782e89edfc7c"
+    },
+    {
+      "kallfil": "assets/models/units/tanks/ussr/t34_85_v2b_web_ios.glb",
+      "fil": "enheter/t34_85/t34_85_v2b_web_ios.glb",
+      "sha256": "437213e1462c986ee0142cc0c2cf2a508a52aaf908b3798ddd32eb83a57871df"
+    },
+    {
+      "kallfil": "assets/models/weapons/smg/mp40.glb",
+      "fil": "enheter/mp40/mp40.glb",
+      "sha256": "dddfc6b41896cf3fa45e812e51fbba11bd3a92c6d84c88fd86d33a5ab82838e4"
+    },
+    {
+      "kallfil": "assets/models/weapons/smg/sten_pichuliru_ios.glb",
+      "fil": "enheter/sten_mk2/sten_pichuliru_ios.glb",
+      "sha256": "f3592db9fdabccdf0cadc1e4f0b12256cb7f4303202719822fba84997c5473bd"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/vapen/sten_mk2_foxxassets/sten_mk2_foxxassets_v2_pbr_bb.glb",
+      "fil": "enheter/sten_mk2/sten_mk2_foxxassets_v2_pbr_bb.glb",
+      "sha256": "622a49ff91fd1d3fc88127f8e224e7093c32b0d5c77fa3235f0a96b4dd150453"
+    },
+    {
+      "kallfil": "assets/models/weapons/launchers/panzerfaust_60_ios.glb",
+      "fil": "enheter/panzerfaust_60/panzerfaust_60_ios.glb",
+      "sha256": "acb61453a22cdda53443689c4e72b867d10ee53e8525467510ea88a7af702149"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/signal_flashlight/signal_flashlight_web_ios.glb",
+      "fil": "enheter/utrustning_signal_flashlight/signal_flashlight_web_ios.glb",
+      "sha256": "c47e0ec1a81766d60faf3f2db7551a9184851acf7c7faf799b68dc873f9c8e30"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/signal_flashlight/signal_flashlight_v3_pbr_bb.glb",
+      "fil": "enheter/utrustning_signal_flashlight/signal_flashlight_v3_pbr_bb.glb",
+      "sha256": "582df8618f7dc606627f133b39811010b1a79e07bfd5960e0dfe9bb2b232c65b"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/round_spectacles/round_spectacles_web_ios.glb",
+      "fil": "enheter/utrustning_round_spectacles/round_spectacles_web_ios.glb",
+      "sha256": "991c4fb4948b349eb46be10bd517ca665493761c82c7ef5d2d648e282cff9db3"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/round_spectacles/round_spectacles_v2_pbr_mobil_bb.glb",
+      "fil": "enheter/utrustning_round_spectacles/round_spectacles_v2_pbr_mobil_bb.glb",
+      "sha256": "de881a508c411e313bce4799f9ca89a3fc08e72bfbd411342fb7b5651283d525"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/pocket_watch/pocket_watch_web_ios.glb",
+      "fil": "enheter/utrustning_pocket_watch/pocket_watch_web_ios.glb",
+      "sha256": "0d7c312ed6ce052a577474addd70185a5772d058e6e099a47b04ac44c141255d"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/pocket_watch/pocket_watch_v3_pbr_mobil_bb.glb",
+      "fil": "enheter/utrustning_pocket_watch/pocket_watch_v3_pbr_mobil_bb.glb",
+      "sha256": "d366a703255ee2f30077eb0121ffc37fdab67719f48db89ae0c341f7619116dc"
+    },
+    {
+      "kallfil": "assets/models/weapons/pistols/m1911_pichuliru_ios.glb",
+      "fil": "enheter/m1911/m1911_pichuliru_ios.glb",
+      "sha256": "3c032a714f4bb2ea8b979f5dd27a77955c17a646ed2feb4bf7401bd9c58be09e"
+    },
+    {
+      "kallfil": "assets/models/units/tanks/usa/sherman_m4a3_76w_mobil_web_ios.glb",
+      "fil": "enheter/m4a3_76w/sherman_m4a3_76w_mobil_web_ios.glb",
+      "sha256": "d194ecb9a425bb5883e1a0a944cd0e8aec5df30447d63337f94a1ea6df5bfe83"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/m4a1_75_rhino_late_42manako_m_lod2.glb",
+      "fil": "enheter/m4a1_75/m4a1_75_rhino_late_42manako_m_lod2.glb",
+      "sha256": "808bcb75b3bf815bedc10bc00ccdf84bedb981346ed5387043c1a2defdcda9aa"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/m4a1_75_rhino_late_42manako_m_bb.glb",
+      "fil": "enheter/m4a1_75/m4a1_75_rhino_late_42manako_m_bb.glb",
+      "sha256": "c19f618ee2f7d3f6ec692e543f9b6200efc24484b6ecdd1c70a20c7b02d147eb"
+    },
+    {
+      "kallfil": "assets/animations/infantry/riflemen/rifleman_usa_ww2_web_ios.glb",
+      "fil": "enheter/usa_rifleman/rifleman_usa_ww2_web_ios.glb",
+      "sha256": "6559488bb88d145995f83b4cd14362d693f4d99106cf8a395d4a58b683f3f081"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/sfh18/sfh18_pjas_web_mobil.glb",
+      "fil": "enheter/sfh18/sfh18_pjas_web_mobil.glb",
+      "sha256": "8033aa98835ecab727cf6641cab6d7ff2315fffb74f6b0e1ddf18b4e37c0af96"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/sfh18/sfh18_pjas_web_mobil_lod1_v2.glb",
+      "fil": "enheter/sfh18/sfh18_pjas_web_mobil_lod1_v2.glb",
+      "sha256": "5184b75eb4925a51ae81f43ec5ae029cfb62f19f9e8ca2d57479ecaa35e3c705"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/sfh18/sfh18_pjas_web_mobil_lod2_v2.glb",
+      "fil": "enheter/sfh18/sfh18_pjas_web_mobil_lod2_v2.glb",
+      "sha256": "65a201342df89f3c618fcb324e95d5c32accb1bd2737e6441779f6e53e59a598"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/sfh18/sfh18_pjas_web_mobil_bb.glb",
+      "fil": "enheter/sfh18/sfh18_pjas_web_mobil_bb.glb",
+      "sha256": "6184cedfa55a1230f12a62cbc267e2453cd1fd2186c5e056e70926deec841d5b"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/vintage_binocular/vintage_binocular_web_ios.glb",
+      "fil": "enheter/utrustning_vintage_binocular/vintage_binocular_web_ios.glb",
+      "sha256": "584137ba9420fb96eafb57289d63ad5e0cf39768bb78eab2c7a06572096b45bf"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/vintage_binocular/vintage_binocular_v3_pbr_bb.glb",
+      "fil": "enheter/utrustning_vintage_binocular/vintage_binocular_v3_pbr_bb.glb",
+      "sha256": "52d6002294de180fa7985a26a0a808ca6d31edbc453da485ac6ff1668c9dff27"
+    },
+    {
+      "kallfil": "assets/animations/infantry/riflemen/rifleman_germany_ww2_web_ios.glb",
+      "fil": "enheter/tysk_infanterist/rifleman_germany_ww2_web_ios.glb",
+      "sha256": "550b5c78c17236beb5b6ed3ef5ea1202a1786a8c573ecf4866d00710c3eff4b6"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/fordon/m3_halftrack_42manako_m_lod2.glb",
+      "fil": "enheter/m3_halftrack/m3_halftrack_42manako_m_lod2.glb",
+      "sha256": "2b0c65f05d7c58d8b7e87c11f998a8ba6fa0e55075329d542879cf99f1e42aaa"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/fordon/m3_halftrack_42manako_m_bb.glb",
+      "fil": "enheter/m3_halftrack/m3_halftrack_42manako_m_bb.glb",
+      "sha256": "9f8e384a9227a185d36e0d58f5f658b6692ad986c11661892f0455d29ed1f67d"
+    },
+    {
+      "kallfil": "assets/models/weapons/rifles/gewehr43_pichuliru_ios.glb",
+      "fil": "enheter/gewehr43/gewehr43_pichuliru_ios.glb",
+      "sha256": "88676a09a540e8771b835c91be2a95f79ea6d8d07481f6a1958787df9db675e5"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/m42_45/m42_45_pjas_web.glb",
+      "fil": "enheter/m42_45mm/m42_45_pjas_web.glb",
+      "sha256": "4299b7d08adf32f2f5d1423dec3c5e180e9f521e72bb78066ff96e062e61f999"
+    },
+    {
+      "kallfil": "assets/models/weapons/polyhaven/stick_grenade.glb",
+      "fil": "enheter/stielhandgranate24/stick_grenade.glb",
+      "sha256": "3b66a4c54ac2bb1c40753b9c4a062e329688b7c3f8c2446b98dc271a125eb735"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/cromwell_iv_42manako_m_lod2.glb",
+      "fil": "enheter/cromwell_iv/cromwell_iv_42manako_m_lod2.glb",
+      "sha256": "d6a3ea0f97cad42c85880d63396f9d7c281b031fb3adaa3e00059c5d7766579d"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/cromwell_iv_42manako_m_bb.glb",
+      "fil": "enheter/cromwell_iv/cromwell_iv_42manako_m_bb.glb",
+      "sha256": "2c54b815dea795265d58ebec2fa7cd5e756551d5c6f4d1e1c3088df793f1236a"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/panther_g_dan11l11l_m_lod4.glb",
+      "fil": "enheter/panther_g/panther_g_dan11l11l_m_lod4.glb",
+      "sha256": "c3008230eebc6e8ca7bb6fb3c695b2f4f49d0737faf2fa287cd8f9776f729caa"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/panther_g_dan11l11l_m_bb.glb",
+      "fil": "enheter/panther_g/panther_g_dan11l11l_m_bb.glb",
+      "sha256": "bdc62430baa7a206636d93dc445684e5038c00ca29276041796a580adfeec82c"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/flak36/flak36_pjas_web.glb",
+      "fil": "enheter/flak36/flak36_pjas_web.glb",
+      "sha256": "7719356db5ae2f3d9cd4159b308e5b924c07894298f583180d94ef8f2b70eb08"
+    },
+    {
+      "kallfil": "assets/models/weapons/rifles/springfield_m1903_pichuliru_ios.glb",
+      "fil": "enheter/m1903/springfield_m1903_pichuliru_ios.glb",
+      "sha256": "e7af2de6bb092827a11ba6b7b09955f0365906459ffa01ec7b0656627322e8f6"
+    },
+    {
+      "kallfil": "assets/models/units/tanks/germany/leichttraktor_light_ios.glb",
+      "fil": "enheter/leichttraktor/leichttraktor_light_ios.glb",
+      "sha256": "00c9b8f6aeec881f7bb9783f56fcff857f6408a0f547b103da45c0a9737b561e"
+    },
+    {
+      "kallfil": "assets/models/weapons/machine_guns/m1919a4_tripod_v1_web_ios.glb",
+      "fil": "enheter/m1919a4/m1919a4_tripod_v1_web_ios.glb",
+      "sha256": "7c7e703ed5e1fdf6f7c2608b4da3c1125b750b92bd8dea4306635b81695dc06f"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/zis3/zis3_pjas_web.glb",
+      "fil": "enheter/zis3_76mm/zis3_pjas_web.glb",
+      "sha256": "ca23fb60ccb354f0616d79c9a6655822f134083e686cdcfdaca06117e5120df3"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/qf_17pdr/qf_17pdr_pjas_web.glb",
+      "fil": "enheter/qf_17pdr/qf_17pdr_pjas_web.glb",
+      "sha256": "1037f7449136fc4ce5047cbac8ce1d7e78786a80c5a05a732fd10c283e41e13c"
+    },
+    {
+      "kallfil": "assets/animations/infantry/riflemen/rifleman_italy_ww2_web_ios.glb",
+      "fil": "enheter/italy_rifleman/rifleman_italy_ww2_web_ios.glb",
+      "sha256": "5279964a01d90ce53d631c133e84b2a3c70edd9626bdfcc80f61122f3230fe84"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/m1_57/m1_57_pjas_web.glb",
+      "fil": "enheter/m1_57mm/m1_57_pjas_web.glb",
+      "sha256": "70e4cdfccb4a5db881a2485b0d99400657e13c556200040c74ad6a5194a5dc97"
+    },
+    {
+      "kallfil": "assets/models/weapons/smg/m3_grease_gun_pichuliru_ios.glb",
+      "fil": "enheter/m3_grease_gun/m3_grease_gun_pichuliru_ios.glb",
+      "sha256": "571c11d0ea7432bee39fcb2d78a592f8631393eada8ecaced1a91f67321b3dd9"
+    },
+    {
+      "kallfil": "assets/models/weapons/shotguns/m1897_trench_gun_pichuliru_ios.glb",
+      "fil": "enheter/m1897_trench/m1897_trench_gun_pichuliru_ios.glb",
+      "sha256": "24fc3cf96172222da39355197cd6c5d0529a39ef98a87f4ff433bf16b79d1873"
+    },
+    {
+      "kallfil": "assets/models/weapons/smg/thompson_m1a1_pichuliru_ios.glb",
+      "fil": "enheter/thompson_m1a1/thompson_m1a1_pichuliru_ios.glb",
+      "sha256": "b83a715a08974ad67fcc1330d12b12b017021f760097df68f71f391e77d498eb"
+    },
+    {
+      "kallfil": "assets/models/weapons/rifles/kar98k_ios.glb",
+      "fil": "enheter/kar98k/kar98k_ios.glb",
+      "sha256": "25a8dbf91e027a993e3f6f90086bb589b3d08b0f95256cd4b36047c08771cec1"
+    },
+    {
+      "kallfil": "assets/models/units/tanks/germany/panzer_iii_j_medium_ios.glb",
+      "fil": "enheter/panzer_iii_j/panzer_iii_j_medium_ios.glb",
+      "sha256": "326efd7c454f3876972d5094beddb429fcd1a71435f238e3bc1dd15c298b6a2c"
+    },
+    {
+      "kallfil": "assets/models/weapons/rifles/m1_garand_pichuliru_ios.glb",
+      "fil": "enheter/m1_garand/m1_garand_pichuliru_ios.glb",
+      "sha256": "b9ff93bd8830a00e834f539a1efeb5b0082051d0d9681c43c231e1f807433651"
+    },
+    {
+      "kallfil": "assets/models/weapons/rifles/fg42_pichuliru_ios.glb",
+      "fil": "enheter/fg42/fg42_pichuliru_ios.glb",
+      "sha256": "0202d9efa8eb49e3ad533e8f5d41fc341781d39018c6ea56cea02d285765243d"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/cigarette_case/cigarette_case_web_ios.glb",
+      "fil": "enheter/utrustning_cigarette_case/cigarette_case_web_ios.glb",
+      "sha256": "33039c43d666cf24698db6098cb9e95f50f2d1b71fac797953bada9c74050c6c"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/utrustning/cigarette_case/cigarette_case_v3_pbr_bb.glb",
+      "fil": "enheter/utrustning_cigarette_case/cigarette_case_v3_pbr_bb.glb",
+      "sha256": "8374fc23d77211a8e2d40b888776481bef82b927cc6289cefe922119d236fdae"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/panzer_iv_h/panzer_iv_h_v2b_v2_pbr_lod2.glb",
+      "fil": "enheter/panzer_iv_h/panzer_iv_h_v2b_v2_pbr_lod2.glb",
+      "sha256": "0d5e7738b52d96fbf6b5be0d1542b6d36408bf26f91c27a6cc307ff57fe75a91"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/panzer_iv_h/panzer_iv_h_v2b_v2_pbr_bb.glb",
+      "fil": "enheter/panzer_iv_h/panzer_iv_h_v2b_v2_pbr_bb.glb",
+      "sha256": "629be7b264a6e33982fadf0f08b6d6112a15aee0d6f11e902046dfb30a86065b"
+    },
+    {
+      "kallfil": "assets/models/units/tanks/ussr/t12_prototype_medium_ios.glb",
+      "fil": "enheter/t12/t12_prototype_medium_ios.glb",
+      "sha256": "7a52ef244db1381a48a11b4ecca5ccc6829899d8fa0bacfc6b1e63372963a124"
+    },
+    {
+      "kallfil": "assets/animations/infantry/riflemen/rifleman_ussr_ww2_web_ios.glb",
+      "fil": "enheter/ussr_rifleman/rifleman_ussr_ww2_web_ios.glb",
+      "sha256": "96de4d6ae5c218e6382fe86176ce4f38c730243743dda1e0b5ce441eca47e008"
+    },
+    {
+      "kallfil": "assets/models/units/vehicles/ussr/gaz67_jeep_ios.glb",
+      "fil": "enheter/gaz67/gaz67_jeep_ios.glb",
+      "sha256": "b0c474b655b9783cfed477bb37d42d880d8e67ade4d0681621488dda418d21ad"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/sherman_firefly_barking_dogo/sherman_firefly_barking_dogo_v3_pbr_lod4_uv.glb",
+      "fil": "enheter/sherman_vc_firefly/sherman_firefly_barking_dogo_v3_pbr_lod4_uv.glb",
+      "sha256": "076193066916ebdeeb5c01938f728fa83e71f15096952672cb2d1014ab81d0e5"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/sherman_firefly_barking_dogo/sherman_firefly_barking_dogo_v3_pbr_bb.glb",
+      "fil": "enheter/sherman_vc_firefly/sherman_firefly_barking_dogo_v3_pbr_bb.glb",
+      "sha256": "15884bc77370559ea124bcbb74ca6f0c5e54b96509240c73e36648e244d04bc9"
+    },
+    {
+      "kallfil": "assets/models/weapons/rifles/stg44_ios.glb",
+      "fil": "enheter/stg44/stg44_ios.glb",
+      "sha256": "0597825497827582ad56b96ae9505665e8c62219fed22d45c5fbd867f8355ad4"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/m1_155/m1_155_pjas_web_mobil.glb",
+      "fil": "enheter/m1_155/m1_155_pjas_web_mobil.glb",
+      "sha256": "5ae1c763295849df4467fcfb1795f8a3b90609177d27679b2f019aedef8db30c"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/m1_155/m1_155_pjas_web_mobil_lod1_v2.glb",
+      "fil": "enheter/m1_155/m1_155_pjas_web_mobil_lod1_v2.glb",
+      "sha256": "042a516367a405f2f1d2f839b16fee437c82107365601dcf9e5aa355fb75df81"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/m1_155/m1_155_pjas_web_mobil_lod2_v2.glb",
+      "fil": "enheter/m1_155/m1_155_pjas_web_mobil_lod2_v2.glb",
+      "sha256": "d40cd83dfdb1cd6d4b6249a866eb605baeae75e508b29c91aa5a2fd835befc91"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/m1_155/m1_155_pjas_web_mobil_bb.glb",
+      "fil": "enheter/m1_155/m1_155_pjas_web_mobil_bb.glb",
+      "sha256": "293e21e1ad358f084f53925e49907389cf798637ebb6b9c7776de298df66ba4b"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/m2a1_105/m2a1_105_pjas_web_mobil.glb",
+      "fil": "enheter/m2a1_105/m2a1_105_pjas_web_mobil.glb",
+      "sha256": "dc69ebd29a9f2842fd1bb12a32e3dd96ef10abc84c9d63c32c9e0e835da8c40f"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/m2a1_105/m2a1_105_pjas_web_mobil_lod1_v2.glb",
+      "fil": "enheter/m2a1_105/m2a1_105_pjas_web_mobil_lod1_v2.glb",
+      "sha256": "87458628bad3c7348a833b2f55629ff6d3bc7164380299f61f3018c83dcba079"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/m2a1_105/m2a1_105_pjas_web_mobil_lod2_v2.glb",
+      "fil": "enheter/m2a1_105/m2a1_105_pjas_web_mobil_lod2_v2.glb",
+      "sha256": "1099e99f2dcb26da39c705b079c1a75b1286b5f84fac68b76ce05d2fba031474"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/m2a1_105/m2a1_105_pjas_web_mobil_bb.glb",
+      "fil": "enheter/m2a1_105/m2a1_105_pjas_web_mobil_bb.glb",
+      "sha256": "17eae4bf238813906873e861e507ff39b83fab633a54d41c4097a5bd73f27f10"
+    },
+    {
+      "kallfil": "assets/models/weapons/rifles/m1_carbine_pichuliru_ios.glb",
+      "fil": "enheter/m1_carbine/m1_carbine_pichuliru_ios.glb",
+      "sha256": "d22ebafecb9df5ccc85bef4c6eb52df08cdb774a138e1d7069f3952477de0e23"
+    },
+    {
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/pak38/pak38_pjas_web.glb",
+      "fil": "enheter/pak38/pak38_pjas_web.glb",
+      "sha256": "9e35922f8691643c2b484387358fbfbb069bb98cca9ad8141dc17a94f04f0536"
+    },
+    {
+      "kallfil": "assets/models/weapons/machine_guns/bren_pichuliru_ios.glb",
+      "fil": "enheter/bren_mk1/bren_pichuliru_ios.glb",
+      "sha256": "b44305515cf657da2a093498693520732e90f926a19fab3c4fe438f00783e019"
+    }
+  ],
+  "enhetsregister_sha256": "5d3cb864b5a7d997d148ae4ff279ab80fe7a4eecf1ac93e32780479898733b25",
+  "precision_sha256": "0253dfdcae8b0f4b1fcd86e29563eb5852e6d55e285ff83b66d87ce28d3072d8",
+  "kallfiler_ar_lokala_referenser": "Källfiler är spårbarhet till arbetsbiblioteket, inte webblänkar. Bara fil-fält i modeller, index och terräng ska hämtas av UI."
+}

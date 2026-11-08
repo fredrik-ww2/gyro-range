@@ -1,0 +1,238 @@
+{
+  "schema": "form.verkstad.enhet.v1",
+  "id": "gaz67",
+  "namn": "GAZ-67 / GAZ-67B",
+  "nation": "Sovjet",
+  "typ": "obepansrat fordon",
+  "kategori": "Transport och halvbandvagnar",
+  "status": "under_utveckling",
+  "utvecklingsniva": "2_halvvags",
+  "saknas": [
+    "animationer och verifierad rörelse",
+    "LOD-kedja",
+    "impostor för fjärrvy",
+    "fastpunkter för mynning eller avgas",
+    "ljudkoppling",
+    "provspelad komplett spelenhet",
+    "spelvärden: provning av uppskattningar",
+    "R62: culling, instancing och skuggproxy i kommande motor",
+    "Kvalitetskontroll av vald modell och mobiltest på riktig iPhone"
+  ],
+  "modell_ar_inte_spelenhet": true,
+  "modellstatus_kallregister": "bibliotek",
+  "tidigare_underkannande_finns": false,
+  "modeller": [
+    {
+      "fil": "gaz67_jeep_ios.glb",
+      "roll": "modell",
+      "lod": null,
+      "kallfil": "assets/models/units/vehicles/ussr/gaz67_jeep_ios.glb",
+      "bytes": 115536,
+      "sha256": "b0c474b655b9783cfed477bb37d42d880d8e67ade4d0681621488dda418d21ad",
+      "trianglar": 20090,
+      "material": 10,
+      "animationer": [],
+      "extensioner": [
+        "KHR_draco_mesh_compression"
+      ],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    }
+  ],
+  "fastpunkter": {
+    "mynning": {
+      "nod": null,
+      "position_m": null,
+      "tillamplig": true,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen entydig fastpunkt hittad i slutlig modell. Måste mätas, ingen påhittad position.",
+      "liknande_enhet": "panzer_iv_h",
+      "status": "saknas"
+    },
+    "avgas": {
+      "nod": null,
+      "position_m": null,
+      "tillamplig": true,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen entydig fastpunkt hittad i slutlig modell. Måste mätas, ingen påhittad position.",
+      "liknande_enhet": "panzer_iv_h",
+      "status": "saknas"
+    }
+  },
+  "effekter": {
+    "gemensamt_bibliotek": "ww2_assets/assets/effects/ateranvandbara/EFFEKTKATALOG.md",
+    "regel": "R15",
+    "inbaddade_effekter_anvands_inte": true,
+    "status": "referens, inte kopplat i detta datapaket"
+  },
+  "spelvarden": {
+    "fart_per_terrang": {
+      "vag": {
+        "varde": 90.0,
+        "enhet": "km/h",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Sovjet/Transport och halvbandvagnar/enheter/1/fart_vag_kmh",
+        "kallvarde": "90",
+        "kallstatus": "overifierad"
+      },
+      "falt": {
+        "varde": 20,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "Fält skiljs från ospecificerad terräng; antaget normalvärde på torr framkomlig mark, ej maximal fart.",
+        "liknande_enhet": "m3a1_halftrack",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Sovjet/Transport och halvbandvagnar/enheter/1/fart_terrang_kmh",
+        "kallvarde": "?"
+      },
+      "skog": {
+        "varde": 9.0,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",
+        "liknande_enhet": "m3a1_halftrack"
+      },
+      "by": {
+        "varde": 14.0,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "70 procent av fältfart bland bebyggelse, utan vägbonus.",
+        "liknande_enhet": "m3a1_halftrack"
+      }
+    },
+    "eldkraft": {
+      "kaliber_mm": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ej tillämplig kanon-/pipkaliber för denna basprofil; verkan måste modelleras separat.",
+        "liknande_enhet": "gaz67"
+      },
+      "eldhastighet_skott_min": {
+        "varde": 0,
+        "enhet": "skott/min",
+        "ursprung": "uppskattat",
+        "motivering": "Obeväpnad basprofil; eventuell tilläggskulspruta ingår inte.",
+        "liknande_enhet": "gaz67"
+      }
+    },
+    "pansar": {
+      "fram": {
+        "varde": 0.0,
+        "enhet": "mm",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Sovjet/Transport och halvbandvagnar/enheter/1/pansar_fram_mm",
+        "kallvarde": "0",
+        "kallstatus": "overifierad"
+      },
+      "sida": {
+        "varde": 0.0,
+        "enhet": "mm",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Sovjet/Transport och halvbandvagnar/enheter/1/pansar_sida_mm",
+        "kallvarde": "0",
+        "kallstatus": "overifierad"
+      },
+      "bak": {
+        "varde": 0.0,
+        "enhet": "mm",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Sovjet/Transport och halvbandvagnar/enheter/1/pansar_bak_mm",
+        "kallvarde": "0",
+        "kallstatus": "overifierad"
+      },
+      "topp": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "m3a1_halftrack"
+      }
+    },
+    "rackvidd": {
+      "varde": 0,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Ingen eldräckvidd för obeväpnad basprofil.",
+      "liknande_enhet": "gaz67"
+    },
+    "upptackbarhet": {
+      "varde": 700,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Referensavstånd för upptäckt i dagsljus på öppen mark, inte en uppmätt konstant; terräng och rörelse ska modifiera.",
+      "liknande_enhet": "m3a1_halftrack"
+    },
+    "traffchans_per_avstand": {
+      "100": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "gaz67"
+      },
+      "250": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "gaz67"
+      },
+      "500": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "gaz67"
+      },
+      "1000": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "gaz67"
+      },
+      "1500": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "gaz67"
+      },
+      "2000": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "gaz67"
+      }
+    },
+    "beteendeprofil": {
+      "modul": "../../beteende/standard.json",
+      "profil": "standard",
+      "nation": "Sovjet",
+      "ursprung": "uppskattat",
+      "motivering": "Gemensam dataprofil; nationella regler måste laddas separat. Ingen AI eller beslutskod ingår.",
+      "liknande_enhet": "m3a1_halftrack"
+    }
+  },
+  "enhetsregister": {
+    "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+    "post": "/lander/Sovjet/Transport och halvbandvagnar/enheter/1",
+    "id": "gaz67"
+  },
+  "mobil": {
+    "lat_laddning": true,
+    "culling": "frustum och occlusion i motor",
+    "ateranvand_texturer": true,
+    "skuggproxy": "genereras vid första start i motor",
+    "lod_val": "skärmstorlek i pixlar, mjuk toning",
+    "instancing": "endast om modellen och animationerna stöder det"
+  }
+}

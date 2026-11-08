@@ -1,0 +1,283 @@
+{
+  "schema": "form.verkstad.enhet.v1",
+  "id": "tiger_i",
+  "namn": "Tiger I",
+  "nation": "Tyskland",
+  "typ": "fordon",
+  "kategori": "Stridsvagnar",
+  "status": "under_utveckling",
+  "utvecklingsniva": "2_halvvags",
+  "saknas": [
+    "ljudkoppling",
+    "provspelad komplett spelenhet",
+    "spelvärden: provning av uppskattningar",
+    "R62: culling, instancing och skuggproxy i kommande motor",
+    "Kvalitetskontroll av vald modell och mobiltest på riktig iPhone",
+    "fastpunkter för mynning eller avgas"
+  ],
+  "modell_ar_inte_spelenhet": true,
+  "modellstatus_kallregister": "bibliotek",
+  "tidigare_underkannande_finns": true,
+  "modeller": [
+    {
+      "fil": "tiger_i_late_42manako_m_lod2.glb",
+      "roll": "modell",
+      "lod": 2,
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/tiger_i_late_42manako_m_lod2.glb",
+      "bytes": 1618916,
+      "sha256": "8db93b627a52abf23fb9df76282c67fe807e5526a6177960be8860d5105b3473",
+      "trianglar": 4646,
+      "material": 9,
+      "animationer": [],
+      "extensioner": [],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "tiger_i_late_42manako_m_bb.glb",
+      "roll": "impostor",
+      "lod": null,
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/tiger_i_late_42manako_m_bb.glb",
+      "bytes": 83744,
+      "sha256": "1e4ac7f4d9e4dc071f98c5f5b6739d8313b7eb4d672c1d636bc1be097d2796b2",
+      "trianglar": 4,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    }
+  ],
+  "fastpunkter": {
+    "mynning": {
+      "nod": null,
+      "position_m": null,
+      "tillamplig": true,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen entydig fastpunkt hittad i slutlig modell. Måste mätas, ingen påhittad position.",
+      "liknande_enhet": "panzer_iv_h",
+      "status": "saknas"
+    },
+    "avgas": {
+      "nod": null,
+      "position_m": null,
+      "tillamplig": true,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen entydig fastpunkt hittad i slutlig modell. Måste mätas, ingen påhittad position.",
+      "liknande_enhet": "panzer_iv_h",
+      "status": "saknas"
+    }
+  },
+  "effekter": {
+    "gemensamt_bibliotek": "ww2_assets/assets/effects/ateranvandbara/EFFEKTKATALOG.md",
+    "regel": "R15",
+    "inbaddade_effekter_anvands_inte": true,
+    "status": "referens, inte kopplat i detta datapaket"
+  },
+  "spelvarden": {
+    "fart_per_terrang": {
+      "vag": {
+        "varde": 38.0,
+        "enhet": "km/h",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Tyskland/Stridsvagnar/enheter/0/fart_vag_kmh",
+        "kallvarde": "38",
+        "kallstatus": "Finns"
+      },
+      "falt": {
+        "varde": 18,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "Fält skiljs från ospecificerad terräng; antaget normalvärde på torr framkomlig mark, ej maximal fart.",
+        "liknande_enhet": "panzer_iv_h",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Tyskland/Stridsvagnar/enheter/0/fart_terrang_kmh",
+        "kallvarde": "20"
+      },
+      "skog": {
+        "varde": 8.1,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "by": {
+        "varde": 12.6,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "70 procent av fältfart bland bebyggelse, utan vägbonus.",
+        "liknande_enhet": "panzer_iv_h"
+      }
+    },
+    "eldkraft": {
+      "kaliber_mm": {
+        "varde": 88,
+        "enhet": "mm",
+        "ursprung": "kalla",
+        "kallfil": "data/tanks/tiger_i.json",
+        "kallfalt": "/kaliber_mm",
+        "kallstatus": "Finns"
+      },
+      "eldhastighet_skott_min": {
+        "varde": 6,
+        "enhet": "skott/min",
+        "ursprung": "uppskattat",
+        "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+        "liknande_enhet": "panzer_iv_h"
+      }
+    },
+    "pansar": {
+      "fram": {
+        "varde": 60,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Källfältet är ett intervall eller en uppskattning; provisoriskt representativt spelvärde.",
+        "liknande_enhet": "panzer_iv_h",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Tyskland/Stridsvagnar/enheter/0/pansar_fram_mm",
+        "kallvarde": "skrov 100 / torn 70–145 / kanonmantel (Blende) 120"
+      },
+      "sida": {
+        "varde": 30,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Källfältet är ett intervall eller en uppskattning; provisoriskt representativt spelvärde.",
+        "liknande_enhet": "panzer_iv_h",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Tyskland/Stridsvagnar/enheter/0/pansar_sida_mm",
+        "kallvarde": "skrov 60–80 / torn 80"
+      },
+      "bak": {
+        "varde": 30,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Källfältet är ett intervall eller en uppskattning; provisoriskt representativt spelvärde.",
+        "liknande_enhet": "panzer_iv_h",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Tyskland/Stridsvagnar/enheter/0/pansar_bak_mm",
+        "kallvarde": "skrov 60–80 (källan slår ihop sida och bak) / torn 80"
+      },
+      "topp": {
+        "varde": 25,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ungefärlig takplåt för vagnfamiljen; exakt variant och plåt måste källkontrolleras.",
+        "liknande_enhet": "tiger_i"
+      }
+    },
+    "rackvidd": {
+      "varde": 1800,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+      "liknande_enhet": "panzer_iv_h"
+    },
+    "upptackbarhet": {
+      "varde": 1200,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Referensavstånd för upptäckt i dagsljus på öppen mark, inte en uppmätt konstant; terräng och rörelse ska modifiera.",
+      "liknande_enhet": "panzer_iv_h"
+    },
+    "traffchans_per_avstand": {
+      "100": {
+        "varde": 1.0,
+        "enhet": "andel",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/PRECISION_EXPORT.json",
+        "kallfalt": "/rader/6/varde",
+        "kallstatus": "BOR_GRANSKAS",
+        "provvillkor": "kontrollerat provskjutningsmönster (Test bed/Training); rätt avstånd, MPI på siktpunkt",
+        "malstorlek": "2,5 × 2 m",
+        "ammunition": "Pzgr. 39 (APCBC-HE)",
+        "anvandning": "referenskurva; motor måste räkna rörelse, sikt, avståndsfel och skytt separat"
+      },
+      "250": {
+        "varde": 1.0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Befintlig beräknad referenskurva ur precisionsregistret; inte uppmätt strid.",
+        "liknande_enhet": "tiger_i",
+        "kallfil": "data/knowledge/enhetsregister/PRECISION_EXPORT.json",
+        "kallfalt": "/rader/360",
+        "provvillkor": "tysk stridssimulering (spridning × 2); rätt avstånd, MPI på siktpunkt",
+        "malstorlek": "2,5 × 2 m",
+        "ammunition": "Pzgr. 39 (APCBC-HE)",
+        "anvandning": "referenskurva; motor måste räkna rörelse, sikt, avståndsfel och skytt separat"
+      },
+      "500": {
+        "varde": 1.0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Befintlig beräknad referenskurva ur precisionsregistret; inte uppmätt strid.",
+        "liknande_enhet": "tiger_i",
+        "kallfil": "data/knowledge/enhetsregister/PRECISION_EXPORT.json",
+        "kallfalt": "/rader/362",
+        "provvillkor": "tysk stridssimulering (spridning × 2); rätt avstånd, MPI på siktpunkt",
+        "malstorlek": "2,5 × 2 m",
+        "ammunition": "Pzgr. 39 (APCBC-HE)",
+        "anvandning": "referenskurva; motor måste räkna rörelse, sikt, avståndsfel och skytt separat"
+      },
+      "1000": {
+        "varde": 0.91,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Befintlig beräknad referenskurva ur precisionsregistret; inte uppmätt strid.",
+        "liknande_enhet": "tiger_i",
+        "kallfil": "data/knowledge/enhetsregister/PRECISION_EXPORT.json",
+        "kallfalt": "/rader/366",
+        "provvillkor": "tysk stridssimulering (spridning × 2); rätt avstånd, MPI på siktpunkt",
+        "malstorlek": "2,5 × 2 m",
+        "ammunition": "Pzgr. 39 (APCBC-HE)",
+        "anvandning": "referenskurva; motor måste räkna rörelse, sikt, avståndsfel och skytt separat"
+      },
+      "1500": {
+        "varde": 0.77,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Befintlig beräknad referenskurva ur precisionsregistret; inte uppmätt strid.",
+        "liknande_enhet": "tiger_i",
+        "kallfil": "data/knowledge/enhetsregister/PRECISION_EXPORT.json",
+        "kallfalt": "/rader/368",
+        "provvillkor": "tysk stridssimulering (spridning × 2); rätt avstånd, MPI på siktpunkt",
+        "malstorlek": "2,5 × 2 m",
+        "ammunition": "Pzgr. 39 (APCBC-HE)",
+        "anvandning": "referenskurva; motor måste räkna rörelse, sikt, avståndsfel och skytt separat"
+      },
+      "2000": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "tiger_i"
+      }
+    },
+    "beteendeprofil": {
+      "modul": "../../beteende/standard.json",
+      "profil": "besattning",
+      "nation": "Tyskland",
+      "ursprung": "uppskattat",
+      "motivering": "Gemensam dataprofil; nationella regler måste laddas separat. Ingen AI eller beslutskod ingår.",
+      "liknande_enhet": "panzer_iv_h"
+    }
+  },
+  "enhetsregister": {
+    "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+    "post": "/lander/Tyskland/Stridsvagnar/enheter/0",
+    "id": "tiger_i"
+  },
+  "mobil": {
+    "lat_laddning": true,
+    "culling": "frustum och occlusion i motor",
+    "ateranvand_texturer": true,
+    "skuggproxy": "genereras vid första start i motor",
+    "lod_val": "skärmstorlek i pixlar, mjuk toning",
+    "instancing": "endast om modellen och animationerna stöder det"
+  },
+  "modellvariant": "Tiger I sen produktion (42manako), identiteten i källnamnet är mer specifik än registerfamiljen."
+}

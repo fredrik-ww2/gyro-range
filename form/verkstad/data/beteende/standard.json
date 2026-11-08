@@ -1,0 +1,150 @@
+{
+  "schema": "form.verkstad.beteende.v1",
+  "id": "standard",
+  "status": "dataprofil_forslag_ej_inkopplad",
+  "kallor": [
+    "AI/individbeteende_v1_6_BEFALSKOD/INDIVIDREGELBOK_v1_6_BEFALSKOD.md",
+    "AI/individbeteende_v1_6_BEFALSKOD/BEFALSKOD_AI_REGLER_v1_6.md",
+    "docs/manualer/TILLAGGSBETEENDE_v1_1_BEFALSKOD.md"
+  ],
+  "nationell_avgransning": {
+    "USA": "USA-underlag",
+    "Tyskland": "tyska underlaget",
+    "ovriga": "nationell doktrin saknas i denna modul; får inte ärva USA/DE automatiskt"
+  },
+  "regler": [
+    {
+      "id": "IB-40",
+      "regel": "Beskjuten på öppen mark utan nära riktigt skydd: skyddsställning, liggande eller knästående. Skyddsställning är inte fysiskt skydd.",
+      "kallfil": "AI/individbeteende_v1_6_BEFALSKOD/INDIVIDREGELBOK_v1_6_BEFALSKOD.md",
+      "avsnitt": "IB-40"
+    },
+    {
+      "id": "fysiskt_skydd",
+      "regel": "Kräver både fysiskt_skydd=true och bryter_eldlinje=true. Gräs, buskar och rök är inte automatiskt riktigt skydd.",
+      "kallfil": "AI/individbeteende_v1_6_BEFALSKOD/INDIVIDREGELBOK_v1_6_BEFALSKOD.md",
+      "avsnitt": "Riktigt skydd och nära"
+    },
+    {
+      "id": "sprang_undantag",
+      "regel": "AI:ns eget språngval till riktigt skydd får inte spärras av kodens skälkontroll. Fysisk navigering krävs fortfarande. Övriga byten följer nationell befälskod.",
+      "kallfil": "AI/individbeteende_v1_6_BEFALSKOD/BEFALSKOD_AI_REGLER_v1_6.md",
+      "avsnitt": "Uttryckligt undantag"
+    },
+    {
+      "id": "eldlage_retratt",
+      "regel": "Eldläge och reträtt måste följa order och nationell befälskod. Moralreglagen är enbart föreslagna startvärden, inte automatisk order att retirera.",
+      "kallfil": "docs/manualer/TILLAGGSBETEENDE_v1_1_BEFALSKOD.md",
+      "avsnitt": "TM-25, TM-26 samt nationella befälsregler",
+      "status": "integration återstår"
+    }
+  ],
+  "fasta_trösklar": {
+    "nara_skydd_m": {
+      "varde": 1.2,
+      "enhet": "m",
+      "ursprung": "kalla",
+      "kallfil": "AI/individbeteende_v1_6_BEFALSKOD/INDIVIDREGELBOK_v1_6_BEFALSKOD.md",
+      "kallfalt": "Riktigt skydd och nära"
+    },
+    "knastaende_vattendjup_m": {
+      "varde": 0.15,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "kallfil": "AI/individbeteende_v1_6_BEFALSKOD/INDIVIDREGELBOK_v1_6_BEFALSKOD.md",
+      "kallfalt": "Enkel ställningsregel",
+      "motivering": "Befintligt provisoriskt spelvärde i individregelboken, inte historiskt uppmätt.",
+      "liknande_enhet": "usa_rifleman"
+    },
+    "skyddssok_radie_m": {
+      "varde": 45,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "kallfil": "AI/individbeteende_v1_6_BEFALSKOD/INDIVIDREGELBOK_v1_6_BEFALSKOD.md",
+      "kallfalt": "Riktigt skydd och nära",
+      "motivering": "Befintligt provisoriskt spelvärde i individregelboken, inte historiskt uppmätt.",
+      "liknande_enhet": "usa_rifleman"
+    }
+  },
+  "reglage": [
+    {
+      "id": "skyddssokning",
+      "namn": "Sök riktigt skydd",
+      "min": 0,
+      "max": 1,
+      "standard": 0.8,
+      "enhet": "andel",
+      "ursprung": "uppskattat",
+      "motivering": "Prioritet, inte automatisk skyddsstatus.",
+      "liknande_enhet": "usa_rifleman",
+      "anvandare_far_justera": true
+    },
+    {
+      "id": "retratt_moral",
+      "namn": "Moralgräns för reträtt",
+      "min": 0,
+      "max": 1,
+      "standard": 0.25,
+      "enhet": "andel",
+      "ursprung": "uppskattat",
+      "motivering": "Provisorisk startnivå; nationell befälskod måste avgöra tillämpningen.",
+      "liknande_enhet": "usa_rifleman",
+      "anvandare_far_justera": true
+    },
+    {
+      "id": "eldlage",
+      "namn": "Eldläge",
+      "min": 0,
+      "max": 2,
+      "standard": 1,
+      "enhet": "val",
+      "ursprung": "uppskattat",
+      "motivering": "0 håll eld, 1 riktad eld, 2 nedhållande eld. Förslag för reglage, inte orderbyte utan kodprövning.",
+      "liknande_enhet": "usa_rifleman",
+      "anvandare_far_justera": true
+    },
+    {
+      "id": "moral",
+      "namn": "Utgångsmoral",
+      "min": 0,
+      "max": 1,
+      "standard": 0.7,
+      "enhet": "andel",
+      "ursprung": "uppskattat",
+      "motivering": "Ej ett historiskt konstantvärde.",
+      "liknande_enhet": "usa_rifleman",
+      "anvandare_far_justera": true
+    },
+    {
+      "id": "ammunitionsdisciplin",
+      "namn": "Spara ammunition",
+      "min": 0,
+      "max": 1,
+      "standard": 0.65,
+      "enhet": "andel",
+      "ursprung": "uppskattat",
+      "motivering": "Provisorisk prioritet.",
+      "liknande_enhet": "usa_rifleman",
+      "anvandare_far_justera": true
+    },
+    {
+      "id": "formationsavstand_m",
+      "namn": "Avstånd mellan individer",
+      "min": 1,
+      "max": 20,
+      "standard": 5,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Provisoriskt; terräng och order kan kräva annat.",
+      "liknande_enhet": "usa_rifleman",
+      "anvandare_far_justera": true
+    }
+  ],
+  "profiler": [
+    "individ",
+    "besattning",
+    "standard",
+    "utrustning"
+  ],
+  "motorintegration": "Händelsestyrd, inte per bildruta. Ingen AI-modell, rörelse- eller stridsmotor ingår."
+}

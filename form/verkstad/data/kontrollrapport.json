@@ -1,0 +1,41 @@
+{
+  "enheter": 257,
+  "med_modell": 62,
+  "status": {
+    "klar": 0,
+    "under_utveckling": 257
+  },
+  "spelvarden_ursprung": {
+    "kalla": 539,
+    "uppskattat": 4344
+  },
+  "antal_modellfiler": 93,
+  "modellbytes_inkl_terrang": 69934380,
+  "terrang_bytes": 2613558,
+  "kopior_sha256_matchar": true,
+  "glb_header_och_externa_resurser": "kontrollerade, full glTF-validator körd",
+  "begransningar": [
+    "ingen motorintegration",
+    "ingen ny oberoende modellgranskning",
+    "ingen mätning på riktig iPhone",
+    "inte publicerat i detta steg"
+  ],
+  "original_andrade": false,
+  "numeriska_spelvarden_ursprung": {
+    "kalla": 539,
+    "uppskattat": 4087
+  },
+  "antal_beteendereferenser": 257,
+  "glTF_validator": {
+    "antal_filer": 221,
+    "fel": 0,
+    "varningar": 506
+  },
+  "original_sha256_verifierade": true,
+  "anmarkningar": [
+    "Fyra befintliga Sherman/Firefly-LOD underkändes av validator för UV/material och ingår inte. Giltiga alternativ valdes utan ändring av original.",
+    "T-34, flera soldater och andra mobilmodeller saknar belagd geometrisk LOD-kedja i detta paket; det står i saknas.",
+    "62 poster har fysiska modellfiler. Övriga 195 är registerposter utan levererad modell och ligger i tidigt skede.",
+    "257 av 257 är under utveckling. Källstatus och osäkerhet har inte skrivits om till kvalitetsgodkännande."
+  ]
+}

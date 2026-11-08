@@ -1,0 +1,240 @@
+{
+  "schema": "form.verkstad.enhet.v1",
+  "id": "qf_6pdr",
+  "namn": "QF 6-pdr 7 cwt",
+  "nation": "Storbritannien",
+  "typ": "dragen pjäs",
+  "kategori": "Pansarvärnskanoner och självgående pjäser",
+  "status": "under_utveckling",
+  "utvecklingsniva": "2_halvvags",
+  "saknas": [
+    "LOD-kedja",
+    "impostor för fjärrvy",
+    "ljudkoppling",
+    "provspelad komplett spelenhet",
+    "spelvärden: provning av uppskattningar",
+    "R62: culling, instancing och skuggproxy i kommande motor",
+    "Kvalitetskontroll av vald modell och mobiltest på riktig iPhone"
+  ],
+  "modell_ar_inte_spelenhet": true,
+  "modellstatus_kallregister": "modell finns i bibliotek (bekräfta R19-status)",
+  "tidigare_underkannande_finns": false,
+  "modeller": [
+    {
+      "fil": "qf_6pdr_pjas_web.glb",
+      "roll": "modell",
+      "lod": null,
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/qf_6pdr/qf_6pdr_pjas_web.glb",
+      "bytes": 36756,
+      "sha256": "e2874ed4a85e6b4acf82a4286ba8637be5a9eb291e64229ea0ab2d4470373235",
+      "trianglar": 872,
+      "material": 1,
+      "animationer": [
+        "Fire",
+        "Hit",
+        "Idle",
+        "Trails_Open",
+        "Trails_Close",
+        "Traverse",
+        "Elevate",
+        "Tow_Roll"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    }
+  ],
+  "fastpunkter": {
+    "mynning": {
+      "nod": "MuzzlePoint",
+      "modellfil": "qf_6pdr_pjas_web.glb",
+      "nodindex": 3,
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/qf_6pdr/qf_6pdr_pjas_web.glb",
+      "ursprung": "kalla",
+      "verifierad_i_motor": false,
+      "koordinatrymd": "nodens lokala koordinater, följ nodens världsmatris",
+      "status": "nod finns; riktning måste provkontrolleras"
+    },
+    "avgas": {
+      "nod": null,
+      "tillamplig": false,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen motor eller avgas för denna typ.",
+      "liknande_enhet": "pak40"
+    }
+  },
+  "effekter": {
+    "gemensamt_bibliotek": "ww2_assets/assets/effects/ateranvandbara/EFFEKTKATALOG.md",
+    "regel": "R15",
+    "inbaddade_effekter_anvands_inte": true,
+    "status": "referens, inte kopplat i detta datapaket"
+  },
+  "spelvarden": {
+    "fart_per_terrang": {
+      "vag": {
+        "varde": 3,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "pak40"
+      },
+      "falt": {
+        "varde": 1.5,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "Fält skiljs från ospecificerad terräng; antaget normalvärde på torr framkomlig mark, ej maximal fart.",
+        "liknande_enhet": "pak40",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Storbritannien/Pansarvärnskanoner och självgående pjäser/enheter/0/fart_terrang_kmh",
+        "kallvarde": "–"
+      },
+      "skog": {
+        "varde": 0.68,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",
+        "liknande_enhet": "pak40"
+      },
+      "by": {
+        "varde": 1.05,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "70 procent av fältfart bland bebyggelse, utan vägbonus.",
+        "liknande_enhet": "pak40"
+      }
+    },
+    "eldkraft": {
+      "kaliber_mm": {
+        "varde": 57.0,
+        "enhet": "mm",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Storbritannien/Pansarvärnskanoner och självgående pjäser/enheter/0/huvudbevapning",
+        "kallvarde": "57 mm (6-pdr) L/43; pansarbrytande: AP 2,72 kg v0 820 m/s, APCBC 3,18 kg 845 m/s, APDS 1,47 kg 1 235 m/s; genomslag vid 1 000 yd/30°: AP 74, APCBC 88, APDS 146 mm",
+        "kallstatus": "Finns",
+        "tolkning": "Första beväpningens kaliber; patronhylsans längd och antal kulsprutor räknas inte som kaliber."
+      },
+      "eldhastighet_skott_min": {
+        "varde": 6,
+        "enhet": "skott/min",
+        "ursprung": "uppskattat",
+        "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+        "liknande_enhet": "pak40"
+      }
+    },
+    "pansar": {
+      "fram": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "pak40"
+      },
+      "sida": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "pak40"
+      },
+      "bak": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "pak40"
+      },
+      "topp": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "pak40"
+      }
+    },
+    "rackvidd": {
+      "varde": 1800,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+      "liknande_enhet": "pak40"
+    },
+    "upptackbarhet": {
+      "varde": 700,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Referensavstånd för upptäckt i dagsljus på öppen mark, inte en uppmätt konstant; terräng och rörelse ska modifiera.",
+      "liknande_enhet": "pak40"
+    },
+    "traffchans_per_avstand": {
+      "100": {
+        "varde": 0.812,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "pak40"
+      },
+      "250": {
+        "varde": 0.759,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "pak40"
+      },
+      "500": {
+        "varde": 0.677,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "pak40"
+      },
+      "1000": {
+        "varde": 0.54,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "pak40"
+      },
+      "1500": {
+        "varde": 0.43,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "pak40"
+      },
+      "2000": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "qf_6pdr"
+      }
+    },
+    "beteendeprofil": {
+      "modul": "../../beteende/standard.json",
+      "profil": "besattning",
+      "nation": "Storbritannien",
+      "ursprung": "uppskattat",
+      "motivering": "Gemensam dataprofil; nationella regler måste laddas separat. Ingen AI eller beslutskod ingår.",
+      "liknande_enhet": "pak40"
+    }
+  },
+  "enhetsregister": {
+    "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+    "post": "/lander/Storbritannien/Pansarvärnskanoner och självgående pjäser/enheter/0",
+    "id": "qf_6pdr"
+  },
+  "mobil": {
+    "lat_laddning": true,
+    "culling": "frustum och occlusion i motor",
+    "ateranvand_texturer": true,
+    "skuggproxy": "genereras vid första start i motor",
+    "lod_val": "skärmstorlek i pixlar, mjuk toning",
+    "instancing": "endast om modellen och animationerna stöder det"
+  }
+}

@@ -1,0 +1,337 @@
+{
+  "schema": "form.verkstad.enhet.v1",
+  "id": "sfh18",
+  "namn": "15 cm sFH 18",
+  "nation": "Tyskland",
+  "typ": "dragen pjäs",
+  "kategori": "Artilleri och granatkastare",
+  "status": "under_utveckling",
+  "utvecklingsniva": "2_halvvags",
+  "saknas": [
+    "ljudkoppling",
+    "provspelad komplett spelenhet",
+    "spelvärden: provning av uppskattningar",
+    "R62: culling, instancing och skuggproxy i kommande motor",
+    "Kvalitetskontroll av vald modell och mobiltest på riktig iPhone"
+  ],
+  "modell_ar_inte_spelenhet": true,
+  "modellstatus_kallregister": "karantän",
+  "tidigare_underkannande_finns": true,
+  "modeller": [
+    {
+      "fil": "sfh18_pjas_web_mobil.glb",
+      "roll": "modell",
+      "lod": null,
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/sfh18/sfh18_pjas_web_mobil.glb",
+      "bytes": 172636,
+      "sha256": "8033aa98835ecab727cf6641cab6d7ff2315fffb74f6b0e1ddf18b4e37c0af96",
+      "trianglar": 4908,
+      "material": 2,
+      "animationer": [
+        "Fire",
+        "Load_Cycle",
+        "Idle",
+        "Limber_Lift",
+        "Tow_Roll",
+        "Trails_Open",
+        "Trails_Close",
+        "Spades_Mount",
+        "Spades_Unmount",
+        "Barrel_To_Travel",
+        "Barrel_To_Battery",
+        "Traverse",
+        "Elevate",
+        "Breech_Open",
+        "Breech_Close",
+        "Ram_Shell",
+        "Insert_Charge"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "sfh18_pjas_web_mobil_lod1_v2.glb",
+      "roll": "modell",
+      "lod": 1,
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/sfh18/sfh18_pjas_web_mobil_lod1_v2.glb",
+      "bytes": 162328,
+      "sha256": "5184b75eb4925a51ae81f43ec5ae029cfb62f19f9e8ca2d57479ecaa35e3c705",
+      "trianglar": 2478,
+      "material": 2,
+      "animationer": [
+        "Fire",
+        "Idle",
+        "Limber_Lift",
+        "Load_Cycle",
+        "Tow_Roll",
+        "Barrel_To_Battery",
+        "Barrel_To_Travel",
+        "Breech_Close",
+        "Breech_Open",
+        "Elevate",
+        "Insert_Charge",
+        "Ram_Shell",
+        "Spades_Mount",
+        "Spades_Unmount",
+        "Trails_Close",
+        "Trails_Open",
+        "Traverse"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "sfh18_pjas_web_mobil_lod2_v2.glb",
+      "roll": "modell",
+      "lod": 2,
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/sfh18/sfh18_pjas_web_mobil_lod2_v2.glb",
+      "bytes": 157148,
+      "sha256": "65a201342df89f3c618fcb324e95d5c32accb1bd2737e6441779f6e53e59a598",
+      "trianglar": 1789,
+      "material": 2,
+      "animationer": [
+        "Fire",
+        "Idle",
+        "Limber_Lift",
+        "Load_Cycle",
+        "Tow_Roll",
+        "Barrel_To_Battery",
+        "Barrel_To_Travel",
+        "Breech_Close",
+        "Breech_Open",
+        "Elevate",
+        "Insert_Charge",
+        "Ram_Shell",
+        "Spades_Mount",
+        "Spades_Unmount",
+        "Trails_Close",
+        "Trails_Open",
+        "Traverse"
+      ],
+      "extensioner": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "sfh18_pjas_web_mobil_bb.glb",
+      "roll": "impostor",
+      "lod": null,
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/sfh18/sfh18_pjas_web_mobil_bb.glb",
+      "bytes": 22336,
+      "sha256": "6184cedfa55a1230f12a62cbc267e2453cd1fd2186c5e056e70926deec841d5b",
+      "trianglar": 4,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    }
+  ],
+  "fastpunkter": {
+    "mynning": {
+      "nod": "MuzzlePoint",
+      "modellfil": "sfh18_pjas_web_mobil.glb",
+      "nodindex": 11,
+      "kallfil": "assets/asset_niva_1/enheter/artilleri/sfh18/sfh18_pjas_web_mobil.glb",
+      "ursprung": "kalla",
+      "verifierad_i_motor": false,
+      "koordinatrymd": "nodens lokala koordinater, följ nodens världsmatris",
+      "status": "nod finns; riktning måste provkontrolleras"
+    },
+    "avgas": {
+      "nod": null,
+      "tillamplig": false,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen motor eller avgas för denna typ.",
+      "liknande_enhet": "pak40"
+    }
+  },
+  "effekter": {
+    "gemensamt_bibliotek": "ww2_assets/assets/effects/ateranvandbara/EFFEKTKATALOG.md",
+    "regel": "R15",
+    "inbaddade_effekter_anvands_inte": true,
+    "status": "referens, inte kopplat i detta datapaket"
+  },
+  "spelvarden": {
+    "fart_per_terrang": {
+      "vag": {
+        "varde": 3,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "pak40"
+      },
+      "falt": {
+        "varde": 1.5,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "Fält skiljs från ospecificerad terräng; antaget normalvärde på torr framkomlig mark, ej maximal fart.",
+        "liknande_enhet": "pak40",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Tyskland/Artilleri och granatkastare/enheter/1/fart_terrang_kmh",
+        "kallvarde": "–"
+      },
+      "skog": {
+        "varde": 0.68,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",
+        "liknande_enhet": "pak40"
+      },
+      "by": {
+        "varde": 1.05,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "70 procent av fältfart bland bebyggelse, utan vägbonus.",
+        "liknande_enhet": "pak40"
+      }
+    },
+    "eldkraft": {
+      "kaliber_mm": {
+        "varde": 150.0,
+        "enhet": "mm",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/Tyskland/Artilleri och granatkastare/enheter/1/huvudbevapning",
+        "kallvarde": "15 cm (149 mm) L/29,5",
+        "kallstatus": "Finns",
+        "tolkning": "Första beväpningens kaliber; patronhylsans längd och antal kulsprutor räknas inte som kaliber."
+      },
+      "eldhastighet_skott_min": {
+        "varde": 6,
+        "enhet": "skott/min",
+        "ursprung": "uppskattat",
+        "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+        "liknande_enhet": "pak40"
+      }
+    },
+    "pansar": {
+      "fram": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "pak40"
+      },
+      "sida": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "pak40"
+      },
+      "bak": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "pak40"
+      },
+      "topp": {
+        "varde": 0,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ingen entydig siffra hittad i enhetsregistret; klassbaserat startvärde, måste provspelas.",
+        "liknande_enhet": "pak40"
+      }
+    },
+    "rackvidd": {
+      "varde": 1800,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+      "liknande_enhet": "pak40"
+    },
+    "upptackbarhet": {
+      "varde": 700,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Referensavstånd för upptäckt i dagsljus på öppen mark, inte en uppmätt konstant; terräng och rörelse ska modifiera.",
+      "liknande_enhet": "pak40"
+    },
+    "traffchans_per_avstand": {
+      "100": {
+        "varde": 0.812,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "pak40"
+      },
+      "250": {
+        "varde": 0.759,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "pak40"
+      },
+      "500": {
+        "varde": 0.677,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "pak40"
+      },
+      "1000": {
+        "varde": 0.54,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "pak40"
+      },
+      "1500": {
+        "varde": 0.43,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "pak40"
+      },
+      "2000": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "sfh18"
+      }
+    },
+    "beteendeprofil": {
+      "modul": "../../beteende/standard.json",
+      "profil": "besattning",
+      "nation": "Tyskland",
+      "ursprung": "uppskattat",
+      "motivering": "Gemensam dataprofil; nationella regler måste laddas separat. Ingen AI eller beslutskod ingår.",
+      "liknande_enhet": "pak40"
+    }
+  },
+  "enhetsregister": {
+    "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+    "post": "/lander/Tyskland/Artilleri och granatkastare/enheter/1",
+    "id": "sfh18"
+  },
+  "mobil": {
+    "lat_laddning": true,
+    "culling": "frustum och occlusion i motor",
+    "ateranvand_texturer": true,
+    "skuggproxy": "genereras vid första start i motor",
+    "lod_val": "skärmstorlek i pixlar, mjuk toning",
+    "instancing": "endast om modellen och animationerna stöder det"
+  }
+}

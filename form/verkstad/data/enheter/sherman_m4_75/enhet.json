@@ -1,0 +1,263 @@
+{
+  "schema": "form.verkstad.enhet.v1",
+  "id": "sherman_m4_75",
+  "namn": "M4 Sherman (75 mm)",
+  "nation": "USA",
+  "typ": "fordon",
+  "kategori": "Stridsvagnar",
+  "status": "under_utveckling",
+  "utvecklingsniva": "2_halvvags",
+  "saknas": [
+    "animationer och verifierad rörelse",
+    "fastpunkter för mynning eller avgas",
+    "ljudkoppling",
+    "provspelad komplett spelenhet",
+    "spelvärden: provning av uppskattningar",
+    "R62: culling, instancing och skuggproxy i kommande motor",
+    "Kvalitetskontroll av vald modell och mobiltest på riktig iPhone",
+    "LOD-kedja"
+  ],
+  "modell_ar_inte_spelenhet": true,
+  "modellstatus_kallregister": "saknar modell",
+  "tidigare_underkannande_finns": false,
+  "modeller": [
+    {
+      "fil": "sherman_m4_barking_dogo_ios.glb",
+      "roll": "modell",
+      "lod": null,
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/sherman_m4_barking_dogo/sherman_m4_barking_dogo_ios.glb",
+      "bytes": 8946472,
+      "sha256": "333ef9c61eb7bf42699dc1404a0d395c8a7841ac17941fe207b03a2ed5eef2e6",
+      "trianglar": 279172,
+      "material": 10,
+      "animationer": [],
+      "extensioner": [
+        "KHR_draco_mesh_compression",
+        "KHR_texture_basisu"
+      ],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    },
+    {
+      "fil": "sherman_m4_barking_dogo_v3_pbr_bb.glb",
+      "roll": "impostor",
+      "lod": null,
+      "kallfil": "assets/asset_niva_1/enheter/stridsvagnar/sherman_m4_barking_dogo/sherman_m4_barking_dogo_v3_pbr_bb.glb",
+      "bytes": 50044,
+      "sha256": "96f65d72590f3e20e0c6b044efddbe6c5aa3c370c106abd919df7240e04d7c01",
+      "trianglar": 4,
+      "material": 1,
+      "animationer": [],
+      "extensioner": [],
+      "externa_resurser": [],
+      "granskning": "ej nygranskad; se källmodellens protokoll",
+      "enhet": "meter",
+      "ladda_vid_start": false
+    }
+  ],
+  "fastpunkter": {
+    "mynning": {
+      "nod": null,
+      "position_m": null,
+      "tillamplig": true,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen entydig fastpunkt hittad i slutlig modell. Måste mätas, ingen påhittad position.",
+      "liknande_enhet": "panzer_iv_h",
+      "status": "saknas"
+    },
+    "avgas": {
+      "nod": null,
+      "position_m": null,
+      "tillamplig": true,
+      "ursprung": "uppskattat",
+      "motivering": "Ingen entydig fastpunkt hittad i slutlig modell. Måste mätas, ingen påhittad position.",
+      "liknande_enhet": "panzer_iv_h",
+      "status": "saknas"
+    }
+  },
+  "effekter": {
+    "gemensamt_bibliotek": "ww2_assets/assets/effects/ateranvandbara/EFFEKTKATALOG.md",
+    "regel": "R15",
+    "inbaddade_effekter_anvands_inte": true,
+    "status": "referens, inte kopplat i detta datapaket"
+  },
+  "spelvarden": {
+    "fart_per_terrang": {
+      "vag": {
+        "varde": 39.0,
+        "enhet": "km/h",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/USA/Stridsvagnar/enheter/0/fart_vag_kmh",
+        "kallvarde": "39 uthålligt på plan mark",
+        "kallstatus": "Finns"
+      },
+      "falt": {
+        "varde": 18,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "Fält skiljs från ospecificerad terräng; antaget normalvärde på torr framkomlig mark, ej maximal fart.",
+        "liknande_enhet": "panzer_iv_h",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/USA/Stridsvagnar/enheter/0/fart_terrang_kmh",
+        "kallvarde": "6–32 (4–20 mph, förväntad terrängfart beroende på terräng)"
+      },
+      "skog": {
+        "varde": 8.1,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "45 procent av fältfart på framkomlig skogsmark. Tät skog kan vara blockerad.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "by": {
+        "varde": 12.6,
+        "enhet": "km/h",
+        "ursprung": "uppskattat",
+        "motivering": "70 procent av fältfart bland bebyggelse, utan vägbonus.",
+        "liknande_enhet": "panzer_iv_h"
+      }
+    },
+    "eldkraft": {
+      "kaliber_mm": {
+        "varde": 75.0,
+        "enhet": "mm",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/USA/Stridsvagnar/enheter/0/huvudbevapning",
+        "kallvarde": "75 mm Gun M3 i Combination Gun Mount M34A1, 97 skott (+ .30 M1919A4 koaxial, .30 M1919A4 i bogen, .50 M2 HB luftvärn, 2-tums granatkastare M3)",
+        "kallstatus": "Finns",
+        "tolkning": "Första beväpningens kaliber; patronhylsans längd och antal kulsprutor räknas inte som kaliber."
+      },
+      "eldhastighet_skott_min": {
+        "varde": 6,
+        "enhet": "skott/min",
+        "ursprung": "uppskattat",
+        "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+        "liknande_enhet": "panzer_iv_h"
+      }
+    },
+    "pansar": {
+      "fram": {
+        "varde": 60,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Källfältet är ett intervall eller en uppskattning; provisoriskt representativt spelvärde.",
+        "liknande_enhet": "panzer_iv_h",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/USA/Stridsvagnar/enheter/0/pansar_fram_mm",
+        "kallvarde": "skrov övre 51, nedre 38–51 / torn front 76 (vinklar och sköld: ?)"
+      },
+      "sida": {
+        "varde": 30,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Källfältet är ett intervall eller en uppskattning; provisoriskt representativt spelvärde.",
+        "liknande_enhet": "panzer_iv_h",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/USA/Stridsvagnar/enheter/0/pansar_sida_mm",
+        "kallvarde": "skrov 38–51 / torn 51"
+      },
+      "bak": {
+        "varde": 38.0,
+        "enhet": "mm",
+        "ursprung": "kalla",
+        "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+        "kallfalt": "/lander/USA/Stridsvagnar/enheter/0/pansar_bak_mm",
+        "kallvarde": "skrov 38 / torn bak ?",
+        "kallstatus": "Finns"
+      },
+      "topp": {
+        "varde": 20,
+        "enhet": "mm",
+        "ursprung": "uppskattat",
+        "motivering": "Ungefärlig takplåt för vagnfamiljen; exakt variant och plåt måste källkontrolleras.",
+        "liknande_enhet": "panzer_iv_h"
+      }
+    },
+    "rackvidd": {
+      "varde": 1800,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Provisoriskt spelvärde; direkt jämförbar uppgift saknas i lästa källfält.",
+      "liknande_enhet": "panzer_iv_h"
+    },
+    "upptackbarhet": {
+      "varde": 1200,
+      "enhet": "m",
+      "ursprung": "uppskattat",
+      "motivering": "Referensavstånd för upptäckt i dagsljus på öppen mark, inte en uppmätt konstant; terräng och rörelse ska modifiera.",
+      "liknande_enhet": "panzer_iv_h"
+    },
+    "traffchans_per_avstand": {
+      "100": {
+        "varde": 0.812,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "250": {
+        "varde": 0.759,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "500": {
+        "varde": 0.677,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "1000": {
+        "varde": 0.54,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "1500": {
+        "varde": 0.43,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Provisorisk kurva för stillastående skytt/mål med fri sikt; inte historisk stridsträffchans.",
+        "liknande_enhet": "panzer_iv_h"
+      },
+      "2000": {
+        "varde": 0,
+        "enhet": "andel",
+        "ursprung": "uppskattat",
+        "motivering": "Utanför denna provisoriska effektiva räckvidd. Noll är en spelavgränsning, inte uppmätt sannolikhet.",
+        "liknande_enhet": "sherman_m4_75"
+      }
+    },
+    "beteendeprofil": {
+      "modul": "../../beteende/standard.json",
+      "profil": "besattning",
+      "nation": "USA",
+      "ursprung": "uppskattat",
+      "motivering": "Gemensam dataprofil; nationella regler måste laddas separat. Ingen AI eller beslutskod ingår.",
+      "liknande_enhet": "panzer_iv_h"
+    }
+  },
+  "enhetsregister": {
+    "kallfil": "data/knowledge/enhetsregister/ENHETSREGISTER.json",
+    "post": "/lander/USA/Stridsvagnar/enheter/0",
+    "id": "sherman_m4_75"
+  },
+  "mobil": {
+    "lat_laddning": true,
+    "culling": "frustum och occlusion i motor",
+    "ateranvand_texturer": true,
+    "skuggproxy": "genereras vid första start i motor",
+    "lod_val": "skärmstorlek i pixlar, mjuk toning",
+    "instancing": "endast om modellen och animationerna stöder det"
+  },
+  "avvisade_modellfiler": {
+    "orsak": "Befintliga lod4/lod5 har UV-/materialfel i glTF-validator. Kopiorna ingår inte i slutpaketet.",
+    "status": "inte godkända av detta arbete"
+  }
+}

@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#172724">
 <link rel="icon" href="data:,">
 <title>Flygplan · Gyrotest</title>
-<link rel="stylesheet" href="./style.css?v=4">
+<link rel="stylesheet" href="./style.css?v=5">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
@@ -17,6 +17,7 @@
 <div class="row"><h1 id="aircraftName">Hawker Typhoon Mk Ib</h1><a id="back" href="../">Skjutbana</a><button id="settingsButton">Inställningar</button></div>
 <p id="status" role="status">Förbereder flygplanet…</p>
 <div id="metrics">Laddar…</div>
+<div id="flightHud">HÖJD 75 m</div>
 </header>
 <svg id="reticle" aria-hidden="true" hidden>
 <g id="reticleGlow">
@@ -31,23 +32,28 @@
 </g>
 </g>
 </svg>
+<svg class="kapelldef" width="0" height="0" aria-hidden="true">
+<defs>
+<clipPath id="vaggarUr" clipPathUnits="objectBoundingBox">
+<path clip-rule="evenodd" d="M0,0 H1 V1 H0 Z M0.04,0.72 C0.04,0.34 0.14,0.15 0.5,0.118 C0.86,0.15 0.96,0.34 0.96,0.72 L0.96,0.84 L0.04,0.84 Z"/>
+</clipPath>
+</defs>
+</svg>
 <div id="cockpit" hidden>
 <div class="vaggar"></div>
-<div class="huv">
-<div class="spröjs spröjs-mitt"></div>
-<div class="spröjs spröjs-vanster"></div>
-<div class="spröjs spröjs-hoger"></div>
-</div>
+<svg class="huv" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+<path d="M4,72 C4,34 14,15 50,11.8 C86,15 96,34 96,72" fill="none" stroke="#121410" stroke-width="6.5" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+<path d="M4,72 C4,34 14,15 50,11.8 C86,15 96,34 96,72" fill="none" stroke="#6d7268" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+</svg>
 <div class="sikhuset"><div class="sikteglas"></div></div>
-<canvas id="panel" width="780" height="360" aria-label="Instrumentpanel"></canvas>
-<div id="styrspak" aria-hidden="true"><div class="stang"></div><div class="grepp"></div></div>
+<canvas id="panel" width="800" height="400" aria-label="Instrumentpanel"></canvas>
 </div>
 <div id="gasreglage" hidden>
 <output id="gasValue">85%</output>
 <div class="kvadrant" id="gasBana" aria-label="Gasreglage">
 <div class="skala" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><b>FULL</b><b class="lag">LÅG</b></div>
 <div class="spalt"><div class="spak" id="gasSpak"><span class="knopp"></span><span class="arm"></span></div></div>
-<div class="spalt"><div class="spak"><span class="knopp mork"></span><span class="arm"></span></div></div>
+<div class="spalt"><div class="spak"><span class="knopp"></span><span class="arm"></span></div></div>
 </div>
 <input id="throttle" class="gas-dold" aria-label="Gas" type="range" min="0" max="1" step="0.01" value="0.85">
 </div>
@@ -57,7 +63,7 @@
 <section id="startPanel" class="glass">
 <div class="eyebrow">HÅLL MOBILEN BEKVÄMT</div>
 <h2>Du är piloten.</h2>
-<p>Luta bakåt för att stiga, framåt för att dyka. Luta åt sidan för att banka och svänga. Gasreglaget sitter längst ner i mitten. Sikte öppnar cockpiten.</p>
+<p>Luta bakåt för att stiga, framåt för att dyka. Luta åt sidan för att banka och svänga. Gasreglaget sitter längst ner i mitten. Knappen Sikte byter till siktet. Där står det Bakom, och den byter till vyn bakom planet.</p>
 <button id="start" disabled>Starta med gyro</button>
 <button id="manual" disabled>Prova med finger</button>
 <p class="small">Planet kan stalla, störta och bli nedskjutet. En Fw 190 finns i luften.</p>
@@ -83,11 +89,21 @@
 </section>
 <footer>
 <div class="row">
-<div class="pilotButtons"><button id="center">Centrera</button><button id="sight" aria-pressed="false">Sikte</button></div>
-<div id="flightHud">HÖJD 75 m · TRÄFFAR 0</div>
-<button id="fire">HÅLL<br>SKJUT</button>
+<div class="sidopanel">
+<button id="center" class="reglage" type="button">
+<span class="knappkropp" aria-hidden="true"></span>
+<span class="reglage-namn">Centrera</span>
+</button>
+<button id="sight" class="reglage" type="button" aria-pressed="false" aria-label="Byt till Sikte">
+<span class="vippa" aria-hidden="true"><span class="vippa-arm"></span></span>
+<span class="reglage-namn" id="sightLabel">Sikte</span>
+</button>
+</div>
+<button id="fire" type="button" aria-label="Skjut">
+<span class="spakgrepp" aria-hidden="true"><span class="avtryckare"></span><span class="greppkula"></span></span>
+</button>
 </div>
 </footer>
-<script type="module" src="./main.js?v=6"></script>
+<script type="module" src="./main.js?v=7"></script>
 </body>
 </html>

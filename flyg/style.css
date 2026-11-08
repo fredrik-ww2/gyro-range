@@ -3,14 +3,19 @@
 #reticle{width:220px;height:220px;font:inherit;filter:none;text-shadow:none}#reticle svg{width:100%;height:100%}.reticle-light{filter:drop-shadow(0 0 3px #ff8d22)}.pilotButtons{display:grid;gap:6px}.pilotButtons button{min-width:81px;min-height:38px;padding:8px}#sight[aria-pressed=true]{color:#ffbc55;border-color:#ffbc55}select{padding:9px;border:1px solid #bec7b8;border-radius:8px;background:#21352f;color:#fff;font-size:13px}#settings>label{display:grid;gap:6px}#flightHud{letter-spacing:0;font-size:10px}.row h1{font-size:16px}@media(max-width:430px){header h1{max-width:130px;font-size:15px}#reticle{width:185px;height:185px}}
 
  /* Flygprov 04: cockpit, gasreglage, sikte */
-#gasreglage{position:fixed;z-index:7;left:max(8px,env(safe-area-inset-left));top:16%;width:86px;height:42vh;max-height:360px;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
-#gasreglage .gas-rubrik{font:700 10px ui-monospace,monospace;letter-spacing:1px;color:#e6d3a4;text-shadow:0 1px 2px #000}
-#gasBana{pointer-events:auto;touch-action:none;position:relative;flex:1;width:100%;border-radius:16px;background:linear-gradient(90deg,#2a261f,#5a5142 42%,#1c1a16);border:2px solid #cbb892;box-shadow:inset 0 0 0 4px #14120e,0 10px 18px #0008}
-.gas-skala{position:absolute;left:6px;top:12px;bottom:12px;display:flex;flex-direction:column;justify-content:space-between;font:700 9px ui-monospace,monospace;color:#e6d7b0;pointer-events:none}
-#gasSpak{position:absolute;left:46%;bottom:16px;width:16px;height:68%;transform-origin:50% 100%;transform:translateX(-50%) rotate(calc(-34deg + var(--gas, .85) * 62deg));pointer-events:none}
-#gasSpak .arm{position:absolute;left:3px;right:3px;top:18px;bottom:0;border-radius:5px;background:linear-gradient(#e7d3a4,#6d5b3e)}
-#gasSpak .knopp{position:absolute;left:-6px;top:0;width:28px;height:30px;border-radius:8px;background:radial-gradient(circle at 35% 30%,#a56b3e,#3a2416);border:1px solid #f0ddb0;box-shadow:0 2px 0 #0008}
-#gasreglage output{font:700 12px ui-monospace,monospace;color:#f3ecda;text-shadow:0 1px 2px #000}
+#gasreglage{position:fixed;z-index:5;left:50%;bottom:calc(6px + env(safe-area-inset-bottom));transform:translateX(-50%);width:104px;height:118px;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
+#gasBana{pointer-events:auto;touch-action:none;position:relative;flex:1;width:100%;border-radius:10px 10px 8px 8px;background:linear-gradient(180deg,#4a4338,#1c1915 55%,#2c2822);border:2px solid #cbb892;box-shadow:inset 0 0 0 3px #12100e,inset 0 8px 12px #0007;display:flex;justify-content:center;gap:14px;padding:8px 12px 7px 26px}
+#gasBana .skala{position:absolute;left:7px;top:7px;bottom:7px;width:10px;pointer-events:none}
+#gasBana .skala i{position:absolute;left:0;height:1px;width:8px;background:#e6d3a4}
+#gasBana .skala i:nth-child(1){top:16px}#gasBana .skala i:nth-child(2){top:34%}#gasBana .skala i:nth-child(3){top:52%}#gasBana .skala i:nth-child(4){top:70%}#gasBana .skala i:nth-child(5){bottom:14px}
+#gasBana .skala b{position:absolute;left:-2px;top:0;font:700 6px ui-monospace,monospace;color:#e6d3a4;letter-spacing:0}
+#gasBana .skala b.lag{top:auto;bottom:0}
+.spalt{position:relative;width:18px;border-radius:8px;background:linear-gradient(90deg,#0b0a08,#322e28 48%,#0b0a08);box-shadow:inset 0 0 5px #000e,0 0 0 1px #6a5e4a}
+.spak{position:absolute;left:50%;width:7px;height:54%;top:calc((1 - var(--gas,.85)) * 42%);transform:translateX(-50%);pointer-events:none}
+.spak .arm{position:absolute;left:0;right:0;top:11px;bottom:0;border-radius:2px;background:linear-gradient(90deg,#8a7350,#f3e6c8 46%,#6a5438)}
+.spak .knopp{position:absolute;left:50%;top:0;width:24px;height:16px;transform:translateX(-50%);border-radius:8px;background:radial-gradient(circle at 35% 30%,#e0bc84,#7d5a30 58%,#3a2816);border:1px solid #f6ead0;box-shadow:0 2px 0 #000a}
+.spak .knopp.mork{background:radial-gradient(circle at 35% 30%,#9aa1a6,#3c4348 58%,#16181a);border-color:#d8dcde}
+#gasreglage output{font:700 9px ui-monospace,monospace;color:#f3ecda;text-shadow:0 1px 2px #000;letter-spacing:.3px}
 .gas-dold{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
 #fiendePil{position:fixed;z-index:5;width:96px;margin-left:-48px;margin-top:-28px;text-align:center;color:#ffe7a8;font:700 12px -apple-system,sans-serif;text-shadow:0 1px 3px #000;pointer-events:none}
 #fiendePilSymbol{font-size:22px;line-height:1;display:inline-block}
@@ -28,8 +33,12 @@
 #styrspak{position:absolute;left:50%;bottom:calc(64px + env(safe-area-inset-bottom));width:78px;height:108px;transform:translateX(-50%);z-index:3;pointer-events:none}
 #styrspak .stang{position:absolute;left:50%;bottom:0;width:14px;height:72px;transform:translateX(-50%);border-radius:7px;background:linear-gradient(90deg,#1a1c18,#4a4e44 40%,#121410)}
 #styrspak .grepp{position:absolute;left:50%;top:0;width:68px;height:68px;transform:translateX(-50%);border-radius:50%;border:10px solid #1c1e1a;box-shadow:inset 0 0 0 4px #8a8070,0 6px 0 #0006;background:radial-gradient(circle at 40% 35%,#4a463e,#14120e 62%)}
-#flightHud{flex:1;margin:0 8px}
-@media(max-height:520px){#gasreglage{height:34vh;top:8%}#panel{height:26vh}#cockpit .huv{bottom:32vh}}
+footer .row{justify-content:space-between;width:100%}
+#flightHud{position:fixed;left:50%;bottom:calc(152px + env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:calc(100% - 188px);margin:0;z-index:5;text-align:center;pointer-events:none;text-shadow:0 1px 2px #000}
+#styrspak{bottom:calc(128px + env(safe-area-inset-bottom));height:92px}
+#styrspak .stang{height:52px}
+#styrspak .grepp{width:56px;height:56px}
+@media(max-height:520px){#gasreglage{height:96px;width:92px}#flightHud{bottom:calc(104px + env(safe-area-inset-bottom))}#panel{height:26vh}#cockpit .huv{bottom:32vh}}
 
 /* Flygprov 03: cockpit och reflexsikte */
 #reticle{position:fixed;inset:0;width:100%;height:100%;transform:none;left:0!important;top:0!important;z-index:2;pointer-events:none;mix-blend-mode:screen}

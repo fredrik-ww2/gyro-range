@@ -42,13 +42,13 @@
 <canvas id="panel" width="780" height="360" aria-label="Instrumentpanel"></canvas>
 <div id="styrspak" aria-hidden="true"><div class="stang"></div><div class="grepp"></div></div>
 </div>
-<div id="gasreglage">
-<div class="gas-rubrik">THROTTLE</div>
-<div class="kvadrant" id="gasBana">
-<div class="gas-skala"><span>FULL</span><span>HALV</span><span>LÅG</span></div>
-<div id="gasSpak"><div class="arm"></div><div class="knopp"></div></div>
+<div id="gasreglage" hidden>
+<output id="gasValue">85%</output>
+<div class="kvadrant" id="gasBana" aria-label="Gasreglage">
+<div class="skala" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><b>FULL</b><b class="lag">LÅG</b></div>
+<div class="spalt"><div class="spak" id="gasSpak"><span class="knopp"></span><span class="arm"></span></div></div>
+<div class="spalt"><div class="spak"><span class="knopp mork"></span><span class="arm"></span></div></div>
 </div>
-<output id="gasValue">85 %</output>
 <input id="throttle" class="gas-dold" aria-label="Gas" type="range" min="0" max="1" step="0.01" value="0.85">
 </div>
 <div id="fiendePil" hidden><div id="fiendePilSymbol">▲</div><div id="fiendePilText"></div></div>
@@ -57,7 +57,7 @@
 <section id="startPanel" class="glass">
 <div class="eyebrow">HÅLL MOBILEN BEKVÄMT</div>
 <h2>Du är piloten.</h2>
-<p>Luta bakåt för att stiga, framåt för att dyka. Luta åt sidan för att banka och svänga. Gasreglaget THROTTLE sitter till vänster. Sikte öppnar cockpiten.</p>
+<p>Luta bakåt för att stiga, framåt för att dyka. Luta åt sidan för att banka och svänga. Gasreglaget sitter längst ner i mitten. Sikte öppnar cockpiten.</p>
 <button id="start" disabled>Starta med gyro</button>
 <button id="manual" disabled>Prova med finger</button>
 <p class="small">Planet kan stalla, störta och bli nedskjutet. En Fw 190 finns i luften.</p>
@@ -88,6 +88,6 @@
 <button id="fire">HÅLL<br>SKJUT</button>
 </div>
 </footer>
-<script type="module" src="./main.js?v=5"></script>
+<script type="module" src="./main.js?v=6"></script>
 </body>
 </html>

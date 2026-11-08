@@ -4,7 +4,7 @@ Så här känns det nu att flyga Typhoonen. Världen är i meter. Siffror märkt
 
 ## Vad du ser
 
-Du sitter i en cockpit i grågrönt med nitar, en svart instrumentbräda och ett reflexsikte. Gasreglaget sitter till vänster och heter THROTTLE. Det följer gaspådraget och kan dras med fingret. Spaken i mitten har ett runt grepp. Runt planet ligger ett lapptäcke av små åkrar, häckar, en flod, en rak väg med bro, byar med röda tak och odlingar. En Fw 190 anfaller. Den kan skjutas ner, och den kan skjuta ner dig. Då finns Flyg igen.
+Du sitter i en cockpit i grågrönt med nitar, en svart instrumentbräda och ett reflexsikte. Gasreglaget är två spakar bredvid varandra längst ner i mitten. De följs åt: uppåt är mer gas, nedåt är mindre, och de går att dra. Reglaget är dolt tills flygningen har startat. Spaken i mitten har ett runt grepp. Runt planet ligger ett lapptäcke av små åkrar, häckar, en flod, en rak väg med bro, byar med röda tak och odlingar. En Fw 190 anfaller. Den kan skjutas ner, och den kan skjuta ner dig. Då finns Flyg igen.
 
 ## Siktet
 

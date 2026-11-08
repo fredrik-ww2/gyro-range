@@ -86,30 +86,24 @@ bevaka(page, 'verkstad');
 try {
   await page.goto(BAS + '/verkstad/#bibliotek', { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('[data-redo="bibliotek"]', { timeout: 60000 });
-  await page.waitForSelector('[data-mapp="enheter/klara"][data-tom="true"]');
-  const tom = await page.locator('[data-mapp="enheter/klara"]').innerText();
-  if (!tom.includes('Tom mapp')) throw new Error('Klara-mappen saknar tomtext: ' + tom);
+  await page.waitForSelector('[data-vag="fardiga"][data-tom="true"]');
+  const tom = await page.locator('[data-vag="fardiga"]').innerText();
+  if (!tom.includes('Färdiga')) throw new Error('Färdiga saknas: ' + tom);
   for (const id of ['stilar', 'forband', 'intelligens', 'regler', 'scenarier', 'resultat']) {
     await page.waitForSelector(`[data-mapp="${id}"][data-tom="true"]`);
   }
-  const nara = Number(await page.locator('[data-mapp="enheter/under_utveckling/1_nastan_klar"]').getAttribute('data-antal'));
-  if (nara < 1) throw new Error('Nästan klar blev tom: ' + nara);
-  await page.locator('[data-mapp="enheter/under_utveckling/2_halvvags"]').evaluate((el) => {
+  const nara = Number(await page.locator('[data-vag="nastan"]').getAttribute('data-antal'));
+  if (nara < 1) throw new Error('Nästan färdiga blev tom: ' + nara);
+  await page.locator('[data-vag="utveckling"]').evaluate((el) => {
     el.open = true;
-    const nation = el.querySelector('[data-nation="Tyskland"]');
+    const nation = el.querySelector('[data-land="Tyskland"]');
     nation.open = true;
-    nation.querySelector('[data-trupp="Stridsvagn"]').open = true;
+    nation.querySelector('[data-vapen="Stridsvagnar"]').open = true;
     nation.scrollIntoView();
   });
-  await page.waitForSelector('[data-mapp="enheter/under_utveckling/2_halvvags"] [data-nation="Tyskland"] [data-trupp="Stridsvagn"] [data-checklista]');
+  await page.waitForSelector('[data-vag="utveckling"] [data-land="Tyskland"] [data-vapen="Stridsvagnar"] [data-checklista]');
   await bild(page, '01-bibliotek');
 
-  await page.locator('[data-mapp="enheter/under_utveckling/3_tidigt_skede"]').evaluate((el) => {
-    el.open = true;
-    const nation = el.querySelector('[data-nation="Tyskland"]');
-    nation.open = true;
-    nation.querySelector('[data-trupp="Stridsvagn"]').open = true;
-  });
   await page.locator('[data-enhet="tiger_ii"]').click();
   await page.waitForSelector('.statusrad[data-status="under_utveckling"]');
   await page.locator('section[data-vy="kort"]').getByRole('heading', { name: 'Saknas för att bli klar' }).waitFor();

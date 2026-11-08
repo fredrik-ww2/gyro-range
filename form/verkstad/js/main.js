@@ -16,6 +16,7 @@ stallEl.hidden = true;
 app.append(bibliotekEl, kortEl, stallEl);
 
 let index;
+let katalog = [];
 let beteende;
 let stallApi;
 let stallNyckel = '';
@@ -87,7 +88,7 @@ async function visaFranHash() {
         varld.post = post;
       }
       stallEl.innerHTML = '<p class="ledtext">Öppnar terrängen…</p>';
-      stallApi = await monteraStall(stallEl, { index, varld, tillbaka() { location.hash = '#bibliotek'; } });
+      stallApi = await monteraStall(stallEl, { index, katalog, varld, tillbaka() { location.hash = '#bibliotek'; } });
     }
     stallApi.visa(true);
     return;
@@ -103,7 +104,7 @@ async function start() {
   try {
     [index, beteende] = await Promise.all([hamtaIndex(), hamtaBeteende()]);
     bibliotekEl.innerHTML = '<p class="ledtext">Läser enheterna…</p>';
-    const katalog = await byggKatalog(index);
+    katalog = await byggKatalog(index);
     monteraBibliotek(bibliotekEl, index, katalog, { oppnaEnhet, oppnaStall });
     addEventListener('hashchange', () => { visaFranHash().catch(visaFel); });
     await visaFranHash();

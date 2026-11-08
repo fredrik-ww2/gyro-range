@@ -9,7 +9,8 @@ import { OrbitControls } from '../vendor/OrbitControls.js';
 import { skapaAppleKamera } from '../../../flyg/kamera/kamera_apple_zoom_v1.js';
 import { KAMERAVARDEN } from './kameravarden.js';
 import { klonaMall, laddaMall, laddaObjekt } from './modeller.js';
-import { esc, hamtaEnhet, placeringsNivaer, statusNamn, tal, truppVisning } from './data.js';
+import { esc, hamtaEnhet, nationVisning, placeringsNivaer, statusNamn, tal, truppVisning, vapenslag } from './data.js';
+import { filtreraMappar, kopplaMappminne, ritaEnhetstrad } from './enhetsmappar.js';
 import { lasScen, skrivScen } from './spara.js';
 import { byggFormMark, hamtaLandskap } from './formvarld.js';
 import { byggFormSkog } from './formskog.js';
@@ -17,7 +18,7 @@ import { byggFormSkog } from './formskog.js';
 const NAR_M = 250;
 const MODELL_NAR_M = 120;
 
-export async function monteraStall(el, { index, tillbaka, varld }) {
+export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
   const valdVarld = varld?.typ === 'form'
     ? varld
     : { typ: 'villers', id: 'villers_bocage', namn: 'Villers-Bocage' };
@@ -709,22 +710,20 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
 
   function oppnaBibliotek() {
     const ark = el.querySelector('[data-ark]');
-    const rader = index.enheter.map((post) => `
-      <button type="button" class="rad" data-enhet="${esc(post.id)}">
-        <span><strong>${esc(post.namn)}</strong><small>${esc(post.nation)} · ${esc(statusNamn(post.status))}</small></span>
-      </button>`).join('');
+    const rader = (katalog && katalog.length ? katalog : raderFranIndex(index)).map((rad) => ({
+      enhet: rad.enhet || rad,
+      check: rad.check || { niva: rad.utvecklingsniva || (rad.status === 'klar' ? 'klar' : '3_tidigt_skede'), status: rad.status }
+    }));
     ark.hidden = false;
     ark.innerHTML = `
       <div class="ark-kort ark-lang" role="dialog" aria-label="Välj enhet">
         <div class="radknappar"><h2>Välj enhet</h2><button type="button" class="textknapp" data-stang>Stäng</button></div>
         <input type="search" data-sok-enhet placeholder="Sök" aria-label="Sök enhet">
-        <div data-enhetslista>${rader}</div>
+        <div data-enhetslista>${ritaEnhetstrad(rader, ritaValRad)}</div>
       </div>`;
+    kopplaMappminne(ark);
     ark.querySelector('[data-sok-enhet]').addEventListener('input', (handelse) => {
-      const fraga = handelse.target.value.trim().toLowerCase();
-      ark.querySelectorAll('[data-enhet]').forEach((knapp) => {
-        knapp.hidden = fraga && !knapp.textContent.toLowerCase().includes(fraga);
-      });
+      filtreraMappar(ark, handelse.target.value);
     });
     ark.onclick = (handelse) => {
       if (handelse.target.closest('[data-stang]')) { ark.hidden = true; return; }
@@ -736,6 +735,14 @@ export async function monteraStall(el, { index, tillbaka, varld }) {
       ritaLista();
       status.textContent = 'Tryck på marken. Sedan väljer du blå eller röd.';
     };
+  }
+
+  function ritaValRad(rad) {
+    const enhet = rad.enhet;
+    const sok = `${enhet.namn} ${nationVisning(enhet.nation)} ${vapenslag(enhet)} ${enhet.id}`.toLowerCase();
+    return `<button type="button" class="rad" data-enhet="${esc(enhet.id)}" data-sok="${esc(sok)}">
+      <span><strong>${esc(enhet.namn)}</strong><small>${esc(nationVisning(enhet.nation))} · ${esc(vapenslag(enhet))}</small></span>
+    </button>`;
   }
 
   function visa(synlig) {
@@ -782,6 +789,16 @@ function släpp(rot) {
   for (const geo of geometrier) geo.dispose();
   for (const mat of material) mat.dispose();
   for (const tex of texturer) tex.dispose();
+}
+
+function raderFranIndex(index) {
+  return (index?.enheter || []).map((post) => ({
+    enhet: post,
+    check: {
+      niva: post.status === 'klar' ? 'klar' : (post.utvecklingsniva || '3_tidigt_skede'),
+      status: post.status
+    }
+  }));
 }
 
 function placeringId(objekt) {

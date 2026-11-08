@@ -86,17 +86,32 @@ section[data-vy="stall"] { height: 100dvh; min-height: 0; overflow: hidden; padd
 .grupprubrik { margin: 18px 4px 8px; }
 .mapp { background: var(--yta); border: 1px solid var(--linje); border-radius: 16px; margin: 8px 0; box-shadow: var(--skugga); }
 .mapp summary {
-  min-height: 52px;
+  min-height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
+  gap: 10px;
+  padding: 10px 14px;
   font-weight: 700;
+  font-size: 1.05rem;
   cursor: pointer;
   list-style: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .mapp summary::-webkit-details-marker { display: none; }
-.mapp summary small { color: var(--dämpad); font-weight: 600; }
+.mapp summary span { flex: 1; }
+.mapp summary::before {
+  content: '';
+  width: 0.45em;
+  height: 0.45em;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  flex: none;
+}
+.mapp[open] > summary::before { transform: rotate(45deg) translateY(-2px); }
+.mapp summary small { color: var(--dämpad); font-weight: 700; min-width: 1.6em; text-align: right; }
+.mapp[data-tom="true"] { opacity: 0.5; }
 .mapp-innehall { padding: 0 8px 8px; }
 .tom, .tomrad { color: var(--dämpad); padding: 8px; }
 .form-saknas a {
@@ -146,7 +161,8 @@ section[data-vy="stall"] { height: 100dvh; min-height: 0; overflow: hidden; padd
 .checklista li span { width: 1.1em; flex: none; font-weight: 700; }
 .checklista li.ok span { color: #1d6b3a; }
 .checklista li.saknas span { color: #8a5a12; }
-.mapp.underniva, .mapp.trupp { margin: 6px 0 6px 8px; box-shadow: none; }
+.mapp.underniva, .mapp.vapen, .mapp.trupp { margin: 6px 0 6px 6px; box-shadow: none; }
+.mapp.vapen { background: transparent; }
 .enhetsrad { border-top: 1px solid var(--linje); }
 
 .forhands { margin: 12px 16px; background: var(--yta); border-radius: 16px; border: 1px solid var(--linje); overflow: hidden; }

@@ -204,6 +204,50 @@ export function truppVisning(enhet) {
   return 'Övrigt';
 }
 
+export const STATUS_MAPPAR = [
+  { id: 'fardiga', namn: 'Färdiga', nivaer: ['klar'] },
+  { id: 'nastan', namn: 'Nästan färdiga', nivaer: ['1_nastan_klar'] },
+  { id: 'utveckling', namn: 'Under utveckling', nivaer: ['2_halvvags', '3_tidigt_skede'] }
+];
+
+export const LAND_ORDNING = ['USA', 'Tyskland', 'Övriga'];
+
+export const VAPEN_ORDNING = [
+  'Infanteri', 'Kulsprutor', 'Pansarvärn', 'Artilleri', 'Stridsvagnar', 'Fordon', 'Övrigt'
+];
+
+export function statusMappId(niva) {
+  if (niva === 'klar') return 'fardiga';
+  if (niva === '1_nastan_klar') return 'nastan';
+  return 'utveckling';
+}
+
+export function landMapp(nation) {
+  const namn = nationVisning(nation);
+  if (namn === 'USA' || namn === 'Tyskland') return namn;
+  return 'Övriga';
+}
+
+export function vapenslag(enhet) {
+  const kategori = enhet?.kategori || '';
+  if (/Stridsvagn/i.test(kategori)) return 'Stridsvagnar';
+  if (/Pansarvärn/i.test(kategori)) return 'Pansarvärn';
+  if (/Artilleri|granatkast/i.test(kategori)) return 'Artilleri';
+  if (/Transport|halvband/i.test(kategori)) return 'Fordon';
+  if (/Rekog/i.test(kategori) && enhet?.typ === 'fordon') return 'Fordon';
+  if (arKulspruta(enhet)) return 'Kulsprutor';
+  if (/Infanteri/i.test(kategori) || enhet?.typ === 'soldat') return 'Infanteri';
+  if (enhet?.typ === 'fordon') return 'Fordon';
+  return 'Övrigt';
+}
+
+function arKulspruta(enhet) {
+  const namn = enhet?.namn || '';
+  if (/kulsprutepistol/i.test(namn)) return false;
+  if (/kulspruta/i.test(namn)) return true;
+  return /(^|[_-])(mg\d+|lmg|hmg|bren|bar_|maxim|dshk|dp27|dp28|m1917|m1919|m2hb|sg43|vickers|hotchkiss|fm2429|fg42)/i.test(enhet?.id || '');
+}
+
 const HUVUDVARDEN = [
   'fart_per_terrang.vag', 'fart_per_terrang.falt', 'fart_per_terrang.skog', 'fart_per_terrang.by',
   'eldkraft.kaliber_mm', 'eldkraft.eldhastighet_skott_min',

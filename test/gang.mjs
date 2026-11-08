@@ -1,0 +1,22 @@
+import { gangFaktor, styrVinkel, skakSekunder, stadga, rorelseStyrka, skakAmplitud } from '../js/gang.js';
+const fel=[];
+const k=(n,v)=>v||fel.push(n);
+k('stå sänkt', Math.abs(gangFaktor('staende',false)-1)<1e-6);
+k('stå sikte', Math.abs(gangFaktor('staende',true)-.5)<1e-6);
+k('huk', gangFaktor('hukande',false)<1&&gangFaktor('hukande',true)<gangFaktor('hukande',false));
+k('ligg', Math.abs(gangFaktor('liggande',false)-.2)<1e-6);
+k('ligg sikte', gangFaktor('liggande',true)<gangFaktor('liggande',false));
+k('dödzon', styrVinkel(2*Math.PI/180)===0&&styrVinkel(-2*Math.PI/180)===0);
+k('höger', styrVinkel(10*Math.PI/180)>0);
+k('vänster', styrVinkel(-10*Math.PI/180)<0);
+k('skak långsam', Math.abs(skakSekunder(1.1)-1)<1e-6);
+k('skak sprint', Math.abs(skakSekunder(4.2)-3)<1e-6);
+k('skak mitt', skakSekunder(2.65)>1.4&&skakSekunder(2.65)<2.6);
+k('stadga', stadga(0)===0&&stadga(1)===1&&stadga(2)===1);
+const vila=0.0018;
+k('skak i vila', skakAmplitud(vila,0,0,1,0)===vila);
+k('skak noll vid stadga', skakAmplitud(vila,1,1,1,1)===0);
+k('skak växer', skakAmplitud(vila,1,1,1,0)>skakAmplitud(vila,.3,1,1,0));
+k('sikte starkare än gång', rorelseStyrka({sikteRadS:3,gang:.4})>rorelseStyrka({gang:.4}));
+if(fel.length){console.error(fel.join('\n'));process.exit(1);}
+console.log('gang-ok');

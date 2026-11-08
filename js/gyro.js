@@ -10,14 +10,11 @@ export class GyroAim {
   this.nativeSource=false;this.prevRaw=new THREE.Quaternion();this.inv=new THREE.Quaternion();this.movedAt=0;this.nativeTime=null;this.nativeDelta=new THREE.Quaternion();
   this.values={alpha:null,beta:null,gamma:null,acc:{x:0,y:0,z:0},rotationRate:{alpha:0,beta:0,gamma:0},interval:0,pitchNedDps:0,vridHogerDps:0};this.drag={x:0,y:0};this.dragQuat=new THREE.Quaternion();this.lastEvent=0;this.lastMotion=0;
   this.aimHold=new THREE.Quaternion();this.heldRelative=new THREE.Quaternion();this.rateQ=new THREE.Quaternion();this.aimHeld=false;this.snap=false;this.fartRedo=false;
+  this.vinklar={pitch:0,roll:0,yaw:0};this.up=new THREE.Vector3(0,1,0);
   addEventListener('deviceorientation',e=>{
    if(this.nativeSource)return;
    if (![e.alpha,e.beta,e.gamma].every(Number.isFinite)) return;
-   Object.assign(this.values,{alpha:e.alpha,beta:e.beta,gamma:e.gamma});this.lastEvent=performance.now();this.received=true;
-   const angle=screen.orientation?.angle ?? window.orientation ?? 0;
-   this.euler.set(rad(e.beta),rad(e.alpha),-rad(e.gamma),'YXZ');
-   this.raw.setFromEuler(this.euler).multiply(this.fix).multiply(this.screen.setFromAxisAngle(this.axis,-rad(angle)));
-   if(this.pendingCenter){this.origin.copy(this.raw).invert();this.pendingCenter=false;}
+   this.lasOrientering(e.alpha,e.beta,e.gamma);
   },{passive:true});
   addEventListener('devicemotion',e=>{
    if(this.nativeSource)return;
@@ -56,14 +53,43 @@ export class GyroAim {
   this.active=a.status==='fulfilled'&&a.value==='granted';this.center();
   return {orientation:a.status==='fulfilled'?a.value:'denied',motion:b.status==='fulfilled'?b.value:'denied'};
  }
- center(){this.nativeTime=null;this.fartRedo=false;if(this.nativeSource){this.raw.identity();this.origin.identity();this.pendingCenter=false;}else if(this.received){this.origin.copy(this.raw).invert();this.pendingCenter=false;}else this.pendingCenter=true;this.drag={x:0,y:0};this.smooth.identity();}
+ center(){
+  this.nativeTime=null;this.fartRedo=false;this.nollAlpha=this.values.alpha;this.nollBeta=this.values.beta;this.nollGamma=this.values.gamma;this._foreBeta=null;
+  if(this.nativeSource){this.raw.identity();this.origin.identity();this.pendingCenter=false;}else if(this.received){this.origin.copy(this.raw).invert();this.pendingCenter=false;}else this.pendingCenter=true;
+  this.drag={x:0,y:0};this.smooth.identity();this.aimHeld=false;this.vinklar.pitch=this.vinklar.yaw=this.vinklar.roll=0;
+ }
+ lasOrientering(alpha,beta,gamma){
+  Object.assign(this.values,{alpha,beta,gamma});this.lastEvent=performance.now();this.received=true;
+  const angle=screen.orientation?.angle ?? window.orientation ?? 0;
+  this.euler.set(rad(beta),rad(alpha),-rad(gamma),'YXZ');
+  this.raw.setFromEuler(this.euler).multiply(this.fix).multiply(this.screen.setFromAxisAngle(this.axis,-rad(angle)));
+  if(this.pendingCenter){this.origin.copy(this.raw).invert();this.pendingCenter=false;}
+ }
  // Test och köade gester matar samma fält som sensorn. Positiv tipp är framåt/nedåt, positiv vridning är åt höger.
  mataGest(pitchNedDps,vridHogerDps){this._injPitch=pitchNedDps;this._injTwist=vridHogerDps;this._inj=true;}
+ // Tar bort yaw mot neutralläget så en dykvridning inte blir en sväng.
+ nollaGira(){
+  if(Number.isFinite(this.values.alpha))this.nollAlpha=this.values.alpha;
+  this.vinklar.yaw=0;
+  if(!this.received)return;
+  this.relative.multiplyQuaternions(this.origin,this.raw).normalize();
+  this.euler.setFromQuaternion(this.relative,'YXZ');
+  this.euler.y=0;this.relative.setFromEuler(this.euler);
+  this.origin.copy(this.relative).multiply(this.inv.copy(this.raw).invert()).normalize();
+ }
  hallSikte(){if(this.aimHeld)return;this.aimHeld=true;this.aimHold.copy(this.smooth);this.heldRelative.copy(this.relative);}
- bekraftaSikte(){if(!this.aimHeld)return;this.inv.copy(this.raw).invert();this.origin.copy(this.heldRelative).multiply(this.inv).normalize();this.smooth.copy(this.aimHold);this.target.copy(this.aimHold);this.aimHeld=false;this.prevRaw.copy(this.raw);this.fartRedo=true;}
+ bekraftaSikte(){if(!this.aimHeld)return;this.inv.copy(this.raw).invert();this.origin.copy(this.heldRelative).multiply(this.inv).normalize();this.smooth.copy(this.aimHold);this.target.copy(this.aimHold);this.aimHeld=false;this.prevRaw.copy(this.raw);this.fartRedo=true;this.nollaGira();}
  slappSikte(){if(!this.aimHeld)return;this.aimHeld=false;this.snap=true;this.prevRaw.copy(this.raw);}
  mataFart(dt){
   if(this._inj){this.values.pitchNedDps=this._injPitch;this.values.vridHogerDps=this._injTwist;this._inj=false;return Math.max(Math.abs(this._injPitch),this._injTwist);}
+  if(!this.nativeSource&&Number.isFinite(this.values.beta)){
+   if(!Number.isFinite(this._foreBeta)){this._foreBeta=this.values.beta;this._foreGamma=this.values.gamma||0;this._foreAlpha=this.values.alpha||0;this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
+   const dB=this.values.beta-this._foreBeta;let dA=(this.values.alpha||0)-this._foreAlpha;dA=((dA+180)%360+360)%360-180;const dG=(this.values.gamma||0)-this._foreGamma;
+   this._foreBeta=this.values.beta;this._foreAlpha=this.values.alpha||0;this._foreGamma=this.values.gamma||0;
+   if(!(dt>0)){this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
+   this.values.pitchNedDps=dB/dt;this.values.vridHogerDps=Math.max(dA/dt,Math.abs(dG/dt));
+   return Math.max(Math.abs(dB),Math.abs(dA),Math.abs(dG))/dt;
+  }
   if(!this.received||!(dt>0)){this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
   if(!this.fartRedo){this.prevRaw.copy(this.raw);this.fartRedo=true;this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
   this.rateQ.copy(this.prevRaw).invert().multiply(this.raw);
@@ -81,17 +107,22 @@ export class GyroAim {
   if(this.aimHeld){this.smooth.copy(this.aimHold);return this.smooth;}
   const jump=this.snap;this.snap=false;
   if(this.active&&this.received){
-   // Återgång: när telefonen hållits still en stund glider utgångsläget mjukt mot nuvarande läge,
-   // så siktet sakta återvänder till mitten. Rörelse mäts ur själva orienteringen (alla källor).
-   if(s.brytare?.atergang!==false&&(s.aterga_s??0)>0&&nowMs-this.movedAt>(s.aterga_vila_s??.4)*1000){this.inv.copy(this.raw).invert();this.origin.slerp(this.inv,1-Math.exp(-dt/s.aterga_s)).normalize();}
+   // Absolut mot neutralläget. Pitch är fram/bak, roll är sidlutning. Yaw styr kroppen, inte siktet.
    this.relative.multiplyQuaternions(this.origin,this.raw).normalize();
    if(this.relative.w<0)this.relative.set(-this.relative.x,-this.relative.y,-this.relative.z,-this.relative.w);
-   // Kvaternionens rotationsvektor möjliggör känslighet/invertering utan Euler-gimbal.
-   const angle=2*Math.acos(THREE.MathUtils.clamp(this.relative.w,-1,1));const sin=Math.sqrt(Math.max(0,1-this.relative.w*this.relative.w));
-   this.vector.set(this.relative.x,this.relative.y,this.relative.z).multiplyScalar(sin>1e-6?angle/sin:2);
-   this.vector.x*=s.kanslighet*(s.inverteraX?-1:1);this.vector.y*=s.kanslighet*(s.inverteraY?-1:1);this.vector.z*=s.kanslighet*(s.inverteraZ?-1:1);
-   const len=this.vector.length();this.target.setFromAxisAngle(len?this.vector.normalize():this.axis,len);
-  }else this.target.identity();
+   this.euler.setFromQuaternion(this.relative,'YXZ');
+   this.kalla='euler';
+  if(!this.nativeSource&&Number.isFinite(this.nollBeta)&&Number.isFinite(this.values.beta)){
+   this.kalla='vinkel';
+    const dB=this.values.beta-this.nollBeta,dG=this.values.gamma-this.nollGamma;
+    const ang=(screen.orientation?.angle??window.orientation??0)*Math.PI/180,c=Math.cos(ang),si=Math.sin(ang);
+    this.vinklar.pitch=(dB*c-dG*si)*Math.PI/180;this.vinklar.roll=(dB*si+dG*c)*Math.PI/180;
+    let dA=this.values.alpha-this.nollAlpha;dA=((dA+180)%360+360)%360-180;this.vinklar.yaw=dA*Math.PI/180;
+   }else{this.vinklar.pitch=this.euler.x;this.vinklar.yaw=this.euler.y;this.vinklar.roll=this.euler.z;}
+   const sp=THREE.MathUtils.clamp(this.vinklar.pitch*s.kanslighet*(s.inverteraX?-1:1),-1.15,1.15);
+   const sr=THREE.MathUtils.clamp(this.vinklar.roll*s.kanslighet*(s.inverteraZ?-1:1),-.95,.95);
+   this.euler.set(sp,-sr,0,'YXZ');this.target.setFromEuler(this.euler);
+  }else{this.vinklar.pitch=this.vinklar.yaw=this.vinklar.roll=0;this.target.identity();}
   this.target.multiply(this.dragQuat.setFromEuler(this.euler.set(this.drag.y,this.drag.x,0,'YXZ')));
   // Rak horisont: ta bort all lutning åt sidan (roll), så bilden aldrig känns sned efter rörelser.
   if(s.brytare?.horisont!==false){this.euler.setFromQuaternion(this.target,'YXZ');this.euler.z=0;this.target.setFromEuler(this.euler);}

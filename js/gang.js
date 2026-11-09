@@ -4,7 +4,7 @@ const DOD=3*Math.PI/180;
 export function gangFaktor(stallning, siktar){
  const sikte=siktar?.5:1;
  if(stallning==='liggande')return .2*sikte;
- if(stallning==='hukande')return .62*sikte;
+ if(stallning==='hukande'||stallning==='knastående')return .62*sikte;
  return sikte;
 }
 

@@ -2,7 +2,7 @@
 const NYCKEL='gyro_styrlabb_v1';
 
 export const STANDARD={
- gang:{satt:'lutning',dodZon_grad:4,max_grad:26,fart_langsam_ms:1.05,fart_max_ms:4.1,knyck_dps:120,steg_m:0.72},
+ gang:{satt:'lutning',dodZon_grad:4,max_grad:26,fart_langsam_ms:1.05,fart_max_ms:4.1,knyck_dps:120,steg_m:0.72,svang_mjuk:1,svang_stark:1.6},
  spurt:{fart_ms:7.4,uthallighet_s:6,aterhamtning_s:9,puls_avklingning_s:14,puls_skak:1.1},
  kropp:{dodZon_andel:0.03,kanslighet:3.2,vila_grad:7,vila_fart:12},
  overkropp:{max_grad:90,kanslighet:1.15,benFoljer_grad:58,benFart:1.4,vila_grad:3},
@@ -13,13 +13,15 @@ export const STANDARD={
  avtryckare:{drag_px:28,kram_s:0.45,hall_s:0.5,snabbt_s:0.2,snabb_fart:720},
  haptik:{kram:0.18,skott:1},
  kikare:{variant:'zf39',zoom:4},
- stallning:{satt:'gyro',grans_dps:250}
+ stallning:{satt:'gyro',grans_dps:250,ner_dps:250,upp_dps:220}
 };
 
 export const FALT=[
  {flik:'Gång',nyckel:'gang.satt',namn:'Gångsätt',typ:'val',val:[{id:'lutning',namn:'Lutning framåt'},{id:'knyck',namn:'Knyck framåt'}]},
  {flik:'Gång',nyckel:'gang.knyck_dps',namn:'Hastighetsgräns knyck',min:40,max:400,steg:5,enhet:'°/s'},
  {flik:'Gång',nyckel:'gang.steg_m',namn:'Steglängd knyck',min:0.2,max:1.6,steg:0.05,enhet:'m'},
+ {flik:'Gång',nyckel:'gang.svang_mjuk',namn:'Mjuk sväng vid vridning',min:0.2,max:3,steg:0.1,enhet:'×'},
+ {flik:'Gång',nyckel:'gang.svang_stark',namn:'Stark sväng vid sidlutning',min:0.4,max:6,steg:0.1,enhet:'rad/s'},
  {flik:'Gång',nyckel:'gang.dodZon_grad',namn:'Dödzon framåtlutning',min:0,max:12,steg:0.5,enhet:'°'},
  {flik:'Gång',nyckel:'gang.max_grad',namn:'Lutning för full gång',min:8,max:45,steg:1,enhet:'°'},
  {flik:'Gång',nyckel:'gang.fart_langsam_ms',namn:'Långsam gång',min:0.3,max:2.5,steg:0.05,enhet:'m/s'},
@@ -63,8 +65,10 @@ export const FALT=[
  {flik:'Avtryckare',nyckel:'haptik.skott',namn:'Haptik vid skott',min:0,max:1.5,steg:0.02,enhet:'×'},
  {flik:'Sikten',nyckel:'kikare.variant',namn:'Kikarsikte',typ:'val',val:[{id:'zf39',namn:'ZF39, stolpe'},{id:'m73',namn:'M73, korshår'},{id:'tunt',namn:'Tunt kors'}]},
  {flik:'Sikten',nyckel:'kikare.zoom',namn:'Förstoring',min:2,max:8,steg:0.5,enhet:'×'},
- {flik:'Ställning',nyckel:'stallning.satt',namn:'Styrsätt',typ:'val',val:[{id:'gyro',namn:'Gyrogester'},{id:'knappar',namn:'Knappar'}]},
- {flik:'Ställning',nyckel:'stallning.grans_dps',namn:'Hastighetsgräns gest',min:80,max:500,steg:10,enhet:'°/s'}
+ {flik:'Ställning',nyckel:'stallning.satt',namn:'Ställningsstyrning',typ:'val',val:[{id:'gyro',namn:'Gyrogester, steg för steg'},{id:'knyck',namn:'Knyck framåt till marken'},{id:'knappar',namn:'Knappar'}]},
+ {flik:'Ställning',nyckel:'stallning.grans_dps',namn:'Hastighetsgräns gest',min:80,max:500,steg:10,enhet:'°/s'},
+ {flik:'Ställning',nyckel:'stallning.ner_dps',namn:'Knyck framåt till liggande',min:80,max:520,steg:10,enhet:'°/s'},
+ {flik:'Ställning',nyckel:'stallning.upp_dps',namn:'Knyck uppåt ett steg',min:80,max:520,steg:10,enhet:'°/s'}
 ];
 
 function las(obj,nyckel){return nyckel.split('.').reduce((o,k)=>o?.[k],obj);}

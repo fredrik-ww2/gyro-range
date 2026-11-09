@@ -1,7 +1,7 @@
 /* Lat laddning av lättaste LOD. Varje WebGL-yta får en egen kopia. */
 
 import {
-  Box3, CompressedTexture, LinearFilter, LinearMipmapLinearFilter, UnsignedByteType
+  Box3, CompressedTexture, LinearFilter, LinearMipmapLinearFilter, UnsignedByteType, Vector3
 } from 'three';
 import { ZSTDDecoder } from '../../../flyg/vendor/libs/zstddec.module.js';
 import { lattasteModell, modellAdress } from './data.js';
@@ -75,7 +75,7 @@ export async function laddaObjekt(renderer, url) {
       const rot = gltf.scene || gltf.scenes?.[0];
       rot.traverse((nod) => {
         const namn = (nod.name || '').toLowerCase();
-        if (/effekt|muzzle|mynnings|smoke|flame|gascloud|swastika|hakkors|sigrune|ssrune/.test(namn)) nod.visible = false;
+        if (/effekt|muzzle|mynnings|smoke|flame|gascloud|swastika|hakkors|sigrune|ssrune|interior|opening|destroyed|removed/.test(namn)) nod.visible = false;
         if (nod.isMesh) {
           nod.frustumCulled = true;
           nod.castShadow = false;
@@ -89,6 +89,7 @@ export async function laddaObjekt(renderer, url) {
         }
       });
       doljAlternativ(rot);
+      lagaDrivlina(rot);
       return rot;
     })));
   }
@@ -100,7 +101,21 @@ export async function laddaMall(renderer, enhetFil, modell) {
   return laddaObjekt(renderer, url);
 }
 
-/* Sketchfab-modeller har flera option-varianter i samma scen. Bara den tyngsta syns, annars z-fightar kjolar och skrov. */
+function triangelAntal(noder) {
+  let tri = 0;
+  for (const nod of noder) {
+    nod.traverse((barn) => {
+      if (!barn.isMesh || !barn.geometry) return;
+      const index = barn.geometry.index;
+      tri += index ? index.count / 3 : (barn.geometry.attributes.position?.count || 0) / 3;
+    });
+  }
+  return tri;
+}
+
+/* Sketchfab-modeller lägger flera option-varianter i samma scen.
+   Variant a är grundutförandet. Den används när den har riktig geometri.
+   Annars den tyngsta, så en tom platshållare inte vinner. */
 function doljAlternativ(rot) {
   const grupper = new Map();
   rot.traverse((nod) => {
@@ -115,20 +130,19 @@ function doljAlternativ(rot) {
   });
   for (const varianter of grupper.values()) {
     if (varianter.size < 2) continue;
-    let bast = null;
-    let bastTri = -1;
-    for (const [variant, noder] of varianter) {
-      let tri = 0;
-      for (const nod of noder) {
-        nod.traverse((barn) => {
-          if (!barn.isMesh || !barn.geometry) return;
-          const index = barn.geometry.index;
-          tri += index ? index.count / 3 : (barn.geometry.attributes.position?.count || 0) / 3;
-        });
-      }
-      if (tri > bastTri || (tri === bastTri && variant === 'a')) {
-        bastTri = tri;
-        bast = variant;
+    let maxTri = 0;
+    for (const noder of varianter.values()) maxTri = Math.max(maxTri, triangelAntal(noder));
+    const aTri = varianter.has('a') ? triangelAntal(varianter.get('a')) : 0;
+    let bast = 'a';
+    if (!(aTri >= 3 && aTri >= maxTri * 0.35)) {
+      bast = null;
+      let bastTri = -1;
+      for (const [variant, noder] of varianter) {
+        const tri = triangelAntal(noder);
+        if (tri > bastTri) {
+          bastTri = tri;
+          bast = variant;
+        }
       }
     }
     for (const [variant, noder] of varianter) {
@@ -136,6 +150,72 @@ function doljAlternativ(rot) {
       for (const nod of noder) nod.visible = false;
     }
   }
+}
+
+const _bandPunkt = new Vector3();
+
+/* Band som sticker långt utanför hjulraden är fel geometri, inte en kameraeffekt.
+   Trianglar som ligger helt utanför hjulens längd tas bort. Hjulen själva rörs inte. */
+function lagaDrivlina(rot) {
+  rot.traverse((nod) => {
+    if (nod.isSkinnedMesh && nod.skeleton) nod.skeleton.pose();
+  });
+  rot.updateMatrixWorld(true);
+  let z0 = Infinity;
+  let z1 = -Infinity;
+  let hjul = 0;
+  rot.traverse((nod) => {
+    if (!nod.isMesh || !nod.visible) return;
+    const namn = nod.name || '';
+    if (!/wheel|hjul|tyre|sprocket|idler|drivhjul/i.test(namn) || /track|band/i.test(namn)) return;
+    const box = new Box3().setFromObject(nod);
+    if (box.isEmpty() || !Number.isFinite(box.min.z)) return;
+    const storlek = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
+    if (storlek > 1.6) return;
+    z0 = Math.min(z0, box.min.z);
+    z1 = Math.max(z1, box.max.z);
+    hjul += 1;
+  });
+  rot.userData.drivlina = { hjul, z0, z1 };
+  if (hjul < 4 || !(z1 - z0 > 2)) return;
+  const marginal = 0.45;
+  let klippta = 0;
+  rot.traverse((nod) => {
+    if (!nod.isMesh || !nod.visible) return;
+    if (!/track|band/i.test(nod.name || '') || /spare|reserv/i.test(nod.name || '')) return;
+    klippta += klippUtanforLangd(nod, z0 - marginal, z1 + marginal);
+  });
+  rot.userData.drivlina.klippta = klippta;
+}
+
+function klippUtanforLangd(mesh, zMin, zMax) {
+  const geo = mesh.geometry;
+  const pos = geo?.attributes?.position;
+  const index = geo?.index;
+  if (!pos || !index) return 0;
+  const kalla = index.array;
+  const behall = [];
+  for (let i = 0; i < kalla.length; i += 3) {
+    let utanfor = 0;
+    let under = 0;
+    for (let k = 0; k < 3; k += 1) {
+      _bandPunkt.fromBufferAttribute(pos, kalla[i + k]).applyMatrix4(mesh.matrixWorld);
+      if (_bandPunkt.z < zMin || _bandPunkt.z > zMax) utanfor += 1;
+      if (_bandPunkt.y < -0.12) under += 1;
+    }
+    if (utanfor === 0 && under < 3) behall.push(kalla[i], kalla[i + 1], kalla[i + 2]);
+  }
+  if (!behall.length || behall.length === kalla.length) return 0;
+  geo.setIndex(behall);
+  const box = new Box3();
+  for (let i = 0; i < behall.length; i += 1) {
+    _bandPunkt.fromBufferAttribute(pos, behall[i]);
+    box.expandByPoint(_bandPunkt);
+  }
+  geo.boundingBox = box;
+  geo.boundingSphere = null;
+  geo.computeBoundingSphere();
+  return (kalla.length - behall.length) / 3;
 }
 
 export function klonaMall(mall) {

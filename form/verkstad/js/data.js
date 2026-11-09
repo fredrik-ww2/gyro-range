@@ -91,18 +91,30 @@ function riktigaModeller(modeller) {
   return (modeller || []).filter((modell) => modell?.fil && modell.roll !== 'impostor' && (modell.trianglar || 0) > 80 && !/_bb\.glb$/i.test(modell.fil));
 }
 
-/** När- och fjärrnät för kartan. Den tunga originalfilen används bara om ingen mobil-LOD finns. */
+function kvantiserad(modell) {
+  return (modell?.extensioner || []).some((namn) => /quantization/i.test(namn));
+}
+
+/** Närbild föredrar okvantiserad källfil. Kvantiserad mobil-LOD har förskjutit delar på en del fordon. */
 export function placeringsNivaer(modeller) {
   const lista = riktigaModeller(modeller);
   const mobil = lista.find((modell) => modell.anvandning === 'mobil' || /_mobil\.glb$/i.test(modell.fil)) || null;
   const enkel = lista.find((modell) => modell.anvandning === 'enkel' || /_enkel\.glb$/i.test(modell.fil)) || null;
+  const kalla = lista
+    .filter((modell) => !kvantiserad(modell) && modell !== enkel && (modell.trianglar || 0) <= 20000)
+    .sort((a, b) => (b.trianglar || 0) - (a.trianglar || 0))[0] || null;
   const latt = lista
     .filter((modell) => modell !== mobil && modell !== enkel && (modell.trianglar || 0) <= 20000)
     .sort((a, b) => (a.trianglar || 1e12) - (b.trianglar || 1e12))[0] || null;
-  return {
-    mobil: mobil || latt,
-    enkel: enkel || mobil || latt
-  };
+  const nar = kalla || mobil || latt;
+  let fjarr = enkel || mobil || kalla || latt;
+  /* En kvantiserad kopia med nästan samma triangelantal är inte en enklare LOD.
+     Den har förskjutit delar. Behåll då samma okvantiserade närbild. */
+  if (fjarr && nar && fjarr !== nar && kvantiserad(fjarr) && !kvantiserad(nar)) {
+    const andel = (fjarr.trianglar || 0) / Math.max(1, nar.trianglar || 1);
+    if (andel >= 0.85) fjarr = nar;
+  }
+  return { mobil: nar, enkel: fjarr };
 }
 
 /** Riktig nätmodell för utplacering. Hoppar över platta billboards om en mesh finns. */
@@ -265,6 +277,13 @@ function harModell(enhet) {
   return (enhet.modeller || []).some((modell) => modell?.fil);
 }
 
+function harTextur(enhet) {
+  return (enhet.modeller || []).some((modell) => {
+    if ((modell.material || 0) > 0) return true;
+    return (modell.extensioner || []).some((namn) => /ktx|basis/i.test(namn));
+  });
+}
+
 function harLod(enhet) {
   if (harText(enhet.saknas, /LOD-kedja/i)) return false;
   const modeller = enhet.modeller || [];
@@ -308,6 +327,7 @@ export function checklista(enhet) {
   const animationRelevant = animationBehovs(enhet);
   const punkter = [
     { id: 'modell', ok: modell, text: '3D-modell finns' },
+    { id: 'textur', ok: harTextur(enhet), text: 'Texturer' },
     { id: 'lod', ok: lod, text: 'LOD-kedja' },
     { id: 'mobil', ok: mobil, text: 'Mobilanpassad' },
     {
@@ -332,7 +352,7 @@ export function checklista(enhet) {
     { id: 'provspel', ok: !harText(enhet.saknas, /provspelad/i), text: 'Provspelad' },
     { id: 'iphone', ok: !harText(enhet.saknas, /iPhone/i), text: 'Granskad på riktig iPhone' }
   ];
-  const mjuka = new Set(['varden', 'ljud', 'provspel', 'iphone', 'skada', 'fast']);
+  const mjuka = new Set(['varden', 'ljud', 'provspel', 'iphone', 'skada', 'fast', 'textur']);
   const alla = punkter.every((punkt) => punkt.ok);
   const port = modell && lod && mobil;
   const hartOppet = punkter.some((punkt) => !punkt.ok && !mjuka.has(punkt.id));

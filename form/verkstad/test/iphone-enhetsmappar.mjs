@@ -95,8 +95,9 @@ try {
     if (nastan < 1 || utveckling < 1) return `antal nästan=${nastan} utveckling=${utveckling}`;
     const kulsprutor = rot.querySelectorAll('[data-vapen="Kulsprutor"]').length;
     const ovriga = rot.querySelectorAll('[data-land="Övriga"]').length;
-    if (kulsprutor < 1) return 'kulsprutor saknas';
-    if (ovriga < 1) return 'övriga saknas';
+    if (kulsprutor !== 0) return 'kulsprutor ska ligga utanför starturvalet';
+    if (ovriga !== 0) return 'övriga nationer ska ligga utanför starturvalet';
+    if (!rot.querySelector('[data-land="USA"]') || !rot.querySelector('[data-land="Tyskland"]')) return 'usa eller tyskland saknas';
     const tomLand = [...rot.querySelectorAll('[data-land]')].filter((nod) => nod.dataset.antal === '0');
     if (tomLand.length) return 'tomt land visas';
     const hojd = rot.querySelector('[data-vag="utveckling"] summary').getBoundingClientRect().height;

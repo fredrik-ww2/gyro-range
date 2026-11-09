@@ -466,11 +466,16 @@ export function markeText(ursprung) {
 }
 
 export function ritaChecklista(check, extra = '') {
-  const punkter = check.punkter.map((punkt) => `<li class="${punkt.ok ? 'ok' : 'saknas'}" data-punkt="${punkt.id}" data-ok="${punkt.ok}"><span aria-hidden="true">${punkt.ok ? '✓' : '○'}</span> ${esc(punkt.text)}</li>`).join('');
+  const rad = (punkt) => `<li class="${punkt.ok ? 'ok' : 'saknas'}" data-punkt="${punkt.id}" data-ok="${punkt.ok}"><span aria-hidden="true">${punkt.ok ? '✓' : '○'}</span> ${esc(punkt.text)}</li>`;
+  const klart = check.punkter.filter((punkt) => punkt.ok).map(rad).join('');
+  const saknas = check.punkter.filter((punkt) => !punkt.ok).map(rad).join('');
   return `<section class="checklista ${extra}" data-saknas data-checklista>
     <h2>Saknas för att bli klar</h2>
-    <p class="fin">${check.klara} av ${check.totalt}. ${check.uppskattade} huvudvärden är fortfarande uppskattade.</p>
-    <ul>${punkter}</ul>
+    <p class="fin">${check.klara} av ${check.totalt} är klara. ${check.uppskattade} huvudvärden är fortfarande uppskattade.</p>
+    <h3>Saknas</h3>
+    <ul data-saknas-lista>${saknas || '<li class="ok">Inget saknas på checklistan.</li>'}</ul>
+    <h3>Redan klart</h3>
+    <ul data-klart-lista>${klart || '<li class="saknas">Inget är klart ännu.</li>'}</ul>
   </section>`;
 }
 

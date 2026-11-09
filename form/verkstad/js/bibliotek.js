@@ -107,8 +107,8 @@ function ritaPost(rad) {
   const djup = check.niva === '1_nastan_klar' || check.niva === '2_halvvags';
   const saknas = check.punkter.filter((punkt) => !punkt.ok);
   return `
-    <article class="enhetsrad">
-      <button type="button" class="rad" data-enhet="${esc(enhet.id)}" data-status="${esc(check.status)}" data-niva="${esc(check.niva)}" data-sok="${esc(sok)}">
+    <article class="enhetsrad" data-enhet="${esc(enhet.id)}" data-status="${esc(check.status)}" data-niva="${esc(check.niva)}" data-sok="${esc(sok)}">
+      <button type="button" class="rad" data-sok="${esc(sok)}">
         <span>
           <strong>${esc(enhet.namn)}</strong>
           <small>${esc(nationVisning(enhet.nation))} · ${esc(vapenslag(enhet))}</small>

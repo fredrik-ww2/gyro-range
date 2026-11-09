@@ -544,10 +544,13 @@ async function boot(){
  $('settingsButton').onclick=()=>{closeMenu();showSettings(true);};$('closeSettings').onclick=()=>showSettings(false);
  function bindTryck(el,fn){
   if(!el)return;
-  let senast=0;
-  const kor=e=>{e.preventDefault();e.stopPropagation();const n=performance.now();if(n-senast<350)return;senast=n;fn();};
-  el.addEventListener('pointerup',kor);
-  el.addEventListener('click',kor);
+  let senast=0,ned=false;
+  const kor=e=>{if(e.cancelable)e.preventDefault();e.stopPropagation();const n=performance.now();if(n-senast<420)return;senast=n;fn();};
+  // iOS kan tappa pointerup och click när body är fixed. pointerdown och ensamt touchend räcker.
+  el.addEventListener('pointerdown',e=>{ned=true;kor(e);});
+  el.addEventListener('touchend',e=>{if(ned){ned=false;return;}kor(e);},{passive:false});
+  el.addEventListener('pointerup',()=>{ned=false;});
+  el.addEventListener('pointercancel',()=>{ned=false;});
  }
  bindTryck($('weaponPose'),stegVapen);bindTryck($('vapenSteg'),stegVapen);syncPoseUi();
  $('center').onclick=()=>{gyro.center();rifle=null;rifleP=0;climb=0;climbP=0;climbBack=null;hastyT=null;hastyP=0;settleT=null;settleX=settleZ=0;};
@@ -649,7 +652,7 @@ async function boot(){
   if(_dir.dot(_fwd)<0)_dir.negate();
   const align=_fwd.angleTo(_dir);snapshot.alignDeg=align*180/Math.PI;
   const kikare=vy==='forsta'&&siktVal==='kikare'&&poseSteg===2&&weapons[selected].sikte==='kikare'&&raiseValue()>.85;
-  const goal=kikare?1-THREE.MathUtils.smoothstep(align,.05,.16):0;
+  const goal=kikare?1:0;
   if(!kikare)scopeAmt=0;else scopeAmt+=(goal-scopeAmt)*0.35;
   if(scopeAmt<.01)scopeAmt=0;
   document.body.dataset.siktar=scopeAmt>.08?'ja':'nej';

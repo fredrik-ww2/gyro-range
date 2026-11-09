@@ -1,5 +1,5 @@
 {
- "version": "flyg-v4",
+ "version": "flyg-v5",
  "modell": {
   "namn": "Hawker Typhoon Mk Ib",
   "fil": "./assets/typhoon_mkib.glb",
@@ -37,7 +37,9 @@
   "kritisk_omega": 8,
   "neutral_rad": 0.018,
   "gyro_brus_rad_s": 0.022,
-  "yaw_andel": 0.8
+  "yaw_andel": 0.0,
+  "roder_vinkel_rad": 0.35,
+  "_roder": "Vrid telefonen runt lodrät axel = sidroder. roder_vinkel_rad är vridningen för fullt utslag. yaw_andel 0 = vridning bankar inte längre."
  },
  "flyg": {
   "gas": 0.85,
@@ -132,7 +134,28 @@
   "sparljus_pool": 96,
   "sparljus_ms": 820,
   "sparljus_liv_s": 2.2,
-  "mynningar_fw190": [[-2.3, 0.05, -1.7], [-3.5, 0.1, -1.15], [2.3, 0.05, -1.7], [3.5, 0.1, -1.15]]
+  "mynningar_fw190": [
+   [
+    -2.3,
+    0.05,
+    -1.7
+   ],
+   [
+    -3.5,
+    0.1,
+    -1.15
+   ],
+   [
+    2.3,
+    0.05,
+    -1.7
+   ],
+   [
+    3.5,
+    0.1,
+    -1.15
+   ]
+  ]
  },
  "ljud": {
   "roster": 8,
@@ -153,13 +176,87 @@
    "namn": "Hawker Typhoon Mk Ib",
    "fil": "./assets/typhoon_mkib.glb",
    "spann_m": 12.67,
-   "rotation_y": 3.14159265359
+   "rotation_y": 3.14159265359,
+   "roder": {
+    "skevroder": {
+     "x": 4.85,
+     "y": -0.3,
+     "z": 0.05,
+     "bredd": 2.5,
+     "korda": 0.5,
+     "max": 0.42
+    },
+    "klaff": {
+     "x": 2.2,
+     "y": -0.36,
+     "z": 0.05,
+     "bredd": 2.4,
+     "korda": 0.65,
+     "max": 0.75
+    },
+    "hojdroder": {
+     "x": 1.6,
+     "y": 0.15,
+     "z": 4.0,
+     "bredd": 2.2,
+     "korda": 0.5,
+     "max": 0.42
+    },
+    "sidroder": {
+     "y": 0.3,
+     "z": 4.25,
+     "hojd": 1.7,
+     "korda": 0.5,
+     "max": 0.45
+    },
+    "farg": 6054485,
+    "kantfarg": 2764326,
+    "respons_s": 0.08,
+    "klaff_respons_s": 0.7
+   }
   },
   "p51": {
    "namn": "P-51 Mustang",
    "fil": "./assets/p51_mustang.glb",
    "spann_m": 11.28,
-   "rotation_y": 3.14159265359
+   "rotation_y": 3.14159265359,
+   "roder": {
+    "skevroder": {
+     "x": 4.32,
+     "y": -0.3,
+     "z": 0.05,
+     "bredd": 2.23,
+     "korda": 0.5,
+     "max": 0.42
+    },
+    "klaff": {
+     "x": 1.96,
+     "y": -0.36,
+     "z": 0.05,
+     "bredd": 2.14,
+     "korda": 0.65,
+     "max": 0.75
+    },
+    "hojdroder": {
+     "x": 1.42,
+     "y": 0.15,
+     "z": 4.0,
+     "bredd": 1.96,
+     "korda": 0.5,
+     "max": 0.42
+    },
+    "sidroder": {
+     "y": 0.3,
+     "z": 4.25,
+     "hojd": 1.7,
+     "korda": 0.5,
+     "max": 0.45
+    },
+    "farg": 9080723,
+    "kantfarg": 2764326,
+    "respons_s": 0.08,
+    "klaff_respons_s": 0.7
+   }
   }
  },
  "standardmodell": "typhoon",
@@ -233,7 +330,12 @@
   "cd": 0.42,
   "referensfart_ms": 120,
   "referensavstand_m": 200,
-  "avstand_m": [100, 200, 300, 400]
+  "avstand_m": [
+   100,
+   200,
+   300,
+   400
+  ]
  },
  "motstandare": {
   "fil": "./assets/fw190_mobil.glb",
@@ -246,5 +348,13 @@
   "traff_radie_m": 7,
   "start_avstand_m": 260,
   "skott_intervall_s": 0.16
+ },
+ "landning": {
+  "max_fart_ms": 62,
+  "mjuk_vs_ms": -3.5,
+  "hard_vs_ms": -7,
+  "max_bank_rad": 0.3,
+  "broms_n": 7000,
+  "_om": "Landning: hjul ute, under max_fart, sjunk mildare än hard_vs. Mellan mjuk och hard: studs och varning. Bromsen verkar när gasen är stängd på marken."
  }
 }

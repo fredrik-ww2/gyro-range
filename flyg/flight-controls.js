@@ -13,7 +13,9 @@ export class FlightInput {
  center(){this.reset();this.gyro.center();}
  read(){let p=this.pose;if(!this.native&&this.web&&this.origin){const wrap=x=>Math.atan2(Math.sin(x),Math.cos(x));p={pitch:wrap(this.web.pitch-this.origin.pitch),roll:wrap(this.web.roll-this.origin.roll),yaw:wrap(this.web.yaw-this.origin.yaw)};}
   const dead=x=>Math.abs(x)<this.c.neutral_rad?0:x,clamp=(x,m)=>Math.max(-m,Math.min(m,x)),gain=this.settings.kanslighet;
-  return {pitch:clamp(dead(p.pitch+this.gyro.drag.y)*gain,this.c.max_pitch),roll:clamp(dead(p.roll+this.c.yaw_andel*p.yaw+this.gyro.drag.x)*gain*this.c.bank_forstarkning,this.c.max_roll),pose:{...p},source:this.native?'native':this.web?'webb':'finger'};
+  // Vridning runt lodrät axel = sidroder (pedaler). Fullt utslag vid roder_vinkel_rad, återgår till noll när telefonen vrids tillbaka.
+  const rv=this.c.roder_vinkel_rad||0.35,roder=this.active&&(this.native||this.web)?clamp(dead(p.yaw)/rv,1):0;
+  return {pitch:clamp(dead(p.pitch+this.gyro.drag.y)*gain,this.c.max_pitch),roll:clamp(dead(p.roll+(this.c.yaw_andel||0)*p.yaw+this.gyro.drag.x)*gain*this.c.bank_forstarkning,this.c.max_roll),roder,pose:{...p},source:this.native?'native':this.web?'webb':'finger'};
  }
 }
 // Exakt kritiskt dämpad fjäder för konstant mål per tidssteg: inga Euler-överslängar.

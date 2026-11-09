@@ -32,7 +32,9 @@ export class FlightModel{
   this.lyftAv=false;
   if(S.paMarken){
    this.gamma=0;this.phi*=Math.exp(-dt*2);this.stalled=false;this.vs=0;this.nz=1;
-   const rull=1400+Math.abs(roder)*5200,aero=q*A.vingyta_m2*(A.cd0+0.02+gear*0.02);
+   // Rullmotstånd, pedalbroms vid roder, och hjulbroms när gasen är stängd (S.broms i newton).
+   const broms=(S.broms||0)*(gas<0.03&&this.V>0.2?1:0);
+   const rull=1400+Math.abs(roder)*5200+broms,aero=q*A.vingyta_m2*(A.cd0+0.02+gear*0.02);
    this.V=Math.max(0,this.V+((T-aero-rull)/m)*dt);
    if(this.V>0.5)this.psi+=roder*dt*(0.45+4/Math.max(5,this.V));
    this.x+=-Math.sin(this.psi)*this.V*dt;this.z+=-Math.cos(this.psi)*this.V*dt;

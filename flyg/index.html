@@ -7,13 +7,13 @@
 <meta name="theme-color" content="#172724">
 <link rel="icon" href="data:,">
 <title>Flygplan · Gyrotest</title>
-<link rel="stylesheet" href="./style.css?v=6">
+<link rel="stylesheet" href="./style.css?v=7">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
 <canvas id="spel" aria-label="Flygplan över Normandie"></canvas>
 <header>
-<div class="eyebrow">WW2 / FLYGPROV 04</div>
+<div class="eyebrow">WW2 / FLYGPROV 05</div>
 <div class="row"><h1 id="aircraftName">Hawker Typhoon Mk Ib</h1><a id="back" href="../">Skjutbana</a><button id="settingsButton">Inställningar</button></div>
 <p id="status" role="status">Förbereder flygplanet…</p>
 <div id="metrics">Laddar…</div>
@@ -59,16 +59,8 @@
 <div class="kvadrant" id="gasBana" aria-label="Gasreglage">
 <div class="skala" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><b>FULL</b><b class="lag">LÅG</b></div>
 <div class="spalt"><div class="spak" id="gasSpak"><span class="knopp"></span><span class="arm"></span></div></div>
-<div class="spalt"><div class="spak"><span class="knopp"></span><span class="arm"></span></div></div>
 </div>
 <input id="throttle" class="gas-dold" aria-label="Gas" type="range" min="0" max="1" step="0.01" value="0.85">
-</div>
-<div id="pitchreglage" hidden>
-<output id="pitchValue">Fin</output>
-<div class="kvadrant" id="pitchBana" aria-label="Propellerpitch">
-<div class="skala" aria-hidden="true"><b>FIN</b><b class="lag">GROV</b></div>
-<div class="spalt"><div class="spak" id="pitchSpak"><span class="knopp"></span><span class="arm"></span></div></div>
-</div>
 </div>
 <div id="pedaler" hidden>
 <button id="pedalV" type="button" aria-label="Vänster pedal"><span class="trampa"></span><span class="pedalnamn">Vänster</span></button>
@@ -77,11 +69,7 @@
 <div id="system" hidden>
 <button id="hjul" type="button" class="metall" aria-label="Hjulen är uppe"><span class="lampa" id="hjulLampa"></span><span>Hjul</span></button>
 <button id="klaff" type="button" class="metall"><span id="klaffText">Inne</span><span>Klaff</span></button>
-<button id="bombVikt" type="button" class="metall" aria-label="500 pund"><span id="bombViktText">500</span><span>pund</span></button>
 <button id="fall" type="button" class="metall" aria-label="Fäll bomb"><span id="bombAntal">2</span><span>Fäll</span></button>
-<button id="tandning" type="button" class="metall" aria-pressed="false"><span class="vippa liten"><span class="vippa-arm"></span></span><span>Tändning</span></button>
-<button id="pump" type="button" class="metall"><span class="knappkropp liten"></span><span>Pump</span></button>
-<button id="patron" type="button" class="metall"><span class="knappkropp liten"></span><span>Patron</span></button>
 </div>
 <div id="fiendePil" hidden><div id="fiendePilSymbol">▲</div><div id="fiendePilText"></div></div>
 <div id="skada" aria-hidden="true"></div>
@@ -89,10 +77,10 @@
 <section id="startPanel" class="glass">
 <div class="eyebrow">HÅLL MOBILEN BEKVÄMT</div>
 <h2>Du är piloten.</h2>
-<p>Luta bakåt för att stiga, framåt för att dyka. Luta åt sidan för att banka. Gasen sitter till vänster, uppåt är mer. Pedalerna längst ner svänger på marken. Sikte byter till siktet. Där står det Bakom.</p>
-<button id="start" disabled>Snabbstart med gyro</button>
-<button id="manual" disabled>Snabbstart med finger</button>
-<button id="kall" disabled>Kallstart på marken</button>
+<p>Luta bakåt för att stiga, framåt för att dyka, åt sidan för att banka. Vrid telefonen som en ratt för sidroder. Gasen sitter till vänster. Hjul och klaff är knappar. Sikte byter mellan cockpit och vyn bakifrån.</p>
+<button id="kall" disabled>Starta från marken</button>
+<button id="start" disabled>Starta i luften</button>
+<button id="manual" disabled>Starta i luften med finger</button>
 <p class="small">Planet kan stalla, störta och bli nedskjutet. En Fw 190 finns i luften.</p>
 </section>
 <section id="crashPanel" class="glass" hidden>
@@ -131,6 +119,6 @@
 </button>
 </div>
 </footer>
-<script type="module" src="./main.js?v=8"></script>
+<script type="module" src="./main.js?v=9"></script>
 </body>
 </html>

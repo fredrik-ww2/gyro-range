@@ -1,7 +1,7 @@
 /* Lat laddning av lättaste LOD. Varje WebGL-yta får en egen kopia. */
 
 import {
-  Box3, CompressedTexture, LinearFilter, LinearMipmapLinearFilter, UnsignedByteType
+  Box3, CompressedTexture, LinearFilter, LinearMipmapLinearFilter, UnsignedByteType, Vector3
 } from 'three';
 import { ZSTDDecoder } from '../../../flyg/vendor/libs/zstddec.module.js';
 import { lattasteModell, modellAdress } from './data.js';
@@ -89,6 +89,7 @@ export async function laddaObjekt(renderer, url) {
         }
       });
       doljAlternativ(rot);
+      lagaDrivlina(rot);
       return rot;
     })));
   }
@@ -149,6 +150,72 @@ function doljAlternativ(rot) {
       for (const nod of noder) nod.visible = false;
     }
   }
+}
+
+const _bandPunkt = new Vector3();
+
+/* Band som sticker långt utanför hjulraden är fel geometri, inte en kameraeffekt.
+   Trianglar som ligger helt utanför hjulens längd tas bort. Hjulen själva rörs inte. */
+function lagaDrivlina(rot) {
+  rot.traverse((nod) => {
+    if (nod.isSkinnedMesh && nod.skeleton) nod.skeleton.pose();
+  });
+  rot.updateMatrixWorld(true);
+  let z0 = Infinity;
+  let z1 = -Infinity;
+  let hjul = 0;
+  rot.traverse((nod) => {
+    if (!nod.isMesh || !nod.visible) return;
+    const namn = nod.name || '';
+    if (!/wheel|hjul|tyre|sprocket|idler|drivhjul/i.test(namn) || /track|band/i.test(namn)) return;
+    const box = new Box3().setFromObject(nod);
+    if (box.isEmpty() || !Number.isFinite(box.min.z)) return;
+    const storlek = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
+    if (storlek > 1.6) return;
+    z0 = Math.min(z0, box.min.z);
+    z1 = Math.max(z1, box.max.z);
+    hjul += 1;
+  });
+  rot.userData.drivlina = { hjul, z0, z1 };
+  if (hjul < 4 || !(z1 - z0 > 2)) return;
+  const marginal = 0.45;
+  let klippta = 0;
+  rot.traverse((nod) => {
+    if (!nod.isMesh || !nod.visible) return;
+    if (!/track|band/i.test(nod.name || '') || /spare|reserv/i.test(nod.name || '')) return;
+    klippta += klippUtanforLangd(nod, z0 - marginal, z1 + marginal);
+  });
+  rot.userData.drivlina.klippta = klippta;
+}
+
+function klippUtanforLangd(mesh, zMin, zMax) {
+  const geo = mesh.geometry;
+  const pos = geo?.attributes?.position;
+  const index = geo?.index;
+  if (!pos || !index) return 0;
+  const kalla = index.array;
+  const behall = [];
+  for (let i = 0; i < kalla.length; i += 3) {
+    let utanfor = 0;
+    let under = 0;
+    for (let k = 0; k < 3; k += 1) {
+      _bandPunkt.fromBufferAttribute(pos, kalla[i + k]).applyMatrix4(mesh.matrixWorld);
+      if (_bandPunkt.z < zMin || _bandPunkt.z > zMax) utanfor += 1;
+      if (_bandPunkt.y < -0.12) under += 1;
+    }
+    if (utanfor === 0 && under < 3) behall.push(kalla[i], kalla[i + 1], kalla[i + 2]);
+  }
+  if (!behall.length || behall.length === kalla.length) return 0;
+  geo.setIndex(behall);
+  const box = new Box3();
+  for (let i = 0; i < behall.length; i += 1) {
+    _bandPunkt.fromBufferAttribute(pos, behall[i]);
+    box.expandByPoint(_bandPunkt);
+  }
+  geo.boundingBox = box;
+  geo.boundingSphere = null;
+  geo.computeBoundingSphere();
+  return (kalla.length - behall.length) / 3;
 }
 
 export function klonaMall(mall) {

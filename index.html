@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#171e1c"><link rel="icon" href="data:,"><title>Gyrosikte · Fältprov</title><link rel="stylesheet" href="./js/style.css?v=26"><script type="importmap">{"imports":{"three":"./js/vendor/three.module.js"}}</script></head>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#171e1c"><link rel="icon" href="data:,"><title>Gyrosikte · Fältprov</title><link rel="stylesheet" href="./js/style.css?v=27"><script type="importmap">{"imports":{"three":"./js/vendor/three.module.js"}}</script></head>
 <body data-pose="framme">
 <div id="shotFlash" aria-hidden="true"></div>
 <canvas id="spel" aria-label="Skjutbana med WW2-soldat och två Tiger-stridsvagnar"></canvas>
@@ -9,6 +9,7 @@
 <button id="menuButton" type="button" aria-label="Meny" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
 </header>
 <button id="nyttNoll" type="button">Nytt neutralläge</button>
+<div id="gyroInfo" aria-live="polite"></div>
 <button id="menuBackdrop" type="button" hidden aria-label="Stäng menyn"></button>
 <nav id="menu" class="glass" hidden>
 <section><h3>Läge</h3><button id="flightButton" type="button" onclick="location.href='./flyg/'+location.search">Flygplan</button></section>
@@ -57,5 +58,5 @@
 <label id="trigger" for="hapticSwitch" role="button" tabindex="0" aria-label="Avtryckare"></label>
 </div>
 </footer>
-<script type="module" src="./js/main.js?v=26"></script>
+<script type="module" src="./js/main.js?v=27"></script>
 <script>document.addEventListener('contextmenu',e=>e.preventDefault());document.addEventListener('selectstart',e=>{if(!e.target.closest?.('input[type=text],textarea'))e.preventDefault();});</script></body></html>

@@ -1,11 +1,14 @@
 :root{color-scheme:dark;font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0f3ea;background:#171e1c;--lime:#e0f1a4}*{box-sizing:border-box}body{margin:0;overflow:hidden;height:100dvh;touch-action:none}button,select{font:inherit;color:inherit;border:1px solid #ffffff36;border-radius:18px;background:#192320cc;padding:12px 16px;cursor:pointer;touch-action:manipulation}button:focus-visible,label[role=button]:focus-visible{outline:3px solid var(--lime);outline-offset:3px}button:disabled{opacity:.45}#spel{width:100%;height:100%;display:block}
 #topbar{position:absolute;left:0;right:0;top:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:calc(env(safe-area-inset-top) + 48px);padding:env(safe-area-inset-top) 10px 0;pointer-events:none}
 #topbar>*{pointer-events:auto}
-#weaponPose{min-height:44px;padding:8px 12px;font-size:14px;font-weight:650}
+#weaponPose{display:none}
+#gyroInfo{position:absolute;z-index:6;top:calc(env(safe-area-inset-top) + 36px);left:8px;right:8px;display:flex;flex-wrap:wrap;gap:4px;pointer-events:none}
+#gyroInfo b,#gyroInfo span{font-size:10px;line-height:1.25;padding:3px 6px;border-radius:8px;background:#121816d0;color:#e7efd8;letter-spacing:.01em}
+#gyroInfo span{flex-basis:100%;background:#121816a8}
 #stallning{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 4px);transform:translateX(-50%);text-align:center;pointer-events:none;color:rgba(240,243,234,.78);text-shadow:0 1px 2px #000a;max-width:46vw}
 #stallning b{display:block;font-size:11px;letter-spacing:.16em;font-weight:650;text-transform:uppercase}
 #stallning small{display:block;margin-top:1px;font-size:10px;letter-spacing:.04em;opacity:.72}
-#nyttNoll{position:absolute;z-index:6;top:calc(env(safe-area-inset-top) + 46px);left:8px;padding:4px 8px;font-size:11px;border-radius:999px;background:#192320cc}
+#nyttNoll{position:absolute;z-index:6;top:calc(env(safe-area-inset-top) + 8px);right:58px;left:auto;padding:4px 8px;font-size:11px;border-radius:999px;background:#192320cc}
 #menuButton{width:44px;height:44px;padding:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;flex:none}
 #menuButton span{display:block;width:18px;height:2px;border-radius:1px;background:currentColor;transition:transform .18s ease,opacity .18s ease}
 #menuButton[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
@@ -33,9 +36,9 @@ h2{font-size:23px;margin:10px 0;font-weight:600;letter-spacing:-.5px}
 #hit{position:absolute;transform:translate(-50%,-50%);font-size:45px;color:#ff7561;opacity:0;z-index:2}
 #debug{position:absolute;top:calc(env(safe-area-inset-top) + 64px);left:12px;z-index:3;font:10px ui-monospace,monospace;background:#111b;padding:8px;border-radius:6px;pointer-events:none}
 footer{position:absolute;z-index:4;bottom:max(8px,env(safe-area-inset-bottom));left:0;right:0;display:flex;justify-content:center;align-items:end;pointer-events:none}
-#weapon{position:absolute;left:12px;bottom:146px;pointer-events:auto;max-width:42vw;font-size:12px;padding:8px 10px;z-index:5}
+#weapon{position:absolute;left:12px;bottom:max(132px,calc(env(safe-area-inset-bottom) + 124px));pointer-events:auto;max-width:34vw;font-size:12px;padding:8px 10px;z-index:5}
 #fireWrap{pointer-events:auto;position:relative;width:98px;height:98px;--drag:0}
-#siktVal{position:absolute;left:50%;bottom:108px;transform:translateX(-50%);width:max-content;padding:6px 12px;font-size:13px;z-index:5;pointer-events:auto}
+#siktVal{position:absolute;left:50%;bottom:max(112px,calc(env(safe-area-inset-bottom) + 104px));transform:translateX(-50%);width:max-content;padding:6px 12px;font-size:13px;z-index:5;pointer-events:auto}
 #fire{height:98px;width:98px;border-radius:50%;border:4px solid #c4b48a;box-shadow:inset 0 0 0 8px #1b2420,0 0 0 5px #18232155;background:radial-gradient(circle at 50% 42%,#3a4036,#1a221c 70%);color:#e7efd4;font-size:11px;font-weight:800;letter-spacing:.12em;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 #triggerLever{width:18px;height:42px;border-radius:10px 10px 14px 14px;background:linear-gradient(#f4f1e6,#c5cbb0);box-shadow:0 6px 0 #6d7364;transform:translateY(calc(var(--drag) * 40px));display:block}
 #reload{font-size:8px;letter-spacing:1.2px}
@@ -85,7 +88,19 @@ body[data-jarn=ja] #irons{display:block!important}
 #spakKnapp,#plattaKnapp{position:absolute;left:50%;top:50%;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;background:#dbe8b7}
 #stallKnappar{position:absolute;z-index:5;right:12px;bottom:max(28px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
 #stallKnappar button{min-width:72px;min-height:44px}
-#vapenSteg{position:absolute;z-index:5;left:50%;bottom:168px;transform:translateX(-50%);padding:6px 12px;font-size:13px}
+#vapenSteg{position:absolute;z-index:5;right:12px;bottom:max(132px,calc(env(safe-area-inset-bottom) + 124px));padding:8px 12px;font-size:13px;min-height:44px}
+@media (orientation:landscape) and (max-height:500px){
+ #gyroInfo{top:4px;right:168px;left:8px}
+ #nyttNoll{top:4px}
+ #stallning{display:none}
+ #weapon{bottom:8px}
+ #vapenSteg{bottom:8px}
+ #siktVal{bottom:8px;left:auto;right:96px;transform:none}
+ #spak,#platta{bottom:8px;width:76px;height:76px}
+ #stallKnappar{bottom:8px;flex-direction:row}
+ #fireWrap{transform:scale(.78);transform-origin:bottom center}
+ #pulsRad{bottom:92px}
+}
 #montera{position:absolute;z-index:5;right:12px;bottom:150px;padding:6px 10px;font-size:12px}
 #scope,#irons{position:fixed;inset:0;pointer-events:none;display:none;z-index:1;transform:none}
 body[data-sikte=kikare][data-siktar=ja][data-pose=framme] #scope{display:block}

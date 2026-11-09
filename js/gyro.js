@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {tolkaOrientering} from './riktning.js';
 const rad=THREE.MathUtils.degToRad;
 // Samma orienteringskonvention som DeviceOrientationControls: YXZ, kamerans -Z,
 // -90 grader runt X och skärmens vinkel runt Z. Alla alpha/beta/gamma används.
@@ -10,7 +11,7 @@ export class GyroAim {
   this.nativeSource=false;this.prevRaw=new THREE.Quaternion();this.inv=new THREE.Quaternion();this.movedAt=0;this.nativeTime=null;this.nativeDelta=new THREE.Quaternion();
   this.values={alpha:null,beta:null,gamma:null,acc:{x:0,y:0,z:0},rotationRate:{alpha:0,beta:0,gamma:0},interval:0,pitchNedDps:0,vridHogerDps:0};this.drag={x:0,y:0};this.dragQuat=new THREE.Quaternion();this.lastEvent=0;this.lastMotion=0;
   this.aimHold=new THREE.Quaternion();this.heldRelative=new THREE.Quaternion();this.rateQ=new THREE.Quaternion();this.aimHeld=false;this.snap=false;this.fartRedo=false;
-  this.vinklar={pitch:0,roll:0,yaw:0};this.up=new THREE.Vector3(0,1,0);
+  this.vinklar={pitch:0,roll:0,yaw:0};this.up=new THREE.Vector3(0,1,0);this.tvungenVinkel=null;
   addEventListener('deviceorientation',e=>{
    if(this.nativeSource)return;
    if (![e.alpha,e.beta,e.gamma].every(Number.isFinite)) return;
@@ -80,15 +81,23 @@ export class GyroAim {
  hallSikte(){if(this.aimHeld)return;this.aimHeld=true;this.aimHold.copy(this.smooth);this.heldRelative.copy(this.relative);}
  bekraftaSikte(){if(!this.aimHeld)return;this.inv.copy(this.raw).invert();this.origin.copy(this.heldRelative).multiply(this.inv).normalize();this.smooth.copy(this.aimHold);this.target.copy(this.aimHold);this.aimHeld=false;this.prevRaw.copy(this.raw);this.fartRedo=true;this.nollaGira();}
  slappSikte(){if(!this.aimHeld)return;this.aimHeld=false;this.snap=true;this.prevRaw.copy(this.raw);}
+ skarmVinkel(){
+  if(Number.isFinite(this.tvungenVinkel))return this.tvungenVinkel;
+  const v=screen.orientation?.angle??window.orientation??0;
+  return Number.isFinite(+v)?+v:0;
+ }
  mataFart(dt){
   if(this._inj){this.values.pitchNedDps=this._injPitch;this.values.vridHogerDps=this._injTwist;this._inj=false;return Math.max(Math.abs(this._injPitch),this._injTwist);}
   if(!this.nativeSource&&Number.isFinite(this.values.beta)){
    if(!Number.isFinite(this._foreBeta)){this._foreBeta=this.values.beta;this._foreGamma=this.values.gamma||0;this._foreAlpha=this.values.alpha||0;this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
-   const dB=this.values.beta-this._foreBeta;let dA=(this.values.alpha||0)-this._foreAlpha;dA=((dA+180)%360+360)%360-180;const dG=(this.values.gamma||0)-this._foreGamma;
+   const fore={alpha:this._foreAlpha,beta:this._foreBeta,gamma:this._foreGamma};
+   const v=tolkaOrientering(this.values.alpha,this.values.beta,this.values.gamma,fore,this.skarmVinkel());
    this._foreBeta=this.values.beta;this._foreAlpha=this.values.alpha||0;this._foreGamma=this.values.gamma||0;
    if(!(dt>0)){this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
-   this.values.pitchNedDps=dB/dt;this.values.vridHogerDps=Math.max(dA/dt,Math.abs(dG/dt));
-   return Math.max(Math.abs(dB),Math.abs(dA),Math.abs(dG))/dt;
+   const deg=180/Math.PI;
+   // Positiv tipp är blick ned. Positiv vridning är åt höger, samma tecken som vinklar.yaw.
+   this.values.pitchNedDps=-v.pitch*deg/dt;this.values.vridHogerDps=Math.max(v.yaw*deg/dt,Math.abs(v.roll)*deg/dt);
+   return Math.max(Math.abs(this.values.pitchNedDps),Math.abs(v.yaw)*deg/dt,Math.abs(v.roll)*deg/dt);
   }
   if(!this.received||!(dt>0)){this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
   if(!this.fartRedo){this.prevRaw.copy(this.raw);this.fartRedo=true;this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
@@ -114,10 +123,9 @@ export class GyroAim {
    this.kalla='euler';
   if(!this.nativeSource&&Number.isFinite(this.nollBeta)&&Number.isFinite(this.values.beta)){
    this.kalla='vinkel';
-    const dB=this.values.beta-this.nollBeta,dG=this.values.gamma-this.nollGamma;
-    const ang=(screen.orientation?.angle??window.orientation??0)*Math.PI/180,c=Math.cos(ang),si=Math.sin(ang);
-    this.vinklar.pitch=(dB*c-dG*si)*Math.PI/180;this.vinklar.roll=(dB*si+dG*c)*Math.PI/180;
-    let dA=this.values.alpha-this.nollAlpha;dA=((dA+180)%360+360)%360-180;this.vinklar.yaw=dA*Math.PI/180;
+    const ang=this.skarmVinkel();
+    const v=tolkaOrientering(this.values.alpha,this.values.beta,this.values.gamma,{alpha:this.nollAlpha,beta:this.nollBeta,gamma:this.nollGamma},ang);
+    this.vinklar.pitch=v.pitch;this.vinklar.roll=v.roll;this.vinklar.yaw=v.yaw;
    }else{this.vinklar.pitch=this.euler.x;this.vinklar.yaw=this.euler.y;this.vinklar.roll=this.euler.z;}
    const sp=THREE.MathUtils.clamp(this.vinklar.pitch*s.kanslighet*(s.inverteraX?-1:1),-1.15,1.15);
    const sr=THREE.MathUtils.clamp(this.vinklar.roll*s.kanslighet*(s.inverteraZ?-1:1),-.95,.95);

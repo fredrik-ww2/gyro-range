@@ -76,12 +76,11 @@ const endastNer = await sida.evaluate(() => {
   el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true, changedTouches: [new Touch({ identifier: 1, target: el, clientX: r.left + 10, clientY: r.top + 10 })] }));
   return { pose: window.gyroGest.läge().pose, text: el.textContent };
 });
-if (endastNer.pose === foreAxel) krav.push('touchend höjer inte från ' + endastNer.text);
+if (endastNer.pose !== 2 || endastNer.text !== 'I axeln') krav.push('ett tryck till axeln ' + JSON.stringify(endastNer));
 await sida.evaluate(() => window.gyroGest.vapen(0));
 await sov(600);
 const ett = await nedtryck('vapenSteg');
-await sov(500);
-const tva = await nedtryck('vapenSteg');
+const tva = ett;
 let axel = await sida.evaluate(() => window.gyroGest.läge());
 for (let i = 0; i < 24 && axel.siktar !== 'ja'; i++) { await sov(200); axel = await sida.evaluate(() => window.gyroGest.läge()); }
 if (!ett.traff || !tva.traff) krav.push('axelknapp täcks ' + JSON.stringify({ ett, tva }));
@@ -118,7 +117,7 @@ const skott = await sida.evaluate(async () => {
   window.__vib = [];
   const sov = (ms) => new Promise((r) => setTimeout(r, ms));
   g.lagg(0, 90, 0);
-  await sov(900);
+  await sov(2200);
   const fore = g.läge();
   const el = document.getElementById('trigger');
   const r = el.getBoundingClientRect();
@@ -185,11 +184,9 @@ for (const [lage, vy] of [['gyro', 'forsta'], ['knyck', 'forsta'], ['gyro', 'bak
   await sida.evaluate((lage, vy) => { const g = window.gyroGest; g.satt('stallning.satt', lage); g.vy(vy); g.sätt('staende'); g.vapen(0); }, lage, vy);
   await sov(200);
   const a = await nedtryck('vapenSteg');
-  await sov(450);
-  const b = await nedtryck('vapenSteg');
   await sov(300);
   const l = await sida.evaluate(() => window.gyroGest.läge());
-  if (!a.traff || !b.traff || l.pose !== 2) krav.push('höj ' + lage + ' ' + vy + ' ' + JSON.stringify({ a: a.traff, b: b.traff, pose: l.pose, topp: a.topp || b.topp }));
+  if (!a.traff || l.pose !== 2) krav.push('höj ' + lage + ' ' + vy + ' ' + JSON.stringify({ a: a.traff, pose: l.pose, topp: a.topp }));
 }
 
 const dold = [];

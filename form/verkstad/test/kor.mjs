@@ -104,11 +104,11 @@ try {
   await page.waitForSelector('[data-vag="utveckling"] [data-land="Tyskland"] [data-vapen="Stridsvagnar"] [data-checklista]');
   await bild(page, '01-bibliotek');
 
-  await page.locator('[data-enhet="tiger_ii"]').click();
+  await page.locator('[data-enhet="m3_lee"]').click();
   await page.waitForSelector('.statusrad[data-status="under_utveckling"]');
   await page.locator('section[data-vy="kort"]').getByRole('heading', { name: 'Saknas för att bli klar' }).waitFor();
   const modellPunkt = page.locator('section[data-vy="kort"] [data-punkt="modell"]');
-  if (await modellPunkt.getAttribute('data-ok') !== 'false') throw new Error('Tiger II visade modell som klar');
+  if (await modellPunkt.getAttribute('data-ok') !== 'false') throw new Error('M3 Lee visade modell som klar');
   const skadaPunkt = page.locator('section[data-vy="kort"] [data-punkt="skada"]');
   if (await skadaPunkt.getAttribute('data-ok') !== 'false') throw new Error('Skada var ikryssad');
   if (await page.locator('[data-status="klar"]').count()) throw new Error('En enhet visades som klar');
@@ -183,11 +183,11 @@ try {
     await page.mouse.click(box.x + box.width * px, box.y + box.height * py);
     await page.locator(`[data-ark] [data-sida="${sida}"]`).click();
   }
-  await stallEn('tiger_ii', 'bla', 0.42, 0.48);
+  await stallEn('m3_lee', 'bla', 0.42, 0.48);
   await stallEn('sherman_m4_75', 'rod', 0.62, 0.55);
   await page.waitForFunction(() => {
     const rader = [...document.querySelectorAll('[data-enhet-id]')];
-    const tiger = rader.find((rad) => rad.dataset.enhetId === 'tiger_ii');
+    const tiger = rader.find((rad) => rad.dataset.enhetId === 'm3_lee');
     const sherman = rader.find((rad) => rad.dataset.enhetId === 'sherman_m4_75');
     return tiger?.dataset.visning === 'platshallare' && sherman?.dataset.visning === 'modell';
   }, null, { timeout: 60000 });
@@ -201,7 +201,7 @@ try {
     await page.waitForTimeout(700);
     await bild(page, fil);
   }
-  await zoomaPa('tiger_ii', '12-tiger-nara');
+  await zoomaPa('m3_lee', '12-lee-nara');
   await zoomaPa('sherman_m4_75', '13-sherman-nara');
   const tri = Number(await page.locator('section[data-vy="stall"]').getAttribute('data-trianglar'));
   if (tri < 1000 || tri > 30000) throw new Error('Fel triangelmängd nära en Sherman: ' + tri);

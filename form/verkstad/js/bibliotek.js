@@ -2,11 +2,12 @@ import {
   MAPP_NAMN, NIVA_NAMN, checklista, esc, nationVisning, statusNamn, stridsrader, vapenslag
 } from './data.js';
 import { filtreraMappar, kopplaMappminne, ritaEnhetstrad } from './enhetsmappar.js';
+import { fokusSammanfattning } from './fokus.js';
 import { lasLandskap, mattLandskap, scenNyckel } from './formvarld.js';
 
 let gemensamtBeteende = null;
 
-export function monteraBibliotek(el, index, katalog, { oppnaEnhet, oppnaStall, beteende }) {
+export function monteraBibliotek(el, index, katalog, { oppnaEnhet, oppnaStall, beteende, fokus }) {
   gemensamtBeteende = beteende || null;
   const rader = katalog.map((rad) => ({ ...rad, check: rad.check || checklista(rad.enhet) }));
   let enheterRitade = false;
@@ -31,7 +32,7 @@ export function monteraBibliotek(el, index, katalog, { oppnaEnhet, oppnaStall, b
     </header>
     <p class="ledtext">${klara ? `${klara} enheter är klara.` : 'Ingen enhet är klar. Nästan klar betyder att modell, LOD-kedja och mobilfil finns, och att animation inte saknas.'}</p>
     <p class="fargforklaring">Gul markering betyder att värdet är uppskattat av datorn. Det är inte hämtat ur källdata.</p>
-    <p class="varning">Fokuslistan KUNSKAP_STARTURVAL_ENHETER_v1_0.md fanns inte i repot eller bland bilagorna. Inga enheter har dolts, för att inte gissa vilka 51 typer som ska visas.</p>
+    ${fokusText(fokus)}
     <label class="sokfalt">Sök enhet
       <input id="sok" type="search" placeholder="Namn, nation eller typ" autocomplete="off">
     </label>
@@ -51,6 +52,18 @@ export function monteraBibliotek(el, index, katalog, { oppnaEnhet, oppnaStall, b
     if (varld) oppnaStall(varld.dataset.varld);
   });
   fyllFormVarldar(el);
+}
+
+function fokusText(fokus) {
+  const summa = fokusSammanfattning(fokus);
+  if (summa.typer !== 51) {
+    return '<p class="varning">Fokuslistan KUNSKAP_STARTURVAL_ENHETER har inte 51 typer. Inget har gissats.</p>';
+  }
+  const saknas = summa.saknas.map((typ) => typ.namn).join(', ');
+  const oklart = summa.flertydig.map((typ) => `${typ.namn} (${(typ.kandidater || []).join(', ')})`).join('; ');
+  return `<p class="ledtext" data-fokus="ja">Starturvalet KUNSKAP_STARTURVAL_ENHETER visar ${summa.enheter} enheter för ${summa.matchade.length} av 51 typer. Övriga enheter ligger kvar i datan men syns inte här.</p>
+    <p class="varning" data-fokus-saknas>Saknas i datan: ${esc(saknas || 'inga')}.</p>
+    <p class="varning" data-fokus-flertydig>Inte visade, flera kandidater: ${esc(oklart || 'inga')}.</p>`;
 }
 
 function ritaOvrig(mapp) {

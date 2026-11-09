@@ -1,4 +1,5 @@
 import { byggKatalog, hamtaBeteende, hamtaEnhet, hamtaIndex } from './data.js';
+import { enheterIFokus, hamtaFokus } from './fokus.js';
 import { monteraBibliotek } from './bibliotek.js';
 import { monteraKort } from './kort.js';
 import { monteraStall } from './stall.js';
@@ -18,6 +19,7 @@ app.append(bibliotekEl, kortEl, stallEl);
 let index;
 let katalog = [];
 let beteende;
+let fokus;
 let stallApi;
 let stallNyckel = '';
 
@@ -102,10 +104,11 @@ async function visaFranHash() {
 
 async function start() {
   try {
-    [index, beteende] = await Promise.all([hamtaIndex(), hamtaBeteende()]);
+    [index, beteende, fokus] = await Promise.all([hamtaIndex(), hamtaBeteende(), hamtaFokus()]);
     bibliotekEl.innerHTML = '<p class="ledtext">Läser enheterna…</p>';
-    katalog = await byggKatalog(index);
-    monteraBibliotek(bibliotekEl, index, katalog, { oppnaEnhet, oppnaStall, beteende });
+    const tillatna = enheterIFokus(fokus);
+    katalog = (await byggKatalog(index)).filter((rad) => tillatna.has(rad.enhet.id));
+    monteraBibliotek(bibliotekEl, index, katalog, { oppnaEnhet, oppnaStall, beteende, fokus });
     addEventListener('hashchange', () => { visaFranHash().catch(visaFel); });
     await visaFranHash();
   } catch (fel) {

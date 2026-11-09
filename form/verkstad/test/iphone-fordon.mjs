@@ -9,9 +9,9 @@ import puppeteer from 'puppeteer-core';
 const ROT = fileURLToPath(new URL('../../../..', import.meta.url));
 const ART = '/opt/cursor/artifacts';
 const FORDON = [
-  'tiger_i', 'panzer_iv_h', 'panther_g', 'panzer_iii_j', 'leichttraktor', 'luchs',
+  'tiger_i', 'panzer_iv_h', 'panther_g', 'panzer_iii_j', 'luchs',
   'pak38', 'pak40',
-  'sherman_m4_75', 'm4a1_75', 'm4a3_76w', 'm4a3e8', 'm10_gmc', 'm3_halftrack', 'm1_57mm'
+  'sherman_m4_75', 'm4a1_75', 'm4a3_76w', 'm4a3e8', 'm10_gmc', 'm1_57mm'
 ];
 const TYPER = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -68,6 +68,8 @@ try {
     const text = rot.innerText;
     if (!text.includes('uppskattat av datorn')) return 'färgförklaring saknas';
     if (!text.includes('KUNSKAP_STARTURVAL')) return 'fokusvarning saknas';
+    if (rot.querySelector('[data-enhet="tiger_ii"]')) return 'tiger ii ska vara dold';
+    if (rot.querySelector('[data-enhet="usa_rifleman"]')) return 'infanterist ska vara dold';
     return true;
   }, 60000);
   await sida.click('[data-vag="nastan"] > summary');

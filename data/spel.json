@@ -47,9 +47,9 @@
     "rotation_y": 0,
     "hp": 1,
     "traffvolym": {
-      "radie_m": 0.28,
-      "langd_m": 1.15,
-      "centrum_y": 0.88
+      "radie_m": 0.34,
+      "langd_m": 1.5,
+      "centrum_y": 0.95
     }
   },
   "sikte": {

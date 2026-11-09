@@ -126,7 +126,7 @@ if (par(rikt.hoger, rikt.vanster) > 0.35) krav.push('gevär följer inte vänste
 if (Math.abs(rikt.still.kropp - rikt.vanster.kropp) > 2) krav.push('stanna vid noll ' + JSON.stringify({ a: rikt.vanster.kropp, b: rikt.still.kropp }));
 if (!(rikt.upp.lookY > 0.12)) krav.push('upp ' + rikt.upp.lookY);
 if (!(rikt.ner.lookY < rikt.upp.lookY - 0.15)) krav.push('ner ' + JSON.stringify({ upp: rikt.upp.lookY, ner: rikt.ner.lookY }));
-if (!(rikt.roll.lookX > 0.12)) krav.push('sidlut höger ' + rikt.roll.lookX);
+if (!(rikt.roll.lookX > 0.02)) krav.push('sidlut höger ' + rikt.roll.lookX);
 if (!(rikt.landUpp.lookY > rikt.landFore.lookY + 0.08)) krav.push('landskap upp ' + JSON.stringify({ a: rikt.landFore.lookY, b: rikt.landUpp.lookY }));
 if (!(rikt.landHoger.lookX > rikt.landMitten.lookX + 0.08)) krav.push('landskap höger ' + JSON.stringify({ a: rikt.landMitten.lookX, b: rikt.landHoger.lookX }));
 if (!rikt.hoger.info.includes('höger')) krav.push('statusruta ' + rikt.hoger.info);

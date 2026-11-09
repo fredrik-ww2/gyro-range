@@ -12,7 +12,7 @@ export const STANDARD={
  ksp:{skak_staende:1,skak_kna:0.55,skak_monterad:0.16,rekyl_monterad:0.12},
  avtryckare:{drag_px:28,kram_s:0.45,hall_s:0.5,snabbt_s:0.2,snabb_fart:720},
  haptik:{kram:0.18,skott:1},
- kikare:{variant:'zf39',zoom:4},
+ kikare:{variant:'zf39',zoom:4,kanslighet:0.4},
  stallning:{satt:'gyro',grans_dps:250,ner_dps:250,upp_dps:220}
 };
 
@@ -65,6 +65,7 @@ export const FALT=[
  {flik:'Avtryckare',nyckel:'haptik.skott',namn:'Haptik vid skott',min:0,max:1.5,steg:0.02,enhet:'×'},
  {flik:'Sikten',nyckel:'kikare.variant',namn:'Kikarsikte',typ:'val',val:[{id:'zf39',namn:'ZF39, stolpe'},{id:'m73',namn:'M73, korshår'},{id:'tunt',namn:'Tunt kors'}]},
  {flik:'Sikten',nyckel:'kikare.zoom',namn:'Förstoring',min:2,max:8,steg:0.5,enhet:'×'},
+ {flik:'Sikten',nyckel:'kikare.kanslighet',namn:'Känslighet i kikare',min:0.15,max:1,steg:0.05,enhet:'×'},
  {flik:'Ställning',nyckel:'stallning.satt',namn:'Ställningsstyrning',typ:'val',val:[{id:'gyro',namn:'Gyrogester, steg för steg'},{id:'knyck',namn:'Knyck framåt till marken'},{id:'knappar',namn:'Knappar'}]},
  {flik:'Ställning',nyckel:'stallning.grans_dps',namn:'Hastighetsgräns gest',min:80,max:500,steg:10,enhet:'°/s'},
  {flik:'Ställning',nyckel:'stallning.ner_dps',namn:'Knyck framåt till liggande',min:80,max:520,steg:10,enhet:'°/s'},

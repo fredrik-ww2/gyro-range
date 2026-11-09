@@ -92,7 +92,12 @@ body[data-jarn=ja] #irons{display:block!important}
 #vapenSteg,#montera,#vyKnapp,#knappHuka{pointer-events:auto}
 #vyKnapp{position:absolute;z-index:40;left:8px;top:calc(env(safe-area-inset-top) + 196px);padding:8px 12px;font-size:14px;min-height:44px}
 #knappHuka{position:absolute;z-index:40;right:max(12px,env(safe-area-inset-right));bottom:max(210px,calc(env(safe-area-inset-bottom) + 198px));min-height:48px;min-width:72px;padding:10px 14px}
-#vapenSteg{position:absolute;z-index:40;right:max(16px,env(safe-area-inset-right));bottom:max(160px,calc(env(safe-area-inset-bottom) + 148px));padding:12px 16px;font-size:16px;min-width:88px;min-height:52px;touch-action:manipulation}
+#vapenSteg{position:absolute;z-index:40;right:max(16px,env(safe-area-inset-right));bottom:max(160px,calc(env(safe-area-inset-bottom) + 148px));padding:12px 16px;font-size:16px;min-width:88px;min-height:52px;touch-action:manipulation;transition:background .15s ease,color .15s ease}
+#vapenSteg.bekraftad{background:var(--lime);color:#19221a}
+#zoomKnapp{position:absolute;z-index:40;right:max(16px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top) + 96px);min-height:44px;min-width:52px;padding:8px 12px;pointer-events:auto}
+#skottInfo{position:absolute;left:50%;top:calc(var(--cy) - var(--radie) + 28px);transform:translateX(-50%);text-align:center;color:#f4f7ee;text-shadow:0 1px 2px #000;pointer-events:none;width:max-content;max-width:70vw}
+#skottInfo b{display:block;font-size:16px}
+#skottInfo span{display:block;font-size:12px;opacity:.85}
 @media (orientation:landscape) and (max-height:500px){
  footer{width:auto;left:0;right:0;margin:0}
  #gyroInfo{top:28px;right:168px;left:8px}
@@ -107,6 +112,7 @@ body[data-jarn=ja] #irons{display:block!important}
  #stallKnappar{top:auto;right:8px;bottom:max(78px,calc(env(safe-area-inset-bottom) + 64px));left:auto;flex-direction:row}
  #vyKnapp{top:auto;bottom:max(28px,calc(env(safe-area-inset-bottom) + 16px));left:148px}
  #knappHuka{right:200px;bottom:max(28px,calc(env(safe-area-inset-bottom) + 16px))}
+ #zoomKnapp{top:36px;right:max(16px,env(safe-area-inset-right))}
  #fireWrap{transform:scale(.78);transform-origin:bottom center;margin-bottom:max(4px,env(safe-area-inset-bottom))}
  #pulsRad{bottom:92px}
 }

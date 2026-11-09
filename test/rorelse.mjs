@@ -1,4 +1,4 @@
-import { gangFartFranLutning, kroppFartRad, hoftMalRad, benFoljer, skapaKnyck } from '../js/rorelse.js';
+import { gangFartFranLutning, kroppFartRad, hoftMalRad, benFoljer, skapaKnyck, kroppIVila } from '../js/rorelse.js';
 import { skakAmplitud, rorelseStyrka } from '../js/gang.js';
 import { STANDARD } from '../js/styrning.js';
 const fel=[];
@@ -19,5 +19,7 @@ k('knyck ett steg', k1.steg(180,120)===true&&k1.steg(180,120)===false);
 k('knyck igen', k1.steg(20,120)===false&&k1.steg(180,120)===true);
 k('lugn lutning', skapaKnyck().steg(40,120)===false);
 k('knyck skild från huka', STANDARD.gang.knyck_dps!==STANDARD.stallning.grans_dps);
+k('vila sväljer liten yaw', kroppIVila(4*Math.PI/180,3,STANDARD.kropp));
+k('hållen vridning styr', !kroppIVila(20*Math.PI/180,2,STANDARD.kropp));
 if(fel.length){console.error(fel.join('\n'));process.exit(1);}
 console.log('rorelse-ok');

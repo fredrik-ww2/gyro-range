@@ -15,6 +15,12 @@ export function kroppFartRad(yawRad,kropp){
  return Math.sign(yawRad)*u*kropp.kanslighet;
 }
 
+// I vila sväljs en liten yaw så sensorn inte driver kroppen. En hållen vridning utanför vilozonen styr som förut.
+export function kroppIVila(yawRad,yawFartDps,kropp){
+ const vila=(kropp.vila_grad??7)*rad;
+ return Math.abs(yawFartDps)<(kropp.vila_fart??12)&&Math.abs(yawRad)<vila;
+}
+
 export function hoftMalRad(rollRad,over){
  const max=over.max_grad*rad;
  return Math.max(-max,Math.min(max,rollRad*over.kanslighet));

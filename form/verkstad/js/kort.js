@@ -494,16 +494,11 @@ function stridsTabell(enhet) {
 }
 
 function saknasPanel(enhet, check) {
-  const finns = check.punkter.filter((punkt) => punkt.ok);
-  const saknas = check.punkter.filter((punkt) => !punkt.ok);
   const extra = (enhet.saknas || []).map((rad) => `<li class="saknas">${esc(rad)}</li>`).join('');
   return `
     <section data-saknas-panel>
-      <h3>Finns</h3>
-      <ul>${finns.map((punkt) => `<li class="ok">${esc(punkt.text)}</li>`).join('') || '<li>Inget är ikryssat ännu.</li>'}</ul>
-      <h3>Saknas</h3>
-      <ul>${saknas.map((punkt) => `<li class="saknas">${esc(punkt.text)}</li>`).join('') || '<li>Inget saknas på checklistan.</li>'}</ul>
-      ${extra ? `<h3>Övrigt som datapaketet nämner</h3><ul>${extra}</ul>` : ''}
+      ${ritaChecklista(check, 'mini')}
+      ${extra ? `<h3>Ordagrant ur datapaketet</h3><ul>${extra}</ul>` : ''}
       <p class="fin">Eget individbeteende för just den här enheten saknas. De gemensamma reglerna ligger under Beteende.</p>
     </section>`;
 }

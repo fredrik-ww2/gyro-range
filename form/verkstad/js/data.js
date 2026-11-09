@@ -311,57 +311,188 @@ function animationBehovs(enhet) {
   return trupp === 'Infanteri' || trupp === 'Stridsvagn' || trupp === 'Fordon' || trupp === 'Rekognosering';
 }
 
-function fastpunkterKlara(enhet) {
-  const punkter = Object.values(enhet.fastpunkter || {}).filter((punkt) => punkt?.tillamplig !== false);
-  if (!punkter.length) return !harText(enhet.saknas, /fastpunkt/i);
-  return punkter.every((punkt) => punkt.position_m);
+function saknasRader(enhet, monster) {
+  return (enhet?.saknas || []).filter((rad) => monster.test(rad));
 }
 
-/** Checklista för steg 1. Mappen räknas här, inte från indexets hårdkodade nivå. */
+function punkt(id, ok, text) {
+  return { id, ok, text };
+}
+
+/** Fästpunkt är bara en koordinat. Den säger inget om att effekten finns eller är kopplad. */
+function fastpunktStatus(enhet) {
+  const poster = Object.entries(enhet.fastpunkter || {}).filter(([, post]) => post?.tillamplig !== false);
+  const namn = poster
+    .filter(([, post]) => !post.position_m || post.status === 'saknas')
+    .map(([id]) => id);
+  const rader = saknasRader(enhet, /fastpunkt/i);
+  if (!poster.length && !rader.length) return punkt('fastpunkter', false, 'Effektfästpunkter: Ej verifierat');
+  if (namn.length || rader.length) {
+    const vilka = namn.length ? namn.join(', ') : rader.join('; ');
+    return punkt('fastpunkter', false, 'Effektfästpunkter saknas: ' + vilka);
+  }
+  return punkt('fastpunkter', true, 'Effektfästpunkter finns');
+}
+
+function effektStatus(enhet) {
+  const effekter = enhet.effekter || null;
+  const rader = saknasRader(enhet, /effekt/i).filter((rad) => !/fastpunkt/i.test(rad));
+  const lista = []
+    .concat(namnUrLista(effekter?.saknas))
+    .concat(namnUrLista(effekter?.saknade))
+    .concat(rader);
+  const status = String(effekter?.status || '');
+  const kopplade = namnUrLista(effekter?.kopplade || effekter?.kopplade_effekter);
+  if (kopplade.length && /kopplad/i.test(status) && !/inte kopplat|saknas|referens/i.test(status)) {
+    return punkt('effekter', true, 'Nödvändiga effekter finns och är kopplade: ' + kopplade.join(', '));
+  }
+  if (lista.length) return punkt('effekter', false, 'Effekter saknas eller är inte kopplade: ' + [...new Set(lista)].join('; '));
+  if (status) return punkt('effekter', false, 'Effekter: ' + status);
+  return punkt('effekter', false, 'Effekter: Ej verifierat');
+}
+
+function ljudStatus(enhet) {
+  const ljud = enhet.ljud || null;
+  const rader = saknasRader(enhet, /ljud/i);
+  const lista = [].concat(namnUrLista(ljud?.saknas)).concat(namnUrLista(ljud?.saknade)).concat(rader);
+  const status = String(ljud?.status || '');
+  const kopplade = namnUrLista(ljud?.kopplade || ljud?.filer);
+  if (kopplade.length && !lista.length && !/inte kopplat|saknas|referens/i.test(status)) {
+    return punkt('ljud', true, 'Nödvändiga ljud finns och är kopplade: ' + kopplade.join(', '));
+  }
+  if (lista.length) return punkt('ljud', false, 'Ljud saknas eller är inte kopplade: ' + [...new Set(lista)].join('; '));
+  if (status) return punkt('ljud', false, 'Ljud: ' + status);
+  return punkt('ljud', false, 'Ljud: Ej verifierat');
+}
+
+function namnUrLista(lista) {
+  if (!Array.isArray(lista)) return [];
+  return lista.map((post) => {
+    if (typeof post === 'string') return post;
+    if (post && typeof post === 'object') return post.namn || post.id || post.fil || '';
+    return '';
+  }).filter(Boolean);
+}
+
+function animationStatus(enhet) {
+  const rader = saknasRader(enhet, /animation/i);
+  if (rader.length) return punkt('animation', false, 'Animation: ' + rader.join('; '));
+  const klipp = (enhet.modeller || []).some((modell) => (modell.animationer || []).length > 0);
+  if (klipp) return punkt('animation', true, 'Animationer finns i modellen');
+  if (!animationBehovs(enhet)) return punkt('animation', true, 'Animation behövs inte för den här typen');
+  return punkt('animation', false, 'Animation: Ej verifierat');
+}
+
+function iphoneStatus(enhet) {
+  const godkand = enhet.iphone_prov?.riktig === true && enhet.iphone_prov?.godkand === true;
+  if (godkand) return punkt('iphone', true, 'Granskad på riktig iPhone');
+  const rader = saknasRader(enhet, /iphone/i);
+  if (rader.length) return punkt('iphone', false, 'Riktig iPhone: ' + rader.join('; '));
+  return punkt('iphone', false, 'Riktig iPhone: Ej verifierat. Simulerad mobil räknas inte.');
+}
+
+function provspelStatus(enhet) {
+  const godkand = enhet.provspel?.godkand === true && enhet.provspel?.riktig_iphone === true;
+  if (godkand) return punkt('provspel', true, 'Provspelad på riktig iPhone');
+  const rader = saknasRader(enhet, /provspel/i);
+  if (rader.length) return punkt('provspel', false, 'Provspel: ' + rader.join('; '));
+  return punkt('provspel', false, 'Provspel på riktig iPhone: Ej verifierat. Simulerad mobil räknas inte.');
+}
+
+function vardenStatus(enhet) {
+  const uppskattade = antalUppskattade(enhet);
+  const saknade = HUVUDVARDEN.filter((sokvag) => {
+    const nod = hamta(enhet.spelvarden || {}, sokvag);
+    return nod?.varde == null || nod.varde === '';
+  });
+  if (!uppskattade && !saknade.length) return punkt('varden', true, 'Stridsvärden har källa eller är godkända av dig');
+  const delar = [];
+  if (saknade.length) delar.push(saknade.length + ' huvudvärden saknas');
+  if (uppskattade) delar.push(uppskattade + ' huvudvärden är uppskattade');
+  return punkt('varden', false, 'Stridsvärden: ' + delar.join(', '));
+}
+
+function skadaStatus(enhet) {
+  const funna = [];
+  (function ga(nod, stig) {
+    if (!nod || typeof nod !== 'object') return;
+    if (Object.prototype.hasOwnProperty.call(nod, 'varde')) {
+      if (/skada|genomslag|penetration/i.test(stig)) funna.push({ stig, nod });
+      return;
+    }
+    for (const [nyckel, barn] of Object.entries(nod)) {
+      if (nyckel === 'andringshistorik') continue;
+      ga(barn, stig ? stig + '.' + nyckel : nyckel);
+    }
+  })(enhet.spelvarden || {}, '');
+  if (!funna.length) return punkt('skada', false, 'Skada och genomslag: Ej verifierat');
+  const oklara = funna.filter((rad) => rad.nod.varde == null || rad.nod.varde === '' || rad.nod.ursprung === 'uppskattat');
+  if (!oklara.length) return punkt('skada', true, 'Skada och genomslag har källa');
+  return punkt('skada', false, 'Skada och genomslag: ' + oklara.map((rad) => rad.stig).join(', '));
+}
+
+function beteendeStatus(enhet) {
+  const kopplad = enhet.beteende?.status === 'kopplad' || enhet.individregler?.status === 'kopplad';
+  if (kopplad) return punkt('beteende', true, 'Individregler och beteende är kopplade');
+  const profil = enhet.spelvarden?.beteendeprofil?.profil;
+  if (profil) return punkt('beteende', false, 'Beteende: profilen ' + profil + ' är inte en inkopplad regel. Ej verifierat i körande kod.');
+  return punkt('beteende', false, 'Beteende och individregler: Ej verifierat');
+}
+
+/**
+ * Tre rubriker. Mappen följer bara rubrik 1 och 2:
+ * visuellt och ljudmässigt färdig, och därefter om riktigt iPhone-prov återstår.
+ * Rubrik 3 visas men flyttar inte enheten.
+ */
 export function checklista(enhet) {
   const uppskattade = antalUppskattade(enhet);
   const modell = harModell(enhet);
+  const textur = harTextur(enhet);
   const lod = harLod(enhet);
   const mobil = harMobil(enhet);
-  const animationSaknas = harText(enhet.saknas, /animation/i);
-  const animationRelevant = animationBehovs(enhet);
-  const punkter = [
-    { id: 'modell', ok: modell, text: '3D-modell finns' },
-    { id: 'textur', ok: harTextur(enhet), text: 'Texturer' },
-    { id: 'lod', ok: lod, text: 'LOD-kedja' },
-    { id: 'mobil', ok: mobil, text: 'Mobilanpassad' },
+  const grupper = [
     {
-      id: 'varden',
-      ok: uppskattade === 0,
-      text: uppskattade === 0
-        ? 'Alla huvudvärden har källa eller är godkända av dig'
-        : `Alla huvudvärden har källa eller är godkända av dig (${uppskattade} uppskattade kvar)`
-    },
-    { id: 'skada', ok: false, text: 'Skada och genomslag' },
-    { id: 'ljud', ok: !harText(enhet.saknas, /ljud/i), text: 'Ljud' },
-    {
-      id: 'fast',
-      ok: fastpunkterKlara(enhet),
-      text: 'Effektfästpunkter'
+      id: 'visuellt',
+      rubrik: '1. Allt visuellt och ljud',
+      punkter: [
+        punkt('modell', modell, modell ? '3D-modell finns' : '3D-modell saknas'),
+        punkt('textur', textur, textur ? 'Texturer finns' : 'Texturer saknas'),
+        punkt('lod', lod, lod ? 'LOD-kedja finns' : 'LOD-kedja saknas'),
+        punkt('mobil', mobil, mobil ? 'Mobilanpassad fil finns' : 'Mobilanpassad fil saknas'),
+        animationStatus(enhet),
+        fastpunktStatus(enhet),
+        effektStatus(enhet),
+        ljudStatus(enhet)
+      ]
     },
     {
-      id: 'animation',
-      ok: animationRelevant ? !animationSaknas : true,
-      text: animationRelevant ? 'Animation' : 'Animation behövs inte för den här typen'
+      id: 'iphone',
+      rubrik: '2. Provspel och test på iPhone',
+      punkter: [provspelStatus(enhet), iphoneStatus(enhet)]
     },
-    { id: 'provspel', ok: !harText(enhet.saknas, /provspelad/i), text: 'Provspelad' },
-    { id: 'iphone', ok: !harText(enhet.saknas, /iPhone/i), text: 'Granskad på riktig iPhone' }
+    {
+      id: 'osynligt',
+      rubrik: '3. Alla stridsvärden och annat som varken syns eller hörs',
+      punkter: [vardenStatus(enhet), skadaStatus(enhet), beteendeStatus(enhet)]
+    }
   ];
-  const mjuka = new Set(['varden', 'ljud', 'provspel', 'iphone', 'skada', 'fast', 'textur']);
-  const alla = punkter.every((punkt) => punkt.ok);
-  const port = modell && lod && mobil;
-  const hartOppet = punkter.some((punkt) => !punkt.ok && !mjuka.has(punkt.id));
+  const punkter = grupper.flatMap((grupp) => grupp.punkter.map((post) => ({ ...post, grupp: grupp.id })));
+  const synligtKlart = grupper[0].punkter.every((post) => post.ok);
+  const iphoneKlart = grupper[1].punkter.every((post) => post.ok);
   let niva = '3_tidigt_skede';
-  if (alla) niva = 'klar';
-  else if (port && !hartOppet) niva = '1_nastan_klar';
+  if (synligtKlart && iphoneKlart) niva = 'klar';
+  else if (synligtKlart) niva = '1_nastan_klar';
   else if (modell) niva = '2_halvvags';
-  const klara = punkter.filter((punkt) => punkt.ok).length;
-  return { punkter, niva, uppskattade, klara, totalt: punkter.length, status: niva === 'klar' ? 'klar' : 'under_utveckling' };
+  const klara = punkter.filter((post) => post.ok).length;
+  return {
+    grupper,
+    punkter,
+    niva,
+    uppskattade,
+    klara,
+    totalt: punkter.length,
+    status: niva === 'klar' ? 'klar' : 'under_utveckling'
+  };
 }
 
 const MOBIL_TRI = { nar: [8000, 20000], enkel: [4000, 12000], skylt: [32, 400] };
@@ -466,16 +597,15 @@ export function markeText(ursprung) {
 }
 
 export function ritaChecklista(check, extra = '') {
-  const rad = (punkt) => `<li class="${punkt.ok ? 'ok' : 'saknas'}" data-punkt="${punkt.id}" data-ok="${punkt.ok}"><span aria-hidden="true">${punkt.ok ? '✓' : '○'}</span> ${esc(punkt.text)}</li>`;
-  const klart = check.punkter.filter((punkt) => punkt.ok).map(rad).join('');
-  const saknas = check.punkter.filter((punkt) => !punkt.ok).map(rad).join('');
+  const rad = (post, grupp) => `<li class="${post.ok ? 'ok' : 'saknas'}" data-punkt="${esc(post.id)}" data-grupp="${esc(grupp)}" data-ok="${post.ok}"><span aria-hidden="true">${post.ok ? '✓' : '○'}</span> ${esc(post.text)}</li>`;
+  const grupper = (check.grupper || []).map((grupp) => `
+    <section data-statusgrupp="${esc(grupp.id)}">
+      <h2>${esc(grupp.rubrik)}</h2>
+      <ul>${grupp.punkter.map((post) => rad(post, grupp.id)).join('')}</ul>
+    </section>`).join('');
   return `<section class="checklista ${extra}" data-saknas data-checklista>
-    <h2>Saknas för att bli klar</h2>
-    <p class="fin">${check.klara} av ${check.totalt} är klara. ${check.uppskattade} huvudvärden är fortfarande uppskattade.</p>
-    <h3>Saknas</h3>
-    <ul data-saknas-lista>${saknas || '<li class="ok">Inget saknas på checklistan.</li>'}</ul>
-    <h3>Redan klart</h3>
-    <ul data-klart-lista>${klart || '<li class="saknas">Inget är klart ännu.</li>'}</ul>
+    <p class="fin">Mappen följer det som syns och hörs, och hur nära enheten är ett prov på riktig iPhone. Rubrik 3 visas men flyttar inte enheten. ${check.uppskattade} huvudvärden är uppskattade.</p>
+    ${grupper}
   </section>`;
 }
 

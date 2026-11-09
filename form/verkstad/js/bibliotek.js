@@ -30,7 +30,7 @@ export function monteraBibliotek(el, index, katalog, { oppnaEnhet, oppnaStall, b
       </div>
       <a class="knapp primar" href="#stall">Ställ ut</a>
     </header>
-    <p class="ledtext">${klara ? `${klara} enheter är klara.` : 'Ingen enhet är klar. Nästan klar betyder att modell, LOD-kedja och mobilfil finns, och att animation inte saknas.'}</p>
+    <p class="ledtext">${klara ? `${klara} enheter är klara.` : 'Ingen enhet är klar. Nästan färdig betyder att allt visuellt och allt ljud är klart, och att bara prov på riktig iPhone återstår. Stridsvärden visas men flyttar inte mappen.'}</p>
     <p class="fargforklaring">Gul markering betyder att värdet är uppskattat av datorn. Det är inte hämtat ur källdata.</p>
     ${fokusText(fokus)}
     <label class="sokfalt">Sök enhet
@@ -105,7 +105,6 @@ function ritaPost(rad) {
   const niva = NIVA_NAMN[check.niva] || (check.niva === 'klar' ? 'Klar' : '');
   const sok = `${enhet.namn} ${nationVisning(enhet.nation)} ${vapenslag(enhet)} ${enhet.id}`.toLowerCase();
   const djup = check.niva === '1_nastan_klar' || check.niva === '2_halvvags';
-  const saknas = check.punkter.filter((punkt) => !punkt.ok);
   return `
     <article class="enhetsrad" data-enhet="${esc(enhet.id)}" data-status="${esc(check.status)}" data-niva="${esc(check.niva)}" data-sok="${esc(sok)}">
       <button type="button" class="rad" data-sok="${esc(sok)}">
@@ -117,7 +116,7 @@ function ritaPost(rad) {
       </button>
       ${vardenKort(enhet)}
       ${beteendeKort()}
-      ${djup ? saknasKort(saknas) : ''}
+      ${djup ? saknasKort(check) : ''}
     </article>`;
 }
 
@@ -127,13 +126,17 @@ function vardenKort(enhet) {
   return `<p class="varden-kort">${rader.map((rad) => `<span class="${rad.farg === 'gul' ? 'uppskattat' : rad.farg === 'rod' ? 'saknasvarde' : 'kalla'}">${esc(VARDEN_NAMN[rad.stig])} ${esc(rad.text)}</span>`).join('')}</p>`;
 }
 
-function saknasKort(saknas) {
-  const rader = saknas.map((punkt) => ({ id: punkt.id, text: punkt.text }));
-  if (gemensamtBeteende && gemensamtBeteende.status !== 'inkopplad') {
-    rader.push({ id: 'beteende', text: 'Beteende i koden' });
-  }
-  if (!rader.length) return '<p class="fin">Inget saknas på checklistan.</p>';
-  return `<ul class="saknas-kort" data-checklista>${rader.map((rad) => `<li data-punkt="${esc(rad.id)}" data-ok="false">${esc(rad.text)}</li>`).join('')}</ul>`;
+function saknasKort(check) {
+  const delar = (check.grupper || []).map((grupp) => {
+    const saknas = grupp.punkter.filter((post) => !post.ok);
+    const rubrik = `<li class="grupp-rubrik" data-grupp="${esc(grupp.id)}">${esc(grupp.rubrik)}</li>`;
+    const rader = saknas.map((post) => `<li data-punkt="${esc(post.id)}" data-grupp="${esc(grupp.id)}" data-ok="false">${esc(post.text)}</li>`).join('');
+    return rubrik + (rader || `<li data-grupp="${esc(grupp.id)}" data-ok="true">Inget saknas under den här rubriken.</li>`);
+  }).join('');
+  const kod = gemensamtBeteende && gemensamtBeteende.status !== 'inkopplad'
+    ? '<li data-punkt="beteende" data-grupp="osynligt" data-ok="false">Beteende i koden är inte inkopplat</li>'
+    : '';
+  return `<ul class="saknas-kort" data-checklista>${delar}${kod}</ul>`;
 }
 
 function beteendeKort() {

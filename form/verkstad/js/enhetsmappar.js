@@ -122,7 +122,12 @@ function ritaVapen(poster, prefix, ritaEnhet) {
     hinkar.get(vapen).push(rad);
   }
   return VAPEN_ORDNING.filter((vapen) => hinkar.get(vapen)?.length).map((vapen) => {
-    const lista = hinkar.get(vapen).slice().sort((a, b) => a.enhet.namn.localeCompare(b.enhet.namn, 'sv'));
+    const rang = { klar: 0, '1_nastan_klar': 1, '2_halvvags': 2, '3_tidigt_skede': 3 };
+    const lista = hinkar.get(vapen).slice().sort((a, b) => {
+      const skillnad = (rang[a.check?.niva] ?? 9) - (rang[b.check?.niva] ?? 9);
+      if (skillnad) return skillnad;
+      return a.enhet.namn.localeCompare(b.enhet.namn, 'sv');
+    });
     const vag = prefix + '/' + vapen;
     return mappHtml({
       vag,

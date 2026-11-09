@@ -72,9 +72,9 @@ try {
     if (rot.querySelector('[data-enhet="usa_rifleman"]')) return 'infanterist ska vara dold';
     return true;
   }, 60000);
-  await sida.click('[data-vag="nastan"] > summary');
-  await sida.click('[data-vag="nastan/Tyskland"] > summary');
-  await sida.click('[data-vag="nastan/Tyskland/Stridsvagnar"] > summary');
+  await sida.click('[data-vag="utveckling"] > summary');
+  await sida.click('[data-vag="utveckling/Tyskland"] > summary');
+  await sida.click('[data-vag="utveckling/Tyskland/Stridsvagnar"] > summary');
   await vanta(sida, () => {
     const rad = document.querySelector('[data-enhet="tiger_i"]')?.closest('.enhetsrad');
     if (!rad) return 'tiger rad saknas';

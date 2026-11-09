@@ -92,8 +92,10 @@ try {
   for (const id of ['stilar', 'forband', 'intelligens', 'regler', 'scenarier', 'resultat']) {
     await page.waitForSelector(`[data-mapp="${id}"][data-tom="true"]`);
   }
-  const nara = Number(await page.locator('[data-vag="nastan"]').getAttribute('data-antal'));
-  if (nara < 1) throw new Error('Nästan färdiga blev tom: ' + nara);
+  const tigerNiva = await page.locator('[data-enhet="tiger_i"]').getAttribute('data-niva');
+  if (tigerNiva !== '2_halvvags') throw new Error('Tiger rangordnades inte efter synligt och ljud: ' + tigerNiva);
+  const tigerMapp = await page.locator('[data-enhet="tiger_i"]').evaluate((nod) => nod.closest('[data-enhetstrad] > details')?.dataset.vag);
+  if (tigerMapp !== 'utveckling') throw new Error('Tiger hamnade i ' + tigerMapp);
   await page.locator('[data-vag="utveckling"]').evaluate((el) => {
     el.open = true;
     const nation = el.querySelector('[data-land="Tyskland"]');
@@ -106,7 +108,9 @@ try {
 
   await page.locator('[data-enhet="m3_lee"]').click();
   await page.waitForSelector('.statusrad[data-status="under_utveckling"]');
-  await page.locator('section[data-vy="kort"]').getByRole('heading', { name: 'Saknas för att bli klar' }).waitFor();
+  await page.locator('section[data-vy="kort"]').getByRole('heading', { name: '1. Allt visuellt och ljud' }).waitFor();
+  await page.locator('section[data-vy="kort"]').getByRole('heading', { name: '2. Provspel och test på iPhone' }).waitFor();
+  await page.locator('section[data-vy="kort"]').getByRole('heading', { name: '3. Alla stridsvärden och annat som varken syns eller hörs' }).waitFor();
   const modellPunkt = page.locator('section[data-vy="kort"] [data-punkt="modell"]');
   if (await modellPunkt.getAttribute('data-ok') !== 'false') throw new Error('M3 Lee visade modell som klar');
   const skadaPunkt = page.locator('section[data-vy="kort"] [data-punkt="skada"]');

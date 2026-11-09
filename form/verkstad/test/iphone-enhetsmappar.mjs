@@ -90,9 +90,18 @@ try {
     if (vag.join(',') !== 'fardiga,nastan,utveckling') return 'ordning ' + vag.join(',');
     const fardiga = rot.querySelector('[data-vag="fardiga"]');
     if (fardiga.dataset.tom !== 'true' || fardiga.dataset.antal !== '0') return 'färdiga ' + fardiga.dataset.antal;
-    const nastan = Number(rot.querySelector('[data-vag="nastan"]').dataset.antal);
+    const tiger = rot.querySelector('[data-enhet="tiger_i"]');
+    if (!tiger) return 'tiger saknas';
+    if (tiger.dataset.niva !== '2_halvvags') return 'tiger niva ' + tiger.dataset.niva;
+    if (tiger.closest('[data-enhetstrad] > details')?.dataset.vag !== 'utveckling') return 'tiger mapp';
+    const effekt = tiger.querySelector('[data-punkt="effekter"]');
+    const ljud = tiger.querySelector('[data-punkt="ljud"]');
+    const varden = tiger.querySelector('[data-punkt="varden"][data-grupp="osynligt"]');
+    if (!effekt || effekt.dataset.ok !== 'false') return 'effekt';
+    if (!ljud || ljud.dataset.ok !== 'false') return 'ljud';
+    if (!varden) return 'värden dolda';
     const utveckling = Number(rot.querySelector('[data-vag="utveckling"]').dataset.antal);
-    if (nastan < 1 || utveckling < 1) return `antal nästan=${nastan} utveckling=${utveckling}`;
+    if (utveckling < 1) return 'utveckling tom';
     const kulsprutor = rot.querySelectorAll('[data-vapen="Kulsprutor"]').length;
     const ovriga = rot.querySelectorAll('[data-land="Övriga"]').length;
     if (kulsprutor !== 0) return 'kulsprutor ska ligga utanför starturvalet';
@@ -106,19 +115,19 @@ try {
   }, 60000);
   await sida.screenshot({ path: join(ART, 'enhetsmappar-stangda.png') });
 
-  await sida.click('[data-vag="nastan"] > summary');
-  await sida.click('[data-vag="nastan/Tyskland"] > summary');
-  await sida.click('[data-vag="nastan/Tyskland/Stridsvagnar"] > summary');
+  await sida.click('[data-vag="utveckling"] > summary');
+  await sida.click('[data-vag="utveckling/Tyskland"] > summary');
+  await sida.click('[data-vag="utveckling/Tyskland/Stridsvagnar"] > summary');
   await sida.evaluate(() => {
-    document.querySelector('[data-vag="nastan"] > summary')?.scrollIntoView({ block: 'start' });
+    document.querySelector('[data-vag="utveckling"] > summary')?.scrollIntoView({ block: 'start' });
   });
   await vanta(sida, () => {
-    const vapen = document.querySelector('[data-vag="nastan/Tyskland/Stridsvagnar"]');
+    const vapen = document.querySelector('[data-vag="utveckling/Tyskland/Stridsvagnar"]');
     if (!vapen?.open) return 'stridsvagnar stängd';
     if (!vapen.querySelector('[data-enhet="tiger_i"]')) return 'tiger saknas';
     const sparad = localStorage.getItem('form-verkstad-senaste-mapp');
-    if (sparad !== 'nastan/Tyskland/Stridsvagnar') return 'minne ' + sparad;
-    const landAntal = Number(document.querySelector('[data-vag="nastan/Tyskland"]').dataset.antal);
+    if (sparad !== 'utveckling/Tyskland/Stridsvagnar') return 'minne ' + sparad;
+    const landAntal = Number(document.querySelector('[data-vag="utveckling/Tyskland"]').dataset.antal);
     const vapenAntal = Number(vapen.dataset.antal);
     if (vapenAntal < 1 || vapenAntal > landAntal) return `antal vapen=${vapenAntal} land=${landAntal}`;
     return true;
@@ -129,9 +138,9 @@ try {
   await vanta(sida, () => {
     const rot = document.querySelector('section[data-vy="bibliotek"]');
     if (rot?.dataset.redo !== 'bibliotek') return 'inte redo';
-    const vapen = document.querySelector('[data-vag="nastan/Tyskland/Stridsvagnar"]');
+    const vapen = document.querySelector('[data-vag="utveckling/Tyskland/Stridsvagnar"]');
     if (!vapen?.open) return 'minnet öppnade inte mappen';
-    if (!document.querySelector('[data-vag="nastan"]')?.open) return 'förälder stängd';
+    if (!document.querySelector('[data-vag="utveckling"]')?.open) return 'förälder stängd';
     return true;
   }, 60000);
   await sida.screenshot({ path: join(ART, 'enhetsmappar-ihagkommen.png') });
@@ -148,7 +157,7 @@ try {
     if (!ark || ark.hidden) return 'ark dolt';
     const vag = [...ark.querySelectorAll('[data-enhetstrad] > details')].map((nod) => nod.dataset.vag);
     if (vag.join(',') !== 'fardiga,nastan,utveckling') return 'välj-ordning ' + vag.join(',');
-    const oppen = ark.querySelector('[data-vag="nastan/Tyskland/Stridsvagnar"]');
+    const oppen = ark.querySelector('[data-vag="utveckling/Tyskland/Stridsvagnar"]');
     if (!oppen?.open) return 'väljaren minns inte';
     return true;
   });

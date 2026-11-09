@@ -46,14 +46,29 @@ async function kollaKort(sida) {
   await vanta(sida, () => {
     const kort = document.querySelector('section[data-vy="kort"]');
     if (!kort) return 'kort saknas';
-    const saknas = kort.querySelector('[data-saknas-lista]');
-    const klart = kort.querySelector('[data-klart-lista]');
+    const text = kort.innerText;
+    const visuell = text.indexOf('1. Allt visuellt och ljud');
+    const iphoneRubrik = text.indexOf('2. Provspel och test på iPhone');
+    const osynlig = text.indexOf('3. Alla stridsvärden och annat som varken syns eller hörs');
+    if (visuell < 0 || iphoneRubrik < 0 || osynlig < 0 || !(visuell < iphoneRubrik && iphoneRubrik < osynlig)) {
+      return 'rubrikordning';
+    }
+    const effekt = kort.querySelector('[data-statusgrupp="visuellt"] [data-punkt="effekter"]');
+    const fast = kort.querySelector('[data-statusgrupp="visuellt"] [data-punkt="fastpunkter"]');
+    const ljud = kort.querySelector('[data-statusgrupp="visuellt"] [data-punkt="ljud"]');
+    const iphone = kort.querySelector('[data-statusgrupp="iphone"] [data-punkt="iphone"]');
+    const varden = kort.querySelector('[data-statusgrupp="osynligt"] [data-punkt="varden"]');
     const tabell = kort.querySelector('[data-stridstabell]');
-    if (!saknas || !klart || !tabell) return 'listor saknas';
-    if (!kort.innerText.includes('Saknas för att bli klar')) return 'rubrik';
-    if (!kort.innerText.includes('Redan klart')) return 'klart';
+    if (!effekt || !fast || !ljud || !iphone || !varden || !tabell) return 'punkter saknas';
+    if (effekt.dataset.ok !== 'false') return 'effekt felaktigt klar';
+    if (ljud.dataset.ok !== 'false') return 'ljud felaktigt klart';
+    if (iphone.dataset.ok !== 'false') return 'iphone felaktigt klar';
+    if (fast.dataset.ok === 'true' && effekt.dataset.ok === 'true') return 'fästpunkt fick räknas som effekt';
+    if (!/Ej verifierat|inte kopplat|saknas/i.test(effekt.textContent || '')) return 'effekttext';
     if (!tabell.querySelector('.uppskattat')) return 'gul saknas';
     if (!tabell.querySelector('.kalla') && !tabell.querySelector('[data-marke="källa"]')) return 'källa saknas';
+    const niva = kort.querySelector('.statusrad')?.dataset.niva;
+    if (niva === 'klar' || niva === '1_nastan_klar') return 'rang ' + niva;
     return true;
   });
 }
@@ -80,7 +95,8 @@ try {
   await sida.evaluate(() => document.querySelector('[data-enhet="tiger_i"]').click());
   await kollaKort(sida);
   await sida.evaluate(() => document.querySelector('[data-checklista]')?.scrollIntoView({ block: 'start' }));
-  await sida.screenshot({ path: ART + '/bibliotekskort-tiger-saknas.png' });
+  const tigerLista = await sida.$('section[data-vy="kort"] [data-checklista]');
+  await tigerLista.screenshot({ path: ART + '/bibliotekskort-tiger-saknas.png' });
   await sida.evaluate(() => document.querySelector('[data-stridstabell]')?.scrollIntoView({ block: 'start' }));
   await sida.screenshot({ path: ART + '/bibliotekskort-tiger.png' });
   console.log('tiger');
@@ -89,8 +105,8 @@ try {
   await kollaKort(sida);
   const namn = await sida.evaluate(() => document.querySelector('section[data-vy="kort"] h1')?.textContent || '');
   if (!/infanterist/i.test(namn)) throw new Error('fel enhet ' + namn);
-  await sida.evaluate(() => window.scrollTo(0, 0));
-  await sida.screenshot({ path: ART + '/bibliotekskort-infanteri-saknas.png' });
+  const infanteriLista = await sida.$('section[data-vy="kort"] [data-checklista]');
+  await infanteriLista.screenshot({ path: ART + '/bibliotekskort-infanteri-saknas.png' });
   await sida.evaluate(() => document.querySelector('[data-stridstabell]')?.scrollIntoView({ block: 'start' }));
   await sida.screenshot({ path: ART + '/bibliotekskort-infanteri.png' });
   console.log('infanteri', namn);

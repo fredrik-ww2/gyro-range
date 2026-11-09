@@ -5,15 +5,31 @@ export const KANS={
  normal:{tipp:250,vrid:250},
  hog:{tipp:160,vrid:160}
 };
-export const STALLNING_NAMN={staende:'Stående',hukande:'Hukande',liggande:'Liggande'};
+export const STALLNING_NAMN={staende:'Stående',hukande:'Hukande',knastående:'Knästående',liggande:'Liggande'};
 const ORDNING=['liggande','hukande','staende'];
 
 export function nastaStallning(nu,gest){
- const i=ORDNING.indexOf(nu);
  if(gest==='dyk')return 'liggande';
+ const steg=nu==='knastående'?'hukande':nu;
+ const i=ORDNING.indexOf(steg);
  if(gest==='ner')return ORDNING[Math.max(0,i-1)];
  if(gest==='upp')return ORDNING[Math.min(ORDNING.length-1,i+1)];
  return nu;
+}
+
+// Snabb knyck framåt kastar sig ner. Knyck uppåt tar ett steg. Gamla gyrot finns kvar som eget läge.
+export function skapaKnyckStallning(){
+ let redoNed=true,redoUpp=true,sparr=0;
+ return {
+  steg(t,tipp,ner,upp){
+   if(t<sparr)return null;
+   if(tipp<ner*.45)redoNed=true;
+   if(-tipp<upp*.45)redoUpp=true;
+   if(tipp>=ner&&redoNed){redoNed=false;sparr=t+.55;return 'dyk';}
+   if(-tipp>=upp&&redoUpp){redoUpp=false;sparr=t+.55;return 'upp';}
+   return null;
+  }
+ };
 }
 
 export function skapaDetektor(){

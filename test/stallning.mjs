@@ -1,4 +1,4 @@
-import {skapaDetektor, simulera} from '../js/stallning.js';
+import {skapaDetektor, simulera, skapaKnyckStallning, nastaStallning} from '../js/stallning.js';
 
 const fel = [];
 function kontroll(namn, villkor, detalj){if(!villkor)fel.push(namn+(detalj?' '+JSON.stringify(detalj):''));}
@@ -48,6 +48,13 @@ const d=skapaDetektor();let t=0;
 for(const p of puls(510,470)){t+=p.ms/1000;d.steg(t,p.tipp,p.vrid,'normal');}
 const m=d.visning();
 kontroll('mätare tipp och vrid', m.tipp>=470&&m.vrid>=450, m);
+
+const kn=skapaKnyckStallning();
+kontroll('knyck ner är dyk', kn.steg(1,300,250,220)==='dyk'&&nastaStallning('staende','dyk')==='liggande');
+kontroll('knyck spärr', kn.steg(1.2,300,250,220)===null);
+kontroll('knyck upp', kn.steg(2,-300,250,220)==='upp'&&nastaStallning('liggande','upp')==='hukande');
+kontroll('knyck upp till stående', nastaStallning('hukande','upp')==='staende');
+kontroll('knä upp till stående', nastaStallning('knastående','upp')==='staende');
 
 if(fel.length){console.error(fel.join('\n'));process.exit(1);}
 console.log('stallning-ok', JSON.stringify({ner:ner.stall,dyk:dyk.stall,upp1:uppFranLigg.stall,upp2:uppFranHuk.stall,langsam:langsam.stall,sparr:dubbel.stall,meter:m}));

@@ -16,7 +16,7 @@ import { byggFormMark, hamtaLandskap } from './formvarld.js';
 import { byggFormSkog } from './formskog.js';
 import {
   FARG, fartFaktor, ganglagAv, indexera, laddaTyper, linjeMot, markId, ofarbar, ritaHinderlista,
-  ritaTerrangkort, skyddFaktor, typVid, vapenAv
+  kvarvarandeVarde, ritaTerrangkort, typVid, vapenAv
 } from './terrang.js';
 
 const NAR_M = 250;
@@ -570,26 +570,16 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
       }
       minaVid(post);
       post.sedanSkott = (post.sedanSkott || 0) + dt;
-      const siktStopp = linjeMot(post.x, post.z, mal.x, mal.z, hinder, terrangPaket.typer, 'blockerar_sikt');
-      const linjeStopp = linjeMot(post.x, post.z, mal.x, mal.z, hinder, terrangPaket.typer, 'blockerar_skjutlinje');
-      if (bast < 220 && post.sedanSkott > 1.1 && !siktStopp.length) {
+      if (bast < 220 && post.sedanSkott > 1.1) {
         post.sedanSkott = 0;
         visaSkott(post, mal);
-        if (linjeStopp.length) {
-          const traff = linjeStopp[0];
-          if (traff.typ.kan_forstoras && post.vapen !== 'handeldvapen') {
-            traff.post.forstord = true;
-            if (traff.post.mesh) traff.post.mesh.visible = false;
-            status.textContent = traff.typ.namn + ' förstördes.';
-            spara();
-          } else {
-            status.textContent = 'Skottet stoppades av ' + traff.typ.namn.toLowerCase() + '.';
-          }
-        } else {
-          const skydd = skyddFaktor(markUnder(mal.x, mal.z), post.vapen || 'handeldvapen', mal.ganglag || 'fot');
-          mal.hp = (mal.hp ?? 100) - 34 * (1 - skydd);
-          if (mal.hp <= 0) mal.grupp.visible = false;
+        const hot = post.vapen || 'handeldvapen';
+        let faktor = kvarvarandeVarde(markUnder(mal.x, mal.z), hot);
+        for (const traff of linjeMot(post.x, post.z, mal.x, mal.z, hinder, terrangPaket.typer, 'id')) {
+          faktor = Math.min(faktor, kvarvarandeVarde(traff.typ, hot));
         }
+        mal.hp = (mal.hp ?? 100) - 34 * faktor;
+        if (mal.hp <= 0) mal.grupp.visible = false;
       }
     }
   }
@@ -1137,10 +1127,10 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
     for (const rad of hinder) {
       if (rad.forstord || post.minor.has(rad.id)) continue;
       const typ = terrangPaket.typer.get(rad.typ);
-      if (!typ || !(typ.skada_vid_intrad > 0)) continue;
+      if (!typ || !(typ.skada_vid_intrad?.varde > 0)) continue;
       if (Math.hypot(rad.x - post.x, rad.z - post.z) > (typ.radie_m || 0)) continue;
       post.minor.add(rad.id);
-      post.hp = (post.hp ?? 100) - typ.skada_vid_intrad;
+      post.hp = (post.hp ?? 100) - typ.skada_vid_intrad.varde;
       status.textContent = typ.namn + ' skadade enheten.';
       if (post.hp <= 0 && post.grupp) post.grupp.visible = false;
     }

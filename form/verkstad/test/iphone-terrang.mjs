@@ -77,9 +77,10 @@ try {
     const kort = document.querySelector('[data-terrangkort]');
     if (!kort) return 'kort saknas';
     if (kort.dataset.typ !== 'stenmur') return kort.dataset.typ;
-    if (kort.dataset.ursprung !== 'uppskattat') return 'ursprung';
-    if (!kort.innerText.includes('ofarbar')) return 'ofarbar saknas';
-    if (!kort.querySelector('.uppskattat')) return 'gul saknas';
+    if (!kort.innerText.includes('kvarvarande 20 %')) return 'kvarvarande ' + kort.innerText.slice(0, 180);
+    if (!kort.innerText.includes('reduktion 80 %')) return 'reduktion';
+    if (!kort.innerText.includes('inte en historiskt verifierad regel')) return 'ofarbar-text';
+    if (!kort.querySelector('[data-hot="gevar"] .uppskattat')) return 'gul saknas';
     return true;
   });
   await sida.evaluate(() => document.querySelector('[data-terrangkort]')?.scrollIntoView({ block: 'center' }));

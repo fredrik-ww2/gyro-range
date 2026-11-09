@@ -3,17 +3,23 @@
 
 const DATA = new URL('../data/terrang/typer.json', import.meta.url);
 
-const STALLNING = [
-  ['staende', 'Stående'],
-  ['knaende', 'Knästående'],
-  ['liggande', 'Liggande']
-];
-
-const VAPEN = [
-  ['handeldvapen', 'Handeldvapen'],
-  ['splitter', 'Splitter'],
+const HOT = [
+  ['gevar', 'Gevär'],
+  ['kulspruta', 'Kulspruta'],
+  ['prickskytt', 'Prickskytt'],
+  ['splitter_granat', 'Splitter, granat'],
+  ['splitter_artilleri', 'Splitter, artilleri'],
+  ['artilleri_ovanifran', 'Artilleri ovanifrån'],
   ['pansarbrytande', 'Pansarbrytande']
 ];
+
+const TAGG_TEXT = {
+  forskningsdata: 'forskningsdata, förslag ej infört',
+  uppskattning: 'uppskattning',
+  citerat_i_harledning: 'citerat i en härledning',
+  lucka: 'saknas',
+  kalla_text: 'källans text'
+};
 
 const GANG = [
   ['fot', 'Fotsoldat'],
@@ -26,6 +32,8 @@ export const FARG = {
   aker: 0xb59a55,
   skog: 0x2f6a3c,
   buskage: 0x4e8a48,
+  hack: 0x5d8a45,
+  bocagevall: 0x3d6b32,
   hack_bocage: 0x3d6b32,
   stenmur: 0x8d8a84,
   trastaket: 0x8a6a3b,
@@ -55,7 +63,33 @@ export function laddaTyper() {
 
 export function indexera(data) {
   const typer = new Map((data?.typer || []).map((typ) => [typ.id, typ]));
+  if (!typer.has('hack_bocage') && typer.has('bocagevall')) typer.set('hack_bocage', typer.get('bocagevall'));
   return { data, typer };
+}
+
+/* Källans tal är kvarvarande verkan. Lägre är bättre. Reduktion är 1 minus det talet. */
+export function reduktionFranKvarvarande(kvarvarande) {
+  const tal = Number(kvarvarande);
+  if (!Number.isFinite(tal)) return null;
+  return 1 - tal;
+}
+
+export function hotForVapen(vapen) {
+  if (vapen === 'splitter') return 'splitter_artilleri';
+  if (vapen === 'pansarbrytande') return 'pansarbrytande';
+  if (vapen === 'gevar' || vapen === 'kulspruta' || vapen === 'prickskytt' || vapen === 'splitter_granat' || vapen === 'splitter_artilleri' || vapen === 'artilleri_ovanifran') return vapen;
+  return 'gevar';
+}
+
+export function kvarvarandeVarde(typ, vapen) {
+  const hot = hotForVapen(vapen);
+  const post = typ?.kvarvarande?.[hot];
+  if (!post || post.varde == null || !Number.isFinite(Number(post.varde))) return 1;
+  return Number(post.varde);
+}
+
+export function skadaAv(grund, typ, vapen) {
+  return grund * kvarvarandeVarde(typ, vapen);
 }
 
 export function ganglagAv(enhet) {
@@ -101,13 +135,8 @@ export function fartFaktor(typ, ganglag) {
   return Math.max(0, Math.min(1, tal));
 }
 
-export function skyddFaktor(typ, vapen, ganglag) {
-  const tabell = typ?.skydd?.[vapen] || typ?.skydd?.handeldvapen;
-  if (!tabell) return 0;
-  const stallning = ganglag === 'fot' && typ.stallning_spel ? typ.stallning_spel : 'staende';
-  const tal = Number(tabell[stallning]);
-  if (!Number.isFinite(tal)) return 0;
-  return Math.max(0, Math.min(1, tal));
+export function skyddFaktor(typ, vapen) {
+  return kvarvarandeVarde(typ, vapen);
 }
 
 export function ofarbar(typ, ganglag) {
@@ -137,40 +166,54 @@ function avstandTillStracka(px, pz, ax, az, bx, bz) {
 
 export function ritaTerrangkort(typ, { tomKarta = false } = {}) {
   if (!typ) return '';
-  const gul = typ.ursprung !== 'kalla';
-  const klass = gul ? 'uppskattat' : 'kalla';
-  const skydd = VAPEN.map(([nyckel, namn]) => {
-    const rad = typ.skydd?.[nyckel] || {};
-    const celler = STALLNING.map(([stallning, stallNamn]) => `${stallNamn} ${procent(rad[stallning])}`).join(' · ');
-    return `<p><span>${esc(namn)}</span> <strong class="${klass}">${esc(celler)}</strong></p>`;
+  const skydd = HOT.map(([nyckel, namn]) => {
+    const post = typ.kvarvarande?.[nyckel];
+    const klass = markeKlass(post?.tagg);
+    const kvar = post?.varde;
+    const reduktion = reduktionFranKvarvarande(kvar);
+    const text = kvar == null
+      ? 'saknas'
+      : `kvarvarande ${procent(kvar)} · reduktion ${procent(reduktion)} · ${TAGG_TEXT[post.tagg] || post.tagg}`;
+    return `<p data-hot="${esc(nyckel)}" data-tagg="${esc(post?.tagg || 'lucka')}"><span>${esc(namn)}</span> <strong class="${klass}">${esc(text)}</strong></p>`;
   }).join('');
   const fart = GANG.map(([nyckel, namn]) => {
     const faktor = fartFaktor(typ, nyckel);
     const text = faktor <= 0 ? 'ofarbar' : procent(faktor);
-    return `<span class="${klass}">${esc(namn)} ${esc(text)}</span>`;
+    return `<span class="uppskattat">${esc(namn)} ${esc(text)}</span>`;
   }).join('');
+  const mina = typ.skada_vid_intrad?.varde > 0
+    ? '<p class="uppskattat">Minfältets skada är uppskattad och inte en historiskt verifierad regel.</p>'
+    : '';
   return `
-    <section class="terrangkort" data-terrangkort data-typ="${esc(typ.id)}" data-ursprung="${esc(typ.ursprung || 'uppskattat')}">
+    <section class="terrangkort" data-terrangkort data-typ="${esc(typ.id)}" data-ursprung="${esc(typ.kalltyp || 'lucka')}" data-kulskydd="${typ.riktigt_kulskydd ? 'ja' : 'nej'}">
       <h2>${esc(typ.namn)}</h2>
-      <p class="fargforklaring">Gul markering betyder att värdet är uppskattat. Det är inte hämtat ur källfilerna, för de fanns inte bland bilagorna.</p>
+      <p class="fargforklaring">Gult är uppskattat. Kvarvarande verkan är källans tal, lägre är bättre. Reduktion är 1 minus det talet. Forskningsdata är ett förslag och inte en införd regel.</p>
+      ${typ.notering ? `<p class="fin">${esc(typ.notering)}</p>` : ''}
       ${tomKarta ? '<p class="fin">Den här kartan har ingen marktypskarta. Tom mark räknas som äng.</p>' : ''}
+      <p class="fin">${typ.riktigt_kulskydd ? 'Riktigt kulskydd enligt den kopierade gevärsraden.' : 'Inte riktigt kulskydd. Vegetation som bara döljer stoppar inte skottet.'}</p>
       <h3>Skydd</h3>
       ${skydd}
       <h3>Sikt</h3>
       <p class="varden-kort">
-        <span class="${klass}">Insyn ${esc(procent(typ.insyn))}</span>
-        <span class="${klass}">Dold position ${typ.dold_position ? 'ja' : 'nej'}</span>
-        <span class="${klass}">Blockerar sikt ${typ.blockerar_sikt ? 'ja' : 'nej'}</span>
-        <span class="${klass}">Blockerar skjutlinje ${typ.blockerar_skjutlinje ? 'ja' : 'nej'}</span>
+        <span class="${markeKlass(typ.insyn?.tagg)}">Insyn ${esc(procent(typ.insyn?.varde))}</span>
+        <span class="${markeKlass(typ.dold_position?.tagg)}">Dold position ${typ.dold_position?.varde ? 'ja' : 'nej'}</span>
       </p>
       <h3>Förflyttning</h3>
+      <p class="fin">Fart och ofarbar mark är uppskattade. De är inte en historiskt verifierad regel.</p>
       <p class="varden-kort">${fart}</p>
+      ${mina}
       <p class="varden-kort">
-        <span class="${klass}">Höjd ${esc(meter(typ.hojd_m))}</span>
-        <span class="${klass}">Radie ${esc(meter(typ.radie_m))}</span>
-        <span class="${klass}">Kan förstöras ${typ.kan_forstoras ? 'ja' : 'nej'}</span>
+        <span class="uppskattat">Höjd ${esc(meter(typ.hojd_m))}</span>
+        <span class="uppskattat">Radie ${esc(meter(typ.radie_m))}</span>
+        <span class="uppskattat">Kan förstöras ${typ.kan_forstoras?.varde ? 'ja' : 'nej'}</span>
       </p>
     </section>`;
+}
+
+function markeKlass(tagg) {
+  if (tagg === 'forskningsdata' || tagg === 'kalla_text') return 'kalla';
+  if (tagg === 'lucka') return 'saknasvarde';
+  return 'uppskattat';
 }
 
 export function ritaHinderlista(typer) {

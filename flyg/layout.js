@@ -63,12 +63,15 @@ export function layoutFor(w, h, ringRad, fovGrader) {
     styr = box(w - 200, h - styrH, 200, styrH);
   }
 
-  const delar = { header, metrics, hud, panel, sikteHus, gas, system, pedaler, styr };
+  const vyW = liggande ? 176 : 188;
+  const vyH = liggande ? 64 : 76;
+  const vy = box(w - vyW - 10, headerH + 8, vyW, vyH);
+  const delar = { header, metrics, hud, panel, sikteHus, gas, system, pedaler, styr, vy };
   return { w, h, r, cx, cy, liggande, ring, ...delar, headerH, bottenY, panelH: panel.h, panelBottom: h - panel.y - panel.h, gasH: gas.h, systemBottom: h - system.y - system.h };
 }
 
 export function layoutKrockar(L) {
-  const namn = ['header', 'metrics', 'hud', 'panel', 'sikteHus', 'gas', 'system', 'pedaler', 'styr'];
+  const namn = ['header', 'metrics', 'hud', 'panel', 'sikteHus', 'gas', 'system', 'pedaler', 'styr', 'vy'];
   return namn.filter((n) => rectsOverlappar(L.ring, L[n]));
 }
 
@@ -119,6 +122,14 @@ export function applyLayout(doc, L) {
   if (pedaler) {
     pedaler.style.left = (L.pedaler.x + L.pedaler.w / 2) + 'px';
     pedaler.style.bottom = (L.h - L.pedaler.y - L.pedaler.h) + 'px';
+  }
+  const sight = doc.getElementById('sight');
+  if (sight && L.vy) {
+    sight.style.top = L.vy.y + 'px';
+    sight.style.width = L.vy.w + 'px';
+    sight.style.height = L.vy.h + 'px';
+    sight.style.left = 'auto';
+    sight.style.fontSize = (L.liggande ? 20 : 24) + 'px';
   }
   const footer = doc.querySelector('footer');
   if (footer && L.liggande) {

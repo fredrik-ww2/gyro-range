@@ -7,13 +7,13 @@
 <meta name="theme-color" content="#172724">
 <link rel="icon" href="data:,">
 <title>Flygplan · Gyrotest</title>
-<link rel="stylesheet" href="./style.css?v=8">
+<link rel="stylesheet" href="./style.css?v=9">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
 <canvas id="spel" aria-label="Flygplan över Normandie"></canvas>
 <header>
-<div class="eyebrow" id="versionEtikett">Flygprov 06</div>
+<div class="eyebrow" id="versionEtikett">Flygprov 07</div>
 <div class="row"><h1 id="aircraftName">Hawker Typhoon Mk Ib</h1><a id="back" href="../">Skjutbana</a><button id="settingsButton">Inställningar</button></div>
 <p id="status" role="status">Förbereder flygplanet…</p>
 <div id="metrics">Laddar…</div>
@@ -78,7 +78,7 @@
 <section id="startPanel" class="glass">
 <div class="eyebrow">HÅLL MOBILEN BEKVÄMT</div>
 <h2>Du är piloten.</h2>
-<p>Luta bakåt för att stiga, framåt för att dyka, åt sidan för att banka. Vrid telefonen som en ratt för sidroder. Gasen sitter till vänster. Hjul och klaff är knappar. Sikte byter mellan cockpit och vyn bakifrån.</p>
+<p>Luta bakåt för att stiga, framåt för att dyka, åt sidan för att banka. Vrid telefonen som en ratt för sidroder. Gasen sitter till vänster. Hjul och klaff är knappar. Knappen Cockpit byter till förstaperson, med instrument och sikte. Bakifrån går tillbaka. Styrningen är densamma.</p>
 <button id="kall" disabled>Starta från marken</button>
 <button id="start" disabled>Starta i luften</button>
 <button id="manual" disabled>Starta i luften med finger</button>
@@ -103,6 +103,7 @@
 <div id="toggles"></div>
 <p class="small">Ledmarkören visar var nosen ska ligga. Den kan stängas av.</p>
 </section>
+<button id="sight" class="vyknapp" type="button" aria-pressed="false" aria-label="Byt till cockpit">Cockpit</button>
 <footer>
 <div class="row">
 <div class="sidopanel">
@@ -110,16 +111,12 @@
 <span class="knappkropp" aria-hidden="true"></span>
 <span class="reglage-namn">Centrera</span>
 </button>
-<button id="sight" class="reglage" type="button" aria-pressed="false" aria-label="Byt till Sikte">
-<span class="vippa" aria-hidden="true"><span class="vippa-arm"></span></span>
-<span class="reglage-namn" id="sightLabel">Sikte</span>
-</button>
 </div>
 <button id="fire" type="button" aria-label="Skjut">
 <span class="spakgrepp" aria-hidden="true"><span class="avtryckare"></span><span class="greppkula"></span></span>
 </button>
 </div>
 </footer>
-<script type="module" src="./main.js?v=10"></script>
+<script type="module" src="./main.js?v=11"></script>
 </body>
 </html>

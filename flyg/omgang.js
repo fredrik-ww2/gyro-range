@@ -1,7 +1,12 @@
 // Rena regler för omgång, skada och ljud. main.js anropar de här, testerna också.
 
-export const FLYG_VERSION = 'Flygprov 06';
-export const FLYG_BYGG = 'flygprov-06';
+export const FLYG_VERSION = 'Flygprov 07';
+export const FLYG_BYGG = 'flygprov-07';
+
+// Knappen visar vart man kommer, inte var man är.
+export function vyEtikett(iCockpit) {
+  return iCockpit ? 'Bakifrån' : 'Cockpit';
+}
 
 export function tomOmgang(bas) {
   return {

@@ -1,11 +1,12 @@
-// Flygprov 06: styrning, inställningar, omstart och att siktet inte ligger på instrumenten.
+// Flygprov 07: cockpitknapp, skottljud som tystnar, plus styrningen från Flygprov 06.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { ringRadie } from '../flyg/ballistik.js';
 import { FlightModel } from '../flyg/flight-model.js';
 import { arOmslag, eulerStyrning, fysikVinkel } from '../flyg/orientering.js';
 import { layoutFor, layoutKrockar } from '../flyg/layout.js';
-import { ljudBehov, tomOmgang, traffPaSpelare, traffPost, FLYG_VERSION } from '../flyg/omgang.js';
+import { ljudBehov, tomOmgang, traffPaSpelare, traffPost, FLYG_VERSION, vyEtikett } from '../flyg/omgang.js';
+import { skapaKanal } from '../flyg/ljud.js';
 import { FlightInput } from '../flyg/flight-controls.js';
 
 const rot = new URL('../', import.meta.url);
@@ -33,8 +34,10 @@ function styr(vinkel = 0) {
   return { inst, gyro, tid(n) { t = n; }, skicka(p) { emit('deviceorientation', p); } };
 }
 
-k('version i sidan', html.includes('Flygprov 06') && html.includes('id="versionEtikett"'));
-k('versionens namn', FLYG_VERSION === 'Flygprov 06');
+k('version i sidan', html.includes('Flygprov 07') && html.includes('id="versionEtikett"'));
+k('versionens namn', FLYG_VERSION === 'Flygprov 07');
+k('cockpitknapp i sidan', html.includes('id="sight"') && html.includes('class="vyknapp"') && html.includes('>Cockpit</button>'));
+k('vyknappens text', vyEtikett(false) === 'Cockpit' && vyEtikett(true) === 'Bakifrån');
 k('zippen ligger kvar', fs.existsSync(new URL('flyg/flyg-v05d.zip', rot)) && fs.existsSync(new URL('flyg/flyg-v05.zip', rot)));
 
 {
@@ -173,10 +176,89 @@ k('zippen ligger kvar', fs.existsSync(new URL('flyg/flyg-v05d.zip', rot)) && fs.
   k('ballongträff behåller målet', post.ref && post.ref.id === 7 && post.id === 'ballong');
 }
 
+function fejkLjud() {
+  const log = [];
+  function gainNod() {
+    const gain = {
+      value: 1,
+      cancelScheduledValues() { log.push('avbryt'); },
+      setValueAtTime(v) { log.push(['nu', v]); this.value = v; },
+      setTargetAtTime(v) { log.push(['mal', v]); }
+    };
+    return {
+      gain,
+      connect(n) { log.push('koppla-gain'); return n; },
+      disconnect() { log.push('loss-gain'); this.borta = true; }
+    };
+  }
+  return {
+    log,
+    currentTime: 1.5,
+    destination: { id: 'ut' },
+    createBufferSource() {
+      const s = {
+        buffer: null,
+        loop: false,
+        loopEnd: 0,
+        playbackRate: { value: 1, cancelScheduledValues() {}, setValueAtTime() {}, setTargetAtTime() {} },
+        connect(n) { log.push('koppla-kalla'); return n; },
+        start(...a) { log.push(['start', ...a]); s.startad = a; },
+        stop() { log.push('stopp'); s.stoppad = true; },
+        disconnect() { log.push('loss-kalla'); s.borta = true; },
+        onended: null
+      };
+      return s;
+    },
+    createGain: gainNod
+  };
+}
+
+{
+  const audio = fejkLjud();
+  const skott = skapaKanal();
+  const motor = skapaKanal();
+  const bang = { duration: 1.4 };
+  const tomgang = { duration: 3.99 };
+  let loopade = 0;
+  for (let i = 0; i < 12; i++) {
+    const n = skott.spela(audio, bang, { volym: 0.4, loop: false, maxSek: 0.12 });
+    if (n.source.loop) loopade++;
+  }
+  const senaste = skott.spelar();
+  k('ett skott åt gången', skott.antal() === 1 && senaste);
+  k('tidigare skott stoppas', audio.log.filter((x) => x === 'stopp').length === 11);
+  k('skott loopar inte', loopade === 0);
+  const kalla = skott.spela(audio, bang, { volym: 0.4, maxSek: 0.12 });
+  k('sista skottet är kort', kalla.source.loop === false && kalla.source.startad[2] === 0.12 && kalla.source.startad[2] < bang.duration);
+  skott.tyst();
+  k('släppt avtryckare är tyst', skott.antal() === 0 && !skott.spelar() && kalla.gain.gain.value === 0 && kalla.source.stoppad && kalla.source.borta && kalla.gain.borta && kalla.source.loop === false);
+  skott.tyst();
+  k('tyst två gånger är ofarligt', skott.antal() === 0);
+  const foreMotor = audio.log.filter((x) => Array.isArray(x) && x[0] === 'start').length;
+  const nod = motor.spela(audio, tomgang, { volym: 0.2, loop: true, loopEnd: 9 });
+  motor.spela(audio, tomgang, { volym: 0.2, loop: true, loopEnd: 9 });
+  const efterMotor = audio.log.filter((x) => Array.isArray(x) && x[0] === 'start').length;
+  k('motorn staplas inte', motor.antal() === 1 && efterMotor === foreMotor + 1 && nod.source.loop === true && nod.source.loopEnd <= tomgang.duration);
+  skott.tyst();
+  k('kanonen tystar inte motorn', motor.antal() === 1 && motor.spelar());
+  const bruten = skapaKanal();
+  const a2 = fejkLjud();
+  a2.createBufferSource = () => {
+    const s = fejkLjud().createBufferSource();
+    s.stop = () => { throw Error('stop'); };
+    return s;
+  };
+  const n = bruten.spela(a2, bang, { maxSek: 0.12 });
+  bruten.tyst();
+  k('bortkopplad även om stop kastar', bruten.antal() === 0 && n.source.borta && n.gain.gain.value === 0 && n.source.loop === false);
+}
+
 const R = ringRadie(1.225);
 for (const [w, h] of [[844, 390], [932, 430], [667, 375], [390, 844], [430, 932], [375, 667]]) {
-  const krock = layoutKrockar(layoutFor(w, h, R, C.cockpit.fov_grader));
+  const L = layoutFor(w, h, R, C.cockpit.fov_grader);
+  const krock = layoutKrockar(L);
   k('ingen överlapp ' + w + 'x' + h, krock.length === 0);
+  k('stor vyknapp ' + w + 'x' + h, L.vy && L.vy.w >= 160 && L.vy.h >= 60 && L.vy.x > w * 0.4 && L.vy.y < h * 0.45);
 }
 
 if (fel.length) {

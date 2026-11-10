@@ -75,7 +75,7 @@ const styr = await sida.evaluate(async () => {
   return { fore, roll, mitt, efter: sikte.kropp, look: sikte.lookX };
 });
 if (!(styr.roll < styr.fore - 4)) krav.push('sidlutning svänger inte ' + JSON.stringify(styr));
-if (Math.abs(styr.efter - styr.mitt) > 3) krav.push('fötterna flyttar sig i skjutställning ' + JSON.stringify(styr));
+if (!(Math.abs(styr.efter - styr.mitt) > 25)) krav.push('stor sidlutning svänger inte i siktet ' + JSON.stringify(styr));
 if (!(styr.look > 0.05)) krav.push('över kropp siktar inte ' + JSON.stringify(styr));
 
 const stall = await sida.evaluate(async () => {

@@ -1,4 +1,4 @@
-import { gangFartFranLutning, kroppFartRad, hoftMalRad, benFoljer, skapaKnyck, kroppIVila } from '../js/rorelse.js';
+import { gangFartFranLutning, kroppFartRad, hoftMalRad, benFoljer, skapaKnyck, kroppIVila, svangFranRoll, sidoAndel, knuffUt } from '../js/rorelse.js';
 import { skakAmplitud, rorelseStyrka } from '../js/gang.js';
 import { STANDARD } from '../js/styrning.js';
 const fel=[];
@@ -21,5 +21,13 @@ k('lugn lutning', skapaKnyck().steg(40,120)===false);
 k('knyck skild från huka', STANDARD.gang.knyck_dps!==STANDARD.stallning.grans_dps);
 k('vila sväljer liten yaw', kroppIVila(4*Math.PI/180,3,STANDARD.kropp));
 k('hållen vridning styr', !kroppIVila(20*Math.PI/180,2,STANDARD.kropp));
+k('sväng dödzon', svangFranRoll(4*Math.PI/180,STANDARD.gang,'gang')===0);
+k('sväng växer', Math.abs(svangFranRoll(18*Math.PI/180,STANDARD.gang,'gang'))>Math.abs(svangFranRoll(10*Math.PI/180,STANDARD.gang,'gang')));
+k('stor lutning är stark', Math.abs(svangFranRoll(24*Math.PI/180,STANDARD.gang,'gang'))>2);
+k('sikte stilla vid finriktning', svangFranRoll(16*Math.PI/180,STANDARD.gang,'sikte')===0);
+k('sikte svänger vid stor lutning', Math.abs(svangFranRoll(30*Math.PI/180,STANDARD.gang,'sikte'))>2);
+k('sidled långsammare', sidoAndel(STANDARD.gang)<0.5);
+const ut=knuffUt(0,0,.4,[{minX:-1,maxX:1,minZ:-1,maxZ:1}]);
+k('hinder knuffar ut', Math.hypot(ut.x,ut.z)>0.4);
 if(fel.length){console.error(fel.join('\n'));process.exit(1);}
 console.log('rorelse-ok');

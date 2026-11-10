@@ -86,6 +86,25 @@ export const FX_V2 = {
       valj: (d) => [{ grupp: 'droppe', add: 0, antal: 22, liv: 1.5, fart: 13, kon: 14, gravity: 9.81, drag: 0.3, storlek: [0.8, 0.45], farg0: fm(VIT, 0.95), farg1: fm(VIT, 0.3) },
         { grupp: 'markdamm', add: 0, anim: true, antal: 3, liv: 1.6, fart: 5, kon: 10, vid_mark: true, drag: 1, storlek: [3.5, 10], farg0: fm(VIT, 0.9), farg1: fm(VIT, 0) },
         { grupp: 'slinga', add: 0, antal: 2, liv: 3, fart: 1, kon: 60, mark: true, vid_mark: true, drag: 1, vind: true, storlek: [2, 6], farg0: fm(VIT, 0.45), farg1: fm(VIT, 0) }] },
+    // Kulor på skjutbanan. Små puffar, inte artillerinedslag. Mark = damm, metall = gnistor, annat = liten träff.
+    traff_kula: {
+      id: 'traff_kula.skjutbana', handelse: () => 'traff.kula', budget: { max_partiklar: 8, draw_calls: 1 },
+      skala: () => 1,
+      parametrar: ['yta: mark|metall|annat', 'pos', 'normal', 'riktning', 'kaliber_mm'],
+      valj: (d) => {
+        if (d.yta === 'mark') return [
+          { grupp: 'markdamm', add: 0, antal: 5, liv: 0.42, fart: 1.5, kon: 68, mark: true, vid_mark: true, drag: 2.4, vind: true, in: 0.02, storlek: [0.16, 0.48], farg0: fm(DAMM, 0.85), farg1: fm(DAMM, 0) },
+          { grupp: 'klump', add: 0, antal: 3, liv: 0.38, fart: 2.4, kon: 36, gravity: 9.81, drag: 0.5, storlek: [0.045, 0.03], farg0: fm(MORK, 1), farg1: fm(BRUN, 0.2) }
+        ];
+        if (d.yta === 'metall') return [
+          { grupp: 'gnista', add: 1, strak: true, antal: 6, liv: 0.16, fart: 7, kon: 32, gravity: 9.81, drag: 1.1, storlek: [0.11, 0.03], farg0: [2.4, 1.85, 0.95, 1], farg1: [1.2, 0.4, 0.08, 0] },
+          { grupp: 'stjarna', add: 1, antal: 1, liv: 0.04, fart: 0, kon: 0, storlek: [0.12, 0.16], farg0: [1.8, 1.5, 1.1, 1], farg1: [1.2, 0.6, 0.2, 0] }
+        ];
+        return [
+          { grupp: 'markdamm', add: 0, antal: 3, liv: 0.28, fart: 1.1, kon: 48, drag: 2.2, storlek: [0.08, 0.22], farg0: fm(DAMM, 0.7), farg1: fm(DAMM, 0) },
+          { grupp: 'klump', add: 0, antal: 2, liv: 0.3, fart: 2, kon: 40, gravity: 9.81, drag: 0.6, storlek: [0.04, 0.025], farg0: fm(MORK, 1), farg1: fm(BRUN, 0) }
+        ];
+      } },
     brand_rok: {
       id: 'brand_rok.generell.v2d', handelse: (d) => d.fas === 'utbrand' ? 'utfall.utslagen' : 'utfall.brand', triggas_av: 'skadeutfall brand / utslagen', fastpunkt: 'motordack (+ lucka för rök i fas tänd)', loop: true, budget: { max_partiklar: 80, draw_calls: 1 },
       skala_formel: 'vagnens fotavtryck: sqrt(L·B / 18,3 m²) begränsad 0,5–1,6 (som v1)', skala: (d, v) => d.skala || (v ? v.skala : 1),

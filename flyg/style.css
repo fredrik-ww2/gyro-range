@@ -103,3 +103,31 @@ header{max-height:var(--flyg-header,120px);overflow:hidden}
  header h1{font-size:16px;margin:4px 0}
  header button,header a{min-height:36px;padding:6px 8px}
 }
+
+/* Flygprov 07: stor, tydlig knapp mellan vyn bakifrån och cockpiten. */
+button#sight.vyknapp{
+ position:fixed;
+ z-index:3;
+ right:max(10px,env(safe-area-inset-right));
+ left:auto;
+ min-width:160px;
+ min-height:60px;
+ padding:8px 14px;
+ border:0;
+ border-radius:16px;
+ background:#e3c88e;
+ color:#172724;
+ box-shadow:0 6px 18px #0007;
+ font:700 22px/1.05 -apple-system,BlinkMacSystemFont,sans-serif;
+ letter-spacing:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ text-align:center;
+ pointer-events:auto;
+}
+button#sight.vyknapp[aria-pressed=true]{
+ background:#1b302b;
+ color:#f6f1e4;
+ border:3px solid #e3c88e;
+}

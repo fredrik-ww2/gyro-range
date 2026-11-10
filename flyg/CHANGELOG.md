@@ -1,5 +1,12 @@
 # Flygprov
 
+## Flygprov 07
+
+Utgångsläget är Flygprov 06, med samma styrning, nivellering, skada av, omstart och fria sikte.
+
+- **Cockpit.** Knappen Cockpit, uppe till höger, byter till förstaperson. Där syns ramen, instrumentbrädan och siktet. Bakifrån går tillbaka till vyn bakom planet. Gyrot styr likadant i båda.
+- **Skottljud.** Kanonen tystnar i samma ögonblick som avtryckaren släpps. Efterljudet på 1,4 sekunder spelas inte klart, ljudet loopar inte, och noderna staplas inte. Motorn som hör till flygningen ligger kvar som en enda nod och startas inte på nytt för varje skott.
+
 ## Flygprov 06
 
 Utgångsläget är taggen `flyg-v05-bas` (samma commit som main hade innan den här rättningen).

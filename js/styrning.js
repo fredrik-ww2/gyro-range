@@ -2,7 +2,7 @@
 const NYCKEL='gyro_styrlabb_v1';
 
 export const STANDARD={
- gang:{satt:'lutning',dodZon_grad:4,max_grad:26,fart_langsam_ms:1.05,fart_max_ms:4.1,knyck_dps:120,steg_m:0.72,svang_mjuk:1,svang_stark:1.6},
+ gang:{satt:'lutning',dodZon_grad:4,max_grad:26,fart_langsam_ms:1.05,fart_max_ms:4.1,knyck_dps:120,steg_m:0.72,svang_mjuk:1,svang_stark:4.2,svang_dod_grad:6,svang_full_grad:22,svang_sikte_dod_grad:18,svang_sikte_full_grad:30,sido_andel:0.36},
  spurt:{fart_ms:7.4,uthallighet_s:6,aterhamtning_s:9,puls_avklingning_s:14,puls_skak:1.1},
  kropp:{dodZon_andel:0.03,kanslighet:3.2,vila_grad:7,vila_fart:12},
  overkropp:{max_grad:90,kanslighet:1.15,benFoljer_grad:58,benFart:1.4,vila_grad:3},
@@ -21,7 +21,11 @@ export const FALT=[
  {flik:'Gång',nyckel:'gang.knyck_dps',namn:'Hastighetsgräns knyck',min:40,max:400,steg:5,enhet:'°/s'},
  {flik:'Gång',nyckel:'gang.steg_m',namn:'Steglängd knyck',min:0.2,max:1.6,steg:0.05,enhet:'m'},
  {flik:'Gång',nyckel:'gang.svang_mjuk',namn:'Mjuk sväng vid vridning',min:0.2,max:3,steg:0.1,enhet:'×'},
- {flik:'Gång',nyckel:'gang.svang_stark',namn:'Stark sväng vid sidlutning',min:0.4,max:6,steg:0.1,enhet:'rad/s'},
+ {flik:'Gång',nyckel:'gang.svang_dod_grad',namn:'Dödzon sidlutning',min:0,max:16,steg:0.5,enhet:'°'},
+ {flik:'Gång',nyckel:'gang.svang_full_grad',namn:'Lutning för full sväng',min:10,max:40,steg:1,enhet:'°'},
+ {flik:'Gång',nyckel:'gang.svang_stark',namn:'Stark sväng vid sidlutning',min:0.4,max:8,steg:0.1,enhet:'rad/s'},
+ {flik:'Gång',nyckel:'gang.svang_sikte_dod_grad',namn:'Dödzon sväng i sikte',min:8,max:28,steg:0.5,enhet:'°'},
+ {flik:'Gång',nyckel:'gang.sido_andel',namn:'Sidofart mot framåt',min:0.15,max:0.65,steg:0.01,enhet:'andel'},
  {flik:'Gång',nyckel:'gang.dodZon_grad',namn:'Dödzon framåtlutning',min:0,max:12,steg:0.5,enhet:'°'},
  {flik:'Gång',nyckel:'gang.max_grad',namn:'Lutning för full gång',min:8,max:45,steg:1,enhet:'°'},
  {flik:'Gång',nyckel:'gang.fart_langsam_ms',namn:'Långsam gång',min:0.3,max:2.5,steg:0.05,enhet:'m/s'},

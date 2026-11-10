@@ -30,12 +30,13 @@ const POS = {
     lowerarm_l: [0, 0, 8], lowerarm_r: [0, 0, -8]
   }
 };
+// Geväret i axeln. Värdena är mätta mot den här riggen: händerna möts framför bröstet.
 const AXEL = {
-  upperarm_r: [40, 0, 30],
-  lowerarm_r: [-55, 0, 0],
-  upperarm_l: [35, 0, -25],
-  lowerarm_l: [-40, 0, 0],
-  spine_03: [8, 0, 0]
+  upperarm_r: [80, 0, 40],
+  lowerarm_r: [40, -60, -80],
+  upperarm_l: [80, 20, -40],
+  lowerarm_l: [80, -40, 40],
+  spine_03: [8, 4, 0]
 };
 
 export function skapaBen(root) {

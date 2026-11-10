@@ -13,28 +13,37 @@ function slag(lx,lz){
  if(lx>196&&lx<330&&lz>56&&lz<168)return 'odling';
  return 'falt';
 }
+// Mjukt brus för fläckar i fält, skog och vatten. Från flyg-v05d, räknas en gång när texturen byggs.
+function brus(x,z,sk){const gx=x/sk,gz=z/sk,ix=Math.floor(gx),iz=Math.floor(gz),fx=gx-ix,fz=gz-iz,u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz);
+ const a=hash(ix,iz),b=hash(ix+1,iz),c=hash(ix,iz+1),d=hash(ix+1,iz+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+function fbm(x,z){return brus(x,z,24)*.55+brus(x,z,7)*.3+brus(x,z,2.2)*.15;}
+function sattFarg(ut,r,g,b,k){ut[0]=Math.max(0,Math.min(255,r*k));ut[1]=Math.max(0,Math.min(255,g*k));ut[2]=Math.max(0,Math.min(255,b*k));}
 function landRGB(x,z,ut){
- const lx=mod(x,TILE),lz=mod(z,TILE),typ=slag(lx,lz);
- if(typ==='flod'){const bank=Math.abs(lx-riverLocal(lz))>14;ut[0]=bank?86:62;ut[1]=bank?102:92;ut[2]=bank?70:104;return;}
- if(typ==='bro'){ut[0]=168;ut[1]=164;ut[2]=150;return;}
- if(typ==='vag'){ut[0]=186;ut[1]=172;ut[2]=138;return;}
+ const lx=mod(x,TILE),lz=mod(z,TILE),typ=slag(lx,lz),n=fbm(x,z);
+ if(typ==='flod'){const d=Math.abs(lx-riverLocal(lz));
+  if(d>14){sattFarg(ut,96,108,66,.9+n*.25);return;}
+  const djup=1-d/14,krus=brus(x*3,z*.5,1.5)*.12;sattFarg(ut,58+djup*8,84+djup*10,98+djup*18,.92+krus);return;}
+ if(typ==='bro'){sattFarg(ut,164,160,148,.95+brus(x,z,1.2)*.1);return;}
+ if(typ==='vag'){const kant=Math.abs(lz-310)>8.5,spar=Math.abs(Math.abs(lz-310)-3.2)<.7;sattFarg(ut,kant?150:spar?170:188,kant?140:spar?158:176,kant?108:spar?126:142,.92+brus(x,z,1.5)*.14);return;}
  if(typ==='by'||typ==='by2'){
   const x0=typ==='by'?346:28,z0=typ==='by'?228:338,fu=mod(lx-x0,18),fv=mod(lz-z0,16);
-  if(fu>3&&fu<14&&fv>3&&fv<13&&hash(Math.floor(lx),Math.floor(lz))>.22){ut[0]=158;ut[1]=62;ut[2]=42;return;}
-  ut[0]=124;ut[1]=118;ut[2]=92;return;
- }
- if(typ==='odling'){
-  const ox=mod(lx-196,9),oz=mod(lz-56,9);
-  if(ox<2.4&&oz<2.4){ut[0]=42;ut[1]=78;ut[2]=36;return;}
-  ut[0]=118;ut[1]=132;ut[2]=74;return;
- }
- const cx=Math.floor(x/32),cz=Math.floor(z/64);
- const pal=[[108,122,68],[146,136,82],[176,162,112],[84,104,58],[126,138,76],[156,140,90],[72,92,50],[168,154,96]];
- const p=pal[Math.floor(hash(cx,cz)*pal.length)%pal.length];
+  if(fu>3&&fu<14&&fv>3&&fv<13&&hash(Math.floor(lx),Math.floor(lz))>.22){const nock=Math.abs(fv-8)<.6,sol=fv<8;sattFarg(ut,nock?96:sol?172:136,nock?40:sol?74:54,nock?30:sol?50:38,1);return;}
+  if(fu<=3||fv<=3){sattFarg(ut,150,140,110,.92+brus(x,z,1.2)*.14);return;}
+  sattFarg(ut,112,124,78,.9+n*.2);return;}
+ if(typ==='odling'){const ox=mod(lx-196,9),oz=mod(lz-56,9);
+  if(ox<2.4&&oz<2.4){sattFarg(ut,40,74,34,.85+brus(x,z,.8)*.35);return;}
+  sattFarg(ut,124,136,78,.9+n*.2);return;}
+ const cx=Math.floor(x/32),cz=Math.floor(z/64),hh=hash(cx,cz);
  const fx=mod(x,32),fz=mod(z,64);
- if((fx<1.6||fz<1.5)&&hash(cx+20,cz)>.12){ut[0]=34;ut[1]=58;ut[2]=30;return;}
- const linje=mod(fx,5)<.8;
- ut[0]=p[0]-(linje?12:0);ut[1]=p[1]-(linje?8:0);ut[2]=p[2]-(linje?6:0);
+ const hackX=fx<1.6&&hash(cx+20,cz)>.12,hackZ=fz<1.5&&hash(cx+20,cz)>.12;
+ if(hackX||hackZ){sattFarg(ut,36,60,30,.8+brus(x*4,z*4,1)*.4);return;}
+ if(fx<3.2&&hash(cx+20,cz)>.12){sattFarg(ut,78,94,52,.9);return;}
+ if(hh>.86){const krona=brus(x,z,3.2),gap=brus(x+50,z,9)>.78;sattFarg(ut,gap?70:28+krona*30,gap?84:58+krona*34,gap?44:24+krona*16,1);return;}
+ const pal=[[108,122,68],[146,136,82],[176,162,112],[84,104,58],[126,138,76],[156,140,90],[72,92,50],[168,154,96],[186,172,118],[98,118,62]];
+ const p=pal[Math.floor(hh*pal.length)%pal.length];
+ const langs=hash(cx+7,cz+3)>.5,ran=langs?fx:fz,taet=p[0]>150?2.6:5,linje=mod(ran,taet)<.7;
+ const k=(.88+n*.24)*(linje?.86:1);
+ sattFarg(ut,p[0],p[1],p[2],k);
 }
 function enhet(geo){geo.translate(0,.5,0);return geo;}
 export function skapaMark(THREE,scene,W){

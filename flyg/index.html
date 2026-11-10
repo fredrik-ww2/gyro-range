@@ -7,13 +7,13 @@
 <meta name="theme-color" content="#172724">
 <link rel="icon" href="data:,">
 <title>Flygplan · Gyrotest</title>
-<link rel="stylesheet" href="./style.css?v=7">
+<link rel="stylesheet" href="./style.css?v=8">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
 <canvas id="spel" aria-label="Flygplan över Normandie"></canvas>
 <header>
-<div class="eyebrow">WW2 / FLYGPROV 05</div>
+<div class="eyebrow" id="versionEtikett">Flygprov 06</div>
 <div class="row"><h1 id="aircraftName">Hawker Typhoon Mk Ib</h1><a id="back" href="../">Skjutbana</a><button id="settingsButton">Inställningar</button></div>
 <p id="status" role="status">Förbereder flygplanet…</p>
 <div id="metrics">Laddar…</div>
@@ -70,6 +70,7 @@
 <button id="hjul" type="button" class="metall" aria-label="Hjulen är uppe"><span class="lampa" id="hjulLampa"></span><span>Hjul</span></button>
 <button id="klaff" type="button" class="metall"><span id="klaffText">Inne</span><span>Klaff</span></button>
 <button id="fall" type="button" class="metall" aria-label="Fäll bomb"><span id="bombAntal">2</span><span>Fäll</span></button>
+<button id="bombsikte" type="button" class="metall" aria-pressed="false"><span class="knappkropp liten"></span><span>Bombsikte</span></button>
 </div>
 <div id="fiendePil" hidden><div id="fiendePilSymbol">▲</div><div id="fiendePilText"></div></div>
 <div id="skada" aria-hidden="true"></div>
@@ -119,6 +120,6 @@
 </button>
 </div>
 </footer>
-<script type="module" src="./main.js?v=9"></script>
+<script type="module" src="./main.js?v=10"></script>
 </body>
 </html>

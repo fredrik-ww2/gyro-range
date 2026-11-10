@@ -83,3 +83,23 @@ body.cockpitvy header{background:none;text-shadow:0 1px 2px #000}body.cockpitvy 
 #forare .ben.vanster{left:33%}
 #forare .ben.hoger{right:33%}
 #forare .kanga{position:absolute;left:8%;right:8%;bottom:0;height:42%;border-radius:7px 7px 2px 2px;background:linear-gradient(#3a3a3a,#121212);border:1px solid #bba57a;box-shadow:inset 0 4px 0 #ffffff14}
+
+/* Flygprov 06: rubrik och reglage ska lämna mitten fri för siktets ring. Måtten sätts också från layout.js. */
+header{max-height:var(--flyg-header,120px);overflow:hidden}
+#versionEtikett{font-weight:700}
+@media(max-height:520px){
+ header{padding-top:4px;padding-bottom:0}
+ header .eyebrow{font-size:10px;line-height:1.15}
+ header h1{font-size:14px;margin:2px 0;line-height:1.15}
+ header button,header a{min-height:32px;padding:4px 8px;font-size:12px}
+ #status{font-size:11px;margin:0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #metrics,#flightHud{font-size:10px;line-height:1.15;margin:0}
+ #fire{height:84px;min-height:84px}
+ #fire .spakgrepp{height:78px}
+ footer{background:none}
+}
+@media(max-width:520px) and (min-height:521px){
+ header{padding-top:max(8px,env(safe-area-inset-top))}
+ header h1{font-size:16px;margin:4px 0}
+ header button,header a{min-height:36px;padding:6px 8px}
+}

@@ -1,5 +1,5 @@
 {
- "version": "flyg-v5",
+ "version": "flygprov-06",
  "modell": {
   "namn": "Hawker Typhoon Mk Ib",
   "fil": "./assets/typhoon_mkib.glb",
@@ -356,5 +356,29 @@
   "max_bank_rad": 0.3,
   "broms_n": 7000,
   "_om": "Landning: hjul ute, under max_fart, sjunk mildare än hard_vs. Mellan mjuk och hard: studs och varning. Bromsen verkar när gasen är stängd på marken."
+ },
+ "bombuppdrag": {
+  "bomber": 4,
+  "sikte": {
+   "fov_grader": 58,
+   "oga_lokal": [0, -0.25, -3.2],
+   "lutning_grader": 62
+  },
+  "mal": [
+   {"typ": "depa", "x": 300, "z": -2300},
+   {"typ": "lv", "x": 420, "z": -2520},
+   {"typ": "tag", "x": -900, "z": -3300, "vridning": 0.35},
+   {"typ": "lv", "x": -760, "z": -3100},
+   {"typ": "hangar", "x": 1500, "z": -3000, "vridning": -0.5}
+  ],
+  "luftvarn": {
+   "rackvidd_m": 2600,
+   "min_hojd_m": 120,
+   "intervall_s": 0.9,
+   "granathastighet_ms": 800,
+   "spridning_m": 60,
+   "skaderadie_m": 20
+  },
+  "_om": "Bombuppdrag från flyg-v05d. Markmål norr om starten. Skuggor och tonmappning från samma paket togs inte med, de gör telefonen varmare utan att styra bättre."
  }
 }

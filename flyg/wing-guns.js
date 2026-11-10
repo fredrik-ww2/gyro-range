@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {bromsa,MYNNING,luftdensitet} from './ballistik.js';
+import {traffPost} from './omgang.js';
 // Spårljusen är riktiga kulor: mynningshastighet, luftmotstånd och tyngd ur ballistik.js.
 export class WingGuns {
  constructor(scene,aircraft,config,effects){this.aircraft=aircraft;this.c=config;this.fx=effects;this.pool=Array.from({length:config.sparljus_pool},()=>({p:new THREE.Vector3(),prev:new THREE.Vector3(),v:new THREE.Vector3(),life:0,owner:'spelare'}));this.next=0;this.model='typhoon';this.rays=[];this.lastConvergence=new THREE.Vector3();this.obj=new THREE.Object3D();this.axis=new THREE.Vector3(0,1,0);this.tmp=new THREE.Vector3();this.dir=new THREE.Vector3();this.origin=new THREE.Vector3();
@@ -19,7 +20,7 @@ export class WingGuns {
  }
  update(dt,mal){let count=0;const traffar=[];
   for(const s of this.pool){if(s.life<=0)continue;s.life-=dt;if(s.life<=0)continue;s.prev.copy(s.p);bromsa(s.v,luftdensitet(s.p.y),dt);s.p.addScaledVector(s.v,dt);
-   if(mal)for(const m of mal){if(!m.lever||m.agare===s.owner)continue;if(segmentTraff(s.prev,s.p,m.center,m.radie)){s.life=0;traffar.push({id:m.id,pos:s.p.clone(),owner:s.owner});break;}}
+   if(mal)for(const m of mal){if(!m.lever||m.agare===s.owner)continue;if(segmentTraff(s.prev,s.p,m.center,m.radie)){s.life=0;traffar.push(traffPost(m,s.p.clone(),s.owner));break;}}
    if(s.life<=0)continue;
    this.obj.position.copy(s.p);this.tmp.copy(s.v).normalize();if(this.tmp.lengthSq()<1e-6)continue;this.obj.quaternion.setFromUnitVectors(this.axis,this.tmp);this.obj.scale.set(1,Math.min(16,s.v.length()*dt*3.2+2),1);this.obj.updateMatrix();this.mesh.setMatrixAt(count++,this.obj.matrix);
   }

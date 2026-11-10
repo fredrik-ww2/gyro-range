@@ -5,7 +5,9 @@ export function luftdensitet(h){return 1.225*Math.pow(Math.max(0.05,1-2.25577e-5
 export function lyftkoefficient(a,A){const a0=A.alfa_noll_grad*D2R,ak=A.alfa_kritisk_grad*D2R,cl=A.cl_alfa_per_rad*(a-a0);
  if(a<=ak)return Math.max(-0.6,cl);const max=A.cl_alfa_per_rad*(ak-a0),over=a-ak;return Math.max(max*A.stall_cl_andel,max*(1-over*4));}
 export class FlightModel{
- constructor(A){this.A=A;this.reset(0,A.start_hojd_m,0,A.start_fart_ms);}
+ constructor(A){this.nivaBas=A.niva_k;this.A={...A};this.reset(0,this.A.start_hojd_m,0,this.A.start_fart_ms);}
+ // Av och på igen måste läsa det sparade värdet. Originalet i config får inte nollas.
+ tillampaNivellering(pa){this.A.niva_k=pa?this.nivaBas:0;return this.A.niva_k;}
  reset(x,y,z,V){this.x=x;this.y=y;this.z=z;this.V=V;this.gamma=0;this.psi=0;this.phi=0;this.phiV=0;this.alpha=this.trimAlpha();this.stalled=false;this.dropp=0;this.crashed=false;this.nz=1;this.vs=0;this.thrust=0;this.drag=0;}
  q(){return .5*luftdensitet(this.y)*this.V*this.V;}
  trimAlpha(){const A=this.A,n=Math.max(A.trim_n_min,Math.min(A.trim_n_max,Math.cos(this.gamma)-A.niva_k*this.gamma)),need=n*A.massa_kg*9.80665/Math.max(1,this.q()*A.vingyta_m2);return Math.min(A.trim_max_grad*D2R,A.alfa_noll_grad*D2R+need/A.cl_alfa_per_rad);}

@@ -1,0 +1,3 @@
+Fotorealistiska texturer från Fredriks WW2-bibliotek (CC0). Poly Haven: castle_wall_slates, clay_plaster, medieval_wood, red_slate_roof_tiles_01, roof_slates_02, thatch_roof_angled, white_plaster_rough_02, white_sandstone_blocks_02, yellow_stone_wall (diff, nor_gl, arm). AmbientCG: Bricks059, Bricks075A, Concrete034, Concrete042A, Wood049 (Color, NormalGL, Roughness). Alla 1K.
+
+Omkodat till WebP, högst 1024 px, för Husverkstaden.

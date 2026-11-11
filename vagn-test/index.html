@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1a221c">
+<link rel="icon" href="data:,">
+<title>Vagntest</title>
+<link rel="stylesheet" href="./stil.css">
+<script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
+</head>
+<body>
+<canvas id="vy" aria-label="Skyttesikte från en Sherman. Luta telefonen för att köra."></canvas>
+<div id="blixt" aria-hidden="true"></div>
+<div id="sikte" hidden>
+<div class="kors korsV"></div>
+<div class="kors korsH vanster"></div>
+<div class="kors korsH hoger"></div>
+<div class="kors prick"></div>
+</div>
+<p id="besked" hidden></p>
+<p id="flygtid" hidden></p>
+<div id="version">Vagntest 01</div>
+<section id="startKort">
+<span class="ogonbryn">NORMANDIE · SKYTTESIKTE</span>
+<h1>Håll telefonen på sidan</h1>
+<p id="startText">Som en ratt. Gasen till vänster stannar där du släpper. Luta för att svänga, vrid för tornet, tippa ovansidan för eldröret.</p>
+<button id="starta" type="button" disabled>Laddar…</button>
+<small>På en dator: A och D svänger, pilarna siktar, dra i gasen.</small>
+</section>
+<p id="hint" hidden>Ingen rörelsesensor. A och D svänger, pilarna siktar.</p>
+<div id="gas" hidden>
+<b id="gasFart">0</b>
+<div id="gasSpar">
+<span class="gasNamn fram">Fram</span>
+<span class="gasNamn back">Back</span>
+<div id="gasNoll"></div>
+<div id="gasFyll"></div>
+<div id="gasKnopp"></div>
+</div>
+<small id="gasText">0%</small>
+</div>
+<div id="topp" hidden>
+<button id="noll" type="button">Nollställ</button>
+<button id="installKnapp" type="button" aria-expanded="false" aria-controls="installningar">Inställningar</button>
+</div>
+<canvas id="karta" width="220" height="220" hidden aria-label="Karta. Skrovet pekar upp, grönt streck är tornet."></canvas>
+<small id="kartaText" hidden>Skrov upp · torn grönt</small>
+<div id="eldWrap" hidden>
+<label id="eld" for="hapticSwitch"><b>Eld</b><small id="eldStatus">Redo</small></label>
+<input id="hapticSwitch" type="checkbox" switch tabindex="-1" aria-hidden="true">
+</div>
+<pre id="mat" hidden></pre>
+<section id="installningar" hidden>
+<div class="panelTopp"><b>Inställningar</b><button id="stang" type="button">Stäng</button></div>
+<div id="axelLista"></div>
+<details>
+<summary>Svängtrösklar</summary>
+<p class="led">Grader efter dödzon och känslighet. Först broms, sedan ett band stilla, sedan det bandet backar.</p>
+<label class="reglage">Broms från <span data-vis="broms"></span><input data-troskel="broms" type="range" min="2" max="30" step="1"></label>
+<label class="reglage">Ett band från <span data-vis="ettBand"></span><input data-troskel="ettBand" type="range" min="4" max="45" step="1"></label>
+<label class="reglage">Backande band från <span data-vis="backBand"></span><input data-troskel="backBand" type="range" min="8" max="60" step="1"></label>
+</details>
+<label class="check"><input id="visaMat" type="checkbox"> Visa mätvärden</label>
+<button id="standard" type="button">Standard</button>
+</section>
+<script type="module" src="./spel.js"></script>
+<script>
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});
+document.addEventListener('dblclick', e => e.preventDefault());
+</script>
+</body>
+</html>

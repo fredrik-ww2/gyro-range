@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#171e1c"><link rel="icon" href="data:,"><title>Gyrosikte · Fältprov</title><link rel="stylesheet" href="./js/style.css?v=33"><script type="importmap">{"imports":{"three":"./js/vendor/three.module.js"}}</script></head>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#171e1c"><link rel="icon" href="data:,"><title>Gyrosikte · Fältprov</title><link rel="stylesheet" href="./js/style.css?v=34"><script type="importmap">{"imports":{"three":"./js/vendor/three.module.js"}}</script></head>
 <body data-pose="framme">
 <div id="shotFlash" aria-hidden="true"></div>
 <canvas id="spel" aria-label="Skjutbana med WW2-soldat och två Tiger-stridsvagnar"></canvas>
 <header id="topbar">
-<div id="version">Skjutbana 33</div>
+<div id="version">Skjutbana 34</div>
+<button id="styrKnapp" type="button" aria-expanded="false" aria-controls="styrPanel">Styrning</button>
 <button id="weaponPose" type="button" aria-pressed="true">Sänk vapen</button>
 <div id="stallning" aria-live="polite"><b id="stallningNamn">Stående</b><small id="stallMeter">0°/s · 0°/s</small></div>
 <button id="menuButton" type="button" aria-label="Meny" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
@@ -34,8 +35,13 @@
 <div id="peep" aria-hidden="true"><div class="hylsa"></div><div class="korn"></div></div>
 <div id="stepHints" aria-hidden="true"><div id="arrowLeft" class="step-arrow left redo"><svg viewBox="0 0 48 180"><path d="M24 8 V132"/><path d="M10 118 L24 150 L38 118"/></svg></div><div id="arrowRight" class="step-arrow right redo"><svg viewBox="0 0 48 180"><path d="M24 8 V132"/><path d="M10 118 L24 150 L38 118"/></svg></div></div>
 <pre id="debug" hidden></pre>
+<pre id="matvarden" hidden></pre>
 <section id="startPanel" class="glass"><span class="eyebrow">HÅLL TELEFONEN STÅENDE</span><h2>Rikta. Centrera. Skjut.</h2><p>Håll bekvämt och tryck för att tillåta rörelsesensorerna. På dator: dra i bilden för att sikta.</p><button id="start" class="primary" disabled>Starta med gyro</button><button id="manual">Spela med finger</button></section>
 <section id="neutralPanel" class="glass" hidden><span class="eyebrow">FÖRE SPELET</span><h2>Håll telefonen i ditt neutrala läge</h2><p>Håll den som du vill sikta ifrån. När nedräkningen är slut blir det här noll.</p><p id="neutralTid">3</p><button id="neutralKlar" class="primary" type="button">Det här är noll</button></section>
+<section id="styrPanel" class="glass" hidden>
+<div class="topline"><h2>Styrning</h2><button id="styrStang" type="button">Klar</button></div>
+<div id="styrRot"></div>
+</section>
 <section id="settings" class="glass" hidden>
 <div class="topline"><h2>Laborera</h2><button id="closeSettings" type="button">Klar</button></div>
 <div id="labb"></div>
@@ -65,8 +71,10 @@
 <svg id="pullRing" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46"></circle></svg>
 <button id="fire" type="button" tabindex="-1" aria-hidden="true"><span id="triggerLever"></span><span id="fireLabel">AVTRYCK</span><span id="reload">REDO</span></button>
 <input id="hapticSwitch" type="checkbox" switch tabindex="-1" aria-hidden="true">
+<input id="styrHaptic" type="checkbox" switch tabindex="-1" aria-hidden="true">
+<label id="styrHapticLabel" for="styrHaptic" aria-hidden="true"></label>
 <label id="trigger" for="hapticSwitch" role="button" tabindex="0" aria-label="Avtryckare"></label>
 </div>
 </footer>
-<script type="module" src="./js/main.js?v=33"></script>
+<script type="module" src="./js/main.js?v=34"></script>
 <script>document.addEventListener('contextmenu',e=>e.preventDefault());document.addEventListener('selectstart',e=>{if(!e.target.closest?.('input[type=text],textarea'))e.preventDefault();});document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});document.addEventListener('dblclick',e=>e.preventDefault());</script></body></html>

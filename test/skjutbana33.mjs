@@ -37,7 +37,7 @@ async function starta(w, h) {
 }
 await starta(844, 390);
 const etikett = await sida.evaluate(() => document.getElementById('version').textContent);
-if (!etikett.includes('Skjutbana 33')) krav.push('version ' + etikett);
+if (!etikett.includes('Skjutbana 34')) krav.push('version ' + etikett);
 
 const stall = await sida.evaluate(async () => {
   const sov = (ms) => new Promise((r) => setTimeout(r, ms));

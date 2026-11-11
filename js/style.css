@@ -117,6 +117,8 @@ body[data-jarn=ja] #irons{display:block!important}
  #vyKnapp{top:auto;bottom:max(28px,calc(env(safe-area-inset-bottom) + 16px));left:148px}
  #knappHuka{right:200px;bottom:max(28px,calc(env(safe-area-inset-bottom) + 16px))}
  #version{top:4px;font-size:11px}
+ #styrKnapp{top:4px;left:124px;min-height:32px;padding:4px 10px;font-size:13px}
+ #matvarden{top:40px;right:8px;max-width:210px}
  #stallVal{top:108px;gap:4px}
  #stallVal button{min-height:40px;min-width:64px;padding:6px 8px;font-size:14px}
  #zoomKnapp{top:36px;right:max(16px,env(safe-area-inset-right))}
@@ -124,6 +126,23 @@ body[data-jarn=ja] #irons{display:block!important}
  #pulsRad{bottom:92px}
 }
 #montera{position:absolute;z-index:5;right:12px;bottom:150px;padding:6px 10px;font-size:12px}
+#styrKnapp{position:absolute;z-index:40;left:max(8px,env(safe-area-inset-left));top:calc(env(safe-area-inset-top) + 34px);min-height:44px;padding:8px 14px;font-size:16px;font-weight:750}
+#styrPanel{position:absolute;z-index:50;left:10px;right:10px;top:calc(env(safe-area-inset-top) + 8px);bottom:max(10px,env(safe-area-inset-bottom));max-width:520px;margin:auto;overflow:auto;touch-action:pan-y;padding:16px 16px 32px;background:#16211ef8}
+#styrPanel h2{margin:0}
+#styrPanel .rad{display:flex;gap:8px;margin-top:8px}
+#styrPanel .rad button{flex:1;min-height:52px;font-size:17px;font-weight:750}
+#styrPanel summary{font-size:18px;font-weight:750;padding:14px 2px;min-height:48px;cursor:pointer}
+#styrPanel details details{margin-left:6px}
+#styrPanel details details summary{font-size:16px;font-weight:650}
+#styrPanel .valj{display:flex;gap:8px;margin-top:8px}
+#styrPanel .valj button{flex:1;min-height:52px;font-size:16px;font-weight:750;line-height:1.2}
+#styrPanel .valj button.vald{background:var(--lime);color:#19221a}
+#styrPanel .bryt{display:flex;align-items:center;gap:12px;min-height:52px;font-size:18px;font-weight:650}
+#styrPanel .bryt input{width:28px;height:28px;margin:0}
+#styrPanel input[type=range]{height:44px;margin-top:6px}
+#styrPanel .reglage{font-size:16px;margin-top:12px}
+#matvarden{position:absolute;z-index:6;left:auto;right:max(8px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top) + 248px);bottom:auto;width:min(230px,calc(100vw - 24px));margin:0;white-space:pre-wrap;font:12px ui-monospace,monospace;line-height:1.35;background:#121816ee;color:#e7efd8;padding:8px 10px;border-radius:10px;pointer-events:none}
+#styrHaptic,#styrHapticLabel{position:fixed;left:-120px;top:0;width:44px;height:44px;margin:0;opacity:0}
 #peep{position:fixed;inset:0;z-index:2;pointer-events:none;display:none}
 body[data-karbin=ja][data-pose=framme][data-vy=forsta] #peep{display:block}
 #peep .hylsa{position:absolute;left:50%;top:46%;width:min(72vmin,360px);height:min(72vmin,360px);transform:translate(-50%,-56%);border-radius:50%;box-shadow:0 0 0 120vmax rgba(5,5,4,.8);background:radial-gradient(circle,transparent 54%,rgba(18,18,14,.28) 66%,rgba(8,8,7,.72) 78%,#050505 88%);filter:blur(2.4px)}

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#171e1c">
+<link rel="icon" href="data:,">
+<title>Gubbtest 01</title>
+<link rel="stylesheet" href="./stil.css?v=3">
+<script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
+</head>
+<body data-lage="ga">
+<canvas id="spel" aria-label="Gubbe på en plan med rutnät"></canvas>
+<div id="kikare" hidden>
+<div class="ring"></div>
+<div class="kors" aria-hidden="true"></div>
+</div>
+<header id="topp">
+<div id="version">Gubbtest 01</div>
+<button id="noll" type="button">Nollställ</button>
+<button id="install" type="button" aria-expanded="false" aria-controls="panel">Inställningar</button>
+</header>
+<div id="lageRad">
+<div id="lage" role="group" aria-label="Läge">
+<button id="knappGa" type="button" aria-pressed="true">Gå</button>
+<button id="knappSikta" type="button" aria-pressed="false">Sikta</button>
+</div>
+<div id="fart" aria-live="polite"><b id="fartNamn">Står</b><small id="sensorLage">Väntar</small></div>
+</div>
+<section id="matning" aria-label="Mätning">
+<pre id="vinklar">Vrid 0°  0 °/s
+Fram 0°  0 °/s
+Sida 0°  0 °/s</pre>
+<p class="skala">Jämn ←→ Ryckig</p>
+<div class="jamn" id="barVrid"><span>Vrid</span><i></i><b id="barVridTal">0</b></div>
+<div class="jamn" id="barFram"><span>Fram</span><i></i><b id="barFramTal">0</b></div>
+<div class="jamn" id="barSida"><span>Sida</span><i></i><b id="barSidaTal">0</b></div>
+<p id="brusRad">Brus: mäter…</p>
+<p id="grafForklaring">Gul vrid · blå fram · orange sida</p>
+<canvas id="graf" width="320" height="72" aria-label="Fart de senaste två sekunderna"></canvas>
+</section>
+<div id="dpad">
+<button id="knappFram" type="button">Fram</button>
+<button id="knappVanster" type="button">Vänster</button>
+<button id="knappHoger" type="button">Höger</button>
+<button id="knappBak" type="button">Bak</button>
+</div>
+<button id="res" type="button" hidden>Res dig</button>
+<section id="panel" class="glas" hidden>
+<div class="rad"><h2>Inställningar</h2><button id="klar" type="button">Klar</button></div>
+<button id="standard" type="button" class="lime">Standard</button>
+<div id="falt"></div>
+</section>
+<section id="startPanel" class="glas">
+<p class="ogonbryn">HÅLL TELEFONEN BEKVÄMT</p>
+<h2>Gubbtest</h2>
+<p>Tryck Starta så telefonen får känna lutning. Håll den som du vill att noll ska vara, och tryck Nollställ om du byter grepp.</p>
+<p>På dator: dra i bilden. Uppåt är framåt, åt sidan vrider honom.</p>
+<button id="start" type="button" class="lime">Starta</button>
+<button id="finger" type="button">Spela med finger</button>
+<p id="startStatus" role="status"></p>
+</section>
+<input id="haptikTick" type="checkbox" switch tabindex="-1" aria-hidden="true">
+<label id="haptikTickEtikett" for="haptikTick" aria-hidden="true"></label>
+<script type="module" src="./main.js?v=3"></script>
+</body>
+</html>

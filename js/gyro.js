@@ -127,6 +127,7 @@ export class GyroAim {
     const v=tolkaOrientering(this.values.alpha,this.values.beta,this.values.gamma,{alpha:this.nollAlpha,beta:this.nollBeta,gamma:this.nollGamma},ang);
     this.vinklar.pitch=v.pitch;this.vinklar.roll=v.roll;this.vinklar.yaw=v.yaw;
    }else{this.vinklar.pitch=this.euler.x;this.vinklar.yaw=this.euler.y;this.vinklar.roll=this.euler.z;}
+   if(this.bearbeta)this.bearbeta(dt);
    const sp=THREE.MathUtils.clamp(this.vinklar.pitch*s.kanslighet*(s.inverteraX?-1:1),-1.15,1.15);
    const sr=THREE.MathUtils.clamp(this.vinklar.roll*s.kanslighet*(s.inverteraZ?-1:1),-.95,.95);
    this.euler.set(sp,-sr,0,'YXZ');this.target.setFromEuler(this.euler);

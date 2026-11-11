@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1a221c">
+<link rel="icon" href="data:,">
+<title>Panorama · Normandie</title>
+<link rel="stylesheet" href="./stil.css">
+<script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
+</head>
+<body>
+<canvas id="vy" aria-label="Normandie 1944, se dig om med telefonen"></canvas>
+<div id="version">Panorama 01</div>
+<section id="startKort">
+<span class="ogonbryn">NORMANDIE 1944</span>
+<h1>Se dig om</h1>
+<p id="startText">Telefonen är ett fönster. Vrid dig för att se runt hela fältet. Luta toppen ned mot marken och upp mot himlen.</p>
+<button id="starta" type="button" disabled>Laddar…</button>
+<small>På en dator drar du med musen.</small>
+</section>
+<p id="hint" hidden>Ingen rörelsesensor. Dra för att titta.</p>
+<section id="styrPanel" hidden>
+<div class="panelTopp"><b>Styrning</b><button id="styrStang" type="button">Stäng</button></div>
+<p class="panelLed">Varje axel kan följa telefonens vinkel, eller bara lägga till snurr och sedan stanna.</p>
+<details data-axel="vrida">
+<summary>Vrida</summary>
+<div class="axelInre"></div>
+</details>
+<details data-axel="uppner">
+<summary>Luta upp/ner</summary>
+<div class="axelInre"></div>
+</details>
+<details data-axel="sida">
+<summary>Luta åt sidan</summary>
+<div class="axelInre"></div>
+</details>
+<button id="standard" type="button">Standard</button>
+</section>
+<div id="kontroller" hidden>
+<button id="styrKnapp" type="button" aria-expanded="false" aria-controls="styrPanel">Styrning</button>
+<button id="horisont" type="button" class="pa" aria-pressed="true">Rak horisont</button>
+<button id="noll" type="button">Nollställ riktning</button>
+</div>
+<script type="module" src="./huvud.js?v=7"></script>
+<script>
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});
+document.addEventListener('dblclick', e => e.preventDefault());
+</script>
+</body>
+</html>

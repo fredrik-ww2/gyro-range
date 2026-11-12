@@ -100,8 +100,13 @@
       "namn": "Bibliotek",
       "lankar": [
         {
+          "namn": "Modellbiblioteket",
+          "text": "Hela listan med modeller, från spelbar till platshållare.",
+          "sokvag": "katalog/"
+        },
+        {
           "namn": "Verkstadens bibliotek",
-          "text": "Katalogen med soldater, vapen och fordon.",
+          "text": "Soldater, vapen och fordon att ställa ut.",
           "sokvag": "form/verkstad/"
         }
       ]

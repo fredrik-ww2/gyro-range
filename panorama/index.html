@@ -7,16 +7,17 @@
 <meta name="theme-color" content="#1a221c">
 <link rel="icon" href="data:,">
 <title>Panorama · Normandie</title>
-<link rel="stylesheet" href="./stil.css">
+<link rel="stylesheet" href="./stil.css?v=8">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
 <canvas id="vy" aria-label="Normandie 1944, se dig om med telefonen"></canvas>
-<div id="version">Panorama 01</div>
+<div id="version">Panorama 02</div>
 <section id="startKort">
 <span class="ogonbryn">NORMANDIE 1944</span>
 <h1>Se dig om</h1>
 <p id="startText">Telefonen är ett fönster. Vrid dig för att se runt hela fältet. Luta toppen ned mot marken och upp mot himlen.</p>
+<p id="laserGuide" hidden>Nytt: Laserpekare. Efter start trycker du den stora knappen. En röd prick visar vart telefonen pekar, och vyn följer handen.</p>
 <button id="starta" type="button" disabled>Laddar…</button>
 <small>På en dator drar du med musen.</small>
 </section>
@@ -38,12 +39,43 @@
 </details>
 <button id="standard" type="button">Standard</button>
 </section>
+<section id="laserPanel" hidden>
+<div class="panelTopp"><b>Laserpekare</b><button id="laserStang" type="button">Stäng</button></div>
+<p class="panelLed">Telefonen är handen. Tio grader med telefonen är tio grader i vyn.</p>
+<label>Förstärkning <span id="laserForstVis"></span><input id="laserForst" type="range" min="0.5" max="3" step="0.05"></label>
+<label>Prickens storlek <span id="laserStorlekVis"></span><input id="laserStorlek" type="range" min="10" max="56" step="2"></label>
+<p class="fargRubrik">Färg</p>
+<div class="fargVal">
+<button type="button" data-farg="#ff1a1a" style="background:#ff1a1a" aria-label="Röd"></button>
+<button type="button" data-farg="#ff9a1a" style="background:#ff9a1a" aria-label="Orange"></button>
+<button type="button" data-farg="#3dde74" style="background:#3dde74" aria-label="Grön"></button>
+<button type="button" data-farg="#ffffff" style="background:#ffffff" aria-label="Vit"></button>
+<input id="laserFarg" type="color" value="#ff1a1a" aria-label="Egen färg">
+</div>
+<button id="laserStrale" type="button" class="omkopplare" aria-pressed="false">Stråle</button>
+<div class="val"><button id="laserMatcha" type="button" aria-pressed="true">Matcha skärmen</button></div>
+<p class="forklaring">Synfältet ställs så skärmen blir ett fönster, cirka 35 cm från ögonen.</p>
+<label>Synfält <span id="laserFovVis"></span><input id="laserFov" type="range" min="8" max="100" step="1"></label>
+<label>Utjämning <span id="laserUtjVis"></span><input id="laserUtj" type="range" min="0" max="1" step="0.05"></label>
+<p class="forklaring">0 är rått. Högre är mjukare och tar bort brus.</p>
+<label>Död zon <span id="laserDodVis"></span><input id="laserDod" type="range" min="0" max="3" step="0.1"></label>
+<p class="forklaring">Små skakningar under det här ignoreras.</p>
+<button id="laserRoll" type="button" class="omkopplare" aria-pressed="true">Lås sidolutning</button>
+<p class="forklaring">På: horisonten hålls rak. Av: telefonens lutning syns.</p>
+<button id="laserNoll" type="button">Nollställ riktning</button>
+<button id="laserStandard" type="button">Standard</button>
+</section>
+<p id="laserHint" hidden>Vrid telefonen. Vyn följer med, grad för grad. Nollställ riktning gör läget du håller nu till rakt fram.</p>
+<div id="laserLinje" hidden></div>
+<div id="laserPrick" hidden></div>
 <div id="kontroller" hidden>
+<button id="laserKnapp" type="button" aria-pressed="false">Laserpekare</button>
+<button id="laserInstall" type="button" hidden aria-expanded="false" aria-controls="laserPanel">Inställningar</button>
 <button id="styrKnapp" type="button" aria-expanded="false" aria-controls="styrPanel">Styrning</button>
 <button id="horisont" type="button" class="pa" aria-pressed="true">Rak horisont</button>
 <button id="noll" type="button">Nollställ riktning</button>
 </div>
-<script type="module" src="./huvud.js?v=7"></script>
+<script type="module" src="./huvud.js?v=8"></script>
 <script>
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});

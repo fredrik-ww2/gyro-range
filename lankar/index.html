@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#24382c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="WW2 Länkar">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>WW2 Länkar</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="ikon-180.png">
+<link rel="icon" href="ikon-180.png">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: #efece3; color: #1c241c; }
+  body {
+    font: 17px/1.35 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    padding: calc(12px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+  }
+  header h1 { font-size: 32px; line-height: 1.1; margin: 8px 0 6px; letter-spacing: -.03em; }
+  header p { margin: 0; color: #5c675c; font-size: 17px; }
+  h2 {
+    margin: 26px 0 8px;
+    font-size: 13px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #5c675c;
+    font-weight: 700;
+  }
+  a.knapp {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 76px;
+    margin: 0 0 10px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #24382c;
+    color: #f6f3ea;
+    text-decoration: none;
+    touch-action: manipulation;
+  }
+  a.knapp:active { background: #1a2b22; }
+  a.knapp b { font-size: 20px; line-height: 1.2; font-weight: 750; }
+  a.knapp span { margin-top: 3px; font-size: 15px; line-height: 1.3; color: #d9d3c4; font-weight: 500; }
+  footer { margin-top: 22px; color: #6d776d; font-size: 13px; }
+  #fel { color: #8a2e24; font-size: 17px; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="rubrik">WW2 Länkar</h1>
+  <p id="led">Tryck på det du vill öppna.</p>
+</header>
+<main id="grupper"></main>
+<p id="fel" hidden>Kunde inte läsa lankar.json.</p>
+<footer id="fot">En ny knapp läggs in i filen lankar.json.</footer>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

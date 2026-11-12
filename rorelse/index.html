@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111417">
+<title>Rörelseinspelare</title>
+<link rel="stylesheet" href="./stil.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>Rörelseinspelare</h1>
+    <a data-alla-lankar href="../lankar/">Alla länkar</a>
+  </div>
+  <p id="status">Sensorer av</p>
+</header>
+<main>
+  <section id="flik-nu">
+    <p id="startText">Tryck Starta sensorer. På iPhone frågar Safari om rörelse. Tryck Tillåt.</p>
+    <div class="kurva"><b>Vridning, tippa, luta · grader/s</b><canvas id="cRot" height="64"></canvas></div>
+    <div class="kurva"><b>Vinklar · grader</b><canvas id="cVinkel" height="64"></canvas></div>
+    <div class="kurva"><b>Acceleration utan gravitation</b><canvas id="cAcc" height="64"></canvas></div>
+    <div class="kurva"><b>Acceleration med gravitation</b><canvas id="cAccG" height="64"></canvas></div>
+    <p class="farg"><i class="r">Röd</i> vridning / höger · <i class="g">grön</i> tippa / upp · <i class="b">blå</i> luta / ut</p>
+    <details id="install">
+      <summary>Känslighet och dödzon</summary>
+      <p class="farg">Känslighet och dödzon gäller fart och acceleration. Vinklarna visas som de är. Värdena sparas på den här telefonen.</p>
+      <div id="reglage"></div>
+      <div class="tider" id="tider"></div>
+      <label class="check">Ljud vid nedräkning <input type="checkbox" id="cbLjud"></label>
+      <label class="check">Vibration om telefonen kan <input type="checkbox" id="cbVibr"></label>
+      <button type="button" id="bStandard">Standardvärden</button>
+    </details>
+  </section>
+
+  <section id="flik-sparade" hidden>
+    <div class="knapprad">
+      <button type="button" id="bExport">Exportera allt</button>
+      <button type="button" id="bImport">Hämta in</button>
+    </div>
+    <input id="importFil" type="file" accept="application/json,.json" hidden>
+    <div id="lista"></div>
+  </section>
+
+  <section id="flik-kann" hidden>
+    <h2>Känn igen</h2>
+    <p class="version">Första versionen. Den jämför formen och kan ta fel.</p>
+    <p>Gör en rörelse du redan har sparat. Appen visar den som liknar mest.</p>
+    <div id="kannResultat" class="kort" hidden>
+      <p class="version" id="kannEtikett">Bästa träffen</p>
+      <p id="kannSvar"></p>
+      <p id="kannProcent"></p>
+      <p id="kannNasta" class="meta"></p>
+      <button type="button" id="bKannSpara">Spara som exempel på den här</button>
+    </div>
+  </section>
+</main>
+
+<button type="button" id="primar">Starta sensorer</button>
+<button type="button" id="kannKnapp" hidden>Känn igen</button>
+
+<nav>
+  <button type="button" data-flik="nu" class="aktiv">Nu</button>
+  <button type="button" data-flik="sparade">Sparade</button>
+  <button type="button" data-flik="kann">Känn igen</button>
+</nav>
+
+<div id="toast" hidden></div>
+
+<div id="lager" hidden>
+  <div id="vyNed">
+    <p id="nedTal">3</p>
+    <p id="nedText">Håll telefonen redo</p>
+    <button type="button" id="bAvbryt">Avbryt</button>
+  </div>
+  <div id="vyNamn" hidden>
+    <h2>Vad betyder rörelsen?</h2>
+    <button type="button" id="mik">Säg vad rörelsen betyder</button>
+    <p class="farg">På iPhone behöver Siri och diktering vara på.</p>
+    <p id="tolkad"></p>
+    <p id="talStatus"></p>
+    <label>Eller skriv namnet
+      <input id="namnFalt" type="text" enterkeyhint="done" autocomplete="off" placeholder="t.ex. backhand i tennis">
+    </label>
+    <div class="knapprad">
+      <button type="button" id="bSpara" class="stor" disabled>Spara</button>
+      <button type="button" id="bIgen">Försök igen</button>
+    </div>
+    <button type="button" id="bSlang">Släng</button>
+  </div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

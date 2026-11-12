@@ -1,0 +1,121 @@
+{
+  "titel": "WW2 Länkar",
+  "ledtext": "Tryck på det du vill öppna.",
+  "hjalp": "En ny knapp är ett objekt i rätt grupp. sokvag är adressen från repots rot, till exempel form/hus/.",
+  "grupper": [
+    {
+      "id": "verkstad",
+      "namn": "Verkstad / FORM",
+      "lankar": [
+        {
+          "namn": "FORM 3D Studio",
+          "text": "Skapa en 3D-modell av en idé och titta på den.",
+          "sokvag": "form/"
+        },
+        {
+          "namn": "Husbyggaren",
+          "text": "Bygg hus och välj väggar och tak.",
+          "sokvag": "form/hus/"
+        },
+        {
+          "namn": "Satellitlandskap",
+          "text": "Gör ett landskap av en satellitbild.",
+          "sokvag": "form/satellit/"
+        },
+        {
+          "namn": "Område från bilder",
+          "text": "Flera foton blir en 3D-plats.",
+          "sokvag": "form/omrade/"
+        },
+        {
+          "namn": "Exempel Strömsö",
+          "text": "Vrid på en färdig modell av Strömsö.",
+          "sokvag": "form/omrade/exempel/"
+        },
+        {
+          "namn": "Serverberäkning",
+          "text": "Låt en server räkna ut 3D från bilderna.",
+          "sokvag": "form/omrade/anslutning/"
+        },
+        {
+          "namn": "Speloptimering",
+          "text": "Gör modellen lättare så den orkar i spelet.",
+          "sokvag": "form/optimera/"
+        },
+        {
+          "namn": "Tekniker",
+          "text": "Så arbetar FORM, i vanlig text.",
+          "sokvag": "form/metod/"
+        },
+        {
+          "namn": "Bygginstruktion",
+          "text": "Text om hur terrängen ska byggas.",
+          "sokvag": "form/bygginstruktion/"
+        }
+      ]
+    },
+    {
+      "id": "styrning",
+      "namn": "Test av styrning och gyro",
+      "lankar": [
+        {
+          "namn": "Skjutbana",
+          "text": "Sikta och skjut med telefonens lutning.",
+          "sokvag": "index.html"
+        },
+        {
+          "namn": "Flygplan",
+          "text": "Flyg med telefonen som spak.",
+          "sokvag": "flyg/"
+        },
+        {
+          "namn": "Panorama",
+          "text": "Se dig om på ett fält i Normandie.",
+          "sokvag": "panorama/"
+        },
+        {
+          "namn": "Gubbtest",
+          "text": "Gå och sikta med en soldat.",
+          "sokvag": "gubbe-test/"
+        },
+        {
+          "namn": "Vagntest",
+          "text": "Kör en stridsvagn med telefonen som ratt.",
+          "sokvag": "vagn-test/"
+        },
+        {
+          "namn": "Rörelsetest",
+          "text": "Mät gyro, acceleration och vibration.",
+          "sokvag": "rorelse-test/"
+        },
+        {
+          "namn": "Rörelseinspelare",
+          "text": "Spela in en rörelse och säg vad den betyder.",
+          "sokvag": "rorelse/"
+        }
+      ]
+    },
+    {
+      "id": "bibliotek",
+      "namn": "Bibliotek",
+      "lankar": [
+        {
+          "namn": "Verkstadens bibliotek",
+          "text": "Katalogen med soldater, vapen och fordon.",
+          "sokvag": "form/verkstad/"
+        }
+      ]
+    },
+    {
+      "id": "ovrigt",
+      "namn": "Övrigt",
+      "lankar": [
+        {
+          "namn": "Skjutbanan i Expo Go",
+          "text": "Öppnar appen i Expo Go.",
+          "sokvag": "app/"
+        }
+      ]
+    }
+  ]
+}

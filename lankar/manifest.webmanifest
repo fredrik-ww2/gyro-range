@@ -1,0 +1,14 @@
+{
+  "name": "WW2 Länkar",
+  "short_name": "WW2 Länkar",
+  "lang": "sv",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#efece3",
+  "theme_color": "#24382c",
+  "icons": [
+    { "src": "ikon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "ikon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }
+  ]
+}

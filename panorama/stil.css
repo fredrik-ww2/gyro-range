@@ -15,9 +15,9 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
 #startKort small{display:block;margin-top:12px;color:#b7c4bb;font-size:13px;line-height:1.4}
 #kontroller{position:absolute;z-index:5;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:stretch}
 #kontroller button{flex:1 1 120px;max-width:220px;min-height:52px;padding:10px 12px;font-size:16px;font-weight:750}
-#horisont.pa,#styrKnapp.pa,#laserInstall.pa,.val button.pa,.omkopplare.pa{background:var(--lime);color:#19221a;border-color:transparent}
+#horisont.pa,#styrKnapp.pa,#laserInstall.pa,.val button.pa,.omkopplare.pa,.forval button.pa{background:var(--lime);color:#19221a;border-color:transparent}
 #hint{position:absolute;z-index:4;left:12px;right:12px;bottom:calc(var(--ovan-kontroll, 150px) + 6px);text-align:center;color:#f4f7ee;text-shadow:0 1px 3px #000;font-size:14px;pointer-events:none}
-#styrPanel,#laserPanel{position:absolute;z-index:6;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:var(--ovan-kontroll, 150px);max-height:min(54dvh,480px);overflow:auto;touch-action:pan-y;padding:12px 12px 14px;border:1px solid #ffffff26;background:#16211ef2;backdrop-filter:blur(16px);border-radius:22px;box-shadow:0 12px 40px #0007}
+#styrPanel,#laserPanel{position:absolute;z-index:6;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:var(--ovan-kontroll, 150px);max-height:min(62dvh,540px);overflow:auto;overflow-x:hidden;touch-action:pan-y;padding:12px 12px 14px;border:1px solid #ffffff26;background:#16211ef2;backdrop-filter:blur(16px);border-radius:22px;box-shadow:0 12px 40px #0007}
 .panelTopp{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .panelTopp b{font-size:18px}
 .panelTopp button,#standard{min-height:40px;padding:8px 12px;font-size:15px}
@@ -39,6 +39,23 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
 #styrPanel input[type=range],#laserPanel input[type=range]{display:block;width:100%;margin-top:4px;accent-color:var(--lime);touch-action:pan-x}
 #standard{width:100%;margin-top:8px}
 #laserNoll,#laserStandard,#laserPanel .omkopplare{width:100%;margin-top:8px;min-height:48px;font-weight:750}
+.forval{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:2px 0 8px}
+.forval button{min-height:44px;padding:6px 8px;font-size:15px;font-weight:750;line-height:1.15}
+.axelRad{padding:5px 0 0;border-top:1px solid #ffffff22}
+.axelLinje{display:grid;grid-template-columns:minmax(0,74px) minmax(0,0.9fr) minmax(0,1.2fr);gap:6px;align-items:center}
+.axelLinje > *{min-width:0}
+.axelNamn{font-size:14px;font-weight:750;line-height:1.15}
+.axelNamn small{display:block;margin-top:1px;color:#b7c4bb;font-size:11px;font-weight:650}
+.axelLinje select{width:100%;min-height:44px;padding:0 4px;border:1px solid #ffffff36;border-radius:12px;background:#121816;color:inherit;font:inherit;font-size:16px;font-weight:750;touch-action:manipulation}
+.axelLinje select:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+#laserPanel .axelLinje .kansRad{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 6px;margin:0;min-width:0;font-size:12px}
+#laserPanel .axelLinje .kansRad span{float:none;font-size:13px;line-height:1.1}
+#laserPanel .axelLinje input[type=range]{flex:1 0 100%;width:100%;margin-top:0}
+.axelRad.arAv .kansRad{opacity:.4}
+.matare{height:8px;margin:4px 0 0;border-radius:99px;background:#ffffff38;box-shadow:inset 0 0 0 1px #ffffff22;overflow:hidden}
+.matare span{display:block;height:100%;width:0;border-radius:99px;background:var(--lime)}
+.axelRad .mer summary{display:flex;align-items:center;min-height:32px;padding:1px 0 2px;color:#d5dece;font-size:14px;font-weight:750;cursor:pointer}
+#laserLasNotis{margin-top:4px}
 .fargRubrik{margin:10px 0 0;font-size:13px}
 .fargVal{display:flex;gap:8px;align-items:center;margin-top:6px}
 .fargVal button{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid #ffffff55;flex:0 0 auto}
@@ -51,6 +68,11 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
   #starta{min-height:56px;font-size:24px}
   #kontroller button{min-height:48px;font-size:16px}
   #kontroller #laserKnapp{min-height:48px;font-size:18px}
+  .forval{grid-template-columns:repeat(4,1fr)}
+}
+@media (max-width:360px){
+  .axelLinje{grid-template-columns:1fr 1.15fr}
+  .axelLinje .kansRad{grid-column:1 / -1}
 }
 @media (max-height:520px){
   #startKort{top:auto;bottom:max(8px,env(safe-area-inset-bottom));transform:none}

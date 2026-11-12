@@ -1,14 +1,34 @@
 import * as THREE from 'three';
-import {enhetsKvaternion, skarmVinkel, vinklarFranKvaternion} from './blick.js?v=8';
+import {enhetsKvaternion, kvaternionFranVinklar, skarmVinkel, vinklarFranKvaternion} from './blick.js?v=8';
 
 const RAD = Math.PI / 180;
 const GRAD = 180 / Math.PI;
 const FARG = /^#[0-9a-fA-F]{6}$/;
+const AXEL_ID = ['vrida', 'uppner', 'sida'];
+const LAGEN = ['position', 'fart', 'rorelse', 'av'];
+// Utslag som ger full joystickfart vid känslighet 1.
+const FULL_UTSLAG = 35 * RAD;
+// Extra vinkel (rad) per rad/s² och enhet på accelerationsreglaget.
+const ACCEL_K = 0.005;
+const ACCEL_TAK = 0.35;
+const MATARE_FULL = 25;
+const SKAK_K = 0.02;
+const SKAK_TAK = 16;
 
 // Förstärkning 1 betyder att telefonens vridning och vyns vridning är samma vinkel.
+const STANDARD_AXEL = {
+  lage: 'position',
+  kanslighet: 1,
+  maxfart: 90,
+  kurva: 'kvadrat',
+  slapp: false,
+  fartgrans: 40,
+  accel: 0,
+  skak: 0
+};
+
 export const STANDARD_LASER = {
   pa: false,
-  forstarkning: 1,
   matcha: true,
   fov: 50,
   utjamning: 0.15,
@@ -21,12 +41,33 @@ export const STANDARD_LASER = {
 
 function klamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
 
+function normalAxel(raw, fallbackK) {
+  const bas = STANDARD_AXEL;
+  const lage = LAGEN.includes(raw?.lage) ? raw.lage : bas.lage;
+  const kandidat = Number.isFinite(+raw?.kanslighet) ? +raw.kanslighet : fallbackK;
+  return {
+    lage,
+    kanslighet: klamp(Number.isFinite(kandidat) ? kandidat : bas.kanslighet, 0.1, 6),
+    maxfart: klamp(Number.isFinite(+raw?.maxfart) ? +raw.maxfart : bas.maxfart, 10, 240),
+    kurva: raw?.kurva === 'linjar' ? 'linjar' : 'kvadrat',
+    slapp: raw?.slapp === true,
+    fartgrans: klamp(Number.isFinite(+raw?.fartgrans) ? +raw.fartgrans : bas.fartgrans, 5, 180),
+    accel: klamp(Number.isFinite(+raw?.accel) ? +raw.accel : bas.accel, 0, 3),
+    skak: klamp(Number.isFinite(+raw?.skak) ? +raw.skak : bas.skak, 0, 3)
+  };
+}
+
 export function normalLaser(raw) {
   const bas = STANDARD_LASER;
   const farg = typeof raw?.farg === 'string' && FARG.test(raw.farg) ? raw.farg.toLowerCase() : bas.farg;
+  const harAxlar = !!raw?.axlar && typeof raw.axlar === 'object';
+  // Äldre sparningar har en gemensam förstärkning, 0,5–3. Den blir känslighet på alla axlar.
+  const arv = Number.isFinite(+raw?.forstarkning) ? klamp(+raw.forstarkning, 0.1, 6) : 1;
+  const fallback = harAxlar ? 1 : arv;
+  const axlar = {};
+  for (const id of AXEL_ID) axlar[id] = normalAxel(raw?.axlar?.[id], fallback);
   return {
     pa: raw?.pa === true,
-    forstarkning: klamp(Number.isFinite(+raw?.forstarkning) ? +raw.forstarkning : bas.forstarkning, 0.5, 3),
     matcha: raw?.matcha !== false,
     fov: klamp(Number.isFinite(+raw?.fov) ? +raw.fov : bas.fov, 8, 100),
     utjamning: klamp(Number.isFinite(+raw?.utjamning) ? +raw.utjamning : bas.utjamning, 0, 1),
@@ -34,8 +75,129 @@ export function normalLaser(raw) {
     lasRoll: raw?.lasRoll !== false,
     prick: klamp(Math.round(Number.isFinite(+raw?.prick) ? +raw.prick : bas.prick), 10, 56),
     farg,
-    strale: raw?.strale === true
+    strale: raw?.strale === true,
+    axlar
   };
+}
+
+function sammaKanslighet(install) {
+  const k = install.axlar.vrida.kanslighet;
+  return AXEL_ID.every(id => {
+    const ax = install.axlar[id];
+    return ax.lage === 'position' && !(ax.accel > 0) && Math.abs(ax.kanslighet - k) < 1e-4;
+  });
+}
+
+export function appliceraForval(raw, id) {
+  const n = normalLaser(raw);
+  const alla = del => {
+    for (const nyckel of AXEL_ID) n.axlar[nyckel] = normalAxel({...n.axlar[nyckel], ...del}, 1);
+  };
+  if (id === 'fonster') {
+    alla({lage: 'position', kanslighet: 1, accel: 0, skak: 0, slapp: false});
+    n.matcha = true;
+  } else if (id === 'joystick') {
+    alla({lage: 'fart', kanslighet: 1, maxfart: 90, kurva: 'kvadrat', accel: 0, skak: 0});
+  } else if (id === 'mus') {
+    alla({lage: 'rorelse', kanslighet: 1, slapp: true, fartgrans: 40, accel: 0, skak: 0});
+  } else if (id === 'fin') {
+    alla({lage: 'position', kanslighet: 2.5, accel: 0, skak: 0, slapp: false});
+    n.dodzon = 0;
+    n.utjamning = 0.05;
+  }
+  return n;
+}
+
+function lagg(fore, mal, dt, tau) {
+  if (!(dt > 0)) return mal;
+  const a = 1 - Math.exp(-dt / tau);
+  return fore + (mal - fore) * a;
+}
+
+function tomKin() {
+  return {har: false, fore: 0, bas: 0, omega: 0, accel: 0, jerk: 0, extra: 0};
+}
+
+function nollKin(s) {
+  s.har = false;
+  s.fore = 0;
+  s.bas = 0;
+  s.omega = 0;
+  s.accel = 0;
+  s.jerk = 0;
+  s.extra = 0;
+}
+
+// Uppdaterar fart, acceleration och ryck. Första provet och luckor ger ingen stegdifferens.
+function stegaKinematik(s, inRad, dt) {
+  if (!s.har || !(dt > 0) || dt >= 0.25) {
+    s.har = true;
+    s.fore = inRad;
+    s.omega = 0;
+    s.accel = 0;
+    s.jerk = 0;
+    return 0;
+  }
+  let d = inRad - s.fore;
+  if (d > Math.PI) d -= Math.PI * 2;
+  if (d < -Math.PI) d += Math.PI * 2;
+  const omegaNy = lagg(s.omega, d / dt, dt, 0.04);
+  const accelNy = lagg(s.accel, (omegaNy - s.omega) / dt, dt, 0.045);
+  const jerkNy = lagg(s.jerk, (accelNy - s.accel) / dt, dt, 0.05);
+  s.fore = inRad;
+  s.omega = omegaNy;
+  s.accel = accelNy;
+  s.jerk = jerkNy;
+  return d;
+}
+
+// Extra utslag bara medan farten ökar. Det klingar av när accelerationen tar slut.
+function raknaExtra(s, ax, dt) {
+  const dtS = dt > 0 && dt < 0.25 ? dt : 0.016;
+  let mal = 0;
+  if (ax.lage !== 'av' && ax.accel > 0 && s.accel * s.omega > 0) {
+    mal = klamp(ax.accel * s.accel * ACCEL_K, -ACCEL_TAK, ACCEL_TAK);
+  }
+  s.extra = lagg(s.extra, mal, dtS, 0.08);
+  return s.extra;
+}
+
+// Position: vinkeln är vyn. Fart: utslag ger fortsatt fart. Mus: bara ändringen räknas.
+function stegaAxel(s, inRad, dt, ax, dodzonRad) {
+  const fore = s.har ? s.fore : inRad;
+  const d = stegaKinematik(s, inRad, dt);
+  const extra = raknaExtra(s, ax, dt);
+  if (ax.lage === 'av') {
+    s.bas = 0;
+    return 0;
+  }
+  if (ax.lage === 'position') {
+    s.bas = inRad * ax.kanslighet;
+    return s.bas + extra;
+  }
+  const dtS = dt > 0 && dt < 0.25 ? dt : 0;
+  if (ax.lage === 'fart') {
+    const v = Math.abs(inRad) < dodzonRad ? 0 : inRad * ax.kanslighet;
+    let x = klamp(v / FULL_UTSLAG, -1, 1);
+    if (ax.kurva !== 'linjar') x = Math.sign(x) * x * x;
+    if (dtS) s.bas += x * ax.maxfart * RAD * dtS;
+    return s.bas + extra;
+  }
+  if (d) {
+    const fart = dtS ? Math.abs(d) / dtS : Infinity;
+    const motNoll = Math.abs(inRad) + 1e-5 < Math.abs(fore);
+    const glitch = Math.abs(d) > 2.2;
+    const slapp = ax.slapp && motNoll && fart <= ax.fartgrans * RAD;
+    if (!glitch && !slapp) s.bas += d * ax.kanslighet;
+  }
+  return s.bas + extra;
+}
+
+// Håller integreringen i fas med 1:1-vägen, så ett lägesbyte inte hoppar.
+function foljBara(s, inRad, dt, kanslighet) {
+  stegaKinematik(s, inRad, dt);
+  s.bas = inRad * kanslighet;
+  s.extra = 0;
 }
 
 // CSS-pixlar gånger ungefärlig punkttäthet. Nutida iPhone ligger på 460, äldre på 326.
@@ -178,10 +340,12 @@ export function skapaLaser(val = {}) {
   const minneHoger = new THREE.Vector3(1, 0, 0);
   const euro = skapaEuro();
   const dod = skapaDodzon();
+  const kin = {vrida: tomKin(), uppner: tomKin(), sida: tomKin()};
   let install = normalLaser(STANDARD_LASER);
   let fick = false;
   let vantarNoll = true;
   let behollVy = false;
+  let vag = '';
 
   function las(alpha, beta, gamma, skarm) {
     const vinkel = Number.isFinite(skarm) ? skarm : skarmVinkel();
@@ -199,6 +363,8 @@ export function skapaLaser(val = {}) {
   function nollInre() {
     euro.noll();
     dod.noll();
+    vag = '';
+    for (const id of AXEL_ID) nollKin(kin[id]);
     minneHoger.set(1, 0, 0);
     visad.identity();
   }
@@ -223,6 +389,8 @@ export function skapaLaser(val = {}) {
     } else vantarNoll = true;
     euro.noll();
     dod.noll();
+    vag = '';
+    for (const id of AXEL_ID) nollKin(kin[id]);
     _hoger.set(1, 0, 0).applyQuaternion(vyQ);
     _hoger.y = 0;
     if (_hoger.lengthSq() > 1e-6) minneHoger.copy(_hoger).normalize();
@@ -230,22 +398,67 @@ export function skapaLaser(val = {}) {
     visad.copy(vyQ);
   }
 
+  function byteVag(namn) {
+    if (vag === namn) return;
+    vag = namn;
+    euro.noll();
+    dod.noll();
+  }
+
+  function lasVinklar(q) {
+    const v = vinklarFranKvaternion(q, euler);
+    return {vrida: v.vrida, uppner: v.uppner, sida: v.sida};
+  }
+
+  function visa(q) {
+    komb.copy(q).multiply(bas);
+    if (install.lasRoll) utanRoll(komb, visad, minneHoger);
+    else visad.copy(komb);
+    return visad;
+  }
+
   function uppdatera(dt) {
+    const dtS = Math.min(Math.max(dt || 0, 0), 0.05);
     if (!fick || vantarNoll) {
       if (install.lasRoll) return utanRoll(bas, visad, minneHoger);
       return visad.copy(bas);
     }
     relativ.multiplyQuaternions(origin, raw);
-    skalaRotation(relativ, install.forstarkning, skalad);
+    const direkt = lasVinklar(relativ);
+    if (sammaKanslighet(install)) {
+      byteVag('lika');
+      const k = install.axlar.vrida.kanslighet;
+      for (const id of AXEL_ID) foljBara(kin[id], direkt[id], dtS, k);
+      skalaRotation(relativ, k, skalad);
+      if (!(install.utjamning > 0)) {
+        euro.noll();
+        filtrerad.copy(skalad);
+      } else euro.filtrera(skalad, dtS, install.utjamning, filtrerad);
+      dod.tillampa(filtrerad, install.dodzon, hallen);
+      return visa(hallen);
+    }
+    byteVag('axlar');
     if (!(install.utjamning > 0)) {
       euro.noll();
-      filtrerad.copy(skalad);
-    } else euro.filtrera(skalad, dt, install.utjamning, filtrerad);
+      filtrerad.copy(relativ);
+    } else euro.filtrera(relativ, dtS, install.utjamning, filtrerad);
     dod.tillampa(filtrerad, install.dodzon, hallen);
-    komb.copy(hallen).multiply(bas);
-    if (install.lasRoll) utanRoll(komb, visad, minneHoger);
-    else visad.copy(komb);
-    return visad;
+    const v = lasVinklar(hallen);
+    const ut = {};
+    const dodzonRad = install.dodzon * RAD;
+    for (const id of AXEL_ID) ut[id] = stegaAxel(kin[id], v[id], dtS, install.axlar[id], dodzonRad);
+    kvaternionFranVinklar(ut, euler, skalad);
+    return visa(skalad);
+  }
+
+  function skakPx() {
+    let e = 0;
+    for (const id of AXEL_ID) {
+      const ax = install.axlar[id];
+      if (ax.lage === 'av' || !(ax.skak > 0)) continue;
+      e += Math.abs(kin[id].jerk) * ax.skak;
+    }
+    return Math.min(SKAK_TAK, e * SKAK_K);
   }
 
   if (val.lyssna !== false && typeof addEventListener === 'function') {
@@ -256,11 +469,17 @@ export function skapaLaser(val = {}) {
   }
 
   return {
-    nollstall, behall, uppdatera,
+    nollstall, behall, uppdatera, skakPx,
     mata: las,
     get install() { return install; },
     satt(nasta) { install = normalLaser(nasta); },
-    get fick() { return fick; }
+    get fick() { return fick; },
+    matare() {
+      const ut = {};
+      for (const id of AXEL_ID) ut[id] = Math.min(1, Math.abs(kin[id].accel) / MATARE_FULL);
+      ut.skak = skakPx();
+      return ut;
+    }
   };
 }
 
@@ -356,8 +575,15 @@ export function sjalvtest() {
   laser.mata(0, 90, 0, 0);
   krav('samma håll igen är rakt fram', laser.uppdatera(1 / 60).angleTo(id) * GRAD < 0.08);
 
+  function stallAxlar(las, del, glob = {}) {
+    const axlar = {};
+    for (const id of AXEL_ID) axlar[id] = {...las.install.axlar[id], lage: 'position', kanslighet: 1, accel: 0, skak: 0, slapp: false, ...del};
+    if (glob.axlar) for (const id of AXEL_ID) axlar[id] = {...axlar[id], ...glob.axlar[id]};
+    const {axlar: _hoppa, ...rest} = glob;
+    las.satt({...las.install, utjamning: 0, dodzon: 0, matcha: false, ...rest, axlar});
+  }
   laser.nollstall();
-  laser.satt({...laser.install, forstarkning: 2, utjamning: 0, dodzon: 0, lasRoll: false});
+  stallAxlar(laser, {kanslighet: 2}, {lasRoll: false});
   laser.mata(0, 90, 0, 0);
   laser.uppdatera(1 / 60);
   laser.mata(-10, 90, 0, 0);
@@ -365,7 +591,7 @@ export function sjalvtest() {
 
   const vy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.5);
   laser.nollstall();
-  laser.satt({...laser.install, forstarkning: 1, utjamning: 0, dodzon: 0, lasRoll: true});
+  stallAxlar(laser, {kanslighet: 1}, {lasRoll: true});
   laser.mata(0, 90, 0, 0);
   laser.behall(vy);
   const kvar = laser.uppdatera(1 / 60).clone();
@@ -389,8 +615,133 @@ export function sjalvtest() {
   const fovLand = matchaFonsterFov({cssBredd: 852, cssHojd: 393, dpr: 3, ppi: 460, avstandM: 0.35});
   krav('liggande fönster är smalare', fovLand > 10 && fovLand < 11.5);
   krav('iPhone-täthet', uppskattaPpi(393, 852, 3) === 460 && uppskattaPpi(375, 667, 2) === 326);
-  krav('förstärkning kläms', normalLaser({forstarkning: 9, utjamning: 0, dodzon: 0, matcha: false, lasRoll: false, strale: true, farg: '#00ff00', pa: true}).forstarkning === 3);
+  const klamd = normalLaser({forstarkning: 9, utjamning: 0, dodzon: 0, matcha: false, lasRoll: false, strale: true, farg: '#00ff00', pa: true});
+  krav('känslighet kläms till 6', klamd.axlar.vrida.kanslighet === 6 && klamd.axlar.uppner.kanslighet === 6 && klamd.axlar.sida.kanslighet === 6);
+  krav('känslighet når ned till 0,1', normalLaser({axlar: {vrida: {kanslighet: 0.02}}}).axlar.vrida.kanslighet === 0.1);
   krav('rå utjämning får vara 0', normalLaser({utjamning: 0, dodzon: 0, matcha: false, lasRoll: false}).utjamning === 0);
   krav('fel färg faller tillbaka till rött', normalLaser({farg: 'rod'}).farg === '#ff1a1a');
+
+  const gammal = normalLaser({pa: true, forstarkning: 1.5, matcha: false, fov: 40, utjamning: 0.4, dodzon: 1.2, lasRoll: false, prick: 30, farg: '#00ff00', strale: true});
+  krav('gammal förstärkning blir känslighet', AXEL_ID.every(id => gammal.axlar[id].kanslighet === 1.5 && gammal.axlar[id].lage === 'position' && gammal.axlar[id].accel === 0));
+  krav('gamla fält behålls', gammal.pa && gammal.matcha === false && gammal.fov === 40 && gammal.utjamning === 0.4 && gammal.dodzon === 1.2 && gammal.lasRoll === false && gammal.prick === 30 && gammal.farg === '#00ff00' && gammal.strale);
+  const sparad = normalLaser(JSON.parse(JSON.stringify(gammal)));
+  krav('ny sparning behåller axlarna', sparad.axlar.sida.kanslighet === 1.5 && sparad.axlar.vrida.lage === 'position');
+  krav('sparade axlar vinner över gammal förstärkning', normalLaser({...sparad, forstarkning: 3}).axlar.vrida.kanslighet === 1.5);
+
+  const fin = appliceraForval({farg: '#ffffff', prick: 40, strale: true, lasRoll: true}, 'fin');
+  krav('fin känslighet', fin.axlar.vrida.lage === 'position' && fin.axlar.uppner.kanslighet === 2.5 && fin.axlar.sida.kanslighet === 2.5 && fin.dodzon === 0 && fin.utjamning === 0.05);
+  krav('förval rör inte färg och prick', fin.farg === '#ffffff' && fin.prick === 40 && fin.strale && fin.lasRoll);
+  const fonster = appliceraForval(fin, 'fonster');
+  krav('fönster 1:1 är position', AXEL_ID.every(id => fonster.axlar[id].lage === 'position' && fonster.axlar[id].kanslighet === 1) && fonster.matcha);
+  const joy = appliceraForval(fonster, 'joystick');
+  krav('joystick är fart', AXEL_ID.every(id => joy.axlar[id].lage === 'fart' && joy.axlar[id].kurva === 'kvadrat' && joy.axlar[id].maxfart === 90));
+  const mus = appliceraForval(joy, 'mus');
+  krav('mus släpper vid retur', AXEL_ID.every(id => mus.axlar[id].lage === 'rorelse' && mus.axlar[id].slapp && mus.axlar[id].fartgrans === 40));
+
+  function gir(q) { return -new THREE.Euler().setFromQuaternion(q, 'YXZ').y * GRAD; }
+  function nick(q) { return new THREE.Euler().setFromQuaternion(q, 'YXZ').x * GRAD; }
+  function hall(las, alpha, bilder, dt) {
+    las.mata(alpha, 90, 0, 0);
+    let q = las.uppdatera(dt);
+    for (let i = 1; i < bilder; i++) q = las.uppdatera(dt);
+    return q.clone();
+  }
+
+  const per = skapaLaser({lyssna: false});
+  stallAxlar(per, {kanslighet: 1}, {axlar: {vrida: {kanslighet: 2}, uppner: {kanslighet: 1}, sida: {kanslighet: 1}}, lasRoll: true});
+  per.mata(0, 90, 0, 0);
+  per.uppdatera(1 / 60);
+  per.mata(-10, 90, 0, 0);
+  const qPer = per.uppdatera(1 / 60).clone();
+  krav('vridning kan vara känsligare än lutning', Math.abs(gir(qPer) - 20) < 1.2 && Math.abs(nick(qPer)) < 1.5);
+
+  const av = skapaLaser({lyssna: false});
+  stallAxlar(av, {kanslighet: 1}, {axlar: {vrida: {lage: 'av'}}, lasRoll: true});
+  av.mata(0, 90, 0, 0);
+  av.uppdatera(1 / 60);
+  av.mata(-10, 90, 0, 0);
+  krav('avstängd axel rör inte vyn', av.uppdatera(1 / 60).angleTo(id) * GRAD < 0.6);
+
+  const fart = skapaLaser({lyssna: false});
+  stallAxlar(fart, {lage: 'fart', kanslighet: 1, maxfart: 90, kurva: 'linjar'}, {lasRoll: true, dodzon: 0});
+  fart.mata(0, 90, 0, 0);
+  fart.uppdatera(1 / 60);
+  const qFart = hall(fart, -35, 30, 1 / 60);
+  const girFart = gir(qFart);
+  krav('joystick håller farten', girFart > 30);
+  const qStopp = hall(fart, 0, 20, 1 / 60);
+  const girStopp = gir(qStopp);
+  krav('tillbaka till noll stannar vyn', Math.abs(girStopp - girFart) < 2);
+  krav('joystick backar inte mot noll', girStopp > girFart - 0.6);
+  const foreBak = girStopp;
+  const qBak = hall(fart, 35, 20, 1 / 60);
+  krav('motsatt utslag vänder', gir(qBak) < foreBak - 8);
+
+  const linje = skapaLaser({lyssna: false});
+  const kurva = skapaLaser({lyssna: false});
+  stallAxlar(linje, {lage: 'fart', kanslighet: 1, maxfart: 90, kurva: 'linjar'}, {lasRoll: true});
+  stallAxlar(kurva, {lage: 'fart', kanslighet: 1, maxfart: 90, kurva: 'kvadrat'}, {lasRoll: true});
+  linje.mata(0, 90, 0, 0);
+  kurva.mata(0, 90, 0, 0);
+  linje.uppdatera(1 / 60);
+  kurva.uppdatera(1 / 60);
+  const gLinje = Math.abs(gir(hall(linje, -17.5, 30, 1 / 60)));
+  const gKurva = Math.abs(gir(hall(kurva, -17.5, 30, 1 / 60)));
+  krav('kvadratisk kurva är långsammare på halvt utslag', gKurva < gLinje * 0.7 && gKurva > 2);
+
+  const musLaser = skapaLaser({lyssna: false});
+  stallAxlar(musLaser, {lage: 'rorelse', kanslighet: 1, slapp: false}, {lasRoll: true});
+  musLaser.mata(0, 90, 0, 0);
+  musLaser.uppdatera(1 / 60);
+  const qMus = hall(musLaser, -10, 1, 1 / 60);
+  krav('mus räknar vinkeländringen', Math.abs(gir(qMus) - 10) < 1.5);
+  const qStill = hall(musLaser, -10, 25, 1 / 60);
+  krav('mus står stilla när telefonen gör det', Math.abs(gir(qStill) - gir(qMus)) < 0.2);
+  const qTillbaka = hall(musLaser, 0, 1, 1 / 60);
+  krav('mus utan släpp följer tillbaka', Math.abs(gir(qTillbaka)) < 1.5);
+
+  const slapp = skapaLaser({lyssna: false});
+  stallAxlar(slapp, {lage: 'rorelse', kanslighet: 1, slapp: true, fartgrans: 40}, {lasRoll: true});
+  slapp.mata(0, 90, 0, 0);
+  slapp.uppdatera(1 / 60);
+  const qUt = hall(slapp, -20, 1, 1 / 60);
+  const girUt = gir(qUt);
+  krav('snabb rörelse ut räknas', girUt > 12);
+  for (let i = 1; i <= 30; i++) {
+    slapp.mata(-20 + (2 * i) / 30, 90, 0, 0);
+    slapp.uppdatera(0.5 / 30);
+  }
+  const girLangsam = gir(slapp.uppdatera(0.5 / 30).clone());
+  krav('långsam retur släpps', Math.abs(girLangsam - girUt) < 1.2);
+  const qSnabb = hall(slapp, 0, 1, 1 / 60);
+  krav('snabb retur räknas', gir(qSnabb) < girLangsam - 8);
+
+  function ramp(boost) {
+    const las = skapaLaser({lyssna: false});
+    stallAxlar(las, {lage: 'position', kanslighet: 1, accel: boost, skak: boost > 0 ? 2 : 0}, {lasRoll: true, axlar: {uppner: {kanslighet: 1.01}}});
+    las.mata(0, 90, 0, 0);
+    las.uppdatera(1 / 60);
+    let topp = 0;
+    let skakTopp = 0;
+    let matareTopp = 0;
+    let alpha = 0;
+    for (let i = 0; i < 8; i++) {
+      alpha -= 4;
+      las.mata(alpha, 90, 0, 0);
+      const q = las.uppdatera(1 / 60);
+      topp = Math.max(topp, gir(q));
+      skakTopp = Math.max(skakTopp, las.skakPx());
+      matareTopp = Math.max(matareTopp, las.matare().vrida);
+    }
+    for (let i = 0; i < 40; i++) las.uppdatera(1 / 60);
+    return {topp, efter: gir(las.uppdatera(1 / 60)), skakTopp, matareTopp};
+  }
+  const utan = ramp(0);
+  const med = ramp(2);
+  krav('acceleration ger extra utslag', med.topp > utan.topp + 1);
+  krav('accelerationen klingar av', Math.abs(med.efter - utan.efter) < 2);
+  krav('skak 0 är tyst', utan.skakTopp === 0);
+  krav('ryck skakar siktet', med.skakTopp > 0.5 && med.skakTopp <= 16);
+  krav('mätaren rör sig under accelerationen', med.matareTopp > 0.15);
   return fel;
 }

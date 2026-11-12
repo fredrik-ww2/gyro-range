@@ -7,12 +7,12 @@
 <meta name="theme-color" content="#1a221c">
 <link rel="icon" href="data:,">
 <title>Panorama · Normandie</title>
-<link rel="stylesheet" href="./stil.css?v=8">
+<link rel="stylesheet" href="./stil.css?v=9">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
 <canvas id="vy" aria-label="Normandie 1944, se dig om med telefonen"></canvas>
-<div id="version">Panorama 02</div>
+<div id="version">Panorama 03</div>
 <section id="startKort">
 <span class="ogonbryn">NORMANDIE 1944</span>
 <h1>Se dig om</h1>
@@ -41,8 +41,15 @@
 </section>
 <section id="laserPanel" hidden>
 <div class="panelTopp"><b>Laserpekare</b><button id="laserStang" type="button">Stäng</button></div>
-<p class="panelLed">Telefonen är handen. Tio grader med telefonen är tio grader i vyn.</p>
-<label>Förstärkning <span id="laserForstVis"></span><input id="laserForst" type="range" min="0.5" max="3" step="0.05"></label>
+<p class="panelLed">Position följer vinkeln. Fart rullar på medan du håller ut, och noll stannar. Mus räknar bara när telefonen rör sig.</p>
+<div class="forval" id="laserForval">
+<button type="button" data-forval="fonster">Fönster 1:1</button>
+<button type="button" data-forval="joystick">Joystick</button>
+<button type="button" data-forval="mus">Mus</button>
+<button type="button" data-forval="fin">Fin känslighet</button>
+</div>
+<div id="laserAxlar"></div>
+<p class="forklaring" id="laserLasNotis" hidden>Sidolutning är låst. Knappen längre ned släpper den.</p>
 <label>Prickens storlek <span id="laserStorlekVis"></span><input id="laserStorlek" type="range" min="10" max="56" step="2"></label>
 <p class="fargRubrik">Färg</p>
 <div class="fargVal">
@@ -75,7 +82,7 @@
 <button id="horisont" type="button" class="pa" aria-pressed="true">Rak horisont</button>
 <button id="noll" type="button">Nollställ riktning</button>
 </div>
-<script type="module" src="./huvud.js?v=8"></script>
+<script type="module" src="./huvud.js?v=9"></script>
 <script>
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});

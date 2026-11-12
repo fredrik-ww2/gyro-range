@@ -135,10 +135,26 @@ export function sjalvtest() {
   const bland = normalStyr({axlar: {vrida: {lage: 'rorelse', kanslighet: 2, fart: 0, utjamning: 0}, uppner: {lage: 'foljer', kanslighet: 1}}});
   krav('lägen är skilda per axel', bland.axlar.vrida.lage === 'rorelse' && bland.axlar.uppner.lage === 'foljer' && bland.axlar.sida.lage === 'foljer');
   krav('känslighet kläms', normalAxel({kanslighet: 9}).kanslighet === 3);
+
+  const duk = {addEventListener() {}};
+  const blick = skapaBlick(duk, {lyssna: false});
+  const nollUtj = normalStyr(STANDARD_STYR);
+  for (const id of AXLAR) nollUtj.axlar[id].utjamning = 0;
+  blick.satt(nollUtj);
+  blick.mata(0, 90, 0);
+  blick.uppdatera(0.05);
+  const malVy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.45);
+  blick.taEmot(malVy);
+  const efterEmot = blick.uppdatera(0.05).clone();
+  krav('ta emot vyn utan hopp', efterEmot.angleTo(malVy) < 0.03);
+  blick.mata(-10, 90, 0);
+  const efterTio = blick.uppdatera(0.05).clone();
+  const steg = efterEmot.angleTo(efterTio);
+  krav('ta emot följer sedan 10°', steg > 0.14 && steg < 0.22);
   return fel;
 }
 
-export function skapaBlick(canvas) {
+export function skapaBlick(canvas, val = {}) {
   const raw = new THREE.Quaternion();
   const origin = new THREE.Quaternion();
   const relativ = new THREE.Quaternion();
@@ -183,15 +199,17 @@ export function skapaBlick(canvas) {
     }
   }
 
-  addEventListener('deviceorientation', e => {
-    if (![e.alpha, e.beta, e.gamma].every(Number.isFinite)) return;
-    lasVinkel(e.alpha, e.beta, e.gamma);
-  }, {passive: true});
-  addEventListener('devicemotion', e => {
-    const rr = e.rotationRate;
-    if (!rr) return;
-    lasFart(rr.alpha, rr.beta, rr.gamma, e.timeStamp);
-  }, {passive: true});
+  if (val.lyssna !== false && typeof addEventListener === 'function') {
+    addEventListener('deviceorientation', e => {
+      if (![e.alpha, e.beta, e.gamma].every(Number.isFinite)) return;
+      lasVinkel(e.alpha, e.beta, e.gamma);
+    }, {passive: true});
+    addEventListener('devicemotion', e => {
+      const rr = e.rotationRate;
+      if (!rr) return;
+      lasFart(rr.alpha, rr.beta, rr.gamma, e.timeStamp);
+    }, {passive: true});
+  }
 
   let pekare = null;
   let sen = null;
@@ -222,6 +240,33 @@ export function skapaBlick(canvas) {
     for (const id of AXLAR) integrerad[id] = visad[id] = 0;
     drag.x = 0;
     drag.y = 0;
+    snappa = true;
+  }
+
+  // Behåll den vy som redan syns, så ett lägesbyte inte hoppar.
+  // Telefonens nästa rörelse räknas från pose som ger qMal just nu.
+  function taEmot(qMal) {
+    const v = vinklarFranKvaternion(qMal, euler);
+    const sida = styr.horisont ? 0 : v.sida;
+    const vis = {uppner: v.uppner, vrida: v.vrida, sida};
+    for (const id of AXLAR) {
+      visad[id] = vis[id];
+      integrerad[id] = vis[id];
+    }
+    if (fickVinkel) {
+      const just = {
+        uppner: vis.uppner / (styr.axlar.uppner.kanslighet || 1),
+        vrida: vis.vrida / (styr.axlar.vrida.kanslighet || 1),
+        sida: sida / (styr.axlar.sida.kanslighet || 1)
+      };
+      kvaternionFranVinklar(just, euler, malQ);
+      origin.copy(malQ).multiply(relativ.copy(raw).invert());
+      vantarNoll = false;
+    }
+    if (!harGyro()) {
+      drag.y = v.uppner;
+      drag.x = -v.vrida;
+    }
     snappa = true;
   }
 
@@ -280,6 +325,7 @@ export function skapaBlick(canvas) {
     satt(nasta) { styr = normalStyr(nasta); },
     get harGyro() { return harGyro(); },
     get senast() { return senastVinkel; },
+    taEmot,
     mata(alpha, beta, gamma) { aktiv = true; lasVinkel(alpha, beta, gamma); },
     mataFart(alphaDps, betaDps, gammaDps, dt) {
       aktiv = true;

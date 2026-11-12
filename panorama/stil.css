@@ -15,30 +15,42 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
 #startKort small{display:block;margin-top:12px;color:#b7c4bb;font-size:13px;line-height:1.4}
 #kontroller{position:absolute;z-index:5;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:stretch}
 #kontroller button{flex:1 1 120px;max-width:220px;min-height:52px;padding:10px 12px;font-size:16px;font-weight:750}
-#horisont.pa,#styrKnapp.pa,.val button.pa{background:var(--lime);color:#19221a;border-color:transparent}
-#hint{position:absolute;z-index:4;left:12px;right:12px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 68px);text-align:center;color:#f4f7ee;text-shadow:0 1px 3px #000;font-size:14px;pointer-events:none}
-#styrPanel{position:absolute;z-index:6;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:calc(max(12px,env(safe-area-inset-bottom)) + 64px);max-height:min(58dvh,460px);overflow:auto;touch-action:pan-y;padding:12px 12px 14px;border:1px solid #ffffff26;background:#16211ef2;backdrop-filter:blur(16px);border-radius:22px;box-shadow:0 12px 40px #0007}
+#horisont.pa,#styrKnapp.pa,#laserInstall.pa,.val button.pa,.omkopplare.pa{background:var(--lime);color:#19221a;border-color:transparent}
+#hint{position:absolute;z-index:4;left:12px;right:12px;bottom:calc(var(--ovan-kontroll, 150px) + 6px);text-align:center;color:#f4f7ee;text-shadow:0 1px 3px #000;font-size:14px;pointer-events:none}
+#styrPanel,#laserPanel{position:absolute;z-index:6;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:var(--ovan-kontroll, 150px);max-height:min(54dvh,480px);overflow:auto;touch-action:pan-y;padding:12px 12px 14px;border:1px solid #ffffff26;background:#16211ef2;backdrop-filter:blur(16px);border-radius:22px;box-shadow:0 12px 40px #0007}
 .panelTopp{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .panelTopp b{font-size:18px}
 .panelTopp button,#standard{min-height:40px;padding:8px 12px;font-size:15px}
 .panelLed{margin:6px 0 8px;color:#c5d0c2;font-size:13px;line-height:1.35}
 #styrPanel details{border-top:1px solid #ffffff22;padding:4px 0}
 #styrPanel summary{font-size:17px;font-weight:750;padding:8px 2px;cursor:pointer}
+#kontroller #laserKnapp{flex:1 1 100%;max-width:none;min-height:64px;font-size:22px;font-weight:800;background:#3c1614;border-color:#ff5a4a;color:#fff4f2}
+#kontroller #laserKnapp.pa{background:#ff2a2a;border-color:transparent;color:#fff}
+#startKort #laserGuide{margin:0 0 14px;color:#ffd2c8;font-size:15px;line-height:1.4}
+#laserHint{position:absolute;z-index:5;left:16px;right:16px;top:calc(env(safe-area-inset-top) + 40px);margin:0;text-align:center;color:#fff;text-shadow:0 1px 4px #000;font-size:16px;line-height:1.35;pointer-events:none}
+#laserPrick{position:absolute;z-index:4;left:50%;top:50%;width:var(--prick,22px);height:var(--prick,22px);transform:translate(-50%,-50%);border-radius:50%;background:var(--laser,#ff1a1a);box-shadow:0 0 0 2px #fff,0 0 12px 3px var(--laser,#ff1a1a);pointer-events:none}
+#laserLinje{position:absolute;z-index:4;left:50%;top:50%;width:4px;height:calc(50% - max(18px,env(safe-area-inset-bottom)));transform:translateX(-50%);pointer-events:none;border-radius:4px;background:linear-gradient(to bottom,var(--laser,#ff1a1a),transparent 88%);box-shadow:0 0 10px var(--laser,#ff1a1a);opacity:.9}
 .axelInre{padding:0 2px 8px}
 .val{display:flex;gap:6px}
 .val button{flex:1;min-height:44px;padding:8px 6px;font-size:14px;font-weight:700;line-height:1.2}
 .forklaring{margin:6px 0 0;color:#b7c4bb;font-size:12px;line-height:1.35}
-#styrPanel label{display:block;margin-top:8px;font-size:13px}
-#styrPanel label span{float:right;color:var(--lime);font-weight:700}
-#styrPanel input[type=range]{display:block;width:100%;margin-top:4px;accent-color:var(--lime);touch-action:pan-x}
+#styrPanel label,#laserPanel label{display:block;margin-top:8px;font-size:13px}
+#styrPanel label span,#laserPanel label span{float:right;color:var(--lime);font-weight:700}
+#styrPanel input[type=range],#laserPanel input[type=range]{display:block;width:100%;margin-top:4px;accent-color:var(--lime);touch-action:pan-x}
 #standard{width:100%;margin-top:8px}
+#laserNoll,#laserStandard,#laserPanel .omkopplare{width:100%;margin-top:8px;min-height:48px;font-weight:750}
+.fargRubrik{margin:10px 0 0;font-size:13px}
+.fargVal{display:flex;gap:8px;align-items:center;margin-top:6px}
+.fargVal button{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid #ffffff55;flex:0 0 auto}
+.fargVal button.pa{box-shadow:0 0 0 3px var(--lime)}
+.fargVal input[type=color]{width:48px;height:44px;padding:0;border:0;background:transparent;cursor:pointer}
 @media (orientation:landscape){
   #startKort{top:50%;padding:16px 18px}
   h1{font-size:28px;margin:4px 0}
   #startKort p{font-size:15px;margin-bottom:10px}
   #starta{min-height:56px;font-size:24px}
   #kontroller button{min-height:48px;font-size:16px}
-  #hint{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 60px)}
+  #kontroller #laserKnapp{min-height:48px;font-size:18px}
 }
 @media (max-height:520px){
   #startKort{top:auto;bottom:max(8px,env(safe-area-inset-bottom));transform:none}

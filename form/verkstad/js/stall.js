@@ -14,6 +14,10 @@ import { filtreraMappar, kopplaMappminne, ritaEnhetstrad } from './enhetsmappar.
 import { lasScen, skrivScen } from './spara.js';
 import { byggFormMark, hamtaLandskap } from './formvarld.js';
 import { byggFormSkog } from './formskog.js';
+import {
+  FARG, fartFaktor, ganglagAv, indexera, laddaTyper, linjeMot, markId, ofarbar, ritaHinderlista,
+  kvarvarandeVarde, ritaTerrangkort, typVid, vapenAv
+} from './terrang.js';
 
 const NAR_M = 250;
 const MODELL_NAR_M = 220;
@@ -66,8 +70,10 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
       <p class="lodmatare" data-lodmatare>Mätare väntar…</p>
       <div class="stall-panel">
         <p data-vald>Välj en enhet, tryck på marken och välj sida.</p>
+        <div data-terrangfalt></div>
         <div class="radknappar">
           <button type="button" class="knapp primar" data-valj-enhet>Välj enhet</button>
+          <button type="button" class="knapp" data-hinder>Hinder</button>
           <button type="button" class="knapp" data-hojd aria-pressed="${startFaktor === 1.5 ? 'true' : 'false'}">${startFaktor === 1.5 ? 'Höjd 1,5×' : 'Höjd vanlig'}</button>
           <button type="button" class="knapp" data-fagel>Fågelperspektiv</button>
           <button type="button" class="knapp" data-klar hidden>Klar</button>
@@ -111,13 +117,17 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
   scen.add(himmel);
   const markGrupp = new Group();
   const enhetsGrupp = new Group();
-  scen.add(markGrupp, enhetsGrupp);
+  const hinderGrupp = new Group();
+  scen.add(markGrupp, enhetsGrupp, hinderGrupp);
 
   const markMeshar = [];
   const rutor50 = new Map();
   const rutor10 = new Map();
   const pagar10 = new Set();
   const placeringar = [];
+  const hinder = [];
+  let terrangPaket = { data: { typer: [], tom_mark: 'ang', form_etikett: {} }, typer: new Map() };
+  let valtHinder = null;
   let valdEnhet = null;
   let valdPlacering = null;
   let flyttaId = null;
@@ -263,12 +273,20 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
     ? 'Tryck på marken för att ställa ut.'
     : 'Tryck på marken för att ställa ut. 50 m på håll, 10 m nära kameran.';
 
+  try {
+    terrangPaket = indexera(await laddaTyper());
+  } catch {
+    terrangPaket = indexera({ typer: [], tom_mark: 'ang', form_etikett: {} });
+  }
   const sparad = await lasScen(VARLD);
   if (sparad?.placeringar) {
     for (const post of sparad.placeringar) {
       if (post.sida !== 'bla' && post.sida !== 'rod') continue;
       await stallUt(post, false);
     }
+  }
+  if (sparad?.hinder) {
+    for (const post of sparad.hinder) stallHinder(post);
   }
   ritaLista();
   fyllTerrang();
@@ -323,6 +341,7 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
   });
   el.querySelector('[data-tillbaka]').addEventListener('click', tillbaka);
   el.querySelector('[data-valj-enhet]').addEventListener('click', oppnaBibliotek);
+  el.querySelector('[data-hinder]').addEventListener('click', oppnaHinder);
   el.querySelector('[data-flytta]').addEventListener('click', () => {
     if (!valdPlacering) return;
     flyttaId = valdPlacering.id;
@@ -330,6 +349,7 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
   });
   el.querySelector('[data-tabort]').addEventListener('click', () => {
     if (valdPlacering) taBort(valdPlacering.id);
+    else if (el.dataset.hinderValt) taBortHinder(el.dataset.hinderValt);
   });
   el.querySelector('[data-lista]').addEventListener('click', (handelse) => {
     const knapp = handelse.target.closest('[data-id]');
@@ -535,17 +555,30 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
         const avstand = Math.hypot(fiende.x - post.x, fiende.z - post.z);
         if (avstand < bast) { bast = avstand; mal = fiende; }
       }
-      if (bast > 14) {
-        const steg = Math.min(bast - 12, 7 * dt);
-        post.x += ((mal.x - post.x) / bast) * steg;
-        post.z += ((mal.z - post.z) / bast) * steg;
-        post.grupp.position.set(post.x, hojd(post.x, post.z), post.z);
+      const markNu = markUnder(post.x, post.z);
+      const fart = fartFaktor(markNu, post.ganglag || 'fot');
+      if (bast > 14 && fart > 0) {
+        const steg = Math.min(bast - 12, 7 * dt * fart);
+        const nx = post.x + ((mal.x - post.x) / bast) * steg;
+        const nz = post.z + ((mal.z - post.z) / bast) * steg;
+        const nasta = markUnder(nx, nz);
+        if (!ofarbar(nasta, post.ganglag || 'fot')) {
+          post.x = nx;
+          post.z = nz;
+          post.grupp.position.set(post.x, hojd(post.x, post.z), post.z);
+        }
       }
+      minaVid(post);
       post.sedanSkott = (post.sedanSkott || 0) + dt;
       if (bast < 220 && post.sedanSkott > 1.1) {
         post.sedanSkott = 0;
-        mal.hp = (mal.hp ?? 100) - 34;
         visaSkott(post, mal);
+        const hot = post.vapen || 'handeldvapen';
+        let faktor = kvarvarandeVarde(markUnder(mal.x, mal.z), hot);
+        for (const traff of linjeMot(post.x, post.z, mal.x, mal.z, hinder, terrangPaket.typer, 'id')) {
+          faktor = Math.min(faktor, kvarvarandeVarde(traff.typ, hot));
+        }
+        mal.hp = (mal.hp ?? 100) - 34 * faktor;
         if (mal.hp <= 0) mal.grupp.visible = false;
       }
     }
@@ -674,18 +707,48 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
       status.textContent = 'Enheten är flyttad och sparad.';
       return;
     }
+    const hinderTraff = ray.intersectObjects(hinderGrupp.children, true)[0];
+    if (valtHinder && markTraff) {
+      stallHinder({ typ: valtHinder, x: markTraff.point.x, z: markTraff.point.z });
+      spara();
+      visaTerrang(valtHinder, markTraff.point);
+      status.textContent = (terrangPaket.typer.get(valtHinder)?.namn || 'Hinder') + ' är utställt.';
+      return;
+    }
     if (traffad && !valdEnhet) {
       valj(traffad);
       return;
     }
-    if (!markTraff) return;
-    if (spellage !== 'stall') {
-      matareMal = { typ: 'mark' };
+    if (!markTraff && !hinderTraff) return;
+    if (!markTraff) {
+      const traffadHinder = hinderIdAv(hinderTraff.object);
+      const post = hinder.find((rad) => rad.id === traffadHinder);
+      if (post) visaTerrang(post.typ, post);
       return;
     }
-    if (valdEnhet) stallUt({ enhet: valdEnhet, x: markTraff.point.x, z: markTraff.point.z, yaw: 0 }, true);
+    const hinderId = hinderIdAv(hinderTraff?.object);
+    if (spellage !== 'stall') {
+      matareMal = { typ: 'mark' };
+      if (hinderId) visaTerrang(hinder.find((post) => post.id === hinderId)?.typ, markTraff.point);
+      else if (markTraff) visaTerrang(null, markTraff.point);
+      return;
+    }
+    if (hinderId && !valdEnhet) {
+      const post = hinder.find((rad) => rad.id === hinderId);
+      visaTerrang(post?.typ, markTraff?.point || post);
+      status.textContent = (terrangPaket.typer.get(post?.typ)?.namn || 'Hinder') + '. Tryck på Ta bort om det ska väck.';
+      valdPlacering = null;
+      flyttaId = null;
+      el.dataset.hinderValt = hinderId;
+      el.querySelector('[data-tabort]').hidden = false;
+      return;
+    }
+    if (valdEnhet && markTraff) stallUt({ enhet: valdEnhet, x: markTraff.point.x, z: markTraff.point.z, yaw: 0 }, true);
     else if (traffad) valj(traffad);
-    else matareMal = { typ: 'mark' };
+    else if (markTraff) {
+      matareMal = { typ: 'mark' };
+      visaTerrang(null, markTraff.point);
+    }
   }
 
   async function stallUt(post, fragaSida) {
@@ -730,6 +793,8 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
     if (meta) {
       try {
         const pack = await hamtaEnhet(meta.fil);
+        rad.ganglag = ganglagAv(pack.visning);
+        rad.vapen = vapenAv(pack.visning);
         const nivaer = placeringsNivaer(pack.visning.modeller);
         if (nivaer.mobil) {
           const nara = klonaMall(await laddaMall(renderer, meta.fil, nivaer.mobil));
@@ -904,6 +969,9 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
       varld: VARLD,
       placeringar: placeringar.filter((post) => post.sida).map(({ id, enhet, sida, x, z, yaw }) => ({
         id, enhet, sida, x: runda(x), z: runda(z), yaw
+      })),
+      hinder: hinder.filter((post) => !post.forstord).map(({ id, typ, x, z }) => ({
+        id, typ, x: runda(x), z: runda(z)
       }))
     };
     await skrivScen(VARLD, data);
@@ -931,9 +999,12 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
       </li>`;
     }).join('') || '<li class="tomrad">Inget utställt ännu.</li>';
     const valdText = valdEnhet ? (poster.get(valdEnhet)?.namn || valdEnhet) : null;
-    el.querySelector('[data-vald]').textContent = valdText
-      ? `Tryck på marken för att ställa ut ${valdText}.`
-      : 'Välj en enhet, tryck på marken och välj sida.';
+    const hinderNamn = valtHinder ? terrangPaket.typer.get(valtHinder)?.namn : null;
+    el.querySelector('[data-vald]').textContent = hinderNamn
+      ? `Tryck på marken för att ställa ut ${hinderNamn}.`
+      : valdText
+        ? `Tryck på marken för att ställa ut ${valdText}.`
+        : 'Välj en enhet eller ett hinder, och tryck på marken.';
   }
 
   function oppnaBibliotek() {
@@ -958,11 +1029,111 @@ export async function monteraStall(el, { index, katalog, tillbaka, varld }) {
       const knapp = handelse.target.closest('[data-enhet]');
       if (!knapp) return;
       valdEnhet = knapp.dataset.enhet;
+      valtHinder = null;
       flyttaId = null;
       ark.hidden = true;
       ritaLista();
       status.textContent = 'Tryck på marken. Sedan väljer du blå eller röd.';
     };
+  }
+
+  function oppnaHinder() {
+    const ark = el.querySelector('[data-ark]');
+    ark.hidden = false;
+    ark.innerHTML = `
+      <div class="ark-kort ark-lang" role="dialog" aria-label="Välj hinder">
+        <div class="radknappar"><h2>Hinder och mark</h2><button type="button" class="textknapp" data-stang>Stäng</button></div>
+        <p class="fin">Värdena är uppskattade. Gul färg betyder det.</p>
+        ${ritaHinderlista(terrangPaket.data.typer || [])}
+      </div>`;
+    ark.onclick = (handelse) => {
+      if (handelse.target.closest('[data-stang]')) { ark.hidden = true; return; }
+      const knapp = handelse.target.closest('[data-hinder-typ]');
+      if (!knapp) return;
+      valtHinder = knapp.dataset.hinderTyp;
+      valdEnhet = null;
+      flyttaId = null;
+      ark.hidden = true;
+      ritaLista();
+      status.textContent = 'Tryck på marken för att ställa ut ' + (terrangPaket.typer.get(valtHinder)?.namn || 'hindret') + '.';
+    };
+  }
+
+  function formEtikett(x, z) {
+    const karta = valdVarld.typ === 'form' ? valdVarld.post?.analysis : null;
+    if (!karta?.labels || !formMark) return null;
+    const u = x / formMark.bredd + 0.5;
+    const v = z / formMark.djup + 0.5;
+    if (u < 0 || v < 0 || u > 1 || v > 1) return null;
+    const col = Math.min(karta.width - 1, Math.max(0, Math.floor(u * karta.width)));
+    const rad = Math.min(karta.height - 1, Math.max(0, Math.floor(v * karta.height)));
+    return karta.labels[rad * karta.width + col];
+  }
+
+  function markUnder(x, z) {
+    const etikett = formEtikett(x, z);
+    const id = markId(terrangPaket.data, etikett);
+    const markTyp = terrangPaket.typer.get(id) || terrangPaket.typer.get('ang');
+    return typVid(x, z, hinder, markTyp, terrangPaket.typer) || markTyp;
+  }
+
+  function visaTerrang(typId, punkt) {
+    const falt = el.querySelector('[data-terrangfalt]');
+    if (!falt) return;
+    let typ = typId ? terrangPaket.typer.get(typId) : null;
+    const tomKarta = valdVarld.typ !== 'form';
+    if (!typ && punkt) typ = markUnder(punkt.x, punkt.z);
+    falt.innerHTML = ritaTerrangkort(typ, { tomKarta: tomKarta && !typId });
+  }
+
+  function stallHinder(post) {
+    const typ = terrangPaket.typer.get(post.typ);
+    if (!typ) return null;
+    const id = post.id || 'h' + Math.random().toString(36).slice(2, 8);
+    const hojdMesh = Math.max(0.2, Number(typ.hojd_m) || 0.2);
+    const langd = Math.max(1.4, (Number(typ.radie_m) || 2) * 2);
+    const geo = (typ.hojd_m || 0) > 0.5
+      ? new BoxGeometry(langd, hojdMesh, Math.min(1.4, langd * 0.28))
+      : new CylinderGeometry(Math.max(0.8, typ.radie_m || 2), Math.max(0.8, typ.radie_m || 2), 0.25, 18);
+    const mesh = new Mesh(geo, new MeshStandardMaterial({ color: FARG[typ.id] || 0x6a6248, roughness: 1, metalness: 0 }));
+    mesh.position.set(post.x, hojd(post.x, post.z) + ((typ.hojd_m || 0) > 0.5 ? hojdMesh / 2 : 0.14), post.z);
+    mesh.userData.hinder = id;
+    mesh.frustumCulled = true;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    hinderGrupp.add(mesh);
+    const rad = { id, typ: typ.id, x: post.x, z: post.z, mesh, forstord: false };
+    hinder.push(rad);
+    el.dataset.hinder = String(hinder.filter((postH) => !postH.forstord).length);
+    return rad;
+  }
+
+  function taBortHinder(id) {
+    const index = hinder.findIndex((post) => post.id === id);
+    if (index < 0) return;
+    const post = hinder[index];
+    post.mesh?.removeFromParent();
+    post.mesh?.geometry?.dispose();
+    post.mesh?.material?.dispose();
+    hinder.splice(index, 1);
+    delete el.dataset.hinderValt;
+    el.querySelector('[data-tabort]').hidden = !valdPlacering;
+    el.dataset.hinder = String(hinder.length);
+    spara();
+  }
+
+  function minaVid(post) {
+    post.minor = post.minor || new Set();
+    for (const rad of hinder) {
+      if (rad.forstord || post.minor.has(rad.id)) continue;
+      const typ = terrangPaket.typer.get(rad.typ);
+      if (!typ || !(typ.skada_vid_intrad?.varde > 0)) continue;
+      if (Math.hypot(rad.x - post.x, rad.z - post.z) > (typ.radie_m || 0)) continue;
+      post.minor.add(rad.id);
+      post.hp = (post.hp ?? 100) - typ.skada_vid_intrad.varde;
+      status.textContent = typ.namn + ' skadade enheten.';
+      if (post.hp <= 0 && post.grupp) post.grupp.visible = false;
+    }
   }
 
   function ritaValRad(rad) {
@@ -1027,6 +1198,15 @@ function raderFranIndex(index) {
       status: post.status
     }
   }));
+}
+
+function hinderIdAv(objekt) {
+  let nod = objekt;
+  while (nod) {
+    if (nod.userData?.hinder) return nod.userData.hinder;
+    nod = nod.parent;
+  }
+  return null;
 }
 
 function placeringId(objekt) {

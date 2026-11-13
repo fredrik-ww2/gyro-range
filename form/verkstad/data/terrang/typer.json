@@ -1,0 +1,1798 @@
+{
+  "schema": "form.verkstad.terrang.v1",
+  "betydelse": {
+    "kvarvarande": "Multiplikator på träff eller förlust. Stående i öppen terräng är 1,0. Lägre är bättre skydd. Över 1 är värre än öppen mark.",
+    "reduktion": "1 minus kvarvarande. Högre är bättre skydd. Negativt betyder mer verkan än på öppen mark. Spelet använder kvarvarande, inte reduktionen, som skademultiplikator."
+  },
+  "kallor": [
+    "SKYDDSVARDEN_UPPSKATTNINGAR_v1.md översiktstabellen",
+    "TILLAGGSMANUAL_EGNA_REGLER_v1_0_TILLAGG_SKYDDSVARDEN_v1.json"
+  ],
+  "inte_anvanda_som_historisk_regel": [
+    "Forskningsdata är tal ur TM-1, förslag och inte infört.",
+    "Uppskattning är härledd och preliminär.",
+    "Förflyttning, ofarbar mark och minfältets skada finns inte i skyddstabellen."
+  ],
+  "form_etikett": {
+    "0": "ang",
+    "1": "skog",
+    "2": "aker",
+    "3": "vag",
+    "4": "hus_sten",
+    "5": "vatten"
+  },
+  "tom_mark": "ang",
+  "stallning_oppen": {
+    "id": "liggande_oppet",
+    "namn": "Liggande på öppen mark",
+    "kvarvarande": {
+      "gevar": {
+        "varde": 0.4,
+        "tagg": "forskningsdata",
+        "falt": "liggande_oppet.gevar"
+      },
+      "kulspruta": {
+        "varde": 0.4,
+        "tagg": "forskningsdata",
+        "falt": "liggande_oppet.kulspruta"
+      },
+      "prickskytt": {
+        "varde": 0.45,
+        "tagg": "uppskattning",
+        "falt": "liggande_oppet.prickskytt"
+      },
+      "splitter_granat": {
+        "varde": 0.33,
+        "tagg": "forskningsdata",
+        "falt": "liggande_oppet.splitter_granat"
+      },
+      "splitter_artilleri": {
+        "varde": 0.33,
+        "tagg": "forskningsdata",
+        "falt": "liggande_oppet.splitter_artilleri"
+      },
+      "artilleri_ovanifran": {
+        "varde": 0.6,
+        "tagg": "forskningsdata",
+        "falt": "liggande_oppet.artilleri_ovanifran"
+      },
+      "pansarbrytande": {
+        "varde": null,
+        "tagg": "lucka",
+        "falt": null
+      }
+    },
+    "notering": "Egen rad, inte inbakad i äng eller väg. Spelet byter inte ställning av sig självt."
+  },
+  "typer": [
+    {
+      "id": "ang",
+      "namn": "Äng",
+      "grupp": "mark",
+      "kalltyp": "ingen",
+      "riktigt_kulskydd": false,
+      "hojd_m": 0.3,
+      "radie_m": 14,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.gevar"
+        },
+        "kulspruta": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 1,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.95,
+        "hjul": 0.75,
+        "band": 0.9,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Kopierad från raden ingen. Äng är [Tolkning] öppen mark."
+    },
+    {
+      "id": "aker",
+      "namn": "Åker",
+      "grupp": "mark",
+      "kalltyp": "ingen",
+      "riktigt_kulskydd": false,
+      "hojd_m": 0.4,
+      "radie_m": 14,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.gevar"
+        },
+        "kulspruta": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.95,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.85,
+        "hjul": 0.45,
+        "band": 0.8,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Skydd kopierat från raden ingen. Åker är [Tolkning] öppen mark. Farten är uppskattad."
+    },
+    {
+      "id": "skog",
+      "namn": "Skog",
+      "grupp": "mark",
+      "kalltyp": "skog_harledning",
+      "riktigt_kulskydd": false,
+      "hojd_m": 8,
+      "radie_m": 16,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 0.6,
+          "tagg": "citerat_i_harledning",
+          "falt": "skog_harledning.gevar"
+        },
+        "kulspruta": {
+          "varde": 0.8,
+          "tagg": "citerat_i_harledning",
+          "falt": "skog_harledning.kulspruta"
+        },
+        "prickskytt": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_granat": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_artilleri": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "artilleri_ovanifran": {
+          "varde": 1.5,
+          "tagg": "citerat_i_harledning",
+          "falt": "skog_harledning.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.35,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.55,
+        "hjul": 0.15,
+        "band": 0.45,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Gevär 0,6, kulspruta 0,8 och artilleri ovanifrån 1,5 är citerade i TM-S22 som TM-1:s rad skog. De är inte en egen rad i översiktstabellen. Splitter saknas. Inte riktigt kulskydd."
+    },
+    {
+      "id": "buskage",
+      "namn": "Buskage",
+      "grupp": "hinder",
+      "kalltyp": null,
+      "riktigt_kulskydd": false,
+      "hojd_m": 1.4,
+      "radie_m": 2.5,
+      "kvarvarande": {
+        "gevar": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "kulspruta": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "prickskytt": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_granat": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_artilleri": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "artilleri_ovanifran": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.4,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.7,
+        "hjul": 0.2,
+        "band": 0.6,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Ingen rad i skyddstabellen. Vegetation som bara döljer blir inte kulskydd. Skott räknas som öppen mark."
+    },
+    {
+      "id": "hack",
+      "namn": "Häck",
+      "grupp": "hinder",
+      "kalltyp": "hack",
+      "riktigt_kulskydd": false,
+      "hojd_m": 1.6,
+      "radie_m": 3,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 0.7,
+          "tagg": "uppskattning",
+          "falt": "hack.gevar"
+        },
+        "kulspruta": {
+          "varde": 0.75,
+          "tagg": "uppskattning",
+          "falt": "hack.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 0.6,
+          "tagg": "uppskattning",
+          "falt": "hack.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 0.4,
+          "tagg": "uppskattning",
+          "falt": "hack.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 0.4,
+          "tagg": "uppskattning",
+          "falt": "hack.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 0.7,
+          "tagg": "uppskattning",
+          "falt": "hack.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.45,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.6,
+        "hjul": 0.2,
+        "band": 0.7,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "kalla_text"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Häck utan jordvall: döljer men stoppar inte kulor (TM-S46). Inte bocagevall och inte riktigt kulskydd."
+    },
+    {
+      "id": "bocagevall",
+      "namn": "Bocagevall",
+      "grupp": "hinder",
+      "kalltyp": "bocagevall",
+      "riktigt_kulskydd": true,
+      "hojd_m": 2.2,
+      "radie_m": 4,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 0.2,
+          "tagg": "forskningsdata",
+          "falt": "bocagevall.gevar"
+        },
+        "kulspruta": {
+          "varde": 0.2,
+          "tagg": "forskningsdata",
+          "falt": "bocagevall.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 0.25,
+          "tagg": "uppskattning",
+          "falt": "bocagevall.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 0.2,
+          "tagg": "forskningsdata",
+          "falt": "bocagevall.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 0.2,
+          "tagg": "forskningsdata",
+          "falt": "bocagevall.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 0.6,
+          "tagg": "forskningsdata",
+          "falt": "bocagevall.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.15,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.3,
+        "hjul": 0,
+        "band": 0.35,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Jordvall. Skydd kopierat från raden bocagevall. Forskningsdata är förslag ur TM-1, inte en införd regel. Skottet nollas inte; kvarvarande verkan används."
+    },
+    {
+      "id": "stenmur",
+      "namn": "Stenmur",
+      "grupp": "hinder",
+      "kalltyp": "mur",
+      "riktigt_kulskydd": true,
+      "hojd_m": 1.2,
+      "radie_m": 3,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 0.2,
+          "tagg": "uppskattning",
+          "falt": "mur.gevar"
+        },
+        "kulspruta": {
+          "varde": 0.2,
+          "tagg": "uppskattning",
+          "falt": "mur.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 0.25,
+          "tagg": "uppskattning",
+          "falt": "mur.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 0.15,
+          "tagg": "uppskattning",
+          "falt": "mur.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 0.15,
+          "tagg": "uppskattning",
+          "falt": "mur.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 0.5,
+          "tagg": "uppskattning",
+          "falt": "mur.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.05,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0,
+        "hjul": 0,
+        "band": 0,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Skydd kopierat från raden mur, som är uppskattning. Ofarbar är inte historiskt verifierat."
+    },
+    {
+      "id": "trastaket",
+      "namn": "Trästaket",
+      "grupp": "hinder",
+      "kalltyp": null,
+      "riktigt_kulskydd": false,
+      "hojd_m": 1.1,
+      "radie_m": 3,
+      "kvarvarande": {
+        "gevar": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "kulspruta": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "prickskytt": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_granat": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_artilleri": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "artilleri_ovanifran": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.7,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.5,
+        "hjul": 0,
+        "band": 0.75,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Ingen rad i skyddstabellen. Inte kulskydd."
+    },
+    {
+      "id": "hus_sten",
+      "namn": "Hus i sten",
+      "grupp": "hinder",
+      "kalltyp": "byggnad_sten",
+      "riktigt_kulskydd": true,
+      "hojd_m": 6,
+      "radie_m": 6,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 0.2,
+          "tagg": "forskningsdata",
+          "falt": "byggnad_sten.gevar"
+        },
+        "kulspruta": {
+          "varde": 0.2,
+          "tagg": "forskningsdata",
+          "falt": "byggnad_sten.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 0.25,
+          "tagg": "uppskattning",
+          "falt": "byggnad_sten.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 0.1,
+          "tagg": "forskningsdata",
+          "falt": "byggnad_sten.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 0.1,
+          "tagg": "forskningsdata",
+          "falt": "byggnad_sten.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 0.3,
+          "tagg": "forskningsdata",
+          "falt": "byggnad_sten.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.05,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0,
+        "hjul": 0,
+        "band": 0,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Skydd kopierat från byggnad_sten."
+    },
+    {
+      "id": "hus_tra",
+      "namn": "Hus i trä",
+      "grupp": "hinder",
+      "kalltyp": "byggnad_tra",
+      "riktigt_kulskydd": false,
+      "hojd_m": 5,
+      "radie_m": 5,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 0.8,
+          "tagg": "forskningsdata",
+          "falt": "byggnad_tra.gevar"
+        },
+        "kulspruta": {
+          "varde": 0.8,
+          "tagg": "forskningsdata",
+          "falt": "byggnad_tra.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 0.6,
+          "tagg": "uppskattning",
+          "falt": "byggnad_tra.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 0.7,
+          "tagg": "forskningsdata",
+          "falt": "byggnad_tra.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 0.7,
+          "tagg": "forskningsdata",
+          "falt": "byggnad_tra.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 0.8,
+          "tagg": "forskningsdata",
+          "falt": "byggnad_tra.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.2,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0,
+        "hjul": 0,
+        "band": 0,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Skydd kopierat från byggnad_tra. Gevär 0,8 är forskningsdata och stoppar inte som en stenmur."
+    },
+    {
+      "id": "ruin",
+      "namn": "Ruin",
+      "grupp": "hinder",
+      "kalltyp": "ruin",
+      "riktigt_kulskydd": true,
+      "hojd_m": 2,
+      "radie_m": 5,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 0.25,
+          "tagg": "uppskattning",
+          "falt": "ruin.gevar"
+        },
+        "kulspruta": {
+          "varde": 0.25,
+          "tagg": "uppskattning",
+          "falt": "ruin.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 0.3,
+          "tagg": "uppskattning",
+          "falt": "ruin.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 0.2,
+          "tagg": "uppskattning",
+          "falt": "ruin.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 0.2,
+          "tagg": "uppskattning",
+          "falt": "ruin.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 0.4,
+          "tagg": "uppskattning",
+          "falt": "ruin.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.35,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.5,
+        "hjul": 0.1,
+        "band": 0.35,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Skydd kopierat från raden ruin, uppskattning."
+    },
+    {
+      "id": "krater",
+      "namn": "Krater",
+      "grupp": "hinder",
+      "kalltyp": "krater",
+      "riktigt_kulskydd": true,
+      "hojd_m": 0,
+      "djup_m": 1.5,
+      "radie_m": 4,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 0.15,
+          "tagg": "uppskattning",
+          "falt": "krater.gevar"
+        },
+        "kulspruta": {
+          "varde": 0.15,
+          "tagg": "uppskattning",
+          "falt": "krater.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 0.2,
+          "tagg": "uppskattning",
+          "falt": "krater.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 0.1,
+          "tagg": "uppskattning",
+          "falt": "krater.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 0.1,
+          "tagg": "uppskattning",
+          "falt": "krater.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 0.4,
+          "tagg": "uppskattning",
+          "falt": "krater.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.8,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.6,
+        "hjul": 0.15,
+        "band": 0.55,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Skydd kopierat från raden krater, uppskattning."
+    },
+    {
+      "id": "dike",
+      "namn": "Dike",
+      "grupp": "hinder",
+      "kalltyp": "dike",
+      "riktigt_kulskydd": true,
+      "hojd_m": 0,
+      "djup_m": 1.2,
+      "radie_m": 3,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 0.2,
+          "tagg": "forskningsdata",
+          "falt": "dike.gevar"
+        },
+        "kulspruta": {
+          "varde": 0.2,
+          "tagg": "forskningsdata",
+          "falt": "dike.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 0.25,
+          "tagg": "uppskattning",
+          "falt": "dike.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 0.2,
+          "tagg": "forskningsdata",
+          "falt": "dike.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 0.2,
+          "tagg": "forskningsdata",
+          "falt": "dike.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 0.6,
+          "tagg": "forskningsdata",
+          "falt": "dike.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.75,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.45,
+        "hjul": 0,
+        "band": 0.5,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Skydd kopierat från raden dike."
+    },
+    {
+      "id": "vag",
+      "namn": "Väg",
+      "grupp": "mark",
+      "kalltyp": "ingen",
+      "riktigt_kulskydd": false,
+      "hojd_m": 0,
+      "radie_m": 8,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.gevar"
+        },
+        "kulspruta": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 1,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 1,
+        "hjul": 1,
+        "band": 1,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Skydd kopierat från raden ingen."
+    },
+    {
+      "id": "grusvag",
+      "namn": "Grusväg",
+      "grupp": "mark",
+      "kalltyp": "ingen",
+      "riktigt_kulskydd": false,
+      "hojd_m": 0,
+      "radie_m": 8,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.gevar"
+        },
+        "kulspruta": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 1.0,
+          "tagg": "forskningsdata",
+          "falt": "ingen.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 1,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.95,
+        "hjul": 0.85,
+        "band": 0.95,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Skydd kopierat från raden ingen. Den lägre farten är uppskattad."
+    },
+    {
+      "id": "bro",
+      "namn": "Bro",
+      "grupp": "hinder",
+      "kalltyp": null,
+      "riktigt_kulskydd": false,
+      "hojd_m": 1,
+      "radie_m": 6,
+      "kvarvarande": {
+        "gevar": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "kulspruta": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "prickskytt": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_granat": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_artilleri": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "artilleri_ovanifran": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 1,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 1,
+        "hjul": 1,
+        "band": 0.9,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Ingen skyddrad. Skott räknas som öppen mark."
+    },
+    {
+      "id": "vatten",
+      "namn": "Vatten",
+      "grupp": "mark",
+      "kalltyp": null,
+      "riktigt_kulskydd": false,
+      "hojd_m": 0,
+      "djup_m": 1.5,
+      "radie_m": 10,
+      "kvarvarande": {
+        "gevar": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "kulspruta": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "prickskytt": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_granat": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_artilleri": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "artilleri_ovanifran": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 1,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.25,
+        "hjul": 0,
+        "band": 0.2,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Ingen skyddrad. Ofarbar för hjul är uppskattat, inte en verifierad regel."
+    },
+    {
+      "id": "sumpmark",
+      "namn": "Sumpmark",
+      "grupp": "mark",
+      "kalltyp": null,
+      "riktigt_kulskydd": false,
+      "hojd_m": 0.2,
+      "radie_m": 12,
+      "kvarvarande": {
+        "gevar": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "kulspruta": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "prickskytt": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_granat": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_artilleri": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "artilleri_ovanifran": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.9,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.35,
+        "hjul": 0,
+        "band": 0.4,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Ingen skyddrad. Ofarbar för hjul är uppskattat, inte en verifierad regel."
+    },
+    {
+      "id": "taggtrad",
+      "namn": "Taggtråd",
+      "grupp": "hinder",
+      "kalltyp": null,
+      "riktigt_kulskydd": false,
+      "hojd_m": 1.2,
+      "radie_m": 3,
+      "kvarvarande": {
+        "gevar": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "kulspruta": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "prickskytt": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_granat": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_artilleri": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "artilleri_ovanifran": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.85,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.15,
+        "hjul": 0.3,
+        "band": 0.85,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Ingen skyddrad. Inte kulskydd."
+    },
+    {
+      "id": "stridsvagnshinder",
+      "namn": "Stridsvagnshinder",
+      "grupp": "hinder",
+      "kalltyp": null,
+      "riktigt_kulskydd": false,
+      "hojd_m": 1.1,
+      "radie_m": 4,
+      "kvarvarande": {
+        "gevar": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "kulspruta": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "prickskytt": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_granat": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_artilleri": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "artilleri_ovanifran": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.6,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.7,
+        "hjul": 0,
+        "band": 0,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Ingen skyddrad. Raden sten är stenblock, inte det här hindret, och används inte. Ofarbar för band är uppskattat."
+    },
+    {
+      "id": "minfalt",
+      "namn": "Minfält",
+      "grupp": "hinder",
+      "kalltyp": null,
+      "riktigt_kulskydd": false,
+      "hojd_m": 0,
+      "radie_m": 8,
+      "kvarvarande": {
+        "gevar": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "kulspruta": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "prickskytt": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_granat": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_artilleri": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "artilleri_ovanifran": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.95,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.5,
+        "hjul": 0.4,
+        "band": 0.4,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 45,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Ingen skyddrad. Skadan 45 av 100 är uppskattad och inte en historiskt verifierad regel."
+    },
+    {
+      "id": "sandsack",
+      "namn": "Sandsäcksvärn",
+      "grupp": "hinder",
+      "kalltyp": null,
+      "riktigt_kulskydd": false,
+      "hojd_m": 1.1,
+      "radie_m": 2.5,
+      "kvarvarande": {
+        "gevar": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "kulspruta": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "prickskytt": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_granat": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "splitter_artilleri": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "artilleri_ovanifran": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.1,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.8,
+        "hjul": 0,
+        "band": 0.5,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Ingen skyddrad. Inte ifyllt med en gissad skyddssiffra."
+    },
+    {
+      "id": "skyttegrav",
+      "namn": "Skyttegrav",
+      "grupp": "hinder",
+      "kalltyp": "skyttegrop",
+      "riktigt_kulskydd": true,
+      "hojd_m": 0,
+      "djup_m": 1.8,
+      "radie_m": 3,
+      "kvarvarande": {
+        "gevar": {
+          "varde": 0.1,
+          "tagg": "forskningsdata",
+          "falt": "skyttegrop.gevar"
+        },
+        "kulspruta": {
+          "varde": 0.1,
+          "tagg": "forskningsdata",
+          "falt": "skyttegrop.kulspruta"
+        },
+        "prickskytt": {
+          "varde": 0.15,
+          "tagg": "uppskattning",
+          "falt": "skyttegrop.prickskytt"
+        },
+        "splitter_granat": {
+          "varde": 0.05,
+          "tagg": "forskningsdata",
+          "falt": "skyttegrop.splitter_granat"
+        },
+        "splitter_artilleri": {
+          "varde": 0.05,
+          "tagg": "forskningsdata",
+          "falt": "skyttegrop.splitter_artilleri"
+        },
+        "artilleri_ovanifran": {
+          "varde": 0.3,
+          "tagg": "forskningsdata",
+          "falt": "skyttegrop.artilleri_ovanifran"
+        },
+        "pansarbrytande": {
+          "varde": null,
+          "tagg": "lucka",
+          "falt": null
+        }
+      },
+      "insyn": {
+        "varde": 0.5,
+        "tagg": "uppskattning"
+      },
+      "dold_position": {
+        "varde": true,
+        "tagg": "uppskattning"
+      },
+      "forflyttning": {
+        "fot": 0.7,
+        "hjul": 0,
+        "band": 0.25,
+        "ursprung": "uppskattat",
+        "historiskt_verifierad": false
+      },
+      "blockerar_sikt": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "kan_forstoras": {
+        "varde": false,
+        "tagg": "uppskattning"
+      },
+      "skada_vid_intrad": {
+        "varde": 0,
+        "tagg": "uppskattning",
+        "historiskt_verifierad": false
+      },
+      "notering": "Skydd kopierat från raden skyttegrop."
+    }
+  ]
+}

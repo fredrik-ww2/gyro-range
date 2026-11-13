@@ -1,0 +1,85 @@
+{
+  "control": {
+    "controlMode": "gyro-flight",
+    "deadzoneDeg": 5,
+    "fullScaleDeg": 30,
+    "sensitivity": 1,
+    "smoothingSeconds": 0.16,
+    "yawFullScaleDeg": 35,
+    "tiltEnabled": true,
+    "yawMode": "pedals",
+    "inputTimeoutSeconds": 0.6,
+    "aimEnabled": true,
+    "aimRouting": "separate",
+    "aimSensitivity": 1,
+    "aimDeadzoneDeg": 0.5,
+    "aimSmoothingSeconds": 0.09,
+    "aimYawLimitDeg": 35,
+    "aimPitchLimitDeg": 25,
+    "cockpitEnabled": true,
+    "view": "cockpit",
+    "viewTransitionSeconds": 0.75
+  },
+  "flight": {
+    "hoverCollective": 0.6,
+    "maxAttitudeDeg": 30,
+    "attitudeRate": 4.5,
+    "transLiftStartKnots": 25,
+    "transLiftEndKnots": 45,
+    "transLiftMax": 0.22,
+    "hoverBand": 0.085,
+    "hoverAltGain": 0.012,
+    "hoverVertGain": 0.055,
+    "horizontalDrag": 0.075,
+    "verticalDrag": 0.38,
+    "torqueGain": 0.95,
+    "yawRateGain": 1.05,
+    "yawDamping": 1.8,
+    "maxHeight": 360,
+    "groundClearance": 3,
+    "autoTorque": true,
+    "hoverAssist": false
+  },
+  "gyro": {
+    "staleSeconds": 0.5,
+    "glitchEulerDeg": 40,
+    "glitchPhysicalDeg": 20
+  },
+  "modes": [
+    {"id": "gyro-flight", "label": "Gyro flyger, finger siktar"},
+    {"id": "gyro-aim", "label": "Finger flyger, gyro siktar"},
+    {"id": "gyro-both", "label": "Gyro flyger och siktar"},
+    {"id": "touch", "label": "Bara spakar"}
+  ],
+  "yawModes": [
+    {"id": "pedals", "label": "Pedalknappar"},
+    {"id": "orientation", "label": "Vrid telefonen"}
+  ],
+  "menu": [
+    {"id": "sensitivity", "group": "control", "label": "Känslighet, helikopter", "min": 0.4, "max": 2.5, "step": 0.1, "digits": 1, "suffix": "×"},
+    {"id": "deadzoneDeg", "group": "control", "label": "Dödzon för spaken", "min": 0, "max": 12, "step": 0.5, "digits": 1, "suffix": "°"},
+    {"id": "fullScaleDeg", "group": "control", "label": "Fullt utslag vid", "min": 15, "max": 60, "step": 1, "digits": 0, "suffix": "°"},
+    {"id": "smoothingSeconds", "group": "control", "label": "Mjukhet", "min": 0, "max": 0.5, "step": 0.02, "digits": 2, "suffix": " s"},
+    {"id": "aimSensitivity", "group": "control", "label": "Känslighet, sikte", "min": 0.3, "max": 2.5, "step": 0.1, "digits": 1, "suffix": "×"},
+    {"id": "aimDeadzoneDeg", "group": "control", "label": "Dödzon för siktet", "min": 0, "max": 8, "step": 0.5, "digits": 1, "suffix": "°"},
+    {"id": "aimSmoothingSeconds", "group": "control", "label": "Mjukhet, sikte", "min": 0, "max": 0.4, "step": 0.02, "digits": 2, "suffix": " s"},
+    {"id": "inputTimeoutSeconds", "group": "control", "label": "Släpp spaken om gyrot tystnar", "min": 0.2, "max": 1.5, "step": 0.1, "digits": 1, "suffix": " s"},
+    {"id": "transLiftMax", "group": "flight", "label": "Fartlyft, som mest", "min": 0, "max": 0.5, "step": 0.02, "digits": 2, "suffix": ""},
+    {"id": "transLiftStartKnots", "group": "flight", "label": "Fartlyft börjar", "min": 10, "max": 50, "step": 1, "digits": 0, "suffix": " knop"},
+    {"id": "transLiftEndKnots", "group": "flight", "label": "Fartlyft fullt", "min": 20, "max": 80, "step": 1, "digits": 0, "suffix": " knop"},
+    {"id": "maxAttitudeDeg", "group": "flight", "label": "Nosen följer spaken", "min": 10, "max": 45, "step": 1, "digits": 0, "suffix": "°"}
+  ],
+  "help": {
+    "gyro-flight": "Luta telefonen så flyger helikoptern. Dra i siktesrutan för att sikta. Spaken till vänster är lyftet.",
+    "gyro-aim": "Dra i den runda spaken för att flyga. Luta telefonen upp, ned och åt sidan för att sikta.",
+    "gyro-both": "Luta telefonen för att flyga. Tryck Styr siktet och luta igen för att sikta. Tryck en gång till så flyger du.",
+    "touch": "Spakarna på skärmen styr allt. Gyrot används inte."
+  },
+  "toggles": [
+    {"id": "hoverAssist", "group": "flight", "label": "Hovringshjälp", "text": "Bromsar glidning och håller höjden när lyftet står nära hovring."},
+    {"id": "autoTorque", "group": "flight", "label": "Pedalkompensation", "text": "Tar bort vridet när du höjer eller sänker lyftet."},
+    {"id": "cockpitEnabled", "group": "control", "label": "Cockpit", "text": "Förstaperson. Spak, lyft och pedaler syns och följer det du gör."},
+    {"id": "aimEnabled", "group": "control", "label": "Rörligt sikte", "text": "Siktet kan peka åt ett annat håll än nosen."},
+    {"id": "sound", "group": "audio", "label": "Ljud", "text": "Motor och vapen."}
+  ]
+}

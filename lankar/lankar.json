@@ -79,6 +79,11 @@
           "sokvag": "flyg/"
         },
         {
+          "namn": "Rotor Strike – helikopter med gyro",
+          "text": "Flyg en helikopter. Luta telefonen för spaken och dra lyftet på skärmen.",
+          "sokvag": "rotor/"
+        },
+        {
           "namn": "Panorama",
           "text": "Se dig om på ett fält i Normandie.",
           "sokvag": "panorama/"

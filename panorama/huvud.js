@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import {skapaBlick, sjalvtest, normalStyr, STANDARD_STYR} from './blick.js?v=8';
-import {byggVarld} from './varld.js?v=8';
-import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval} from './laser.js?v=9';
+import {byggVarld} from './varld.js?v=10';
+import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=10';
+import {skapaLjud} from './ljud.js?v=10';
+import {skapaKansla, pulsFor, sjalvtest as kanslaTest} from './kansla.js?v=10';
 
 const NYCKEL = 'panorama_styr_v1';
 const LASER_NYCKEL = 'panorama_laser_v1';
@@ -12,7 +14,7 @@ const VANLIG_FOV = 68;
 
 const $ = id => document.getElementById(id);
 const canvas = $('vy');
-const teckenfel = [...sjalvtest(), ...laserTest()];
+const teckenfel = [...sjalvtest(), ...laserTest(), ...kanslaTest()];
 if (teckenfel.length) console.error('Blicktecken', teckenfel);
 
 let renderer;
@@ -40,8 +42,21 @@ blick.satt(sparad);
 let laserSparad = STANDARD_LASER;
 try { laserSparad = normalLaser(JSON.parse(localStorage.getItem(LASER_NYCKEL) || 'null') || STANDARD_LASER); } catch { laserSparad = STANDARD_LASER; }
 laser.satt(laserSparad);
+const ljud = skapaLjud();
+const kansla = skapaKansla();
 let laserPa = false;
 let hintTimer = 0;
+let nastaPuls = 0;
+let senasteNiva = {acc: 0, ryck: 0, linjar: 0, vinkelAcc: 0, omega: null};
+let visAcc = 0;
+let visRyck = 0;
+let skottTid = 0;
+let skottAntal = 0;
+let traffAntal = 0;
+const MITT = new THREE.Vector2(0, 0);
+const raycaster = new THREE.Raycaster();
+const puffar = [];
+let puffTex = null;
 
 function spara() {
   try { localStorage.setItem(NYCKEL, JSON.stringify(blick.styr)); } catch { /* privat läge */ }
@@ -109,7 +124,8 @@ byggPanel();
 
 function aktuellFov() {
   if (!laserPa) return VANLIG_FOV;
-  return laser.install.matcha ? matchaFonsterFov() : laser.install.fov;
+  const bas = laser.install.matcha ? matchaFonsterFov() : laser.install.fov;
+  return effektivFov(bas, laser.install);
 }
 function sattFov() {
   camera.fov = Math.min(100, Math.max(8, aktuellFov()));
@@ -130,6 +146,8 @@ function passa() {
     const fovHeltal = Math.round(Math.min(100, Math.max(8, matchaFonsterFov())));
     $('laserFov').value = String(fovHeltal);
     $('laserFovVis').textContent = fovHeltal + '° · fönster';
+    const bas = matchaFonsterFov();
+    $('laserZoomVis').textContent = kom(laser.install.zoom) + '× · ' + Math.round(effektivFov(bas, laser.install)) + '°';
   }
   lyft();
 }
@@ -147,6 +165,8 @@ function loop(nu) {
   const vanlig = blick.uppdatera(dt);
   camera.quaternion.copy(laserPa && blick.harGyro ? laser.uppdatera(dt) : vanlig);
   ritaLaser(nu);
+  tickPuff(dt);
+  svalna(dt);
   renderer.render(scene, camera);
   if (window.__pano) window.__pano.ritningar = renderer.info.render.calls;
 }
@@ -177,6 +197,7 @@ function visaLaserUtseende() {
   rot.setProperty('--laser', inst.farg);
   rot.setProperty('--prick', inst.prick + 'px');
   $('laserPrick').hidden = !laserPa;
+  $('kikare').hidden = !(laserPa && inst.sikte === 'kikare');
   $('laserLinje').hidden = !(laserPa && inst.strale);
   laserKnapp.classList.toggle('pa', laserPa);
   laserKnapp.setAttribute('aria-pressed', laserPa ? 'true' : 'false');
@@ -278,6 +299,32 @@ function fyllLaser() {
   $('laserDodVis').textContent = inst.dodzon < 0.05 ? 'av' : kom(inst.dodzon) + '°';
   $('laserStorlek').value = String(inst.prick);
   $('laserStorlekVis').textContent = inst.prick + ' px';
+  $('laserZoom').value = String(inst.zoom);
+  const basFov = inst.matcha ? matchaFonsterFov() : inst.fov;
+  $('laserZoomVis').textContent = kom(inst.zoom) + '× · ' + Math.round(effektivFov(basFov, inst)) + '°';
+  $('zoomRad').hidden = inst.sikte !== 'kikare';
+  document.querySelectorAll('#sikteVal button').forEach(knapp => {
+    const pa = knapp.dataset.sikte === inst.sikte;
+    knapp.classList.toggle('pa', pa);
+    knapp.setAttribute('aria-pressed', pa ? 'true' : 'false');
+  });
+  $('ljudVol').value = String(inst.volym);
+  $('ljudVolVis').textContent = Math.round(inst.volym * 100) + ' %';
+  const ljudPa = $('ljudPa');
+  ljudPa.classList.toggle('pa', inst.ljud);
+  ljudPa.setAttribute('aria-pressed', inst.ljud ? 'true' : 'false');
+  ljudPa.textContent = inst.ljud ? 'Ljud på' : 'Ljud av';
+  const vibrera = $('vibrera');
+  vibrera.classList.toggle('pa', inst.vibrera);
+  vibrera.setAttribute('aria-pressed', inst.vibrera ? 'true' : 'false');
+  $('vibrStyrka').value = String(inst.vibrStyrka);
+  $('vibrStyrkaVis').textContent = Math.round(inst.vibrStyrka * 100) + ' %';
+  $('vibrKansl').value = String(inst.vibrKansl);
+  $('vibrKanslVis').textContent = kom(inst.vibrKansl) + '×';
+  const klick = $('vibrKlick');
+  klick.classList.toggle('pa', inst.klick);
+  klick.setAttribute('aria-pressed', inst.klick ? 'true' : 'false');
+  synkaLjud();
   $('laserFarg').value = inst.farg;
   document.querySelectorAll('.fargVal button').forEach(knapp => {
     const pa = knapp.dataset.farg === inst.farg;
@@ -452,8 +499,191 @@ $('laserStandard').addEventListener('click', () => {
   visaLaserUtseende();
   sattFov();
 });
+$('sikteVal').addEventListener('click', e => {
+  const knapp = e.target.closest('[data-sikte]');
+  if (!knapp) return;
+  andraLaser({sikte: knapp.dataset.sikte});
+});
+$('laserZoom').addEventListener('input', e => andraLaser({zoom: Number(e.target.value)}));
+$('ljudPa').addEventListener('click', () => {
+  ljud.oppna();
+  andraLaser({ljud: !laser.install.ljud});
+});
+$('ljudKnapp').addEventListener('click', () => {
+  ljud.oppna();
+  andraLaser({ljud: !laser.install.ljud});
+});
+$('ljudVol').addEventListener('input', e => andraLaser({volym: Number(e.target.value)}));
+$('vibrera').addEventListener('click', () => andraLaser({vibrera: !laser.install.vibrera}));
+$('vibrKlick').addEventListener('click', () => {
+  ljud.oppna();
+  andraLaser({klick: !laser.install.klick});
+});
+$('vibrStyrka').addEventListener('input', e => andraLaser({vibrStyrka: Number(e.target.value)}));
+$('vibrKansl').addEventListener('input', e => andraLaser({vibrKansl: Number(e.target.value)}));
+$('skjut').addEventListener('click', () => {
+  ljud.oppna();
+  avfyra();
+});
+
+function synkaLjud() {
+  ljud.satt(laser.install.ljud, laser.install.volym);
+  const knapp = $('ljudKnapp');
+  knapp.classList.toggle('pa', laser.install.ljud);
+  knapp.setAttribute('aria-pressed', laser.install.ljud ? 'true' : 'false');
+  knapp.textContent = laser.install.ljud ? 'Ljud på' : 'Ljud av';
+}
+function ritaNiva() {
+  const accP = Math.max(0, Math.min(1, visAcc / 8));
+  const ryckP = Math.max(0, Math.min(1, visRyck / 40));
+  $('accStapel').style.width = Math.round(accP * 100) + '%';
+  $('ryckStapel').style.width = Math.round(ryckP * 100) + '%';
+  $('accVis').textContent = kom(visAcc);
+  $('ryckVis').textContent = kom(visRyck);
+  $('ryckMatare').classList.toggle('puls', visRyck > 12);
+}
+function svalna(dt) {
+  visAcc *= Math.exp(-dt * 1.6);
+  visRyck *= Math.exp(-dt * 1.3);
+  if (visAcc < 0.05) visAcc = 0;
+  if (visRyck < 0.05) visRyck = 0;
+  ritaNiva();
+}
+function taNiva(prov, tid) {
+  const niva = kansla.mata(prov, tid);
+  senasteNiva = niva;
+  visAcc = Math.max(visAcc, niva.acc);
+  visRyck = Math.max(visRyck, niva.ryck);
+  ritaNiva();
+  const inst = laser.install;
+  const nu = performance.now();
+  if (nu < nastaPuls) return niva;
+  const puls = pulsFor(niva.acc, niva.ryck, {styrka: inst.vibrStyrka, kanslighet: inst.vibrKansl});
+  if (!puls || (!inst.vibrera && !inst.klick)) return niva;
+  nastaPuls = nu + puls.paus;
+  if (inst.vibrera && typeof navigator.vibrate === 'function') {
+    try { navigator.vibrate(puls.monster); } catch { /* Safari saknar vibrate */ }
+  }
+  if (inst.klick) ljud.klick(puls.styrka);
+  if (window.__pano) window.__pano.senastePuls = puls;
+  return niva;
+}
+function mataRorelse(prov, tid) {
+  const t = Number.isFinite(tid) ? tid : performance.now() / 1000;
+  return taNiva(prov, t);
+}
+function storlekVektor(v) {
+  if (!v) return null;
+  const x = +v.x, y = +v.y, z = +v.z;
+  if (![x, y, z].every(Number.isFinite)) return null;
+  return Math.hypot(x, y, z);
+}
+addEventListener('devicemotion', e => {
+  const linjar = storlekVektor(e.acceleration);
+  const rr = e.rotationRate;
+  const omega = rr ? storlekVektor({x: rr.alpha, y: rr.beta, z: rr.gamma}) : null;
+  if (linjar == null && omega == null) return;
+  const tid = (Number.isFinite(e.timeStamp) ? e.timeStamp : performance.now()) / 1000;
+  taNiva({linjar, omega}, tid);
+}, {passive: true});
+
+function puffTextur() {
+  if (puffTex) return puffTex;
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const r = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+  r.addColorStop(0, 'rgba(255,246,220,.95)');
+  r.addColorStop(0.22, 'rgba(232,196,140,.75)');
+  r.addColorStop(0.55, 'rgba(140,116,86,.3)');
+  r.addColorStop(1, 'rgba(90,74,52,0)');
+  g.fillStyle = r;
+  g.fillRect(0, 0, 64, 64);
+  puffTex = new THREE.CanvasTexture(c);
+  puffTex.colorSpace = THREE.SRGBColorSpace;
+  return puffTex;
+}
+function arHimmel(obj) {
+  for (let n = obj; n; n = n.parent) if (n.userData && n.userData.himlen) return true;
+  return false;
+}
+function laggPuff(punkt, normal) {
+  const mat = new THREE.SpriteMaterial({map: puffTextur(), transparent: true, depthWrite: false, color: 0xe6d2b4});
+  const s = new THREE.Sprite(mat);
+  s.raycast = () => {};
+  s.position.copy(punkt);
+  if (normal) s.position.addScaledVector(normal, 0.07);
+  s.scale.setScalar(0.08);
+  s.userData = {t: 0, liv: 0.45};
+  scene.add(s);
+  puffar.push(s);
+  while (puffar.length > 14) {
+    const gammal = puffar.shift();
+    scene.remove(gammal);
+    gammal.material.dispose();
+  }
+}
+function tickPuff(dt) {
+  for (let i = puffar.length - 1; i >= 0; i--) {
+    const s = puffar[i];
+    s.userData.t += dt;
+    const u = s.userData.t / s.userData.liv;
+    if (u >= 1) {
+      scene.remove(s);
+      s.material.dispose();
+      puffar.splice(i, 1);
+      continue;
+    }
+    s.scale.setScalar(0.08 + u * 0.62);
+    s.material.opacity = 1 - u * u;
+    s.position.y += dt * 0.28;
+  }
+}
+function hittaTraff() {
+  try {
+    raycaster.setFromCamera(MITT, camera);
+    const lista = raycaster.intersectObjects(scene.children, true);
+    for (const h of lista) {
+      if (!(h.distance > 0.4) || h.distance > 220) continue;
+      if (arHimmel(h.object)) continue;
+      return h;
+    }
+  } catch { /* en modell kan sakna träffyta */ }
+  return null;
+}
+function blixt() {
+  const el = $('traffBlixt');
+  el.classList.remove('pa');
+  void el.offsetWidth;
+  el.classList.add('pa');
+}
+function avfyra() {
+  const nu = performance.now();
+  if (nu - skottTid < 280) return false;
+  skottTid = nu;
+  skottAntal++;
+  ljud.skott();
+  blixt();
+  $('skjut').classList.add('eld');
+  setTimeout(() => $('skjut').classList.remove('eld'), 140);
+  const traff = hittaTraff();
+  if (traff) {
+    traffAntal++;
+    let normal = null;
+    if (traff.face) normal = traff.face.normal.clone().transformDirection(traff.object.matrixWorld).normalize();
+    laggPuff(traff.point, normal);
+    ljud.traff();
+  }
+  return true;
+}
+
+const vibrHar = $('vibrHar');
+vibrHar.textContent = typeof navigator.vibrate === 'function'
+  ? 'Den här webbläsaren har navigator.vibrate. Pulsen blir starkare och tätare när rörelsen är ojämn.'
+  : 'Den här webbläsaren saknar navigator.vibrate, samma som Safari på iPhone. Mätarna och klickljudet används i stället.';
 
 start.addEventListener('click', async () => {
+  ljud.oppna();
   start.disabled = true;
   markera(GUIDE_NYCKEL);
   try { await blick.start(); }
@@ -468,7 +698,13 @@ start.addEventListener('click', async () => {
 
 try {
   const varld = await byggVarld(scene, renderer);
-  window.__pano = {kamera: camera, blick, laser, laserPa, rapport: varld.rapport, teckenfel, renderer, scene, hackAntal: varld.hackAntal, matchFov: matchaFonsterFov};
+  window.__pano = {
+    kamera: camera, blick, laser, laserPa, rapport: varld.rapport, teckenfel, renderer, scene,
+    hackAntal: varld.hackAntal, matchFov: matchaFonsterFov, ljud, mataRorelse, skjut: avfyra,
+    get niva() { return {acc: visAcc, ryck: visRyck, senaste: senasteNiva}; },
+    get skott() { return skottAntal; },
+    get traffar() { return traffAntal; }
+  };
   window.__redo = teckenfel.length === 0;
   start.disabled = false;
   start.textContent = 'Starta';

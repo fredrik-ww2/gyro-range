@@ -15,20 +15,30 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
 #startKort small{display:block;margin-top:12px;color:#b7c4bb;font-size:13px;line-height:1.4}
 #kontroller{position:absolute;z-index:5;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:stretch}
 #kontroller button{flex:1 1 120px;max-width:220px;min-height:52px;padding:10px 12px;font-size:16px;font-weight:750}
-#horisont.pa,#styrKnapp.pa,#laserInstall.pa,.val button.pa,.omkopplare.pa,.forval button.pa{background:var(--lime);color:#19221a;border-color:transparent}
+#horisont.pa,#styrKnapp.pa,#laserInstall.pa,#ljudKnapp.pa,.val button.pa,.omkopplare.pa,.forval button.pa{background:var(--lime);color:#19221a;border-color:transparent}
 #hint{position:absolute;z-index:4;left:12px;right:12px;bottom:calc(var(--ovan-kontroll, 150px) + 6px);text-align:center;color:#f4f7ee;text-shadow:0 1px 3px #000;font-size:14px;pointer-events:none}
-#styrPanel,#laserPanel{position:absolute;z-index:6;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:var(--ovan-kontroll, 150px);max-height:min(62dvh,540px);overflow:auto;overflow-x:hidden;touch-action:pan-y;padding:12px 12px 14px;border:1px solid #ffffff26;background:#16211ef2;backdrop-filter:blur(16px);border-radius:22px;box-shadow:0 12px 40px #0007}
+/* Panelen stannar under skärmmitten. Laserpricken sitter på 50 % och låg tidigare under rutan. */
+#styrPanel,#laserPanel{position:absolute;z-index:6;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:var(--ovan-kontroll, 150px);max-height:min(240px, max(0px, calc(50dvh - var(--ovan-kontroll, 150px) - 36px)));overflow:auto;overflow-x:hidden;touch-action:pan-y;padding:12px 12px 14px;border:1px solid #ffffff26;background:#16211ecc;backdrop-filter:blur(14px);border-radius:22px;box-shadow:0 12px 40px #0007}
 .panelTopp{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .panelTopp b{font-size:18px}
 .panelTopp button,#standard{min-height:40px;padding:8px 12px;font-size:15px}
 .panelLed{margin:6px 0 8px;color:#c5d0c2;font-size:13px;line-height:1.35}
 #styrPanel details{border-top:1px solid #ffffff22;padding:4px 0}
 #styrPanel summary{font-size:17px;font-weight:750;padding:8px 2px;cursor:pointer}
-#kontroller #laserKnapp{flex:1 1 100%;max-width:none;min-height:64px;font-size:22px;font-weight:800;background:#3c1614;border-color:#ff5a4a;color:#fff4f2}
+#kontroller #laserKnapp{flex:1.4 1 150px;max-width:none;min-height:64px;font-size:20px;font-weight:800;background:#3c1614;border-color:#ff5a4a;color:#fff4f2}
 #kontroller #laserKnapp.pa{background:#ff2a2a;border-color:transparent;color:#fff}
+#kontroller #skjut{flex:0.9 1 112px;max-width:none;min-height:64px;font-size:22px;font-weight:800;background:#9a241c;border-color:#ffc3b8;color:#fff}
+#kontroller #skjut.eld{background:#ff3b30;border-color:transparent}
+#kontroller button{flex:1 1 104px;max-width:none}
 #startKort #laserGuide{margin:0 0 14px;color:#ffd2c8;font-size:15px;line-height:1.4}
 #laserHint{position:absolute;z-index:5;left:16px;right:16px;top:calc(env(safe-area-inset-top) + 40px);margin:0;text-align:center;color:#fff;text-shadow:0 1px 4px #000;font-size:16px;line-height:1.35;pointer-events:none}
-#laserPrick{position:absolute;z-index:4;left:50%;top:50%;width:var(--prick,22px);height:var(--prick,22px);transform:translate(-50%,-50%);border-radius:50%;background:var(--laser,#ff1a1a);box-shadow:0 0 0 2px #fff,0 0 12px 3px var(--laser,#ff1a1a);pointer-events:none}
+#laserPrick{position:absolute;z-index:8;left:50%;top:50%;width:var(--prick,9px);height:var(--prick,9px);transform:translate(-50%,-50%);border-radius:50%;background:var(--laser,#ff1a1a);box-shadow:0 0 0 1.5px #fff,0 0 0 3px #140e0a,0 0 10px 3px var(--laser,#ff1a1a);pointer-events:none}
+#kikare{position:absolute;inset:0;z-index:4;pointer-events:none}
+.kikareHal,.kikareRit{position:absolute;left:50%;top:50%;width:min(76vw,68dvh);height:min(76vw,68dvh);transform:translate(-50%,-50%)}
+.kikareHal{border-radius:50%;box-shadow:0 0 0 120vmax rgba(0,0,0,.78);background:radial-gradient(circle, transparent 58%, rgba(0,0,0,.28) 80%, rgba(0,0,0,.55) 100%)}
+#traffBlixt{position:absolute;z-index:7;left:50%;top:50%;width:16px;height:16px;border-radius:50%;border:2px solid #fff6d0;opacity:0;pointer-events:none;box-shadow:0 0 14px 4px #ffd27a;transform:translate(-50%,-50%) scale(.4)}
+#traffBlixt.pa{animation:skottBlixt .18s ease-out}
+@keyframes skottBlixt{from{opacity:.95;transform:translate(-50%,-50%) scale(.35)}to{opacity:0;transform:translate(-50%,-50%) scale(2.6)}}
 #laserLinje{position:absolute;z-index:4;left:50%;top:50%;width:4px;height:calc(50% - max(18px,env(safe-area-inset-bottom)));transform:translateX(-50%);pointer-events:none;border-radius:4px;background:linear-gradient(to bottom,var(--laser,#ff1a1a),transparent 88%);box-shadow:0 0 10px var(--laser,#ff1a1a);opacity:.9}
 .axelInre{padding:0 2px 8px}
 .val{display:flex;gap:6px}
@@ -39,6 +49,17 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
 #styrPanel input[type=range],#laserPanel input[type=range]{display:block;width:100%;margin-top:4px;accent-color:var(--lime);touch-action:pan-x}
 #standard{width:100%;margin-top:8px}
 #laserNoll,#laserStandard,#laserPanel .omkopplare{width:100%;margin-top:8px;min-height:48px;font-weight:750}
+#laserPanel .panelKropp{min-width:0}
+#sikteVal button{font-size:14px}
+#kanslaMer{margin-top:8px;border-top:1px solid #ffffff22;padding-top:4px}
+#kanslaMer summary{display:flex;align-items:center;min-height:44px;font-size:16px;font-weight:750;cursor:pointer}
+.rorelseFast{margin-top:6px;padding-top:4px;border-top:1px solid #ffffff22}
+.rorelseMatare{display:grid;grid-template-columns:auto minmax(40px,1fr) auto;gap:6px;align-items:center;margin-top:4px}
+.rorelseMatare span{font-size:13px;font-weight:750}
+.rorelseMatare em{font-style:normal;color:var(--lime);font-weight:800;font-size:14px}
+.rorelseMatare i{display:block;height:8px;border-radius:99px;background:#0c1210;box-shadow:inset 0 0 0 1px #ffffff22;overflow:hidden}
+.rorelseMatare i b{display:block;height:100%;width:0;border-radius:99px;background:var(--lime)}
+.rorelseMatare.puls i b{background:#ffb15a}
 .forval{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:2px 0 8px}
 .forval button{min-height:44px;padding:6px 8px;font-size:15px;font-weight:750;line-height:1.15}
 .axelRad{padding:5px 0 0;border-top:1px solid #ffffff22}
@@ -67,7 +88,7 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
   #startKort p{font-size:15px;margin-bottom:10px}
   #starta{min-height:56px;font-size:24px}
   #kontroller button{min-height:48px;font-size:16px}
-  #kontroller #laserKnapp{min-height:48px;font-size:18px}
+  #kontroller #laserKnapp,#kontroller #skjut{min-height:48px;font-size:18px}
   .forval{grid-template-columns:repeat(4,1fr)}
 }
 @media (max-width:360px){
@@ -76,4 +97,5 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
 }
 @media (max-height:520px){
   #startKort{top:auto;bottom:max(8px,env(safe-area-inset-bottom));transform:none}
+  #styrPanel,#laserPanel{max-height:min(200px, max(0px, calc(50dvh - var(--ovan-kontroll, 100px) - 24px)));background:#16211eb8}
 }

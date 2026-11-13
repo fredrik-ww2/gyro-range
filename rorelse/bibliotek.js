@@ -12,7 +12,7 @@ export function nyttId() {
 }
 
 export function tomtBibliotek() {
-  return { kategorier: [], inspelningar: [], senast: null };
+  return { kategorier: [], inspelningar: [], senast: null, profiler: [] };
 }
 
 function rentNamn(namn) {
@@ -243,6 +243,42 @@ function normaliseraKategori(k, i) {
   return { id: textEller(k.id, `kat-${i}`), namn: textEller(k.namn, 'Namnlös'), faktorer };
 }
 
+function normaliseraProfil(p) {
+  if (!p || typeof p !== 'object' || typeof p.id !== 'string') return null;
+  const skalara = (Array.isArray(p.skalara) ? p.skalara : []).filter((s) => s && typeof s.nyckel === 'string').map((s) => ({
+    nyckel: s.nyckel,
+    text: textEller(s.text, s.nyckel),
+    enhet: typeof s.enhet === 'string' ? s.enhet : '',
+    medel: Number.isFinite(s.medel) ? s.medel : null,
+    spridning: Number.isFinite(s.spridning) ? s.spridning : null,
+    variationskoefficient: Number.isFinite(s.variationskoefficient) ? s.variationskoefficient : null
+  }));
+  const kurvor = (Array.isArray(p.kurvor) ? p.kurvor : []).filter((k) => k && typeof k.nyckel === 'string').map((k) => ({
+    nyckel: k.nyckel,
+    storhet: typeof k.storhet === 'string' ? k.storhet : '',
+    text: textEller(k.text, k.nyckel),
+    enhet: typeof k.enhet === 'string' ? k.enhet : '',
+    punkter: (Array.isArray(k.punkter) ? k.punkter : []).filter((pt) => pt && Number.isFinite(pt.u)).map((pt) => ({
+      u: pt.u,
+      medel: Number.isFinite(pt.medel) ? pt.medel : null,
+      spridning: Number.isFinite(pt.spridning) ? pt.spridning : null
+    }))
+  }));
+  return {
+    id: p.id,
+    version: Number.isFinite(p.version) ? p.version : 1,
+    kategoriId: typeof p.kategoriId === 'string' ? p.kategoriId : null,
+    signatur: typeof p.signatur === 'string' ? p.signatur : '',
+    text: typeof p.text === 'string' ? p.text : '',
+    antal: Number.isFinite(p.antal) ? p.antal : 0,
+    sparad: typeof p.sparad === 'string' ? p.sparad : null,
+    synk: p.synk === 'start' ? 'start' : 'topp',
+    synkLage: Number.isFinite(p.synkLage) ? p.synkLage : null,
+    skalara,
+    kurvor
+  };
+}
+
 function normaliseraInspelning(ins, i) {
   if (!ins || typeof ins !== 'object') return null;
   const sampel = normaliseraSampel(ins.sampel);
@@ -305,7 +341,8 @@ function franV1(obj) {
   return {
     kategorier: kat.faktorer[0].val.length ? [kat] : [],
     inspelningar,
-    senast: null
+    senast: null,
+    profiler: []
   };
 }
 
@@ -323,20 +360,24 @@ export function lasImport(obj) {
   }
   const kategorier = (Array.isArray(obj.kategorier) ? obj.kategorier : []).map(normaliseraKategori).filter(Boolean);
   const inspelningar = (Array.isArray(obj.inspelningar) ? obj.inspelningar : []).map(normaliseraInspelning).filter(Boolean);
+  const profiler = (Array.isArray(obj.profiler) ? obj.profiler : []).map(normaliseraProfil).filter(Boolean);
   let senast = null;
   if (obj.senast && typeof obj.senast === 'object' && typeof obj.senast.kategoriId === 'string') {
     senast = { kategoriId: obj.senast.kategoriId, val: giltigtVal(kategorier.find((k) => k.id === obj.senast.kategoriId), obj.senast.val) };
   }
-  return { kategorier, inspelningar, senast };
+  return { kategorier, inspelningar, senast, profiler };
 }
 
 export function slahopImport(lokal, inkommande) {
   const kategorier = (lokal.kategorier || []).map((k) => structuredClone(k));
   const inspelningar = (lokal.inspelningar || []).map((r) => structuredClone(r));
+  const profiler = (lokal.profiler || []).map((p) => structuredClone(p));
   let nyaKat = 0;
   let uppdKat = 0;
   let nyaIns = 0;
   let uppdIns = 0;
+  let nyaProfil = 0;
+  let uppdProfil = 0;
   for (const kat of inkommande.kategorier || []) {
     const i = kategorier.findIndex((k) => k.id === kat.id);
     if (i >= 0) { kategorier[i] = kat; uppdKat++; }
@@ -347,15 +388,21 @@ export function slahopImport(lokal, inkommande) {
     if (i >= 0) { inspelningar[i] = ins; uppdIns++; }
     else { inspelningar.push(ins); nyaIns++; }
   }
+  for (const p of inkommande.profiler || []) {
+    if (!p?.id) continue;
+    const i = profiler.findIndex((r) => r.id === p.id);
+    if (i >= 0) { profiler[i] = p; uppdProfil++; }
+    else { profiler.push(p); nyaProfil++; }
+  }
   let senast = lokal.senast || null;
   if (!senast?.kategoriId && inkommande.senast?.kategoriId) senast = inkommande.senast;
   const kat = kategorier.find((k) => k.id === senast?.kategoriId);
   if (senast && !kat) senast = null;
   else if (senast && kat) senast = { kategoriId: kat.id, val: giltigtVal(kat, senast.val) };
-  return { kategorier, inspelningar, senast, nyaKat, uppdKat, nyaIns, uppdIns };
+  return { kategorier, inspelningar, senast, profiler, nyaKat, uppdKat, nyaIns, uppdIns, nyaProfil, uppdProfil };
 }
 
-export function byggExport({ kategorier, inspelningar, senast, enhet, tid }) {
+export function byggExport({ kategorier, inspelningar, senast, profiler, enhet, tid }) {
   return {
     format: FORMAT,
     version: VERSION,
@@ -372,7 +419,8 @@ export function byggExport({ kategorier, inspelningar, senast, enhet, tid }) {
     enhet: enhet || null,
     kategorier: kategorier || [],
     inspelningar: inspelningar || [],
-    senast: senast || null
+    senast: senast || null,
+    profiler: profiler || []
   };
 }
 
@@ -391,7 +439,8 @@ export function skapaLager() {
       return {
         kategorier: Array.isArray(data.kategorier) ? data.kategorier : [],
         inspelningar: Array.isArray(data.inspelningar) ? data.inspelningar : [],
-        senast: data.senast || null
+        senast: data.senast || null,
+        profiler: Array.isArray(data.profiler) ? data.profiler : []
       };
     } catch (e) {
       return tomtBibliotek();
@@ -402,7 +451,8 @@ export function skapaLager() {
     localStorage.setItem(LS_NYCKEL, JSON.stringify({
       kategorier: data.kategorier || [],
       inspelningar: data.inspelningar || [],
-      senast: data.senast || null
+      senast: data.senast || null,
+      profiler: data.profiler || []
     }));
   }
 
@@ -432,9 +482,11 @@ export function skapaLager() {
       const tx = db.transaction(['meta', 'inspelningar'], 'readonly');
       const mk = tx.objectStore('meta').get('kategorier');
       const ms = tx.objectStore('meta').get('senast');
+      const mp = tx.objectStore('meta').get('profiler');
       const ia = tx.objectStore('inspelningar').getAll();
       mk.onsuccess = () => { ut.kategorier = mk.result || []; };
       ms.onsuccess = () => { ut.senast = ms.result || null; };
+      mp.onsuccess = () => { ut.profiler = Array.isArray(mp.result) ? mp.result : []; };
       ia.onsuccess = () => { ut.inspelningar = ia.result || []; };
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
@@ -494,6 +546,21 @@ export function skapaLager() {
     });
   }
 
+  async function sparaProfiler(profiler) {
+    if (fallback || !db) {
+      const data = lsLas();
+      data.profiler = profiler || [];
+      lsSkriv(data);
+      return;
+    }
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('meta', 'readwrite');
+      tx.objectStore('meta').put(profiler || [], 'profiler');
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
   async function skrivAllt(data) {
     if (fallback || !db) { lsSkriv(data); return; }
     await new Promise((resolve, reject) => {
@@ -503,6 +570,7 @@ export function skapaLager() {
       for (const rad of data.inspelningar || []) ins.put(rad);
       const meta = tx.objectStore('meta');
       meta.put(data.kategorier || [], 'kategorier');
+      meta.put(data.profiler || [], 'profiler');
       if (data.senast) meta.put(data.senast, 'senast');
       else meta.delete('senast');
       tx.oncomplete = () => resolve();
@@ -516,6 +584,7 @@ export function skapaLager() {
     sparaTaxonomi,
     sparaInspelning,
     taBortInspelning,
+    sparaProfiler,
     skrivAllt,
     get fallback() { return fallback; }
   };

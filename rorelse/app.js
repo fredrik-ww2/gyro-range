@@ -1,11 +1,11 @@
-import { beraknaEgenskaper, jamforBibliotek } from './analys.js';
+import { beraknaEgenskaper, byggProfil, grupperaExakt, idForProfil, jamforBibliotek, jamforInspelningar } from './analys.js';
 import {
   byggEtikett, byggExport, bytNamnFaktor, bytNamnKategori, bytNamnUnderval, bytNamnVal,
   etikettText, giltigtVal, laggTillFaktor, laggTillUnderval, laggTillVal, lasImport,
   nyttId, skapaKategori, skapaLager, slahopImport, taBortFaktor, taBortKategori,
   taBortUnderval, taBortVal
 } from './bibliotek.js';
-import { byggKurvor, formSek, formTal } from './kurvor.js';
+import { byggBand, byggKurvor, byggOversikt, formSek, formTal } from './kurvor.js';
 import { arSlutOrd, klippSvans, lasVektor, matHz, rundaSampel, vinkelSkillnad } from './motor.js';
 
 const $ = (id) => document.getElementById(id);
@@ -16,6 +16,10 @@ let lager;
 let kategorier = [];
 let inspelningar = [];
 let senast = null;
+let profiler = [];
+let sparadKatId = null;
+let sparadSig = null;
+let jamforIds = [];
 let lage = 'redo';
 let utkast = null;
 let sparadId = null;
@@ -205,13 +209,18 @@ function uppdateraFot() {
   else b.textContent = 'Backa';
 }
 
+function vyNyckel() {
+  return `${lage}|${sparadKatId || ''}|${sparadSig || ''}|${detaljId || ''}`;
+}
+
 function rita() {
-  const samma = lage === senasteVy;
+  const nyckel = vyNyckel();
+  const samma = nyckel === senasteVy;
   const y = document.scrollingElement ? document.scrollingElement.scrollTop : 0;
   kurvRitning = null;
   huvud.dataset.lage = lage;
   huvud.replaceChildren(byggVy());
-  senasteVy = lage;
+  senasteVy = nyckel;
   uppdateraFot();
   if (samma && document.scrollingElement) document.scrollingElement.scrollTop = y;
   else window.scrollTo(0, 0);
@@ -223,11 +232,16 @@ function rita() {
 
 function byggVy() {
   if (lage === 'spelar') return vySpelar();
+  if (lage === 'oversikt') return vyOversikt(utkast, true);
   if (lage === 'kurvor') return vyKurvor(utkast, true);
   if (lage === 'markning') return vyMarkning();
   if (lage === 'bibliotek') return vyBibliotek();
-  if (lage === 'detalj') return vyDetalj();
+  if (lage === 'detalj') return vyOversikt(inspelningar.find((r) => r.id === detaljId), false);
+  if (lage === 'detaljAxlar') return vyDetaljAxlar();
   if (lage === 'analys') return vyAnalys();
+  if (lage === 'sparade') return vySparade();
+  if (lage === 'sparadGrupp') return vyGrupp();
+  if (lage === 'jamfor') return vyJamfor();
   return vyRedo();
 }
 
@@ -245,7 +259,13 @@ function vyRedo() {
   b.dataset.gor = 'nollstall';
   b.dataset.roll = 'nollstall';
   b.textContent = 'Nollställ';
-  rot.append(h, p, b);
+  const sparade = document.createElement('button');
+  sparade.type = 'button';
+  sparade.className = 'sparade-knapp';
+  sparade.dataset.gor = 'oppna-sparade';
+  sparade.dataset.roll = 'sparade';
+  sparade.textContent = 'Sparade slag';
+  rot.append(h, p, b, sparade);
   return rot;
 }
 
@@ -391,8 +411,8 @@ function vyMarkning() {
 
   const till = document.createElement('button');
   till.type = 'button';
-  till.dataset.gor = 'till-kurvor';
-  till.textContent = 'Visa kurvorna';
+  till.dataset.gor = 'till-oversikt';
+  till.textContent = 'Visa översikten';
   rot.append(till);
   return rot;
 }
@@ -454,6 +474,415 @@ function sektionFaktor(faktor) {
   return sec;
 }
 
+function laggOversikt(rot, ins) {
+  const ritning = byggOversikt(ins, config);
+  rot.append(ritning.rot);
+  kurvRitning = ritning;
+}
+
+function knappVarjeAxel() {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'helknapp';
+  b.dataset.gor = 'till-axlar';
+  b.dataset.roll = 'till-axlar';
+  b.textContent = 'Visa varje axel';
+  return b;
+}
+
+function vyOversikt(ins, utkastVy) {
+  const rot = document.createElement('div');
+  if (!ins) {
+    const p = document.createElement('p');
+    p.textContent = 'Inspelningen finns inte kvar.';
+    rot.append(p);
+    return rot;
+  }
+  const h = document.createElement('h1');
+  h.textContent = utkastVy ? 'Rörelsen' : markningText(ins);
+  const sum = document.createElement('p');
+  sum.className = 'sammanfattning';
+  if (utkastVy) sum.textContent = `${formSek(ins.langdSek)} · ${avslutText(ins.avslut) || ''}`.trim();
+  else sum.textContent = `${datum(ins.skapad)} · ${formSek(ins.langdSek)}`.replace(/^ · /, '');
+  rot.append(h, sum);
+  if (utkastVy && ins.avslut === 'slut' && Number(ins.svansSek) > 0) {
+    const p = document.createElement('p');
+    p.className = 'led';
+    const sek = ins.svansSek.toLocaleString('sv-SE', { maximumFractionDigits: 1 });
+    p.textContent = `De sista ${sek} sekunderna före ordet är borttagna.`;
+    rot.append(p);
+  }
+  if (utkastVy) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.gor = 'till-markning';
+    b.dataset.roll = 'till-markning';
+    const har = !!ins.kategoriId;
+    b.textContent = har ? 'Ändra märkning' : 'Välj kategori';
+    b.className = har ? '' : 'chip vald';
+    if (!har) b.style.width = '100%';
+    rot.append(b);
+    if (har) {
+      const p = document.createElement('p');
+      p.textContent = markningText(ins);
+      rot.append(p);
+    }
+  }
+  laggOversikt(rot, ins);
+  rot.append(knappVarjeAxel());
+  if (!utkastVy) {
+    const bort = document.createElement('button');
+    bort.type = 'button';
+    bort.className = arBort('inspelning', ins.id) ? 'farlig' : '';
+    bort.dataset.gor = 'bort-inspelning';
+    bort.dataset.id = ins.id;
+    bort.textContent = arBort('inspelning', ins.id) ? 'Ta bort på riktigt' : 'Ta bort';
+    rot.append(bort);
+  }
+  return rot;
+}
+
+function vyDetaljAxlar() {
+  const ins = inspelningar.find((r) => r.id === detaljId);
+  const rot = document.createElement('div');
+  if (!ins) {
+    const p = document.createElement('p');
+    p.textContent = 'Inspelningen finns inte kvar.';
+    rot.append(p);
+    return rot;
+  }
+  const h = document.createElement('h1');
+  h.textContent = markningText(ins);
+  const p = document.createElement('p');
+  p.className = 'led';
+  p.textContent = `${datum(ins.skapad)} · ${formSek(ins.langdSek)}`;
+  rot.append(h, p);
+  laggKurvor(rot, ins);
+  return rot;
+}
+
+function vySparade() {
+  if (sparadKatId) {
+    const kat = kategorier.find((k) => k.id === sparadKatId);
+    if (kat) return vyGrupper(kat);
+    sparadKatId = null;
+  }
+  return vyKategoriVal();
+}
+
+function vyKategoriVal() {
+  const rot = document.createElement('div');
+  rot.dataset.roll = 'sparade-kategori';
+  const h = document.createElement('h1');
+  h.textContent = 'Sparade slag';
+  const led = document.createElement('p');
+  led.className = 'led';
+  led.textContent = 'Välj kategori.';
+  rot.append(h, led);
+  const med = kategorier.filter((k) => inspelningar.some((ins) => ins.kategoriId === k.id));
+  if (!med.length) {
+    const p = document.createElement('p');
+    p.textContent = 'Inga sparade slag än. Spela in en rörelse och välj kategori.';
+    rot.append(p);
+    return rot;
+  }
+  for (const kat of med) {
+    const antal = inspelningar.filter((ins) => ins.kategoriId === kat.id).length;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bibliotek-rad';
+    b.dataset.gor = 'valj-sparad-kat';
+    b.dataset.roll = 'kategori';
+    b.dataset.id = kat.id;
+    const stark = document.createElement('strong');
+    stark.textContent = kat.namn;
+    const liten = document.createElement('small');
+    liten.textContent = `${antal} st`;
+    b.append(stark, liten);
+    rot.append(b);
+  }
+  return rot;
+}
+
+function vyGrupper(kat) {
+  const rot = document.createElement('div');
+  rot.dataset.roll = 'sparade-grupper';
+  const h = document.createElement('h1');
+  h.textContent = kat.namn;
+  const led = document.createElement('p');
+  led.className = 'led';
+  led.textContent = 'Varje rad är slag med exakt samma val.';
+  rot.append(h, led);
+  const grupper = grupperaExakt(inspelningar, kat);
+  if (!grupper.length) {
+    const p = document.createElement('p');
+    p.textContent = 'Inga slag i den här kategorin.';
+    rot.append(p);
+    return rot;
+  }
+  for (const g of grupper) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bibliotek-rad';
+    b.dataset.gor = 'oppna-grupp';
+    b.dataset.roll = 'grupp';
+    b.dataset.signatur = g.signatur;
+    const stark = document.createElement('strong');
+    stark.textContent = g.text;
+    const liten = document.createElement('small');
+    liten.textContent = `(${g.antal} st)`;
+    b.append(stark, liten);
+    rot.append(b);
+  }
+  return rot;
+}
+
+function gruppNu() {
+  const kat = kategorier.find((k) => k.id === sparadKatId);
+  if (!kat) return null;
+  return grupperaExakt(inspelningar, kat).find((g) => g.signatur === sparadSig) || null;
+}
+
+function allaValda(grupp) {
+  return !!grupp && grupp.ids.length > 0 && grupp.ids.every((id) => jamforIds.includes(id));
+}
+
+function jamforText() {
+  const n = jamforIds.length;
+  return n ? `Jämför ${n} slag` : 'Jämför';
+}
+
+function vyGrupp() {
+  const rot = document.createElement('div');
+  rot.dataset.roll = 'sparad-grupp';
+  const kat = kategorier.find((k) => k.id === sparadKatId);
+  const grupp = gruppNu();
+  const h = document.createElement('h1');
+  h.textContent = kat?.namn || 'Sparade slag';
+  rot.append(h);
+  if (!grupp) {
+    const p = document.createElement('p');
+    p.textContent = 'Gruppen finns inte kvar.';
+    rot.append(p);
+    return rot;
+  }
+  const rub = document.createElement('p');
+  rub.className = 'sammanfattning';
+  rub.textContent = `${grupp.text} (${grupp.antal} st)`;
+  const led = document.createElement('p');
+  led.className = 'led';
+  led.textContent = 'Bocka i de slag du vill jämföra.';
+  rot.append(rub, led);
+  const alla = document.createElement('button');
+  alla.type = 'button';
+  alla.className = 'textknapp';
+  alla.dataset.gor = 'alla-slag';
+  alla.dataset.roll = 'alla';
+  alla.textContent = allaValda(grupp) ? 'Rensa' : 'Välj alla';
+  rot.append(alla);
+  grupp.ids.forEach((id, i) => {
+    const ins = inspelningar.find((r) => r.id === id);
+    if (!ins) return;
+    const lab = document.createElement('label');
+    lab.className = 'bock';
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.dataset.gor = 'bock';
+    box.dataset.id = id;
+    box.checked = jamforIds.includes(id);
+    const text = document.createElement('span');
+    const stark = document.createElement('strong');
+    stark.textContent = datum(ins.skapad) || `Slag ${i + 1}`;
+    const liten = document.createElement('small');
+    liten.textContent = formSek(ins.langdSek);
+    text.append(stark, liten);
+    lab.append(box, text);
+    rot.append(lab);
+  });
+  const jam = document.createElement('button');
+  jam.type = 'button';
+  jam.className = 'helknapp' + (jamforIds.length ? ' gul' : '');
+  jam.dataset.gor = 'jamfor-valda';
+  jam.dataset.roll = 'jamfor';
+  jam.textContent = jamforText();
+  rot.append(jam);
+  return rot;
+}
+
+function formProcent(cv) {
+  if (!Number.isFinite(cv)) return '–';
+  const p = cv * 100;
+  const dec = p >= 10 ? 0 : 1;
+  return `${p.toLocaleString('sv-SE', { maximumFractionDigits: dec, minimumFractionDigits: 0 })} %`;
+}
+
+function uppdateraJamforKnappar() {
+  const grupp = gruppNu();
+  const knapp = document.querySelector('[data-roll=jamfor]');
+  if (knapp) {
+    knapp.textContent = jamforText();
+    knapp.classList.toggle('gul', jamforIds.length > 0);
+  }
+  const alla = document.querySelector('[data-roll=alla]');
+  if (alla) alla.textContent = allaValda(grupp) ? 'Rensa' : 'Välj alla';
+}
+
+function sattBock(id, pa) {
+  if (pa) {
+    if (!jamforIds.includes(id)) jamforIds.push(id);
+  } else jamforIds = jamforIds.filter((x) => x !== id);
+  uppdateraJamforKnappar();
+}
+
+function valdaInspelningar() {
+  return jamforIds.map((id) => inspelningar.find((ins) => ins.id === id)).filter(Boolean);
+}
+
+function rangRad(s, maxCv, stabil) {
+  const rad = document.createElement('div');
+  rad.className = 'rang-rad' + (stabil ? ' stabil' : '');
+  rad.dataset.nyckel = s.nyckel;
+  if (Number.isFinite(s.medel)) rad.dataset.medel = String(s.medel);
+  if (Number.isFinite(s.spridning)) rad.dataset.spridning = String(s.spridning);
+  const text = document.createElement('div');
+  text.className = 'rang-text';
+  const namn = document.createElement('span');
+  namn.textContent = s.text;
+  const tal = document.createElement('small');
+  const sprid = Number.isFinite(s.spridning) ? ` ± ${formTal(s.spridning, s.enhet)}` : '';
+  tal.textContent = `${formTal(s.medel, s.enhet)}${sprid} · ${formProcent(s.variationskoefficient)}`;
+  text.append(namn, tal);
+  const spar = document.createElement('div');
+  spar.className = 'rang-spar';
+  const fyll = document.createElement('div');
+  fyll.className = 'rang-fyll';
+  const bredd = maxCv > 0 && Number.isFinite(s.variationskoefficient) ? (s.variationskoefficient / maxCv) * 100 : 0;
+  fyll.style.width = `${bredd}%`;
+  spar.append(fyll);
+  rad.append(text, spar);
+  return rad;
+}
+
+function vyJamfor() {
+  const rot = document.createElement('div');
+  rot.dataset.roll = 'jamforelse';
+  const kat = kategorier.find((k) => k.id === sparadKatId);
+  const grupp = gruppNu();
+  const h = document.createElement('h1');
+  h.textContent = 'Jämför';
+  rot.append(h);
+  const valda = valdaInspelningar();
+  if (!valda.length) {
+    const p = document.createElement('p');
+    p.textContent = 'Inga slag är valda.';
+    rot.append(p);
+    return rot;
+  }
+  const rub = document.createElement('p');
+  rub.className = 'sammanfattning';
+  rub.textContent = grupp?.text || markningText(valda[0]);
+  const synkStart = config.monster?.synk === 'start';
+  const intro = document.createElement('p');
+  intro.className = 'led';
+  const lageText = synkStart ? 'rörelsens start' : 'toppen';
+  intro.textContent = `${valda.length} slag. De är utsträckta till samma längd och lagda på varandra vid ${lageText}. Tunna linjer är varje slag. Bandet är medelvärdet plus och minus en standardavvikelse.`;
+  rot.append(rub, intro);
+  if (valda.length < 2) {
+    const p = document.createElement('p');
+    p.className = 'led';
+    p.textContent = 'Spridning syns när minst två slag är valda.';
+    rot.append(p);
+  }
+  const jam = jamforInspelningar(valda, config);
+  const band = byggBand(jam, config);
+  rot.append(band.rot);
+  kurvRitning = band;
+
+  const rang = document.createElement('section');
+  rang.dataset.roll = 'rang';
+  const h2 = document.createElement('h2');
+  h2.textContent = 'Vad som kännetecknar';
+  const forkl = document.createElement('p');
+  forkl.className = 'led';
+  forkl.textContent = 'Spridning är standardavvikelsen. Hög variation betyder att slagen skiljer sig där. Låg variation betyder att det är likadant varje gång.';
+  rang.append(h2, forkl);
+  const maxCv = Math.max(
+    0.001,
+    ...jam.rang.varierar.map((s) => s.variationskoefficient),
+    ...jam.rang.stabila.map((s) => s.variationskoefficient)
+  );
+  const hVar = document.createElement('h3');
+  hVar.textContent = 'Varierar mest';
+  rang.append(hVar);
+  if (!jam.rang.varierar.length) {
+    const p = document.createElement('p');
+    p.textContent = 'Det finns för få slag för att se vad som varierar.';
+    rang.append(p);
+  } else for (const s of jam.rang.varierar) rang.append(rangRad(s, maxCv, false));
+  const hStab = document.createElement('h3');
+  hStab.textContent = 'Mest stabilt';
+  rang.append(hStab);
+  if (!jam.rang.stabila.length) {
+    const p = document.createElement('p');
+    p.textContent = 'Inget mätvärde går att jämföra än.';
+    rang.append(p);
+  } else for (const s of jam.rang.stabila) rang.append(rangRad(s, maxCv, true));
+  rot.append(rang);
+
+  const det = document.createElement('details');
+  const sum = document.createElement('summary');
+  sum.textContent = 'Alla mätvärden';
+  const table = document.createElement('table');
+  table.className = 'jam-tabell';
+  const head = document.createElement('tr');
+  for (const rubrik of ['Mätvärde', 'Medel', 'Spridning', 'Variation']) {
+    const th = document.createElement('th');
+    th.textContent = rubrik;
+    head.append(th);
+  }
+  table.append(head);
+  const ordnad = [...jam.skalara].sort((a, b) => {
+    const av = Number.isFinite(a.variationskoefficient) ? a.variationskoefficient : -1;
+    const bv = Number.isFinite(b.variationskoefficient) ? b.variationskoefficient : -1;
+    return bv - av;
+  });
+  for (const s of ordnad) {
+    const tr = document.createElement('tr');
+    tr.dataset.roll = 'stat';
+    tr.dataset.nyckel = s.nyckel;
+    if (Number.isFinite(s.medel)) tr.dataset.medel = String(s.medel);
+    if (Number.isFinite(s.spridning)) tr.dataset.spridning = String(s.spridning);
+    const namn = document.createElement('td');
+    namn.textContent = s.text;
+    const medel = document.createElement('td');
+    medel.textContent = formTal(s.medel, s.enhet);
+    const spr = document.createElement('td');
+    spr.textContent = formTal(s.spridning, s.enhet);
+    const cv = document.createElement('td');
+    cv.textContent = formProcent(s.variationskoefficient);
+    tr.append(namn, medel, spr, cv);
+    table.append(tr);
+  }
+  det.append(sum, table);
+  rot.append(det);
+
+  const spara = document.createElement('button');
+  spara.type = 'button';
+  spara.className = 'helknapp gul';
+  spara.dataset.gor = 'spara-monster';
+  spara.dataset.roll = 'spara-monster';
+  const profilId = kat && grupp ? idForProfil(kat.id, grupp.signatur) : '';
+  const finns = profilId && profiler.some((p) => p.id === profilId);
+  spara.textContent = finns ? 'Uppdatera mönster' : 'Spara mönster';
+  const om = document.createElement('p');
+  om.className = 'led';
+  om.textContent = finns
+    ? 'Ett mönster är sparat för den här kombinationen. Appen kan senare använda det för att känna igen slaget.'
+    : 'Spara medel och spridning för den här kombinationen av val. Appen kan senare använda mönstret för att känna igen slaget.';
+  rot.append(spara, om);
+  return rot;
+}
+
 function vyBibliotek() {
   const rot = document.createElement('div');
   rot.dataset.roll = 'bibliotek';
@@ -495,31 +924,6 @@ function vyBibliotek() {
   return rot;
 }
 
-function vyDetalj() {
-  const ins = inspelningar.find((r) => r.id === detaljId);
-  const rot = document.createElement('div');
-  if (!ins) {
-    const p = document.createElement('p');
-    p.textContent = 'Inspelningen finns inte kvar.';
-    rot.append(p);
-    return rot;
-  }
-  const h = document.createElement('h1');
-  h.textContent = markningText(ins);
-  const p = document.createElement('p');
-  p.className = 'led';
-  p.textContent = `${datum(ins.skapad)} · ${formSek(ins.langdSek)}`;
-  const bort = document.createElement('button');
-  bort.type = 'button';
-  bort.className = arBort('inspelning', ins.id) ? 'farlig' : '';
-  bort.dataset.gor = 'bort-inspelning';
-  bort.dataset.id = ins.id;
-  bort.textContent = arBort('inspelning', ins.id) ? 'Ta bort på riktigt' : 'Ta bort';
-  rot.append(h, p, bort);
-  laggKurvor(rot, ins);
-  return rot;
-}
-
 function vyAnalys() {
   const rot = document.createElement('div');
   rot.dataset.roll = 'analys';
@@ -528,7 +932,10 @@ function vyAnalys() {
   const intro = document.createElement('p');
   intro.className = 'led';
   intro.textContent = 'Här syns inspelningar som är märkta likadant, och inspelningar där allt är lika utom en faktor. Det förbereder att appen senare kan känna igen till exempel mer eller mindre skruv.';
-  rot.append(h, intro);
+  const tips = document.createElement('p');
+  tips.className = 'led';
+  tips.textContent = 'Vill du lägga valda slag på varandra, gå tillbaka och tryck Sparade slag.';
+  rot.append(h, intro, tips);
   const svar = jamforBibliotek(inspelningar, kategorier, config);
   rot.dataset.fynd = String(svar.enFaktorSkiljer.length);
   if (!svar.identiska.length && !svar.enFaktorSkiljer.length) {
@@ -840,7 +1247,7 @@ function avsluta(orsak) {
   };
   utkast.egenskaper = beraknaEgenskaper(utkast, config);
   sparadId = null;
-  lage = 'kurvor';
+  lage = 'oversikt';
   andra = false;
   redigerar = null;
   rita();
@@ -956,14 +1363,24 @@ function armBekrafta() {
 }
 
 function backa() {
-  if (lage === 'markning') { lage = 'kurvor'; rita(); return; }
+  if (lage === 'jamfor') { lage = 'sparadGrupp'; rita(); return; }
+  if (lage === 'sparadGrupp') { sparadSig = null; jamforIds = []; lage = 'sparade'; rita(); return; }
+  if (lage === 'sparade') {
+    if (sparadKatId) { sparadKatId = null; rita(); return; }
+    lage = 'redo';
+    rita();
+    return;
+  }
+  if (lage === 'detaljAxlar') { lage = 'detalj'; rita(); return; }
+  if (lage === 'markning') { lage = 'oversikt'; rita(); return; }
+  if (lage === 'kurvor') { lage = 'oversikt'; rita(); return; }
   if (lage === 'spelar') {
     if (bekrafta !== 'avbryt') { bekrafta = 'avbryt'; armBekrafta(); uppdateraFot(); return; }
     bekrafta = null;
     avbrytInspelning();
     return;
   }
-  if (lage === 'kurvor') {
+  if (lage === 'oversikt') {
     if (bekrafta !== 'slang') { bekrafta = 'slang'; armBekrafta(); uppdateraFot(); return; }
     bekrafta = null;
     utkast = null;
@@ -980,13 +1397,13 @@ function backa() {
 async function sparaNasta() {
   bekrafta = null;
   if (lage === 'spelar') { avsluta('stopp'); return; }
-  if (lage === 'kurvor' && utkast && !utkast.kategoriId && sparadId !== utkast.id) {
+  if ((lage === 'kurvor' || lage === 'oversikt') && utkast && !utkast.kategoriId && sparadId !== utkast.id) {
     lage = 'markning';
     rita();
     toast('Välj kategori. Tryck sen på spara igen.');
     return;
   }
-  if ((lage === 'kurvor' || lage === 'markning') && utkast && sparadId !== utkast.id) {
+  if ((lage === 'kurvor' || lage === 'oversikt' || lage === 'markning') && utkast && sparadId !== utkast.id) {
     try { await sparaPagaende(); }
     catch (e) { toast('Kunde inte spara.'); return; }
     toast(utkast.kategoriId ? 'Sparat. Tryck Nollställ för nästa.' : 'Sparat utan kategori. Tryck Nollställ för nästa.');
@@ -1003,7 +1420,7 @@ async function sparaNasta() {
 async function sparaOchStang() {
   try {
     if (lage === 'spelar') avsluta('stopp');
-    if ((lage === 'kurvor' || lage === 'markning') && utkast && sparadId !== utkast.id) await sparaPagaende();
+    if ((lage === 'kurvor' || lage === 'oversikt' || lage === 'markning') && utkast && sparadId !== utkast.id) await sparaPagaende();
   } catch (e) {
     toast('Kunde inte spara.');
     return;
@@ -1026,7 +1443,7 @@ function filnamn() {
 
 async function exportera() {
   const data = byggExport({
-    kategorier, inspelningar, senast, enhet: enhetInfo(), tid: new Date().toISOString()
+    kategorier, inspelningar, senast, profiler, enhet: enhetInfo(), tid: new Date().toISOString()
   });
   const text = JSON.stringify(data);
   const fil = new File([text], filnamn(), { type: 'application/json' });
@@ -1061,21 +1478,84 @@ async function hamtaInFil(fil) {
   for (const ins of inkommande.inspelningar) {
     if (!ins.egenskaper) ins.egenskaper = beraknaEgenskaper(ins, config);
   }
-  const hop = slahopImport({ kategorier, inspelningar, senast }, inkommande);
+  const hop = slahopImport({ kategorier, inspelningar, senast, profiler }, inkommande);
   kategorier = hop.kategorier;
   inspelningar = hop.inspelningar;
   senast = hop.senast;
+  profiler = hop.profiler || [];
   try { await lager.skrivAllt({ kategorier, inspelningar, senast }); }
   catch (e) { toast('Kunde inte spara det som hämtades in.'); return; }
-  toast(`Lade till ${hop.nyaIns} inspelningar och ${hop.nyaKat} kategorier.`);
-  if (lage === 'bibliotek' || lage === 'analys' || lage === 'redo') rita();
+  const monster = (hop.nyaProfil || 0) + (hop.uppdProfil || 0);
+  const extra = monster ? ` Mönster: ${monster}.` : '';
+  toast(`Lade till ${hop.nyaIns} inspelningar och ${hop.nyaKat} kategorier.${extra}`);
+  if (lage === 'bibliotek' || lage === 'analys' || lage === 'redo' || lage === 'sparade' || lage === 'sparadGrupp' || lage === 'jamfor') rita();
+}
+
+async function sparaMonster() {
+  const kat = kategorier.find((k) => k.id === sparadKatId);
+  const valda = valdaInspelningar();
+  if (!kat || !valda.length) { toast('Välj minst ett slag.'); return; }
+  const profil = byggProfil(valda, kat, config);
+  profil.sparad = new Date().toISOString();
+  const i = profiler.findIndex((p) => p.id === profil.id);
+  if (i >= 0) profiler[i] = profil;
+  else profiler.push(profil);
+  try { await lager.sparaProfiler(profiler); }
+  catch (e) { toast('Kunde inte spara mönstret.'); return; }
+  toast('Mönstret är sparat.');
+  rita();
 }
 
 function hantera(gor, el) {
   const id = el.dataset.id || '';
   const data = { faktor: el.dataset.faktor || '', val: el.dataset.val || '' };
+  if (gor === 'bock') return;
   if (gor === 'nollstall') { tryckNollstall(); return; }
   if (gor === 'stopp') { avsluta('stopp'); return; }
+  if (gor === 'oppna-sparade') {
+    sparadKatId = null;
+    sparadSig = null;
+    jamforIds = [];
+    lage = 'sparade';
+    rita();
+    return;
+  }
+  if (gor === 'valj-sparad-kat') {
+    sparadKatId = id;
+    sparadSig = null;
+    jamforIds = [];
+    lage = 'sparade';
+    rita();
+    return;
+  }
+  if (gor === 'oppna-grupp') {
+    sparadSig = el.dataset.signatur || '';
+    const g = gruppNu();
+    jamforIds = g ? g.ids.slice() : [];
+    lage = 'sparadGrupp';
+    rita();
+    return;
+  }
+  if (gor === 'alla-slag') {
+    const g = gruppNu();
+    jamforIds = g && !allaValda(g) ? g.ids.slice() : [];
+    for (const box of document.querySelectorAll('[data-gor=bock]')) box.checked = jamforIds.includes(box.dataset.id);
+    uppdateraJamforKnappar();
+    return;
+  }
+  if (gor === 'jamfor-valda') {
+    if (!jamforIds.length) { toast('Bocka i minst ett slag.'); return; }
+    lage = 'jamfor';
+    rita();
+    return;
+  }
+  if (gor === 'spara-monster') { void sparaMonster(); return; }
+  if (gor === 'till-axlar') {
+    lage = lage === 'detalj' ? 'detaljAxlar' : 'kurvor';
+    rita();
+    return;
+  }
+  if (gor === 'till-oversikt') { lage = 'oversikt'; rita(); return; }
   if (gor === 'till-markning') { lage = 'markning'; rita(); return; }
   if (gor === 'till-kurvor') { lage = 'kurvor'; rita(); return; }
   if (gor === 'andra') { andra = !andra; redigerar = null; rita(); return; }
@@ -1128,6 +1608,11 @@ function koppla() {
     if (!b || !huvud.contains(b)) return;
     hantera(b.dataset.gor, b);
   });
+  huvud.addEventListener('change', (ev) => {
+    const box = ev.target;
+    if (!box || box.dataset?.gor !== 'bock') return;
+    sattBock(box.dataset.id || '', !!box.checked);
+  });
   huvud.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Enter') return;
     if (!ev.target.closest('[data-roll=falt]')) return;
@@ -1177,6 +1662,7 @@ async function start() {
   kategorier = data.kategorier || [];
   inspelningar = data.inspelningar || [];
   senast = data.senast || null;
+  profiler = data.profiler || [];
   lyssna();
   koppla();
   rita();
@@ -1213,8 +1699,51 @@ async function start() {
           avslut: ins.avslut,
           svansSek: ins.svansSek
         })),
-        senast: senast ? structuredClone(senast) : null
+        senast: senast ? structuredClone(senast) : null,
+        profiler: profiler.map((p) => ({ id: p.id, text: p.text, antal: p.antal, kategoriId: p.kategoriId }))
       };
+    },
+    grupper(kategoriId) {
+      const kat = kategorier.find((k) => k.id === kategoriId);
+      if (!kat) return [];
+      return grupperaExakt(inspelningar, kat);
+    },
+    jamforTal(ids, nyckel) {
+      const lista = (ids || []).map((pid) => inspelningar.find((ins) => ins.id === pid)).filter(Boolean);
+      const jam = jamforInspelningar(lista, config);
+      const s = jam.skalara.find((x) => x.nyckel === nyckel) || null;
+      const langd = jam.skalara.find((x) => x.nyckel === 'langdSek') || null;
+      const kurva = jam.kurvor.find((x) => x.nyckel === 'rot.0');
+      const vid = kurva?.punkter.find((p) => p.u === jam.synkLage) || null;
+      return {
+        medel: s?.medel ?? null,
+        spridning: s?.spridning ?? null,
+        variation: s?.variationskoefficient ?? null,
+        langdVariation: langd?.variationskoefficient ?? null,
+        bandMedel: vid?.medel ?? null,
+        bandSpridning: vid?.spridning ?? null,
+        synk: jam.synk,
+        antal: jam.antal
+      };
+    },
+    async laggIn(paket) {
+      const ink = {
+        kategorier: paket?.kategorier || [],
+        inspelningar: (paket?.inspelningar || []).map((ins) => {
+          if (!ins.egenskaper) ins.egenskaper = beraknaEgenskaper(ins, config);
+          return ins;
+        }),
+        senast: paket?.senast || null,
+        profiler: paket?.profiler || []
+      };
+      const hop = slahopImport({ kategorier, inspelningar, senast, profiler }, ink);
+      kategorier = hop.kategorier;
+      inspelningar = hop.inspelningar;
+      senast = hop.senast;
+      profiler = hop.profiler || [];
+      await lager.skrivAllt({ kategorier, inspelningar, senast, profiler });
+      if (['sparade', 'sparadGrupp', 'jamfor', 'bibliotek', 'analys', 'redo'].includes(lage)) rita();
+      return { antal: inspelningar.length };
     },
     mata(p) {
       if (!p) return;

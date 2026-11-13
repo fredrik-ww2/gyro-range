@@ -231,9 +231,9 @@ async function main() {
         await sleep(28);
       }
     }
-    async function skarm(namn) {
+    async function skarm(namn, uppe = true) {
       await js(`(() => { const t = document.getElementById('toast'); if (t) t.hidden = true; })()`);
-      await js('window.scrollTo(0,0)');
+      if (uppe) await js('window.scrollTo(0,0)');
       await js('dispatchEvent(new Event("resize"))');
       await sleep(250);
       const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' });
@@ -280,12 +280,26 @@ async function main() {
     krav('talet startar om', antalEfter > antalFore, `${antalFore} -> ${antalEfter}`);
     const horde = await js('window.__rorelse.horde("det var slut")');
     krav('hörde slut', horde === true);
-    await vanta(`window.__rorelse.lage === 'kurvor'`);
+    await vanta(`window.__rorelse.lage === 'oversikt'`);
     const utkast = await js('window.__rorelse.utkastLage()');
     const tog = (Date.now() - t0) / 1000;
     krav('avslut på ordet', utkast?.avslut === 'slut', JSON.stringify(utkast));
     krav('svansen är klippt', utkast && utkast.svansSek === 0.4 && utkast.langdSek < tog - 0.2, `langd ${utkast?.langdSek} av ${tog}`);
     krav('sampel finns', (utkast?.antal || 0) > 4, String(utkast?.antal));
+    const dukarOv = await js(`document.querySelectorAll('[data-roll=oversikt] canvas').length`);
+    krav('översikt med alla kurvor', dukarOv >= 4, String(dukarOv));
+    await skarm('rorelse_oversikt.png');
+    const foreMarkor = await js(`document.querySelector('[data-roll=avlasning]')?.innerText || ''`);
+    const efterMarkor = await js(`(() => {
+      const s = document.querySelector('[data-roll=tid]');
+      if (!s) return '';
+      s.value = '0';
+      s.dispatchEvent(new Event('input', { bubbles: true }));
+      return document.querySelector('[data-roll=avlasning]')?.innerText || '';
+    })()`);
+    krav('tidmarkör ändrar värden', !!foreMarkor && foreMarkor !== efterMarkor, `${foreMarkor} -> ${efterMarkor}`);
+    await klick('[data-roll=till-axlar]');
+    await vanta(`window.__rorelse.lage === 'kurvor'`);
     const textKurva = await js('document.body.innerText');
     krav('tabell topp', textKurva.includes('Topp') && textKurva.includes('Total vridning'));
     const dukar = await js('document.querySelectorAll("canvas").length');
@@ -388,7 +402,7 @@ async function main() {
     await vanta(`window.__rorelse.lage === 'spelar'`);
     await rorelse(24, 900);
     await js('window.__rorelse.horde("slut")');
-    await vanta(`window.__rorelse.lage === 'kurvor'`);
+    await vanta(`window.__rorelse.lage === 'oversikt'`);
     const forval = await js('document.body.innerText');
     krav('förval syns', forval.includes('Pingis') && forval.includes('Ändra märkning'), forval.slice(0, 180));
     await klick('[data-roll=till-markning]');
@@ -430,8 +444,127 @@ async function main() {
     krav('biblioteket visar pingis', bibText.includes('Pingis') && bibText.includes('Backhand'));
     await klick('.bibliotek-rad');
     await vanta(`window.__rorelse.lage === 'detalj'`);
+    await klick('[data-roll=till-axlar]');
+    await vanta(`window.__rorelse.lage === 'detaljAxlar'`);
     const dukar2 = await js('document.querySelectorAll("canvas").length');
     krav('sparad inspelning har kurvor', dukar2 >= 12, String(dukar2));
+
+    const foreSeed = await bib();
+    const katSeed = foreSeed.kategorier.find((k) => k.namn === 'Pingis');
+    const slagF = katSeed.faktorer.find((f) => f.namn === 'Slag');
+    const skruvKat = katSeed.faktorer.find((f) => f.namn === 'Skruv');
+    const backId = slagF.val.find((v) => v.namn === 'Backhand').id;
+    skruvKat.val.push({ id: 'val-kross', namn: 'Kross', underval: [] });
+    skruvKat.val.push({ id: 'val-driv', namn: 'Driv', underval: [] });
+    const sliceIns = foreSeed.inspelningar.find((ins) => ins.val?.[skruvKat.id]?.valId === skruvKat.val.find((v) => v.namn === 'Slice').id);
+    function triangel(id, topp, valId, minut) {
+      const sampel = [];
+      for (let i = 0; i <= 20; i++) {
+        const t = i / 20;
+        const f = i <= 10 ? i / 10 : (20 - i) / 10;
+        sampel.push({
+          t,
+          rot: [topp * f, 2 * f, -f],
+          acc: [0.4 * f, 0.1 * f, 0],
+          accG: [0.2 * f, 0.2, -9.8],
+          vinkel: [8 * f, f, -0.5 * f],
+          skarm: 0
+        });
+      }
+      return {
+        id,
+        skapad: new Date(Date.UTC(2026, 10, 13, 18, minut)).toISOString(),
+        kategoriId: katSeed.id,
+        val: {
+          [slagF.id]: { valId: backId, undervalId: null },
+          [skruvKat.id]: { valId, undervalId: null }
+        },
+        etikett: { kategori: 'Pingis', rader: [] },
+        langdSek: 1,
+        antal: sampel.length,
+        avslut: 'slut',
+        svansSek: 0,
+        nollage: [0, 0, 0],
+        sampel
+      };
+    }
+    const simulerade = [
+      ...[10, 20, 30, 40, 50].map((topp, i) => triangel(`kross-${i}`, topp, 'val-kross', i)),
+      ...[8, 12, 16, 20].map((topp, i) => triangel(`driv-${i}`, topp, 'val-driv', 10 + i))
+    ];
+    const tillagt = await js(`window.__rorelse.laggIn(${JSON.stringify({
+      kategorier: [katSeed],
+      inspelningar: simulerade,
+      senast: foreSeed.senast,
+      profiler: []
+    })})`);
+    krav('simulerade slag inne', tillagt?.antal >= 11, String(tillagt?.antal));
+    await klick('#backa');
+    await klick('#backa');
+    await klick('#backa');
+    await vanta(`window.__rorelse.lage === 'redo'`);
+    await klick('[data-roll=sparade]');
+    await vanta(`window.__rorelse.lage === 'sparade'`);
+    const valdeKat = await js(`(() => { const b = [...document.querySelectorAll('[data-roll=kategori]')].find((el) => el.textContent.includes('Pingis')); if (!b) return false; b.click(); return true; })()`);
+    krav('kan välja kategori', valdeKat === true);
+    await vanta(`!!document.querySelector('[data-roll=grupp]')`);
+    const gruppText = await js(`[...document.querySelectorAll('[data-roll=grupp]')].map((el) => el.textContent.replace(/\\s+/g, ' ').trim())`);
+    krav('grupp med fem kross', gruppText.some((t) => t.includes('Kross') && t.includes('(5 st)')), JSON.stringify(gruppText));
+    krav('grupp med fyra driv', gruppText.some((t) => t.includes('Driv') && t.includes('(4 st)')), JSON.stringify(gruppText));
+    const grupper = await js(`window.__rorelse.grupper(${JSON.stringify(katSeed.id)})`);
+    const fem = grupper.find((g) => g.antal === 5);
+    const fyra = grupper.find((g) => g.antal === 4);
+    krav('exakt fem och fyra', !!fem && !!fyra && fem.ids.every((id) => id.startsWith('kross-')) && fyra.ids.every((id) => id.startsWith('driv-')), JSON.stringify(grupper.map((g) => [g.antal, g.text])));
+    krav('slice är ett eget slag', !!sliceIns?.id);
+    krav('slice ligger inte i kross', !!fem && !fem.ids.includes(sliceIns?.id));
+    await skarm('rorelse_sparade.png');
+    const oppna = await js(`(() => { const b = [...document.querySelectorAll('[data-roll=grupp]')].find((el) => el.textContent.includes('Kross') && el.textContent.includes('(5 st)')); if (!b) return false; b.click(); return true; })()`);
+    krav('öppnar krossgruppen', oppna === true);
+    await vanta(`window.__rorelse.lage === 'sparadGrupp'`);
+    const ibockade = await js(`document.querySelectorAll('[data-gor=bock]:checked').length`);
+    krav('alla fem är ibockade', ibockade === 5, String(ibockade));
+    await js(`(() => { const b = document.querySelector('[data-gor=bock]'); b.checked = false; b.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+    const avbockad = await js(`document.querySelectorAll('[data-gor=bock]:checked').length`);
+    krav('kan bocka av ett slag', avbockad === 4, String(avbockad));
+    await klick('[data-roll=alla]');
+    const allaIgen = await js(`document.querySelectorAll('[data-gor=bock]:checked').length`);
+    krav('välj alla igen', allaIgen === 5, String(allaIgen));
+    await klick('[data-roll=jamfor]');
+    await vanta(`window.__rorelse.lage === 'jamfor'`);
+    const bandAntal = await js(`document.querySelectorAll('[data-roll=band] canvas').length`);
+    krav('band för varje axel', bandAntal >= 9, String(bandAntal));
+    // Toppvärden 10, 20, 30, 40, 50. Medel 30. Spridning sqrt(1000/4) = sqrt(250).
+    const handSpridning = Math.sqrt(250);
+    const jamTal = await js(`window.__rorelse.jamforTal(${JSON.stringify(fem.ids)}, 'rot.0.topp')`);
+    krav('medel i jämförelsen', jamTal?.medel === 30, JSON.stringify(jamTal));
+    krav('spridning mot handräkning', Math.abs(Number(jamTal?.spridning) - handSpridning) < 1e-6, String(jamTal?.spridning));
+    krav('bandets spridning', Math.abs(Number(jamTal?.bandSpridning) - handSpridning) < 1e-6, String(jamTal?.bandSpridning));
+    krav('längden stabilare än toppen', jamTal?.langdVariation === 0 && jamTal.variation > 0, JSON.stringify(jamTal));
+    await js(`document.querySelector('details').open = true`);
+    const synlig = await js(`document.querySelector('[data-roll=stat][data-nyckel="rot.0.topp"]')?.innerText || ''`);
+    const sprAttr = Number(await js(`document.querySelector('[data-roll=stat][data-nyckel="rot.0.topp"]')?.dataset.spridning`));
+    krav('tabellen visar spridningen', Math.abs(sprAttr - handSpridning) < 1e-6 && /15[,.]8/.test(synlig), `${sprAttr} ${synlig}`);
+    await js('window.scrollTo(0,0)');
+    await skarm('rorelse_jamforelse.png');
+    await js(`(() => {
+      const el = document.querySelector('[data-roll=rang]');
+      if (!el) return 0;
+      const y = el.getBoundingClientRect().top + window.scrollY - 60;
+      window.scrollTo(0, Math.max(0, y));
+      return window.scrollY;
+    })()`);
+    await skarm('rorelse_variation.png', false);
+    await klick('[data-roll=spara-monster]');
+    await vanta(`(window.__rorelse.bibliotek().profiler || []).length === 1`);
+    const monster = await js(`window.__rorelse.bibliotek().profiler[0]`);
+    krav('mönster för kross', monster?.antal === 5 && String(monster.text).includes('Kross'), JSON.stringify(monster));
+
+    await cdp.send('Page.reload', { ignoreCache: true });
+    await vanta('window.__rorelse && window.__rorelse.redo === true', 6000);
+    const efterMonster = await js('window.__rorelse.bibliotek()');
+    krav('mönster kvar efter omladdning', (efterMonster.profiler || []).some((p) => String(p.text).includes('Kross') && p.antal === 5));
+    const grupperKvar = await js(`window.__rorelse.grupper(${JSON.stringify(katSeed.id)})`);
+    krav('grupper kvar', grupperKvar.some((g) => g.antal === 5) && grupperKvar.some((g) => g.antal === 4));
 
     krav('inga konsolfel', konsol.length === 0, konsol.join(' | ').slice(0, 500));
   } finally {

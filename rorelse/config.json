@@ -1,5 +1,5 @@
 {
-  "hjalp": "Tal som går att ändra utan att bygga om sidan. svansSek är sekunderna som klipps bort före ordet slut, så att det inte kommer med när telefonen tas tillbaka.",
+  "hjalp": "Tal som går att ändra utan att bygga om sidan. svansSek är sekunderna som klipps bort före ordet slut, så att det inte kommer med när telefonen tas tillbaka. monster.synk är topp eller start och anger var jämförelsen lägger slagen på varandra. monster.antalPunkter är hur många punkter medelkurvan har. monster.antalRang är hur många rader som visas för det som varierar mest och det som är mest stabilt.",
   "svansSek": 0.4,
   "maxSek": 30,
   "malHz": 50,
@@ -9,6 +9,16 @@
     "startaOmMs": 300
   },
   "grafHojd": 112,
+  "oversikt": { "hojd": 84 },
+  "monster": {
+    "synk": "topp",
+    "antalPunkter": 40,
+    "startTroskel": 0.12,
+    "synkLage": 0.4,
+    "antalRang": 4,
+    "cvGolvAndel": 0.5,
+    "hojd": 72
+  },
   "skalaMinst": { "rot": 40, "acc": 1.5, "accG": 2, "vinkel": 12 },
   "analys": {
     "antalSkillnader": 5,

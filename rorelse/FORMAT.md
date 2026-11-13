@@ -81,3 +81,7 @@ Total vridning i tabellen är summan av rotationshastigheten över tiden, i grad
 ## Import
 
 En fil tas in om `format` är `ww2-rorelse` och `version` är 2 (eller 1, som ovan). Samma `id` ersätter det som redan finns. Nya id läggs till. Inget som bara finns på telefonen tas bort.
+
+## Mönster
+
+`profiler` är valfritt. Ett mönster hör till en kategori och en exakt kombination av val. Det sparas från jämförelsen och innehåller medelvärde och spridning (standardavvikelse, delat med n−1) för varje mätvärde, plus medelkurvan. Samma `id` ersätter mönstret som redan finns. En fil utan `profiler` går fortfarande att läsa in. En senare version kan jämföra ett nytt slag med mönstren i samma kategori.

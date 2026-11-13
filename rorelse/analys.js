@@ -1,20 +1,34 @@
 // Jämförelse av inspelningar. Ingen DOM och ingen lagring.
 //
-// Gränssnitt för en senare modell:
+// Gränssnitt:
 //   beraknaEgenskaper(inspelning, config) -> { version, namn, vektor, varden }
 //   traningsrader(inspelningar, config)   -> [{ id, kategoriId, val, etikett, namn, x }]
 //   jamforBibliotek(inspelningar, kategorier, config)
 //       -> { identiska, enFaktorSkiljer }
+//   grupperaExakt(inspelningar, kategori)
+//       -> [{ signatur, text, antal, ids }]
+//   jamforInspelningar(inspelningar, config)
+//       -> { antal, synk, synkLage, u0, u1, skalara, rang, kurvor, ids }
+//   byggProfil(inspelningar, kategori, config)
+//       -> profil med medel och spridning per egenskap, för en kategori och
+//          en exakt kombination av val
+//   avstandTillProfil(inspelning, profil, config)
+//       -> { avstand, antal, perEgenskap }
+//   narmasteProfil(inspelning, profiler, config)
+//       -> { profilId, text, avstand } eller null
 //
 // x[i] hör ihop med namn[i]. null betyder att sensorn inte gav något värde.
-// En senare modell kan träna på rader där val är lika utom en faktor,
-// med den faktorns valId som mål. jamforBibliotek pekar ut vilka egenskaper
-// som redan skiljer sådana grupper åt, till exempel toppvärdet för vridning
-// när bara skruv skiljer.
+// Spridning är stickprovsstandardavvikelse (delat med n−1).
+// En profil är mönstret för en kategori och en exakt val-kombination.
+// avstandTillProfil och narmasteProfil är till för att senare känna igen
+// vilket slag en ny inspelning liknar, inom den kategorin.
+// jamforBibliotek pekar ut vilka egenskaper som redan skiljer grupper åt
+// när bara en faktor skiljer, till exempel toppvärdet för vridning.
 
-import { magnitudSerie, matHz, serieAv, statistik } from './motor.js';
+import { magnitudSerie, matHz, medelOchSpridning, serieAv, statistik, vardeVid } from './motor.js';
 
 export const ANALYS_VERSION = 1;
+export const PROFIL_VERSION = 1;
 
 const STORHETER = ['rot', 'acc', 'accG', 'vinkel'];
 
@@ -269,4 +283,283 @@ export function jamforBibliotek(inspelningar, kategorier, config) {
 
   enFaktorSkiljer.sort((a, b) => (b.skillnader[0]?.poang || 0) - (a.skillnader[0]?.poang || 0));
   return { identiska, enFaktorSkiljer };
+}
+
+function valText(ins, kategori) {
+  const faktorer = kategori?.faktorer || [];
+  if (!faktorer.length) return 'Utan val';
+  const delar = [];
+  for (const f of faktorer) {
+    const v = ins?.val?.[f.id];
+    const vald = (f.val || []).find((x) => x.id === v?.valId);
+    if (!vald) { delar.push('Ej valt'); continue; }
+    const under = v?.undervalId ? (vald.underval || []).find((u) => u.id === v.undervalId) : null;
+    delar.push(under ? `${vald.namn} · ${under.namn}` : vald.namn);
+  }
+  if (delar.every((d) => d === 'Ej valt')) return 'Utan val';
+  return delar.join(' · ');
+}
+
+export function idForProfil(kategoriId, signatur) {
+  return `${kategoriId || ''}|${signatur || ''}`;
+}
+
+// Bara inspelningar med exakt samma val på alla faktorer hamnar i samma grupp.
+export function grupperaExakt(inspelningar, kategori) {
+  const faktorer = kategori?.faktorer || [];
+  const hinkar = new Map();
+  for (const ins of inspelningar || []) {
+    if (!ins || ins.kategoriId !== kategori?.id) continue;
+    if (!ins.sampel?.length && !(ins.antal > 0)) continue;
+    const sig = signatur(ins, faktorer, null);
+    if (!hinkar.has(sig)) hinkar.set(sig, []);
+    hinkar.get(sig).push(ins);
+  }
+  const ut = [];
+  for (const [sig, medlemmar] of hinkar) {
+    ut.push({
+      signatur: sig,
+      text: valText(medlemmar[0], kategori),
+      antal: medlemmar.length,
+      ids: medlemmar.map((ins) => ins.id)
+    });
+  }
+  ut.sort((a, b) => b.antal - a.antal || a.text.localeCompare(b.text, 'sv'));
+  return ut;
+}
+
+function spannTid(sampel) {
+  let t0 = Infinity;
+  let t1 = -Infinity;
+  for (const s of sampel || []) {
+    if (!Number.isFinite(s?.t)) continue;
+    if (s.t < t0) t0 = s.t;
+    if (s.t > t1) t1 = s.t;
+  }
+  if (!Number.isFinite(t0)) return { t0: 0, t1: 0 };
+  return { t0, t1 };
+}
+
+function synkAv(sampel, config) {
+  const { t0, t1 } = spannTid(sampel);
+  const mag = magnitudSerie(sampel, 'rot');
+  const serie = mag.length >= 2 ? mag : magnitudSerie(sampel, 'acc');
+  const typ = config?.monster?.synk === 'start' ? 'start' : 'topp';
+  if (!serie.length) return { t: t0, t0, t1, typ };
+  let topp = serie[0];
+  for (const p of serie) if (p.v > topp.v) topp = p;
+  const andel = Number(config?.monster?.startTroskel);
+  const troskel = topp.v * (Number.isFinite(andel) ? andel : 0.12);
+  let start = serie[0];
+  for (const p of serie) {
+    if (p.t > topp.t) break;
+    if (p.v >= troskel) { start = p; break; }
+  }
+  return { t: typ === 'start' ? start.t : topp.t, t0, t1, typ };
+}
+
+function synkLageAv(config, typ) {
+  const angiven = Number(config?.monster?.synkLage);
+  if (Number.isFinite(angiven)) return angiven;
+  return typ === 'start' ? 0.08 : 0.4;
+}
+
+function rutnat(uMin, uMax, n, synkU) {
+  const antal = Math.max(2, n);
+  const ut = [];
+  const steg = (uMax - uMin) / (antal - 1);
+  for (let i = 0; i < antal; i++) ut.push(uMin + steg * i);
+  if (synkU >= uMin && synkU <= uMax) {
+    let bast = 0;
+    for (let i = 1; i < ut.length; i++) {
+      if (Math.abs(ut[i] - synkU) < Math.abs(ut[bast] - synkU)) bast = i;
+    }
+    ut[bast] = synkU;
+  }
+  return ut;
+}
+
+function cvAv(medel, spridning, enhet, config) {
+  if (!Number.isFinite(medel) || !Number.isFinite(spridning)) return null;
+  const andel = Number(config?.monster?.cvGolvAndel);
+  const faktor = Number.isFinite(andel) ? andel : 0.5;
+  const golv = Math.abs(minAbs(enhet, config)) * faktor;
+  if (Math.abs(medel) < Math.max(golv, 1e-9)) return null;
+  return spridning / Math.abs(medel);
+}
+
+function storhetsNycklar(config) {
+  const franConfig = (config?.storheter || []).map((s) => s.nyckel).filter((k) => STORHETER.includes(k));
+  return franConfig.length ? franConfig : STORHETER.slice();
+}
+
+export function jamforInspelningar(inspelningar, config) {
+  const cfg = config || {};
+  const lista = (inspelningar || []).filter((ins) => ins?.sampel?.length);
+  const synkTyp = cfg.monster?.synk === 'start' ? 'start' : 'topp';
+  const synkLage = synkLageAv(cfg, synkTyp);
+  const tom = {
+    antal: lista.length,
+    synk: synkTyp,
+    synkLage,
+    u0: 0,
+    u1: 1,
+    skalara: [],
+    rang: { varierar: [], stabila: [] },
+    kurvor: [],
+    ids: lista.map((ins) => ins.id)
+  };
+  if (!lista.length) return tom;
+
+  const rader = lista.map((ins) => beraknaEgenskaper(ins, cfg));
+  const skalara = [];
+  for (const d of definitioner(cfg)) {
+    if (d.nyckel === 'hz') continue;
+    const stat = medelOchSpridning(rader.map((eg) => eg.varden[d.nyckel]?.varde));
+    if (!stat.antal) continue;
+    skalara.push({
+      nyckel: d.nyckel,
+      text: d.text,
+      enhet: d.enhet,
+      medel: stat.medel,
+      spridning: stat.spridning,
+      variationskoefficient: cvAv(stat.medel, stat.spridning, d.enhet, cfg)
+    });
+  }
+  const medCv = skalara.filter((s) => Number.isFinite(s.variationskoefficient));
+  const fallande = [...medCv].sort((a, b) => b.variationskoefficient - a.variationskoefficient || a.text.localeCompare(b.text, 'sv'));
+  const nRang = Math.max(1, Number(cfg.monster?.antalRang) || 4);
+  const rang = {
+    varierar: fallande.slice(0, nRang),
+    stabila: [...fallande].reverse().slice(0, nRang)
+  };
+
+  const synkar = lista.map((ins) => synkAv(ins.sampel, cfg));
+  let uMin = Infinity;
+  let uMax = -Infinity;
+  for (const syn of synkar) {
+    const d = Math.max(1e-6, syn.t1 - syn.t0);
+    const a = synkLage + (syn.t0 - syn.t) / d;
+    const b = synkLage + (syn.t1 - syn.t) / d;
+    if (a < uMin) uMin = a;
+    if (b > uMax) uMax = b;
+  }
+  if (!Number.isFinite(uMin) || !(uMax > uMin)) { uMin = 0; uMax = 1; }
+  const antalPunkter = Math.max(8, Number(cfg.monster?.antalPunkter) || 40);
+  const grid = rutnat(uMin, uMax, antalPunkter, synkLage);
+
+  const kurvor = [];
+  for (const nyckel of storhetsNycklar(cfg)) {
+    const axlar = cfg.axlar?.[nyckel] || [];
+    const rubrik = rubrikFor(cfg, nyckel);
+    for (let axel = 0; axel < axlar.length; axel++) {
+      const hinkar = grid.map(() => []);
+      const linjer = [];
+      const vid = [];
+      lista.forEach((ins, i) => {
+        const syn = synkar[i];
+        const d = Math.max(1e-6, syn.t1 - syn.t0);
+        const serie = serieAv(ins.sampel, nyckel, axel);
+        const linje = [];
+        grid.forEach((u, gi) => {
+          const t = syn.t + (u - synkLage) * d;
+          const v = vardeVid(serie, t);
+          if (!Number.isFinite(v)) return;
+          hinkar[gi].push(v);
+          linje.push({ u, v });
+        });
+        linjer.push(linje);
+        const vSynk = vardeVid(serie, syn.t);
+        if (Number.isFinite(vSynk)) vid.push(vSynk);
+      });
+      const vidStat = medelOchSpridning(vid);
+      kurvor.push({
+        nyckel: `${nyckel}.${axel}`,
+        storhet: nyckel,
+        axel,
+        text: `${rubrik}, ${axlar[axel].namn}`,
+        enhet: axlar[axel].enhet || '',
+        linjer,
+        vidSynk: { medel: vidStat.medel, spridning: vidStat.spridning },
+        punkter: grid.map((u, gi) => {
+          const stat = medelOchSpridning(hinkar[gi]);
+          return { u, medel: stat.medel, spridning: stat.spridning };
+        })
+      });
+    }
+  }
+
+  return {
+    antal: lista.length,
+    synk: synkTyp,
+    synkLage,
+    u0: uMin,
+    u1: uMax,
+    skalara,
+    rang,
+    kurvor,
+    ids: lista.map((ins) => ins.id)
+  };
+}
+
+export function byggProfil(inspelningar, kategori, config) {
+  const lista = (inspelningar || []).filter((ins) => ins?.sampel?.length);
+  const jam = jamforInspelningar(lista, config || {});
+  const signaturText = lista.length ? signatur(lista[0], kategori?.faktorer || [], null) : '';
+  return {
+    version: PROFIL_VERSION,
+    id: idForProfil(kategori?.id, signaturText),
+    kategoriId: kategori?.id || null,
+    signatur: signaturText,
+    text: lista.length ? valText(lista[0], kategori) : 'Utan val',
+    antal: jam.antal,
+    synk: jam.synk,
+    synkLage: jam.synkLage,
+    skalara: jam.skalara.map((s) => ({
+      nyckel: s.nyckel,
+      text: s.text,
+      enhet: s.enhet,
+      medel: runda(s.medel),
+      spridning: runda(s.spridning),
+      variationskoefficient: runda(s.variationskoefficient)
+    })),
+    kurvor: jam.kurvor.map((k) => ({
+      nyckel: k.nyckel,
+      storhet: k.storhet,
+      text: k.text,
+      enhet: k.enhet,
+      punkter: k.punkter.map((p) => ({
+        u: runda(p.u),
+        medel: runda(p.medel),
+        spridning: runda(p.spridning)
+      }))
+    }))
+  };
+}
+
+export function avstandTillProfil(inspelning, profil, config) {
+  const cfg = config || {};
+  const eg = beraknaEgenskaper(inspelning || {}, cfg);
+  const per = [];
+  for (const rad of profil?.skalara || []) {
+    const v = eg.varden[rad.nyckel]?.varde;
+    if (!Number.isFinite(v) || !Number.isFinite(rad.medel)) continue;
+    const spr = Number.isFinite(rad.spridning) && rad.spridning > 1e-6 ? rad.spridning : minAbs(rad.enhet, cfg);
+    const golv = spr > 1e-6 ? spr : 1;
+    per.push({ nyckel: rad.nyckel, z: Math.abs(v - rad.medel) / golv });
+  }
+  if (!per.length) return { avstand: null, antal: 0, perEgenskap: [] };
+  const avstand = per.reduce((sum, rad) => sum + rad.z, 0) / per.length;
+  return { avstand, antal: per.length, perEgenskap: per };
+}
+
+export function narmasteProfil(inspelning, profiler, config) {
+  const kandidater = (profiler || []).filter((p) => !inspelning?.kategoriId || p.kategoriId === inspelning.kategoriId);
+  let bast = null;
+  for (const p of kandidater) {
+    const s = avstandTillProfil(inspelning, p, config);
+    if (!Number.isFinite(s.avstand)) continue;
+    if (!bast || s.avstand < bast.avstand) bast = { profilId: p.id, text: p.text || '', avstand: s.avstand };
+  }
+  return bast;
 }

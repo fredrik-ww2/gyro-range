@@ -123,3 +123,43 @@ export function statistik(punkter) {
     antal: n
   };
 }
+
+// Stickprovsstandardavvikelse, delat med n−1. Ett ensamt värde har ingen spridning.
+export function medelOchSpridning(varden) {
+  const vals = [];
+  for (const v of varden || []) if (Number.isFinite(v)) vals.push(v);
+  if (!vals.length) return { medel: null, spridning: null, antal: 0 };
+  let sum = 0;
+  for (const v of vals) sum += v;
+  const medel = sum / vals.length;
+  if (vals.length < 2) return { medel, spridning: null, antal: vals.length };
+  let kv = 0;
+  for (const v of vals) {
+    const d = v - medel;
+    kv += d * d;
+  }
+  return { medel, spridning: Math.sqrt(kv / (vals.length - 1)), antal: vals.length };
+}
+
+// Linjär interpolation. null om t ligger utanför serien.
+export function vardeVid(punkter, t) {
+  if (!punkter?.length || !Number.isFinite(t)) return null;
+  const forsta = punkter[0];
+  const sista = punkter[punkter.length - 1];
+  if (!Number.isFinite(forsta?.t) || !Number.isFinite(sista?.t)) return null;
+  if (t < forsta.t - 1e-6 || t > sista.t + 1e-6) return null;
+  if (t <= forsta.t) return Number.isFinite(forsta.v) ? forsta.v : null;
+  if (t >= sista.t) return Number.isFinite(sista.v) ? sista.v : null;
+  for (let i = 1; i < punkter.length; i++) {
+    const b = punkter[i];
+    const a = punkter[i - 1];
+    if (!Number.isFinite(b?.t) || t > b.t) continue;
+    const dt = b.t - a.t;
+    if (!(dt > 0) || !Number.isFinite(a.v) || !Number.isFinite(b.v)) {
+      return Number.isFinite(b.v) ? b.v : (Number.isFinite(a.v) ? a.v : null);
+    }
+    const f = (t - a.t) / dt;
+    return a.v + (b.v - a.v) * f;
+  }
+  return Number.isFinite(sista.v) ? sista.v : null;
+}

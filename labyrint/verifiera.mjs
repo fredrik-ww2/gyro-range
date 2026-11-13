@@ -135,7 +135,10 @@ try {
   await sida.click('#menyKnapp');
   await sida.waitForSelector('#meny:not([hidden])');
   const menyText = await sida.$eval('#meny', (el) => el.innerText);
-  krav('menyn har banor', /1 Lätt/.test(menyText) && /3 Svår/.test(menyText));
+  const nivaKnappar = await sida.$$eval('#banor button', (els) => els.map((el) => el.textContent.trim()));
+  krav('tio nivåknappar', nivaKnappar.join(',') === '1,2,3,4,5,6,7,8,9,10', nivaKnappar.join(','));
+  krav('menyn visar vald nivå', /Nivå 1/.test(menyText) && /Första/.test(menyText));
+  krav('menyn har känsla', /Lugn/.test(menyText) && /Kvick/.test(menyText));
   krav('menyn har ljud och hjälpbanor', /Ljud/.test(menyText) && /Hjälpbanor/.test(menyText));
   krav('menyn har nollställning', /Nollställ/.test(menyText));
   krav('menyn har prestanda', /Bilder\/s/.test(menyText));
@@ -143,6 +146,37 @@ try {
   await sida.screenshot({path: join(bilder, 'labyrint-meny.png')});
   await sida.click('#stang');
   await sida.waitForSelector('#meny[hidden]');
+
+  const banor = await sida.evaluate(() => {
+    const api = window.__labyrint;
+    const ut = [];
+    for (let i = 0; i < api.antal(); i++) {
+      api.bana(i);
+      const b = api.boll();
+      const data = api.banaData();
+      ut.push({nummer: data.nummer, namn: data.namn, lage: b.lage, x: b.x, z: b.z});
+    }
+    api.bana(0);
+    api.sattLutning(18, 14);
+    api.steg(48, 1 / 60);
+    return {ut, glipa: api.provGlipa()};
+  });
+  krav('alla tio nivåer laddar', banor.ut.length === 10 && banor.ut.every((b, i) => b.nummer === i + 1 && b.lage === 'rullar'), JSON.stringify(banor.ut));
+  await sida.screenshot({path: join(bilder, 'labyrint-lutning.png')});
+  krav('ingen svart glipa vid lutning', banor.glipa.bjork > 2000 && banor.glipa.glipa < 40, JSON.stringify(banor.glipa));
+  const andra = await sida.evaluate(() => {
+    const api = window.__labyrint;
+    api.bana(9);
+    api.sattLutning(-16, 12);
+    api.steg(36, 1 / 60);
+    return api.provGlipa();
+  });
+  await sida.screenshot({path: join(bilder, 'labyrint-niva10.png')});
+  krav('ingen svart glipa på nivå 10', andra.bjork > 2000 && andra.glipa < 40, JSON.stringify(andra));
+  await sida.evaluate(() => {
+    window.__labyrint.slappLutning();
+    window.__labyrint.bana(0);
+  });
 
   const liggande = await browser.newPage();
   const liggFel = await oppna(liggande, 844, 390);
@@ -227,13 +261,58 @@ try {
   krav('hålfall i webbläsaren', spel.hal, String(spel.minY));
   krav('mål i webbläsaren', spel.mal);
 
+  const nasta = await sida.evaluate(() => {
+    const api = window.__labyrint;
+    const paus = api.malPaus();
+    api.borja();
+    api.bana(0);
+    api.sattLutning(0, 0);
+    const mal = api.banaData().mal;
+    api.placera(mal.x, mal.z, 0, 0);
+    for (let i = 0; i < 90 && api.boll().lage !== 'mal'; i++) api.steg(1, 1 / 60);
+    const vann = api.boll().lage === 'mal';
+    const firande = !document.querySelector('#firande').hidden;
+    const rubrik = document.querySelector('#firandeRubrik').textContent;
+    api.steg(Math.ceil(paus * 0.35 * 60), 1 / 60);
+    const underPaus = api.banaData().nummer;
+    api.steg(Math.ceil((paus + 0.25) * 60), 1 / 60);
+    const efter = {
+      nummer: api.banaData().nummer,
+      namn: api.banaData().namn,
+      lage: api.boll().lage,
+      firande: !document.querySelector('#firande').hidden,
+    };
+    api.bana(api.antal() - 1);
+    api.sattLutning(0, 0);
+    const sistaMal = api.banaData().mal;
+    api.placera(sistaMal.x, sistaMal.z, 0, 0);
+    for (let i = 0; i < 90 && api.boll().lage !== 'mal'; i++) api.steg(1, 1 / 60);
+    api.steg(Math.ceil((paus + 0.4) * 60), 1 / 60);
+    const slut = {
+      nummer: api.banaData().nummer,
+      lage: api.boll().lage,
+      firande: !document.querySelector('#firande').hidden,
+      rubrik: document.querySelector('#firandeRubrik').textContent,
+      knapp: !document.querySelector('#firandeOm').hidden,
+    };
+    document.querySelector('#firandeOm').click();
+    const om = {nummer: api.banaData().nummer, lage: api.boll().lage, firande: !document.querySelector('#firande').hidden};
+    api.slappLutning();
+    api.bana(0);
+    return {paus, vann, firande, rubrik, underPaus, efter, slut, om};
+  });
+  krav('målet firas innan banan byts', nasta.vann && nasta.firande && nasta.underPaus === 1 && /Mål/.test(nasta.rubrik), JSON.stringify(nasta));
+  krav('nästa bana laddas efter pausen', nasta.efter.nummer === 2 && nasta.efter.lage === 'rullar' && nasta.efter.firande === false, JSON.stringify(nasta.efter));
+  krav('sista banan väntar med segermarkering', nasta.slut.nummer === 10 && nasta.slut.lage === 'mal' && nasta.slut.firande && nasta.slut.knapp && /Alla nivåer/.test(nasta.slut.rubrik), JSON.stringify(nasta.slut));
+  krav('från början efter sista banan', nasta.om.nummer === 1 && nasta.om.lage === 'rullar' && nasta.om.firande === false, JSON.stringify(nasta.om));
+
   await new Promise((r) => setTimeout(r, 400));
   const prestanda = await sida.evaluate(() => window.__labyrint.prestanda());
   krav('något ritas', prestanda.ritningar > 5, String(prestanda.ritningar));
   krav('bildfrekvensen tickar', prestanda.fps > 8, String(prestanda.fps));
   nat.push(...konsol);
   krav('0 konsolfel och nätverksfel', konsol.length === 0, konsol.join(' | '));
-  console.log(JSON.stringify({prestanda, port, bilder: ['labyrint-staende.png', 'labyrint-meny.png', 'labyrint-liggande.png']}, null, 2));
+  console.log(JSON.stringify({prestanda, port, bilder: ['labyrint-staende.png', 'labyrint-lutning.png', 'labyrint-meny.png', 'labyrint-niva10.png', 'labyrint-liggande.png']}, null, 2));
 } catch (e) {
   fel.push(e?.stack || String(e));
 } finally {

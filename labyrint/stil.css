@@ -22,6 +22,21 @@ button.menyknapp[aria-expanded="true"] { background: var(--accent); color: #2418
 button.menyknapp[data-mal="1"]::after {
   content: ""; width: 8px; height: 8px; border-radius: 50%; background: #e7c56a; display: inline-block;
 }
+#firande {
+  position: fixed; z-index: 12;
+  top: calc(env(safe-area-inset-top) + 60px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: 8px 14px; border-radius: 14px;
+  background: #1c1612f2; border: 1px solid #e3c88eaa;
+  box-shadow: 0 8px 24px #0008; text-align: center;
+  pointer-events: none;
+}
+#firande b { font-size: 18px; color: var(--accent); }
+#firande span { font-size: 14px; color: var(--damp); font-weight: 650; }
+#firande button { pointer-events: auto; margin-top: 6px; }
 #meny {
   position: fixed; z-index: 13;
   top: calc(env(safe-area-inset-top) + 58px);
@@ -40,9 +55,12 @@ button.menyknapp[data-mal="1"]::after {
 #stang { min-height: 44px; }
 #hjalpText, #lageText { margin: 8px 0 0; color: var(--damp); font-size: 13px; line-height: 1.4; font-weight: 500; }
 #lageText:empty { display: none; }
-.banor, #malKnappar { display: flex; gap: 6px; margin-top: 8px; }
-.banor button, #malKnappar button { flex: 1; min-width: 0; padding: 8px 4px; font-size: 14px; }
-.banor button[aria-pressed="true"] { background: var(--accent); color: #24180f; }
+.banor { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 8px; }
+.banor button { min-height: 42px; min-width: 0; padding: 0; font-size: 16px; font-variant-numeric: tabular-nums; }
+.banor button[aria-pressed="true"], .kansla button[aria-pressed="true"] { background: var(--accent); color: #24180f; }
+#banaNamn { margin: 6px 0 0; font-size: 14px; font-weight: 750; }
+.kansla, #malKnappar { display: flex; gap: 6px; margin-top: 8px; }
+.kansla button, #malKnappar button { flex: 1; min-width: 0; padding: 8px 4px; font-size: 14px; }
 .reglage, .check { display: flex; align-items: center; gap: 8px; margin-top: 10px; min-height: 44px; font-size: 14px; }
 .reglage { flex-wrap: wrap; }
 .reglage span { display: flex; justify-content: space-between; width: 100%; }

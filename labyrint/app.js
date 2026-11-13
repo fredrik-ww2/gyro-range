@@ -1,6 +1,6 @@
 import {lasKonfig} from './konfig.js';
-import {skapaSim} from './fysik.js';
-import {skapaGyro} from './gyro.js';
+import {malOvergang, skapaSim} from './fysik.js';
+import {skapaGyro, mjukLutning} from './gyro.js';
 import {skapaLjud} from './ljud.js';
 import {skapaBrade} from './brade.js';
 
@@ -9,12 +9,6 @@ const RAD = Math.PI / 180;
 
 function klamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
-}
-
-function dod(v, d) {
-  const a = Math.abs(v);
-  if (a <= d) return 0;
-  return Math.sign(v) * (a - d);
 }
 
 function tal(v, en) {
@@ -33,6 +27,7 @@ let banaIndex = klamp(install.bana | 0, 0, konfig.banor.length - 1);
 let sim = skapaSim(konfig, konfig.banor[banaIndex]);
 let igang = false;
 let frys = false;
+let malSedan = null;
 let visLut = {fram: 0, sida: 0};
 let fps = 0;
 let fpsTid = 0;
@@ -70,7 +65,8 @@ function fyllText() {
   $('menyRubrik').textContent = texter.meny || 'Meny';
   $('stang').textContent = texter.stang || 'Stäng';
   $('hjalpText').textContent = texter.hjalpText || '';
-  $('banaRubrik').textContent = texter.bana || 'Bana';
+  $('banaRubrik').textContent = texter.bana || 'Nivå';
+  $('kanslaRubrik').textContent = texter.kansla || 'Känsla';
   $('startGyro').textContent = texter.startGyro || 'Starta gyro';
   $('startFinger').textContent = texter.startFinger || 'Finger';
   $('kanslighetNamn').textContent = texter.kanslighet || 'Känslighet';
@@ -82,6 +78,7 @@ function fyllText() {
   $('allaLankar').textContent = texter.allaLankar || 'Alla länkar';
   $('igen').textContent = texter.igen || 'Igen';
   $('nasta').textContent = texter.nasta || 'Nästa bana';
+  $('firandeOm').textContent = texter.borjaOm || 'Från början';
   $('version').textContent = konfig.version || '';
 }
 
@@ -91,14 +88,55 @@ function ritaBanor() {
   konfig.banor.forEach((bana, i) => {
     const knapp = document.createElement('button');
     knapp.type = 'button';
-    knapp.textContent = `${bana.nummer} ${bana.namn}`;
+    knapp.textContent = String(bana.nummer);
+    knapp.setAttribute('aria-label', `Nivå ${bana.nummer} ${bana.namn}`);
     knapp.setAttribute('aria-pressed', String(i === banaIndex));
     knapp.addEventListener('click', () => bytBana(i));
     rot.append(knapp);
   });
+  const vald = konfig.banor[banaIndex];
+  $('banaNamn').textContent = `Nivå ${vald.nummer} · ${vald.namn}`;
+}
+
+function ritaKansla() {
+  const rot = $('kansla');
+  rot.replaceChildren();
+  for (const steg of konfig.gyro.kansla || []) {
+    const knapp = document.createElement('button');
+    knapp.type = 'button';
+    knapp.textContent = steg.namn;
+    knapp.setAttribute('aria-pressed', String(Math.abs(install.kanslighet - steg.tal) < 0.03));
+    knapp.addEventListener('click', () => {
+      install.kanslighet = steg.tal;
+      $('kanslighet').value = String(steg.tal);
+      $('kanslighetTal').textContent = tal(install.kanslighet);
+      sparaInstall();
+      ritaKansla();
+    });
+    rot.append(knapp);
+  }
+}
+
+function doljFirande() {
+  $('firande').hidden = true;
+  $('firandeOm').hidden = true;
+}
+
+function visaMal(sista) {
+  const el = $('firande');
+  if (!el.hidden) return;
+  const nasta = konfig.banor[banaIndex + 1];
+  $('firandeRubrik').textContent = sista ? (texter.allaKlara || 'Alla nivåer klara') : (texter.mal || 'Mål');
+  $('firandeText').textContent = sista
+    ? (texter.allaKlaraText || 'Du klarade hela labyrinten.')
+    : `${texter.nasta || 'Nästa nivå'}: ${nasta.nummer} ${nasta.namn}`;
+  $('firandeOm').hidden = !sista;
+  el.hidden = false;
 }
 
 function bytBana(i) {
+  malSedan = null;
+  doljFirande();
   banaIndex = klamp(i, 0, konfig.banor.length - 1);
   install.bana = banaIndex;
   sparaInstall();
@@ -120,10 +158,10 @@ function visaMeny(oppna) {
 function aktuellLutning() {
   const ra = gyro.grader();
   if (ra.kalla === 'tvingad') return ra;
-  const m = konfig.gyro.maxGrader;
+  const gyroKurva = {...konfig.gyro, dodzon: install.dodzon};
   return {
-    fram: klamp(dod(ra.fram, install.dodzon) * install.kanslighet, -m, m),
-    sida: klamp(dod(ra.sida, install.dodzon) * install.kanslighet, -m, m),
+    fram: mjukLutning(ra.fram, install.kanslighet, gyroKurva),
+    sida: mjukLutning(ra.sida, install.kanslighet, gyroKurva),
     kalla: ra.kalla,
   };
 }
@@ -139,14 +177,27 @@ function jamna(dt, lut) {
   visLut.sida += (lut.sida - visLut.sida) * k;
 }
 
-function hanteraLage() {
+function hanteraLage(dt) {
   const lage = sim.lage;
-  if (lage === 'faller' || lage === 'paus') $('lageText').textContent = texter.hal || 'Hål';
-  else if (lage === 'mal') {
-    $('lageText').textContent = texter.mal || 'Mål';
+  if (lage === 'mal') {
+    if (malSedan == null) malSedan = 0;
+    malSedan += dt;
+    const sista = banaIndex >= konfig.banor.length - 1;
+    const steg = malOvergang(malSedan, banaIndex, konfig.banor.length, konfig.spel.malPaus);
+    $('lageText').textContent = sista ? (texter.allaKlara || 'Alla nivåer klara') : (texter.mal || 'Mål');
     $('menyKnapp').dataset.mal = '1';
     $('malKnappar').hidden = false;
-  } else if ($('lageText').textContent === (texter.hal || 'Hål')) $('lageText').textContent = '';
+    visaMal(sista);
+    if (steg.byt) bytBana(steg.index);
+    return;
+  }
+  malSedan = null;
+  if (lage === 'faller' || lage === 'paus') {
+    doljFirande();
+    $('lageText').textContent = texter.hal || 'Hål';
+  } else if ($('lageText').textContent === (texter.hal || 'Hål') || $('lageText').textContent === (texter.mal || 'Mål') || $('lageText').textContent === (texter.allaKlara || 'Alla nivåer klara')) {
+    $('lageText').textContent = '';
+  }
 }
 
 function stegEn(dt) {
@@ -155,7 +206,7 @@ function stegEn(dt) {
   if (igang) {
     sim.steg(dt, {fram: Math.sin(visLut.fram * RAD), sida: Math.sin(visLut.sida * RAD)});
     ljud.fran(sim.state);
-    hanteraLage();
+    hanteraLage(dt);
   }
   gyro.slack(dt);
   brade.luta(dt, visLut.fram * RAD, visLut.sida * RAD);
@@ -191,6 +242,7 @@ function koppla() {
     install.kanslighet = +$('kanslighet').value;
     visaTal();
     sparaInstall();
+    ritaKansla();
   });
   $('dodzon').addEventListener('input', () => {
     install.dodzon = +$('dodzon').value;
@@ -211,8 +263,10 @@ function koppla() {
   $('menyKnapp').addEventListener('click', () => visaMeny($('meny').hidden));
   $('stang').addEventListener('click', () => visaMeny(false));
   $('spel').addEventListener('pointerdown', () => { if (!$('meny').hidden) visaMeny(false); });
+  $('firandeOm').addEventListener('click', () => bytBana(0));
   $('igen').addEventListener('click', () => bytBana(banaIndex));
   $('nasta').addEventListener('click', () => bytBana((banaIndex + 1) % konfig.banor.length));
+  addEventListener('pointerdown', () => ljud.starta(), {capture: true, passive: true});
   $('startGyro').addEventListener('click', async () => {
     ljud.starta();
     const svar = await gyro.starta();
@@ -240,6 +294,7 @@ function borja() {
 }
 
 fyllText();
+ritaKansla();
 koppla();
 brade.bygg(konfig.banor[banaIndex]);
 brade.hjalp(install.hjalp);
@@ -288,7 +343,10 @@ window.__labyrint = {
   steg(n, dt) { for (let i = 0; i < n; i++) stegEn(dt); brade.rita(); },
   bana(i) { bytBana(i); },
   banaData() { return konfig.banor[banaIndex]; },
+  antal() { return konfig.banor.length; },
+  malPaus() { return konfig.spel.malPaus; },
   radie() { return konfig.fysik.kulaRadie; },
+  provGlipa() { return brade.provGlipa(); },
   meny(oppna) { visaMeny(!!oppna); },
   prestanda() { return {fps, laddSek, ...brade.prestanda()}; },
   borja() { borja(); },

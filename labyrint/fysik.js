@@ -4,29 +4,56 @@ function klamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
 }
 
+function vinkelRad(vagg) {
+  return (vagg.vinkel || 0) * Math.PI / 180;
+}
+
+function tillLokal(dx, dz, a) {
+  if (!a) return [dx, dz];
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return [dx * c - dz * s, dx * s + dz * c];
+}
+
+function tillVarld(lx, lz, a) {
+  if (!a) return [lx, lz];
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return [lx * c + lz * s, -lx * s + lz * c];
+}
+
+export function avstandTillVagg(x, z, vagg) {
+  const [lx, lz] = tillLokal(x - vagg.x, z - vagg.z, vinkelRad(vagg));
+  const dx = Math.max(Math.abs(lx) - vagg.b / 2, 0);
+  const dz = Math.max(Math.abs(lz) - vagg.d / 2, 0);
+  return Math.hypot(dx, dz);
+}
+
 function traffVagg(x, z, radie, vagg) {
+  const a = vinkelRad(vagg);
+  const [lx, lz] = tillLokal(x - vagg.x, z - vagg.z, a);
   const hx = vagg.b / 2;
   const hz = vagg.d / 2;
-  const inomX = Math.abs(x - vagg.x) <= hx;
-  const inomZ = Math.abs(z - vagg.z) <= hz;
-  const naraX = Math.max(vagg.x - hx, Math.min(x, vagg.x + hx));
-  const naraZ = Math.max(vagg.z - hz, Math.min(z, vagg.z + hz));
-  const dx = x - naraX;
-  const dz = z - naraZ;
+  const inomX = Math.abs(lx) <= hx;
+  const inomZ = Math.abs(lz) <= hz;
+  const naraX = Math.max(-hx, Math.min(lx, hx));
+  const naraZ = Math.max(-hz, Math.min(lz, hz));
+  const dx = lx - naraX;
+  const dz = lz - naraZ;
   const avst2 = dx * dx + dz * dz;
+  let lokal = null;
   if (inomX && inomZ) {
-    const penX = hx - Math.abs(x - vagg.x);
-    const penZ = hz - Math.abs(z - vagg.z);
-    if (penX < penZ) {
-      const tecken = Math.sign(x - vagg.x) || 1;
-      return {nx: tecken, nz: 0, pen: penX + radie};
-    }
-    const tecken = Math.sign(z - vagg.z) || 1;
-    return {nx: 0, nz: tecken, pen: penZ + radie};
+    const penX = hx - Math.abs(lx);
+    const penZ = hz - Math.abs(lz);
+    if (penX < penZ) lokal = {nx: Math.sign(lx) || 1, nz: 0, pen: penX + radie};
+    else lokal = {nx: 0, nz: Math.sign(lz) || 1, pen: penZ + radie};
+  } else if (avst2 < radie * radie) {
+    const avst = Math.sqrt(avst2) || 1e-8;
+    lokal = {nx: dx / avst, nz: dz / avst, pen: radie - avst};
   }
-  if (avst2 >= radie * radie) return null;
-  const avst = Math.sqrt(avst2) || 1e-8;
-  return {nx: dx / avst, nz: dz / avst, pen: radie - avst};
+  if (!lokal) return null;
+  const [nx, nz] = tillVarld(lokal.nx, lokal.nz, a);
+  return {nx, nz, pen: lokal.pen};
 }
 
 export function skapaSim(konfig, bana) {
@@ -89,7 +116,8 @@ export function skapaSim(konfig, bana) {
     state.vx += tx * vt * (behall - 1);
     state.vz += tz * vt * (behall - 1);
     if (-vn > f.studsFart) {
-      state.handelser.push({typ: 'studs', kraft: klamp(-vn / 0.55, 0.25, 1)});
+      const kraft = klamp((-vn - f.studsFart) / 0.5, 0.12, 1);
+      state.handelser.push({typ: 'studs', kraft});
     }
   }
 
@@ -196,20 +224,28 @@ export function skapaSim(konfig, bana) {
     }
     const ax = f.g * lut.sida;
     const az = -f.g * lut.fram;
-    state.vx += ax * h;
-    state.vz += az * h;
-    const fart = Math.hypot(state.vx, state.vz);
+    const fore = Math.hypot(state.vx, state.vz);
     const lutning = Math.min(1, Math.hypot(lut.fram, lut.sida));
-    const cosT = Math.sqrt(Math.max(0.15, 1 - lutning * lutning));
-    if (fart > 1e-5) {
-      const broms = f.rullfriktion * f.g * cosT * h;
-      const kvar = Math.max(0, fart - broms) / fart;
-      state.vx *= kvar;
-      state.vz *= kvar;
+    const cosT = Math.sqrt(Math.max(0.2, 1 - lutning * lutning));
+    const lag = fore < f.lagFart ? 1 - fore / Math.max(1e-4, f.lagFart) : 0;
+    const mu = f.rullfriktion + ((f.rullfriktionLag ?? f.rullfriktion) - f.rullfriktion) * lag;
+    const broms = mu * f.g * cosT;
+    if (fore < (f.vilaFart ?? 0.01) && Math.hypot(ax, az) <= broms) {
+      state.vx = 0;
+      state.vz = 0;
+    } else {
+      let vx = state.vx + ax * h;
+      let vz = state.vz + az * h;
+      const f2 = Math.hypot(vx, vz);
+      if (f2 > 1e-8) {
+        const kvar = Math.max(0, f2 - broms * h) / f2;
+        vx *= kvar;
+        vz *= kvar;
+      }
+      const damp = Math.exp(-f.viskos * h);
+      state.vx = vx * damp;
+      state.vz = vz * damp;
     }
-    const damp = Math.exp(-f.viskos * h);
-    state.vx *= damp;
-    state.vz *= damp;
     const efter = Math.hypot(state.vx, state.vz);
     if (efter > f.maxFart) {
       const skala = f.maxFart / efter;
@@ -277,4 +313,10 @@ export function skapaSim(konfig, bana) {
   }
 
   return {state, steg, placera, aterstall, get x() { return state.x; }, get z() { return state.z; }, get y() { return state.y; }, get vx() { return state.vx; }, get vz() { return state.vz; }, get vy() { return state.vy; }, get fart() { return state.fart; }, get lage() { return state.lage; }, get handelser() { return state.handelser; }, get vunnen() { return state.vunnen; }};
+}
+
+export function malOvergang(tidIMal, index, antal, paus) {
+  const sista = index >= antal - 1;
+  if (sista || !(tidIMal >= paus)) return {index, byt: false, sista};
+  return {index: index + 1, byt: true, sista: false};
 }

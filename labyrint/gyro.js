@@ -28,6 +28,26 @@ export function gravitationSkarm(q, ut, inv) {
   return ut;
 }
 
+export function mjukLutning(grader, kanslighet, gyro) {
+  const d = Math.max(0, gyro.dodzon || 0);
+  const maxG = Math.max(0.001, gyro.maxGrader || 1);
+  const expo = gyro.expo ?? 1.7;
+  const kryp = gyro.kryp ?? 0.06;
+  const a = Math.abs(grader) * Math.max(0, kanslighet);
+  const s = Math.sign(grader);
+  if (a < 1e-5) return 0;
+  let norm;
+  if (d > 0 && a <= d) {
+    const u = a / d;
+    norm = kryp * u * u * u;
+  } else {
+    const u = Math.min(1, (a - d) / Math.max(0.001, maxG - d));
+    const bas = d > 0 ? kryp : 0;
+    norm = bas + (1 - bas) * Math.pow(u, expo);
+  }
+  return s * Math.min(maxG, norm * maxG);
+}
+
 export function lutningFranGrav(grav, noll, konfig) {
   const g = konfig.gyro;
   let fram = Math.asin(klamp(grav.y, -1, 1)) * GRAD - (noll?.fram || 0);

@@ -107,6 +107,11 @@
           "namn": "Rörelseinspelare",
           "text": "Spela in en rörelse och säg vad den betyder.",
           "sokvag": "rorelse/"
+        },
+        {
+          "namn": "Bowling",
+          "text": "Kasta ett klot med telefonen som arm.",
+          "sokvag": "bowling/"
         }
       ]
     },

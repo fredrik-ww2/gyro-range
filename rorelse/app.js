@@ -1,53 +1,57 @@
+import { beraknaEgenskaper, jamforBibliotek } from './analys.js';
 import {
-  arStilla, byggExport, behandlaRaa, helaSerien, kannIgen, lasImport, matHz, nyaSlatare, rundaSampel
-} from './motor.js';
+  byggEtikett, byggExport, bytNamnFaktor, bytNamnKategori, bytNamnUnderval, bytNamnVal,
+  etikettText, giltigtVal, laggTillFaktor, laggTillUnderval, laggTillVal, lasImport,
+  nyttId, skapaKategori, skapaLager, slahopImport, taBortFaktor, taBortKategori,
+  taBortUnderval, taBortVal
+} from './bibliotek.js';
+import { byggKurvor, formSek, formTal } from './kurvor.js';
+import { arSlutOrd, klippSvans, lasVektor, matHz, rundaSampel, vinkelSkillnad } from './motor.js';
 
 const $ = (id) => document.getElementById(id);
-const NYCKEL = 'ww2-rorelse-installningar';
-const AXEL_NAMN = {
-  vridning: 'Vridning',
-  tippa: 'Tippa fram/bak',
-  luta: 'Luta åt sidan',
-  accX: 'Acceleration höger',
-  accY: 'Acceleration upp',
-  accZ: 'Acceleration ut ur skärmen'
-};
-const AXEL_ORDNING = Object.keys(AXEL_NAMN);
-const FARGER = ['#e25b55', '#5cc27a', '#5aa6e8'];
+const huvud = $('huvud');
 
-let installningar;
-let standard;
-let db = null;
-let gester = [];
-let sensorerPagar = false;
-let lage = 'idle';
-let syfte = 'ny';
-let malGest = null;
-let slatare = null;
-let ring = [];
+let config;
+let lager;
+let kategorier = [];
+let inspelningar = [];
+let senast = null;
+let lage = 'redo';
+let utkast = null;
+let sparadId = null;
+let detaljId = null;
+let andra = false;
+let redigerar = null;
+let bortNyckel = null;
+let bortTimer = 0;
+let bekrafta = null;
+let bekraftaTimer = 0;
+let menyOppet = false;
+let kurvRitning = null;
+let senasteVy = '';
+let klar = false;
+let startar = false;
+
+let lyssnar = false;
+let senaste = { rot: null, acc: null, accG: null, vinkel: null };
+let nollage = null;
+let antalHandelser = 0;
 let rec = null;
-let aktivFlik = 'nu';
-let nedTimer = [];
+let stoppKlocka = 0;
+
 let tal = null;
-let audio = null;
-let hzTider = [];
-let senaste = { rot: null, vinkel: null, acc: null, accG: null, sedd: false, motionTid: 0 };
-let valdExempel = new Map();
-let byterNamn = null;
-let spel = null;
-let senasteProv = null;
-let senasteKann = null;
+let talSkaLyssna = false;
+let talTillgang = 'okant';
+let talOmstart = 0;
+
 let toastTimer = 0;
-let stoppTimer = 0;
 
-function talVarde(v) {
-  return Number.isFinite(v) ? v : null;
-}
-
-function vektor(obj, nycklar) {
-  if (!obj) return null;
-  const v = nycklar.map((k) => talVarde(obj[k]));
-  return v.every((x) => x == null) ? null : v;
+function toast(text) {
+  const el = $('toast');
+  el.textContent = text;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 2800);
 }
 
 function skarmVinkel() {
@@ -57,817 +61,972 @@ function skarmVinkel() {
   return 0;
 }
 
-function formSek(s) {
-  const n = Number.isFinite(s) ? s : 0;
-  return `${n.toLocaleString('sv-SE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s`;
+function enhetInfo() {
+  const ua = navigator.userAgent || '';
+  let plattform = 'other';
+  if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) plattform = 'ios';
+  else if (/Android/i.test(ua)) plattform = 'android';
+  return { userAgent: ua, plattform, sprak: navigator.language || null, skarm: skarmVinkel() };
 }
 
-function formTal(n, decimaler) {
-  return Number(n).toLocaleString('sv-SE', { minimumFractionDigits: decimaler, maximumFractionDigits: decimaler });
+function arBort(typ, id) {
+  return bortNyckel === `${typ}:${id}`;
 }
 
-function visaDatum(iso) {
+function textKnapp(text, gor, id, extra, saker) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'textknapp' + (saker ? ' saker' : '');
+  b.dataset.gor = gor;
+  b.dataset.id = id;
+  if (extra) {
+    if (extra.faktor) b.dataset.faktor = extra.faktor;
+    if (extra.val) b.dataset.val = extra.val;
+  }
+  b.textContent = text;
+  return b;
+}
+
+function chipKnapp(text, vald, gor, id, extra) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'chip' + (vald ? ' vald' : '');
+  b.dataset.gor = gor;
+  b.dataset.id = id;
+  if (extra) {
+    if (extra.faktor) b.dataset.faktor = extra.faktor;
+    if (extra.val) b.dataset.val = extra.val;
+  }
+  b.textContent = text;
+  return b;
+}
+
+function faltRad(varde, knappText) {
+  const rad = document.createElement('div');
+  rad.className = 'falt-rad';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.dataset.roll = 'falt';
+  input.value = varde || '';
+  input.maxLength = '40';
+  input.autocomplete = 'off';
+  input.enterKeyHint = 'done';
+  input.placeholder = 'Namn';
+  input.setAttribute('aria-label', 'Namn');
+  const ok = document.createElement('button');
+  ok.type = 'button';
+  ok.className = 'chip vald';
+  ok.dataset.gor = 'bekrafta';
+  ok.textContent = knappText;
+  const av = document.createElement('button');
+  av.type = 'button';
+  av.className = 'textknapp';
+  av.dataset.gor = 'avbryt-falt';
+  av.textContent = 'Avbryt';
+  rad.append(input, ok, av);
+  queueMicrotask(() => {
+    if (!input.isConnected) return;
+    input.focus();
+    input.select();
+  });
+  return rad;
+}
+
+function listaPoster(rot, opt) {
+  const box = document.createElement('div');
+  box.className = andra ? 'postlista' : 'chips';
+  const extra = opt.extra || null;
+  for (const post of opt.poster) {
+    if (redigerar && redigerar.typ === opt.bytTyp && redigerar.id === post.id) {
+      box.append(faltRad(post.namn, 'Spara namn'));
+      continue;
+    }
+    const vald = post.id === opt.valdId;
+    if (!andra) {
+      box.append(chipKnapp(post.namn, vald, opt.gorValj, post.id, extra));
+      continue;
+    }
+    const rad = document.createElement('div');
+    rad.className = 'postrad';
+    rad.append(chipKnapp(post.namn, vald, opt.gorValj, post.id, extra));
+    rad.append(textKnapp('Byt namn', opt.gorByt, post.id, extra, false));
+    rad.append(textKnapp(arBort(opt.bortTyp, post.id) ? 'Ta bort på riktigt' : 'Ta bort', opt.gorBort, post.id, extra, arBort(opt.bortTyp, post.id)));
+    box.append(rad);
+  }
+  const oppnas = redigerar && redigerar.typ === opt.nyTyp && redigerar.nyckel === opt.nyckel;
+  if (oppnas) box.append(faltRad('', opt.laggText || 'Lägg till'));
+  else {
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'chip lagg';
+    add.dataset.gor = opt.gorNytt;
+    if (opt.nyckel) add.dataset.id = opt.nyckel;
+    if (extra?.faktor) add.dataset.faktor = extra.faktor;
+    if (extra?.val) add.dataset.val = extra.val;
+    add.textContent = opt.nyttText;
+    box.append(add);
+  }
+  rot.append(box);
+}
+
+function avslutText(orsak) {
+  if (orsak === 'slut') return 'Stannade när du sa slut.';
+  if (orsak === 'stopp') return 'Stannade med knappen.';
+  if (orsak === 'max') return 'Tiden tog slut.';
+  return '';
+}
+
+function markningText(ins) {
+  const kat = kategorier.find((k) => k.id === ins?.kategoriId);
+  if (kat) return etikettText(byggEtikett(kat, ins.val));
+  if (ins?.etikett) return etikettText(ins.etikett);
+  return 'Utan kategori';
+}
+
+function radVal(ins) {
+  const kat = kategorier.find((k) => k.id === ins.kategoriId);
+  if (!kat) return etikettText(ins.etikett);
+  const rader = byggEtikett(kat, ins.val).rader.filter((r) => r.val);
+  if (!rader.length) return kat.namn;
+  return rader.map((r) => (r.underval ? `${r.val} · ${r.underval}` : r.val)).join(' · ');
+}
+
+function datum(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleString('sv-SE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-function nyttId() {
-  return crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+function uppdateraFot() {
+  const b = $('backa');
+  if (bekrafta === 'slang') b.textContent = 'Släng inspelningen';
+  else if (bekrafta === 'avbryt') b.textContent = 'Avbryt inspelningen';
+  else b.textContent = 'Backa';
 }
 
-function toast(text) {
-  const el = $('toast');
-  el.textContent = text;
-  el.hidden = false;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
-}
-
-function slaIhop(bas, over) {
-  if (!over || typeof over !== 'object' || Array.isArray(over)) return structuredClone(bas);
-  const ut = structuredClone(bas);
-  for (const [k, v] of Object.entries(over)) {
-    if (v && typeof v === 'object' && !Array.isArray(v) && ut[k] && typeof ut[k] === 'object' && !Array.isArray(ut[k])) {
-      ut[k] = slaIhop(ut[k], v);
-    } else ut[k] = v;
+function rita() {
+  const samma = lage === senasteVy;
+  const y = document.scrollingElement ? document.scrollingElement.scrollTop : 0;
+  kurvRitning = null;
+  huvud.dataset.lage = lage;
+  huvud.replaceChildren(byggVy());
+  senasteVy = lage;
+  uppdateraFot();
+  if (samma && document.scrollingElement) document.scrollingElement.scrollTop = y;
+  else window.scrollTo(0, 0);
+  if (kurvRitning) {
+    const ritning = kurvRitning;
+    requestAnimationFrame(() => ritning.rita());
   }
-  return ut;
 }
 
-function sparaInstallningar() {
-  localStorage.setItem(NYCKEL, JSON.stringify(installningar));
-  slatare = nyaSlatare(installningar.utjamning);
+function byggVy() {
+  if (lage === 'spelar') return vySpelar();
+  if (lage === 'kurvor') return vyKurvor(utkast, true);
+  if (lage === 'markning') return vyMarkning();
+  if (lage === 'bibliotek') return vyBibliotek();
+  if (lage === 'detalj') return vyDetalj();
+  if (lage === 'analys') return vyAnalys();
+  return vyRedo();
 }
 
-function enhetInfo() {
-  const ua = navigator.userAgent || '';
-  let plattform = 'other';
-  if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) plattform = 'ios';
-  else if (/Android/i.test(ua)) plattform = 'android';
-  return {
-    userAgent: ua,
-    plattform,
-    sprak: navigator.language || null,
-    skarm: {
-      bredd: screen.width,
-      hojd: screen.height,
-      pixelForhallande: window.devicePixelRatio || 1,
-      vinkel: skarmVinkel()
+function vyRedo() {
+  const rot = document.createElement('div');
+  rot.className = 'redo';
+  const h = document.createElement('h1');
+  h.textContent = 'Rörelseinspelare';
+  const p = document.createElement('p');
+  p.className = 'led';
+  p.textContent = 'Håll telefonen som under rörelsen. Tryck Nollställ. Gör rörelsen. Säg slut.';
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'nollstall';
+  b.dataset.gor = 'nollstall';
+  b.dataset.roll = 'nollstall';
+  b.textContent = 'Nollställ';
+  rot.append(h, p, b);
+  return rot;
+}
+
+function vySpelar() {
+  const rot = document.createElement('div');
+  rot.className = 'spelar';
+  const status = document.createElement('p');
+  status.className = 'rec-status';
+  const prick = document.createElement('span');
+  prick.className = 'prick';
+  prick.setAttribute('aria-hidden', 'true');
+  status.append(prick, document.createTextNode('Spelar in'));
+  const klocka = document.createElement('p');
+  klocka.className = 'klocka';
+  klocka.id = 'klocka';
+  klocka.textContent = formSek(0);
+  const led = document.createElement('p');
+  led.className = 'led';
+  led.textContent = 'Säg slut när du är klar.';
+  const hint = document.createElement('p');
+  hint.id = 'tal-hint';
+  hint.className = 'led';
+  hint.textContent = 'Talet är avstängt. Tryck Stopp när du är klar.';
+  const dod = talTillgang === 'saknas' || talTillgang === 'nekat';
+  hint.hidden = !dod;
+  const stopp = document.createElement('button');
+  stopp.type = 'button';
+  stopp.id = 'stopp';
+  stopp.className = 'stopp' + (dod ? ' stopp-behovs' : '');
+  stopp.dataset.gor = 'stopp';
+  stopp.dataset.roll = 'stopp';
+  stopp.textContent = 'Stopp';
+  rot.append(status, klocka, led, hint, stopp);
+  return rot;
+}
+
+function laggKurvor(rot, ins) {
+  const ritning = byggKurvor(ins, config);
+  rot.append(ritning.rot);
+  kurvRitning = ritning;
+}
+
+function vyKurvor(ins, utkastVy) {
+  const rot = document.createElement('div');
+  rot.dataset.roll = 'kurvor';
+  const h = document.createElement('h1');
+  h.textContent = 'Rörelsen';
+  const sum = document.createElement('p');
+  sum.className = 'sammanfattning';
+  sum.textContent = `${formSek(ins?.langdSek)} · ${avslutText(ins?.avslut) || ''}`.trim();
+  rot.append(h, sum);
+  if (ins?.avslut === 'slut' && Number(ins.svansSek) > 0) {
+    const p = document.createElement('p');
+    p.className = 'led';
+    const sek = ins.svansSek.toLocaleString('sv-SE', { maximumFractionDigits: 1 });
+    p.textContent = `De sista ${sek} sekunderna före ordet är borttagna.`;
+    rot.append(p);
+  }
+  if (utkastVy) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.gor = 'till-markning';
+    b.dataset.roll = 'till-markning';
+    const har = !!ins?.kategoriId;
+    b.textContent = har ? 'Ändra märkning' : 'Välj kategori';
+    b.className = har ? '' : 'chip vald';
+    if (!har) b.style.width = '100%';
+    rot.append(b);
+    if (har) {
+      const p = document.createElement('p');
+      p.textContent = markningText(ins);
+      rot.append(p);
     }
-  };
-}
-
-function oppnaDb() {
-  return new Promise((resolve, reject) => {
-    const r = indexedDB.open('ww2-rorelse', 1);
-    r.onupgradeneeded = () => {
-      if (!r.result.objectStoreNames.contains('gester')) r.result.createObjectStore('gester', { keyPath: 'id' });
-    };
-    r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
-  });
-}
-
-function idbAlla() {
-  return new Promise((resolve, reject) => {
-    const q = db.transaction('gester', 'readonly').objectStore('gester').getAll();
-    q.onsuccess = () => resolve(q.result || []);
-    q.onerror = () => reject(q.error);
-  });
-}
-
-async function sparaGest(gest) {
-  if (db) {
-    await new Promise((resolve, reject) => {
-      const q = db.transaction('gester', 'readwrite').objectStore('gester').put(gest);
-      q.onsuccess = () => resolve();
-      q.onerror = () => reject(q.error);
-    });
-    return;
   }
-  const alla = JSON.parse(localStorage.getItem('ww2-rorelse-gester') || '[]');
-  const i = alla.findIndex((g) => g.id === gest.id);
-  if (i >= 0) alla[i] = gest;
-  else alla.push(gest);
-  localStorage.setItem('ww2-rorelse-gester', JSON.stringify(alla));
+  if (ins) laggKurvor(rot, ins);
+  return rot;
 }
 
-async function taBortGest(id) {
-  if (db) {
-    await new Promise((resolve, reject) => {
-      const q = db.transaction('gester', 'readwrite').objectStore('gester').delete(id);
-      q.onsuccess = () => resolve();
-      q.onerror = () => reject(q.error);
-    });
-    return;
+function vyMarkning() {
+  const rot = document.createElement('div');
+  rot.dataset.roll = 'markning';
+  const h = document.createElement('h1');
+  h.textContent = 'Märk rörelsen';
+  const led = document.createElement('p');
+  led.className = 'led';
+  led.textContent = 'Välj kategori och ett val per faktor. Nästa gång ligger samma val kvar.';
+  rot.append(h, led);
+
+  const andraKnapp = document.createElement('button');
+  andraKnapp.type = 'button';
+  andraKnapp.className = 'textknapp';
+  andraKnapp.dataset.gor = 'andra';
+  andraKnapp.dataset.roll = 'andra';
+  andraKnapp.textContent = andra ? 'Klar med ändringar' : 'Ändra namn och val';
+  rot.append(andraKnapp);
+
+  const katRub = document.createElement('h2');
+  katRub.textContent = 'Kategori';
+  rot.append(katRub);
+
+  if (!kategorier.length && !(redigerar && redigerar.typ === 'ny-kategori')) {
+    const p = document.createElement('p');
+    p.className = 'led';
+    p.textContent = 'Döp kategorin. Till exempel Bordtennis.';
+    rot.append(p);
   }
-  const alla = JSON.parse(localStorage.getItem('ww2-rorelse-gester') || '[]').filter((g) => g.id !== id);
-  localStorage.setItem('ww2-rorelse-gester', JSON.stringify(alla));
+
+  listaPoster(rot, {
+    poster: kategorier,
+    valdId: utkast?.kategoriId || null,
+    gorValj: 'valj-kategori',
+    gorByt: 'byt-kategori',
+    gorBort: 'bort-kategori',
+    bortTyp: 'kategori',
+    gorNytt: 'ny-kategori',
+    nyTyp: 'ny-kategori',
+    bytTyp: 'byt-kategori',
+    nyckel: 'kategori',
+    nyttText: '+ Ny kategori',
+    laggText: 'Skapa'
+  });
+
+  const kat = kategorier.find((k) => k.id === utkast?.kategoriId);
+  if (kat) {
+    for (const faktor of kat.faktorer) rot.append(sektionFaktor(faktor));
+    if (redigerar && redigerar.typ === 'ny-faktor') rot.append(faltRad('', 'Lägg till'));
+    else {
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'chip lagg';
+      add.dataset.gor = 'ny-faktor';
+      add.dataset.roll = 'lagg-till-faktor';
+      add.textContent = '+ Lägg till faktor';
+      rot.append(add);
+    }
+    if (!kat.faktorer.length && !(redigerar && redigerar.typ === 'ny-faktor')) {
+      const p = document.createElement('p');
+      p.className = 'led';
+      p.textContent = 'Lägg till en faktor. Till exempel Slag, Hårdhet eller Skruv.';
+      rot.append(p);
+    }
+  }
+
+  const till = document.createElement('button');
+  till.type = 'button';
+  till.dataset.gor = 'till-kurvor';
+  till.textContent = 'Visa kurvorna';
+  rot.append(till);
+  return rot;
 }
 
-function sortera() {
-  gester.sort((a, b) => String(b.uppdaterad || b.skapad || '').localeCompare(String(a.uppdaterad || a.skapad || '')));
+function sektionFaktor(faktor) {
+  const sec = document.createElement('section');
+  sec.className = 'faktor';
+  const huvudRad = document.createElement('div');
+  huvudRad.className = 'faktor-huvud';
+  if (redigerar && redigerar.typ === 'byt-faktor' && redigerar.id === faktor.id) {
+    huvudRad.append(faltRad(faktor.namn, 'Spara namn'));
+  } else {
+    const h = document.createElement('h2');
+    h.textContent = faktor.namn;
+    huvudRad.append(h);
+    if (andra) {
+      huvudRad.append(textKnapp('Byt namn', 'byt-faktor', faktor.id, null, false));
+      huvudRad.append(textKnapp(arBort('faktor', faktor.id) ? 'Ta bort på riktigt' : 'Ta bort', 'bort-faktor', faktor.id, null, arBort('faktor', faktor.id)));
+    }
+  }
+  sec.append(huvudRad);
+  const valdId = utkast.val?.[faktor.id]?.valId || null;
+  listaPoster(sec, {
+    poster: faktor.val,
+    valdId,
+    gorValj: 'valj-val',
+    gorByt: 'byt-val',
+    gorBort: 'bort-val',
+    bortTyp: 'val',
+    gorNytt: 'ny-val',
+    nyTyp: 'ny-val',
+    bytTyp: 'byt-val',
+    nyckel: faktor.id,
+    nyttText: '+ Lägg till val',
+    laggText: 'Lägg till',
+    extra: { faktor: faktor.id }
+  });
+  const vald = faktor.val.find((v) => v.id === valdId);
+  if (vald && (andra || (vald.underval && vald.underval.length))) {
+    const uh = document.createElement('h3');
+    uh.textContent = 'Underval';
+    sec.append(uh);
+    listaPoster(sec, {
+      poster: vald.underval || [],
+      valdId: utkast.val?.[faktor.id]?.undervalId || null,
+      gorValj: 'valj-under',
+      gorByt: 'byt-under',
+      gorBort: 'bort-under',
+      bortTyp: 'under',
+      gorNytt: 'ny-under',
+      nyTyp: 'ny-under',
+      bytTyp: 'byt-under',
+      nyckel: vald.id,
+      nyttText: '+ Lägg till underval',
+      laggText: 'Lägg till',
+      extra: { faktor: faktor.id, val: vald.id }
+    });
+  }
+  return sec;
 }
 
-function behorighet() {
-  const DME = window.DeviceMotionEvent;
-  const DOE = window.DeviceOrientationEvent;
-  if (!window.isSecureContext) return Promise.resolve('insecure');
-  const pm = DME && typeof DME.requestPermission === 'function' ? DME.requestPermission() : Promise.resolve('granted');
-  const po = DOE && typeof DOE.requestPermission === 'function' ? DOE.requestPermission() : Promise.resolve('granted');
-  return Promise.all([pm, po]).then(([a, b]) => {
-    const ok = (v) => v === 'granted' || v === 'unavailable';
-    return ok(a) && ok(b) ? 'granted' : 'denied';
-  }).catch((err) => (err && err.name === 'NotAllowedError' ? 'needs-gesture' : 'error'));
+function vyBibliotek() {
+  const rot = document.createElement('div');
+  rot.dataset.roll = 'bibliotek';
+  const h = document.createElement('h1');
+  h.textContent = 'Bibliotek';
+  rot.append(h);
+  if (!inspelningar.length) {
+    const p = document.createElement('p');
+    p.className = 'led';
+    p.textContent = 'Inga inspelningar än. Gå tillbaka och tryck Nollställ.';
+    rot.append(p);
+    return rot;
+  }
+  const grupper = new Map();
+  for (const ins of inspelningar) {
+    const nyckel = ins.kategoriId && kategorier.some((k) => k.id === ins.kategoriId) ? ins.kategoriId : '';
+    if (!grupper.has(nyckel)) grupper.set(nyckel, []);
+    grupper.get(nyckel).push(ins);
+  }
+  const ordning = [...kategorier.map((k) => k.id).filter((id) => grupper.has(id)), ...(grupper.has('') ? [''] : [])];
+  for (const id of ordning) {
+    const h2 = document.createElement('h2');
+    h2.textContent = id ? kategorier.find((k) => k.id === id).namn : 'Utan kategori';
+    rot.append(h2);
+    for (const ins of grupper.get(id)) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'bibliotek-rad';
+      b.dataset.gor = 'oppna';
+      b.dataset.id = ins.id;
+      const stark = document.createElement('strong');
+      stark.textContent = radVal(ins);
+      const liten = document.createElement('small');
+      liten.textContent = `${datum(ins.skapad)} · ${formSek(ins.langdSek)}`;
+      b.append(stark, liten);
+      rot.append(b);
+    }
+  }
+  return rot;
+}
+
+function vyDetalj() {
+  const ins = inspelningar.find((r) => r.id === detaljId);
+  const rot = document.createElement('div');
+  if (!ins) {
+    const p = document.createElement('p');
+    p.textContent = 'Inspelningen finns inte kvar.';
+    rot.append(p);
+    return rot;
+  }
+  const h = document.createElement('h1');
+  h.textContent = markningText(ins);
+  const p = document.createElement('p');
+  p.className = 'led';
+  p.textContent = `${datum(ins.skapad)} · ${formSek(ins.langdSek)}`;
+  const bort = document.createElement('button');
+  bort.type = 'button';
+  bort.className = arBort('inspelning', ins.id) ? 'farlig' : '';
+  bort.dataset.gor = 'bort-inspelning';
+  bort.dataset.id = ins.id;
+  bort.textContent = arBort('inspelning', ins.id) ? 'Ta bort på riktigt' : 'Ta bort';
+  rot.append(h, p, bort);
+  laggKurvor(rot, ins);
+  return rot;
+}
+
+function vyAnalys() {
+  const rot = document.createElement('div');
+  rot.dataset.roll = 'analys';
+  const h = document.createElement('h1');
+  h.textContent = 'Jämför';
+  const intro = document.createElement('p');
+  intro.className = 'led';
+  intro.textContent = 'Här syns inspelningar som är märkta likadant, och inspelningar där allt är lika utom en faktor. Det förbereder att appen senare kan känna igen till exempel mer eller mindre skruv.';
+  rot.append(h, intro);
+  const svar = jamforBibliotek(inspelningar, kategorier, config);
+  rot.dataset.fynd = String(svar.enFaktorSkiljer.length);
+  if (!svar.identiska.length && !svar.enFaktorSkiljer.length) {
+    const p = document.createElement('p');
+    p.textContent = 'Det finns inte tillräckligt att jämföra än. Spela in två rörelser i samma kategori där allt är lika utom en sak, till exempel bara skruven.';
+    rot.append(p);
+    return rot;
+  }
+  if (svar.identiska.length) {
+    const h2 = document.createElement('h2');
+    h2.textContent = 'Lika märkta';
+    rot.append(h2);
+    for (const g of svar.identiska) {
+      const art = document.createElement('article');
+      art.className = 'kort';
+      const t = document.createElement('p');
+      t.textContent = `${g.antal} inspelningar. ${g.kategoriNamn}. ${g.text}.`;
+      art.append(t);
+      const topp = g.medel['rot.0.topp'];
+      if (Number.isFinite(topp)) {
+        const rad = document.createElement('p');
+        rad.textContent = `Medel för vridningens topp: ${formTal(topp, '°/s')}.`;
+        art.append(rad);
+      }
+      rot.append(art);
+    }
+  }
+  if (svar.enFaktorSkiljer.length) {
+    const h2 = document.createElement('h2');
+    h2.textContent = 'Bara en sak skiljer';
+    rot.append(h2);
+    for (const g of svar.enFaktorSkiljer) {
+      const art = document.createElement('article');
+      art.className = 'kort';
+      art.dataset.roll = 'fynd';
+      art.dataset.faktor = g.faktorNamn;
+      const t = document.createElement('h3');
+      t.textContent = `${g.kategoriNamn}. Allt är lika utom ${g.faktorNamn}.`;
+      art.append(t);
+      if (g.lika) {
+        const lika = document.createElement('p');
+        lika.textContent = `Det som är lika: ${g.lika}.`;
+        art.append(lika);
+      }
+      const rader = document.createElement('p');
+      rader.textContent = `${g.grupper.map((x) => `${x.text}: ${x.antal} ${x.antal === 1 ? 'inspelning' : 'inspelningar'}`).join('. ')}.`;
+      art.append(rader);
+      if (!g.skillnader.length) {
+        const tom = document.createElement('p');
+        tom.textContent = 'Inga mätvärden skiljer sig tydligt.';
+        art.append(tom);
+      } else {
+        const rub = document.createElement('p');
+        rub.textContent = 'Det som skiljer mest:';
+        const ul = document.createElement('ul');
+        for (const s of g.skillnader) {
+          const li = document.createElement('li');
+          li.textContent = `${s.text}: ${s.hog.text} ${formTal(s.hog.varde, s.enhet)} mot ${s.lag.text} ${formTal(s.lag.varde, s.enhet)}.`;
+          ul.append(li);
+        }
+        art.append(rub, ul);
+      }
+      rot.append(art);
+    }
+  }
+  return rot;
 }
 
 function lyssna() {
-  if (sensorerPagar) return;
-  sensorerPagar = true;
+  if (lyssnar) return;
+  lyssnar = true;
   addEventListener('devicemotion', onMotion, { passive: true });
   addEventListener('deviceorientation', onOrient, { passive: true });
-  $('startText').hidden = true;
-  uppdateraKnappar();
-}
-
-async function startaSensorer() {
-  const utfall = await behorighet();
-  if (utfall === 'granted') {
-    lyssna();
-    $('status').textContent = 'Sensorer på · väntar';
-    return true;
-  }
-  if (utfall === 'insecure') $('status').textContent = 'Öppna sidan med https för att läsa rörelse.';
-  else $('status').textContent = 'Sensorerna är spärrade. Öppna sidan igen och tryck Tillåt.';
-  return false;
 }
 
 function onMotion(e) {
-  const rot = vektor(e.rotationRate, ['alpha', 'beta', 'gamma']);
-  const acc = vektor(e.acceleration, ['x', 'y', 'z']);
-  const accG = vektor(e.accelerationIncludingGravity, ['x', 'y', 'z']);
+  antalHandelser += 1;
+  const rot = lasVektor(e.rotationRate, ['alpha', 'beta', 'gamma']);
+  const acc = lasVektor(e.acceleration, ['x', 'y', 'z']);
+  const accG = lasVektor(e.accelerationIncludingGravity, ['x', 'y', 'z']);
   if (rot) senaste.rot = rot;
   if (acc) senaste.acc = acc;
   if (accG) senaste.accG = accG;
-  senaste.sedd = true;
-  senaste.motionTid = performance.now();
-  const nu = performance.now() / 1000;
-  hzTider.push(nu);
-  const grans = nu - 1;
-  while (hzTider.length && hzTider[0] < grans) hzTider.shift();
+  kanskeProv();
 }
 
 function onOrient(e) {
-  const v = [talVarde(e.alpha), talVarde(e.beta), talVarde(e.gamma)];
+  const v = [e.alpha, e.beta, e.gamma].map((x) => (Number.isFinite(x) ? x : null));
   if (v.some((x) => x != null)) senaste.vinkel = v;
-  senaste.sedd = true;
+  kanskeProv();
 }
 
-function nuRaw(t) {
-  const färsk = performance.now() - senaste.motionTid < 250;
-  return {
+function kanskeProv() {
+  if (!rec?.aktiv) return;
+  if (!senaste.rot && !senaste.acc && !senaste.accG && !senaste.vinkel) return;
+  const t = (performance.now() - rec.start) / 1000;
+  const minDt = 1 / (Number(config.malHz) || 50);
+  if (rec.senastProv != null && t - rec.senastProv < minDt * 0.85) return;
+  rec.senastProv = t;
+  let relativ = null;
+  if (senaste.vinkel) {
+    if (!nollage) nollage = senaste.vinkel.slice();
+    relativ = vinkelSkillnad(senaste.vinkel, nollage);
+  }
+  rec.sampel.push(rundaSampel({
     t,
-    rot: färsk && senaste.rot ? senaste.rot.slice() : null,
-    vinkel: senaste.vinkel ? senaste.vinkel.slice() : null,
-    acc: färsk && senaste.acc ? senaste.acc.slice() : null,
-    accG: färsk && senaste.accG ? senaste.accG.slice() : null,
+    rot: senaste.rot,
+    acc: senaste.acc,
+    accG: senaste.accG,
+    vinkel: relativ,
     skarm: skarmVinkel()
+  }));
+}
+
+function sakertLofte(anrop) {
+  try {
+    const v = anrop();
+    return Promise.resolve(v).catch((err) => (err && err.name === 'NotAllowedError' ? 'denied' : 'error'));
+  } catch (e) {
+    return Promise.resolve('error');
+  }
+}
+
+function beOmTillstand() {
+  const DME = window.DeviceMotionEvent;
+  const DOE = window.DeviceOrientationEvent;
+  const rorelse = (DME && typeof DME.requestPermission === 'function')
+    ? sakertLofte(() => DME.requestPermission())
+    : Promise.resolve('granted');
+  const orient = (DOE && typeof DOE.requestPermission === 'function')
+    ? sakertLofte(() => DOE.requestPermission())
+    : Promise.resolve('granted');
+  let mik = Promise.resolve('granted');
+  try {
+    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+      mik = navigator.mediaDevices.getUserMedia({ audio: true }).then((strom) => {
+        for (const sp of strom.getTracks()) {
+          try { sp.stop(); } catch (e) { /* spåret är redan stoppat */ }
+        }
+        return 'granted';
+      }).catch(() => 'denied');
+    }
+  } catch (e) {
+    mik = Promise.resolve('denied');
+  }
+  return Promise.all([rorelse, orient, mik]);
+}
+
+function textAvTal(ev) {
+  let s = '';
+  const start = Number.isFinite(ev?.resultIndex) ? ev.resultIndex : 0;
+  const resultat = ev?.results;
+  if (!resultat) return '';
+  for (let i = start; i < resultat.length; i++) s += ` ${resultat[i][0]?.transcript || ''}`;
+  return s;
+}
+
+function uppdateraTalHint() {
+  const el = document.getElementById('tal-hint');
+  const dod = talTillgang === 'saknas' || talTillgang === 'nekat';
+  if (el) el.hidden = !dod;
+  const stopp = document.getElementById('stopp');
+  if (stopp) stopp.classList.toggle('stopp-behovs', dod);
+}
+
+function stoppaTal() {
+  talSkaLyssna = false;
+  clearTimeout(talOmstart);
+  const r = tal;
+  tal = null;
+  if (!r) return;
+  try { r.onend = null; r.onresult = null; r.stop(); } catch (e) { /* redan stoppad */ }
+}
+
+function startaTal() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { talTillgang = 'saknas'; return false; }
+  const rGammal = tal;
+  tal = null;
+  if (rGammal) {
+    try { rGammal.onend = null; rGammal.stop(); } catch (e) { /* redan stoppad */ }
+  }
+  let r;
+  try { r = new SR(); } catch (e) { talTillgang = 'saknas'; return false; }
+  r.lang = config.tal?.sprak || 'sv-SE';
+  r.continuous = true;
+  r.interimResults = true;
+  r.onresult = (ev) => {
+    if (lage !== 'spelar') return;
+    if (arSlutOrd(textAvTal(ev), config.tal?.ord || 'slut')) avsluta('slut');
   };
-}
-
-function laggRing(beh) {
-  ring.push(beh);
-  const grans = beh.t - (installningar.fonsterSek || 3) - 0.25;
-  while (ring.length && ring[0].t < grans) ring.shift();
-}
-
-let sistProv = 0;
-function tick() {
-  const nuMs = performance.now();
-  const nu = nuMs / 1000;
-  if (sensorerPagar && slatare) {
-    const raw = nuRaw(nu);
-    const beh = behandlaRaa(raw, installningar, slatare);
-    beh.t = nu;
-    laggRing(beh);
-    if (rec?.aktiv) {
-      const minDt = 1000 / (installningar.malHz || 60);
-      if (nuMs - sistProv >= minDt * 0.9) {
-        sistProv = nuMs;
-        const t = (nuMs - rec.start) / 1000;
-        rec.sampel.push(rundaSampel({ ...raw, t }));
-        rec.senastRaw = raw;
-      }
+  r.onerror = (ev) => {
+    const kod = ev?.error || '';
+    if (kod === 'not-allowed' || kod === 'service-not-allowed') {
+      talTillgang = 'nekat';
+      talSkaLyssna = false;
+      clearTimeout(talOmstart);
+      uppdateraTalHint();
     }
-    const hz = hzTider.length;
-    $('status').textContent = senaste.sedd ? `Sensorer på · ${hz} Hz` : 'Sensorer på · väntar';
+  };
+  r.onend = () => {
+    if (tal !== r) return;
+    tal = null;
+    if (!talSkaLyssna || talTillgang === 'nekat') return;
+    const vantan = Number(config.tal?.startaOmMs);
+    clearTimeout(talOmstart);
+    talOmstart = setTimeout(() => { if (talSkaLyssna) startaTal(); }, Number.isFinite(vantan) ? vantan : 300);
+  };
+  tal = r;
+  try {
+    r.start();
+    if (talTillgang !== 'nekat') talTillgang = 'ok';
+    return true;
+  } catch (e) {
+    tal = null;
+    talTillgang = 'saknas';
+    return false;
   }
-  if (aktivFlik === 'nu') ritaLive();
-  if (spel) ritaSpel();
-  requestAnimationFrame(tick);
-}
-
-function storlek(canvas) {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = canvas.clientWidth || 320;
-  const h = canvas.clientHeight || 64;
-  const bw = Math.max(1, Math.floor(w * dpr));
-  const bh = Math.max(1, Math.floor(h * dpr));
-  if (canvas.width !== bw || canvas.height !== bh) {
-    canvas.width = bw;
-    canvas.height = bh;
-  }
-  const c = canvas.getContext('2d');
-  c.setTransform(dpr, 0, 0, dpr, 0, 0);
-  return { c, w, h };
-}
-
-function ritaSerie(canvas, punkter, t0, t1, nyckel, skala, mitten, huvud) {
-  if (!canvas) return;
-  const { c, w, h } = storlek(canvas);
-  c.clearRect(0, 0, w, h);
-  c.strokeStyle = '#2c343c';
-  c.beginPath();
-  c.moveTo(0, h / 2);
-  c.lineTo(w, h / 2);
-  c.stroke();
-  const span = Math.max(0.001, t1 - t0);
-  for (let k = 0; k < 3; k++) {
-    c.beginPath();
-    c.strokeStyle = FARGER[k];
-    c.lineWidth = 1.7;
-    let flytt = true;
-    for (const p of punkter) {
-      if (p.t < t0 || p.t > t1) continue;
-      const v = p[nyckel]?.[k];
-      if (v == null || !Number.isFinite(v)) { flytt = true; continue; }
-      const x = ((p.t - t0) / span) * (w - 2) + 1;
-      const mitt = mitten ? mitten[k] : 0;
-      const y = h / 2 - ((v - mitt) / skala) * (h / 2 - 3);
-      const yy = Math.max(2, Math.min(h - 2, y));
-      if (flytt) { c.moveTo(x, yy); flytt = false; }
-      else c.lineTo(x, yy);
-    }
-    c.stroke();
-  }
-  if (huvud != null) {
-    const x = Math.max(1, Math.min(w - 1, ((huvud - t0) / span) * (w - 2) + 1));
-    c.strokeStyle = '#f4f1e6';
-    c.beginPath();
-    c.moveTo(x, 0);
-    c.lineTo(x, h);
-    c.stroke();
-  }
-}
-
-function ritaLive() {
-  const nu = performance.now() / 1000;
-  const fonster = installningar.fonsterSek || 3;
-  const t0 = nu - fonster;
-  const skala = installningar.skala || {};
-  ritaSerie($('cRot'), ring, t0, nu, 'rot', skala.rot || 250, null, null);
-  ritaSerie($('cVinkel'), ring, t0, nu, 'vinkel', skala.vinkel || 180, [180, 0, 0], null);
-  ritaSerie($('cAcc'), ring, t0, nu, 'acc', skala.acc || 20, null, null);
-  ritaSerie($('cAccG'), ring, t0, nu, 'accG', skala.accG || 20, null, null);
-}
-
-function forberedLjud() {
-  if (!installningar.ljud) return;
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-  if (!audio) audio = new AC();
-  if (audio.state === 'suspended') void audio.resume();
-}
-
-function pip(frek, ms) {
-  if (!audio || !installningar.ljud) return;
-  const t = audio.currentTime;
-  const o = audio.createOscillator();
-  const g = audio.createGain();
-  o.type = 'sine';
-  o.frequency.setValueAtTime(frek, t);
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.2, t + 0.015);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
-  o.connect(g);
-  g.connect(audio.destination);
-  o.start(t);
-  o.stop(t + ms / 1000 + 0.02);
-}
-
-function skaka(ms) {
-  if (!installningar.vibration) return;
-  try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* telefonen kan sakna vibration */ }
-}
-
-function visaFlik(namn) {
-  aktivFlik = namn;
-  $('flik-nu').hidden = namn !== 'nu';
-  $('flik-sparade').hidden = namn !== 'sparade';
-  $('flik-kann').hidden = namn !== 'kann';
-  for (const knapp of document.querySelectorAll('nav button')) {
-    knapp.classList.toggle('aktiv', knapp.dataset.flik === namn);
-  }
-  uppdateraKnappar();
-}
-
-function uppdateraKnappar() {
-  const spelar = lage === 'spelar';
-  $('primar').hidden = !(aktivFlik === 'nu' || spelar);
-  $('primar').classList.toggle('stopp', spelar);
-  if (spelar) {
-    /* texten sätts av klockan */
-  } else if (!sensorerPagar) $('primar').textContent = 'Starta sensorer';
-  else $('primar').textContent = 'Ny inmatning';
-  $('kannKnapp').hidden = aktivFlik !== 'kann' || spelar || lage === 'ned' || lage === 'namn';
-  $('primar').disabled = lage === 'ned' || lage === 'namn';
-}
-
-function avbrytNed() {
-  nedTimer.forEach(clearTimeout);
-  nedTimer = [];
-  lage = 'idle';
-  $('lager').hidden = true;
-  $('vyNed').hidden = false;
-  $('vyNamn').hidden = true;
-  uppdateraKnappar();
-}
-
-function startaNed(nastaSyfte, gestId) {
-  if (lage === 'spelar' || lage === 'ned' || lage === 'namn') return;
-  syfte = nastaSyfte;
-  malGest = gestId || null;
-  lage = 'ned';
-  $('vyNamn').hidden = true;
-  $('vyNed').hidden = false;
-  $('lager').hidden = false;
-  uppdateraKnappar();
-  const talen = [];
-  const n = Math.max(1, Math.round(Number(installningar.nedrakningSek) || 3));
-  for (let i = n; i >= 1; i--) talen.push(i);
-  const toner = [523, 659, 784, 988];
-  talen.forEach((talSteg, i) => {
-    nedTimer.push(setTimeout(() => {
-      $('nedTal').textContent = String(talSteg);
-      $('nedText').textContent = 'Håll telefonen redo';
-      pip(toner[Math.min(i, toner.length - 1)], 120);
-      skaka(35);
-    }, i * 1000));
-  });
-  nedTimer.push(setTimeout(() => {
-    $('nedTal').textContent = 'Kör';
-    $('nedText').textContent = 'Gör rörelsen';
-    pip(988, 180);
-    skaka(70);
-  }, talen.length * 1000));
-  nedTimer.push(setTimeout(() => {
-    nedTimer = [];
-    $('lager').hidden = true;
-    borjaInspelning();
-  }, talen.length * 1000 + 350));
 }
 
 function borjaInspelning() {
+  nollage = senaste.vinkel ? senaste.vinkel.slice() : null;
+  rec = { aktiv: true, start: performance.now(), sampel: [], senastProv: null };
+  sparadId = null;
+  utkast = null;
+  andra = false;
+  redigerar = null;
   lage = 'spelar';
-  sistProv = 0;
-  rec = {
-    aktiv: true,
-    start: performance.now(),
-    sampel: [],
-    senastRaw: null,
-    stillaFran: null,
-    syfte,
-    gestId: malGest
-  };
-  visaFlik('nu');
-  clearInterval(stoppTimer);
-  stoppTimer = setInterval(kollaStopp, 100);
-  uppdateraKnappar();
-  kollaStopp();
+  rita();
+  clearInterval(stoppKlocka);
+  stoppKlocka = setInterval(() => {
+    if (!rec?.aktiv) return;
+    const t = (performance.now() - rec.start) / 1000;
+    if (t >= (Number(config.maxSek) || 30)) avsluta('max');
+  }, 200);
 }
 
-function kollaStopp() {
-  if (!rec?.aktiv) return;
-  const t = (performance.now() - rec.start) / 1000;
-  $('primar').textContent = `Stopp · ${formSek(t)}`;
-  if (t >= (Number(installningar.maxSek) || 10)) {
-    avsluta('max');
-    return;
-  }
-  const still = !rec.senastRaw || arStilla(rec.senastRaw, installningar);
-  if (!still) {
-    rec.stillaFran = null;
-    return;
-  }
-  if (rec.stillaFran == null) rec.stillaFran = performance.now();
-  const stillTid = (performance.now() - rec.stillaFran) / 1000;
-  if (t >= (Number(installningar.minSek) || 0) && stillTid >= (Number(installningar.stillaSek) || 3)) avsluta('stilla');
+function tryckNollstall() {
+  if (lage !== 'redo' || startar) return;
+  startar = true;
+  if (!window.isSecureContext) toast('Öppna sidan med https så att telefonen får mäta rörelse.');
+  const lov = beOmTillstand();
+  talSkaLyssna = true;
+  talTillgang = 'okant';
+  if (!startaTal() && talTillgang !== 'nekat') talTillgang = 'saknas';
+  lov.then(([rorelse, orient, mik]) => {
+    const ok = (v) => v === 'granted' || v === 'unavailable';
+    if (!ok(rorelse) || !ok(orient)) {
+      stoppaTal();
+      toast('Rörelsen är avstängd. Stäng sidan, öppna den igen och tryck Tillåt.');
+      return;
+    }
+    if (mik !== 'granted') talTillgang = 'nekat';
+    lyssna();
+    borjaInspelning();
+  }).catch(() => {
+    stoppaTal();
+    toast('Det gick inte att fråga om rörelse. Försök igen.');
+  }).finally(() => { startar = false; });
+}
+
+function avbrytInspelning() {
+  if (rec) rec.aktiv = false;
+  clearInterval(stoppKlocka);
+  stoppaTal();
+  rec = null;
+  utkast = null;
+  lage = 'redo';
+  rita();
 }
 
 function avsluta(orsak) {
   if (!rec?.aktiv) return;
   rec.aktiv = false;
-  clearInterval(stoppTimer);
-  const sampel = rec.sampel.slice();
-  const langd = sampel.length ? sampel[sampel.length - 1].t : (performance.now() - rec.start) / 1000;
+  clearInterval(stoppKlocka);
+  const nu = (performance.now() - rec.start) / 1000;
+  stoppaTal();
+  let sampel = rec.sampel.slice();
+  let svans = 0;
+  if (orsak === 'slut' || orsak === 'stopp') {
+    svans = Number(config.svansSek) || 0;
+    sampel = klippSvans(sampel, nu, svans);
+  }
+  rec = null;
+  if (!sampel.length) {
+    lage = 'redo';
+    rita();
+    toast('Ingen rörelse blev kvar. Gör rörelsen och säg slut efteråt.');
+    return;
+  }
+  const langd = sampel[sampel.length - 1].t;
   const hz = matHz(sampel);
-  const tagning = {
+  const kat = kategorier.find((k) => k.id === senast?.kategoriId) || null;
+  const val = kat ? giltigtVal(kat, senast?.val) : {};
+  utkast = {
     id: nyttId(),
     skapad: new Date().toISOString(),
-    langdSek: Math.round(langd * 1000) / 1000,
-    samplingsfrekvensHz: hz == null ? null : Math.round(hz * 10) / 10,
+    kategoriId: kat?.id || null,
+    val,
+    etikett: byggEtikett(kat, val),
+    langdSek: Math.round((langd || 0) * 1000) / 1000,
     antal: sampel.length,
+    samplingsfrekvensHz: hz == null ? null : Math.round(hz * 10) / 10,
     avslut: orsak,
-    sampel
+    svansSek: svans,
+    nollage: nollage ? nollage.slice() : null,
+    sampel,
+    enhet: enhetInfo()
   };
-  const gjort = rec.syfte;
-  const gestId = rec.gestId;
-  rec = null;
-  lage = 'idle';
-  pip(440, 90);
-  skaka(40);
-  uppdateraKnappar();
-  if (!sampel.length) {
-    toast('Ingen rörelse kom in. Starta sensorerna och försök igen.');
-    return;
-  }
-  senasteProv = { tagning, gestId, syfte: gjort };
-  if (gjort === 'exempel') {
-    void laggExempel(gestId, tagning);
-    return;
-  }
-  if (gjort === 'kann') {
-    visaKann(tagning);
-    return;
-  }
-  oppnaNamn();
+  utkast.egenskaper = beraknaEgenskaper(utkast, config);
+  sparadId = null;
+  lage = 'kurvor';
+  andra = false;
+  redigerar = null;
+  rita();
 }
 
-function oppnaNamn() {
-  lage = 'namn';
-  $('namnFalt').value = '';
-  $('tolkad').textContent = '';
-  $('talStatus').textContent = '';
-  $('bSpara').disabled = true;
-  $('vyNed').hidden = true;
-  $('vyNamn').hidden = false;
-  $('lager').hidden = false;
-  uppdateraKnappar();
-  if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
-    $('talStatus').textContent = 'Taligenkänning saknas här. Skriv namnet. På iPhone finns en mikrofon på tangentbordet.';
-    $('mik').hidden = true;
-  } else $('mik').hidden = false;
-}
-
-function stangNamn() {
-  stoppaTal();
-  lage = 'idle';
-  $('lager').hidden = true;
-  $('vyNamn').hidden = true;
-  $('vyNed').hidden = false;
-  uppdateraKnappar();
-}
-
-function stoppaTal() {
-  if (!tal) return;
-  try { tal.onend = null; tal.stop(); } catch (e) { /* redan stoppad */ }
-  tal = null;
-}
-
-function startaTal(falt) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    $('talStatus').textContent = 'Taligenkänning saknas här. Skriv namnet.';
-    falt.focus();
-    return;
-  }
-  stoppaTal();
-  tal = new SR();
-  tal.lang = 'sv-SE';
-  tal.interimResults = true;
-  tal.continuous = false;
-  tal.maxAlternatives = 1;
-  if ($('talStatus')) $('talStatus').textContent = 'Lyssnar… säg till exempel backhand i tennis.';
-  tal.onresult = (ev) => {
-    let text = '';
-    for (let i = 0; i < ev.results.length; i++) text += ev.results[i][0].transcript;
-    text = text.replace(/\s+/g, ' ').trim();
-    if (!text) return;
-    falt.value = text;
-    if (falt === $('namnFalt')) {
-      $('tolkad').textContent = text;
-      $('bSpara').disabled = false;
-    }
-  };
-  tal.onerror = (ev) => {
-    const texter = {
-      'not-allowed': 'Mikrofonen är avstängd. Skriv namnet, eller slå på diktering i Inställningar.',
-      'service-not-allowed': 'Siri eller diktering är av. Skriv namnet. Tangentbordets mikrofon fungerar ändå.',
-      'no-speech': 'Hörde inget. Försök igen eller skriv.',
-      'audio-capture': 'Ingen mikrofon hittades. Skriv namnet.',
-      network: 'Talet behöver nät. Skriv namnet om det inte går.'
-    };
-    if (ev.error === 'aborted') return;
-    const text = texter[ev.error] || 'Kunde inte höra. Skriv namnet.';
-    if (falt === $('namnFalt')) $('talStatus').textContent = text;
-    else toast(text);
-  };
-  tal.onend = () => {
-    if (falt === $('namnFalt') && falt.value.trim()) $('talStatus').textContent = 'Hörde det här. Tryck Spara, eller försök igen.';
-  };
-  try { tal.start(); }
-  catch (e) {
-    if (falt === $('namnFalt')) $('talStatus').textContent = 'Kunde inte starta mikrofonen. Skriv namnet.';
-  }
-}
-
-async function sparaNy(namn) {
-  const nu = new Date().toISOString();
-  const gest = {
-    id: nyttId(),
-    namn,
-    skapad: nu,
-    uppdaterad: nu,
-    exempel: [senasteProv.tagning]
-  };
+async function sparaTax() {
   try {
-    await sparaGest(gest);
+    await lager.sparaTaxonomi(kategorier, senast);
   } catch (e) {
     toast('Kunde inte spara på telefonen.');
-    return;
-  }
-  gester.unshift(gest);
-  sortera();
-  stangNamn();
-  ritaLista();
-  visaFlik('sparade');
-  toast(`Sparade ${namn}.`);
-}
-
-async function laggExempel(gestId, tagning) {
-  const gest = gester.find((g) => g.id === gestId);
-  if (!gest) {
-    toast('Hittade inte rörelsen.');
-    return;
-  }
-  gest.exempel.push(tagning);
-  gest.uppdaterad = new Date().toISOString();
-  try { await sparaGest(gest); }
-  catch (e) { toast('Kunde inte spara exemplet.'); return; }
-  valdExempel.set(gest.id, tagning.id);
-  ritaLista();
-  visaFlik('sparade');
-  toast(`Exempel ${gest.exempel.length} på ${gest.namn}.`);
-}
-
-function visaKann(tagning) {
-  const svar = kannIgen(tagning.sampel, gester, installningar);
-  senasteKann = { tagning, svar };
-  visaFlik('kann');
-  const box = $('kannResultat');
-  box.hidden = false;
-  if (!svar.ok) {
-    $('kannEtikett').textContent = 'Första versionen';
-    $('kannSvar').textContent = svar.orsak === 'tom' ? 'Spara en rörelse först.' : 'Tagningen var för kort.';
-    $('kannProcent').textContent = '';
-    $('kannNasta').textContent = '';
-    $('bKannSpara').hidden = true;
-    return;
-  }
-  const osaker = svar.bast.procent < 55;
-  $('kannEtikett').textContent = osaker ? 'Osäker träff · första versionen' : 'Bästa träffen · första versionen';
-  $('kannSvar').textContent = svar.bast.namn;
-  $('kannProcent').textContent = `${svar.bast.procent} %`;
-  $('kannNasta').textContent = svar.nasta ? `Näst närmast: ${svar.nasta.namn}` : 'Jämförd med samma rörelse åt andra hållet.';
-  $('bKannSpara').hidden = false;
-  $('bKannSpara').textContent = `Spara som exempel på ${svar.bast.namn}`;
-}
-
-function ritaLista() {
-  const rot = $('lista');
-  rot.replaceChildren();
-  if (!gester.length) {
-    const p = document.createElement('p');
-    p.className = 'tom';
-    p.textContent = 'Inga rörelser än. Tryck Ny inmatning och gör en rörelse.';
-    rot.append(p);
-    return;
-  }
-  for (const gest of gester) {
-    const senasteEx = gest.exempel[gest.exempel.length - 1];
-    const vald = gest.exempel.find((e) => e.id === valdExempel.get(gest.id)) || senasteEx;
-    const artikel = document.createElement('article');
-    artikel.className = 'kort';
-    artikel.dataset.id = gest.id;
-
-    if (byterNamn === gest.id) {
-      const falt = document.createElement('input');
-      falt.type = 'text';
-      falt.value = gest.namn;
-      falt.setAttribute('data-namn', '');
-      falt.autocomplete = 'off';
-      const rad = document.createElement('div');
-      rad.className = 'knapprad';
-      rad.append(knapp('Spara namn', 'spara-namn'), knapp('Säg namnet', 'tal-namn'), knapp('Avbryt', 'avbryt-namn'));
-      artikel.append(falt, rad);
-    } else {
-      const h = document.createElement('h3');
-      h.textContent = gest.namn;
-      artikel.append(h);
-    }
-
-    const meta = document.createElement('p');
-    meta.className = 'meta';
-    const langd = vald?.langdSek;
-    meta.textContent = `${visaDatum(gest.uppdaterad || gest.skapad)} · ${formSek(langd)} · ${gest.exempel.length} exempel`;
-    const mini = document.createElement('canvas');
-    mini.className = 'mini';
-    mini.height = 36;
-    artikel.append(meta, mini);
-
-    if (gest.exempel.length > 1) {
-      const rad = document.createElement('div');
-      rad.className = 'exempelrad';
-      gest.exempel.forEach((ex, i) => {
-        const b = knapp(`Exempel ${i + 1}`, 'valj');
-        b.dataset.exempel = ex.id;
-        if (ex.id === vald?.id) b.classList.add('vald');
-        rad.append(b);
-      });
-      artikel.append(rad);
-    }
-
-    const spelarDenna = spel && spel.gestId === gest.id;
-    const rad1 = document.createElement('div');
-    rad1.className = 'knapprad';
-    rad1.append(
-      knapp(spelarDenna ? 'Stopp' : 'Spela upp', spelarDenna ? 'stoppa-spel' : 'spela'),
-      knapp('Lägg till exempel', 'exempel')
-    );
-    const rad2 = document.createElement('div');
-    rad2.className = 'knapprad';
-    const bort = knapp('Ta bort', 'ta-bort');
-    rad2.append(knapp('Byt namn', 'byt'), bort);
-    artikel.append(rad1, rad2);
-
-    if (spelarDenna) {
-      const box = document.createElement('div');
-      box.className = 'spel';
-      for (const id of ['rot', 'vinkel', 'acc', 'accG']) {
-        const c = document.createElement('canvas');
-        c.dataset.spel = id;
-        c.height = 64;
-        box.append(c);
-      }
-      artikel.append(box);
-    }
-    rot.append(artikel);
-    ritaMini(mini, vald?.sampel || []);
   }
 }
 
-function knapp(text, gor) {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.textContent = text;
-  b.dataset.gor = gor;
-  return b;
-}
-
-function ritaMini(canvas, sampel) {
-  const punkter = (sampel || []).map((s) => ({ t: s.t, rot: s.rot }));
-  let max = 20;
-  for (const p of punkter) for (const v of p.rot || []) if (Number.isFinite(v)) max = Math.max(max, Math.abs(v));
-  const t1 = punkter.length ? punkter[punkter.length - 1].t : 1;
-  ritaSerie(canvas, punkter, 0, Math.max(0.2, t1), 'rot', max, null, null);
-}
-
-function startaSpel(gest, ex) {
-  const serie = helaSerien(ex.sampel, installningar);
-  spel = {
-    gestId: gest.id,
-    exId: ex.id,
-    start: performance.now(),
-    langd: Math.max(0.2, ex.langdSek || (serie.length ? serie[serie.length - 1].t : 0.2)),
-    serie
-  };
-  ritaLista();
-}
-
-function ritaSpel() {
-  if (!spel) return;
-  const artikel = document.querySelector(`article[data-id="${CSS.escape(spel.gestId)}"]`);
-  if (!artikel) return;
-  const t = Math.min(spel.langd, (performance.now() - spel.start) / 1000);
-  const skala = installningar.skala || {};
-  const kart = {
-    rot: ['rot', skala.rot || 250, null],
-    vinkel: ['vinkel', skala.vinkel || 180, [180, 0, 0]],
-    acc: ['acc', skala.acc || 20, null],
-    accG: ['accG', skala.accG || 20, null]
-  };
-  for (const canvas of artikel.querySelectorAll('canvas[data-spel]')) {
-    const [nyckel, skal, mitt] = kart[canvas.dataset.spel];
-    ritaSerie(canvas, spel.serie, 0, spel.langd, nyckel, skal, mitt, t);
-  }
-  if (t >= spel.langd) {
-    spel = null;
-    ritaLista();
+async function sparaAndradeInspelningar() {
+  try {
+    for (const ins of inspelningar) await lager.sparaInspelning(ins);
+  } catch (e) {
+    toast('Kunde inte spara på telefonen.');
   }
 }
 
-function byggReglage() {
-  const rot = $('reglage');
-  const tider = $('tider');
-  rot.replaceChildren();
-  tider.replaceChildren();
-  const reg = installningar.reglage || {};
-  const k = reg.kanslighet || { min: 0.2, max: 5, steg: 0.1 };
-  const ordning = [...AXEL_ORDNING, ...Object.keys(installningar.axlar || {}).filter((n) => !AXEL_ORDNING.includes(n))];
-  for (const namn of ordning) {
-    const axel = installningar.axlar[namn];
-    if (!axel) continue;
-    const titel = AXEL_NAMN[namn] || namn;
-    rot.append(slider(`${titel}, känslighet`, k.min, k.max, k.steg, axel.kanslighet, (v) => { axel.kanslighet = v; }));
-    const steg = String(axel.enhet || '').includes('m') ? (reg.dodzonStegAcc || 0.05) : (reg.dodzonStegRot || 0.5);
-    rot.append(slider(`${titel}, dödzon ${axel.enhet || ''}`, 0, axel.dodzonMax || 40, steg, axel.dodzon, (v) => { axel.dodzon = v; }));
-  }
-  const u = reg.utjamning || { min: 0, max: 1, steg: 0.05 };
-  rot.append(slider('Utjämning', u.min, u.max, u.steg, installningar.utjamning, (v) => { installningar.utjamning = v; }));
-  const falt = [
-    ['nedrakningSek', 'Nedräkning', 1, 5, 1],
-    ['stillaSek', 'Stopp efter stillhet, sekunder', 0.5, 15, 0.5],
-    ['maxSek', 'Längsta inspelning, sekunder', 1, 30, 1],
-    ['fonsterSek', 'Kurvorna visar, sekunder', 1, 8, 0.5],
-    ['malHz', 'Takt, ungefär', 20, 120, 1],
-    ['stillaRotDegS', 'Stillhet under, grader/s', 1, 80, 1],
-    ['stillaAcc', 'Stillhet under, m/s²', 0.05, 5, 0.05]
-  ];
-  for (const [nyckel, text, min, max, steg] of falt) {
-    const lab = document.createElement('label');
-    lab.className = 'rad';
-    const span = document.createElement('span');
-    span.textContent = text;
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.min = String(min);
-    input.max = String(max);
-    input.step = String(steg);
-    input.value = String(installningar[nyckel]);
-    input.addEventListener('change', () => {
-      const v = Number(input.value);
-      if (!Number.isFinite(v)) return;
-      installningar[nyckel] = Math.min(max, Math.max(min, v));
-      input.value = String(installningar[nyckel]);
-      sparaInstallningar();
-    });
-    lab.append(span, input);
-    tider.append(lab);
-  }
-  $('cbLjud').checked = !!installningar.ljud;
-  $('cbVibr').checked = !!installningar.vibration;
+async function sparaPagaende() {
+  if (!utkast || sparadId === utkast.id) return;
+  const kat = kategorier.find((k) => k.id === utkast.kategoriId) || null;
+  utkast.etikett = byggEtikett(kat, utkast.val);
+  utkast.egenskaper = beraknaEgenskaper(utkast, config);
+  const kopia = structuredClone(utkast);
+  await lager.sparaInspelning(kopia);
+  const finns = inspelningar.find((r) => r.id === kopia.id);
+  if (finns) Object.assign(finns, kopia);
+  else inspelningar.unshift(kopia);
+  if (kat) senast = { kategoriId: kat.id, val: structuredClone(utkast.val || {}) };
+  await lager.sparaTaxonomi(kategorier, senast);
+  sparadId = utkast.id;
 }
 
-function slider(text, min, max, steg, varde, satt) {
-  const lab = document.createElement('label');
-  lab.className = 'rad';
-  const namn = document.createElement('span');
-  namn.className = 'namn';
-  namn.textContent = text;
-  const vis = document.createElement('span');
-  vis.className = 'varde';
-  const input = document.createElement('input');
-  input.type = 'range';
-  input.min = String(min);
-  input.max = String(max);
-  input.step = String(steg);
-  input.value = String(varde ?? min);
-  const rita = () => { vis.textContent = formTal(input.value, String(steg).includes('.') ? 2 : 0); };
+function felNamn(res) {
+  toast(res.fel === 'finns' ? 'Det namnet finns redan.' : 'Skriv ett namn.');
+}
+
+async function bekraftaFalt() {
+  if (!redigerar) return;
+  const namn = (document.querySelector('[data-roll=falt]')?.value) || '';
+  const r = redigerar;
+  const katId = utkast?.kategoriId;
+  let res = { ok: false, fel: 'tomt' };
+  if (r.typ === 'ny-kategori') res = skapaKategori(kategorier, namn);
+  else if (r.typ === 'byt-kategori') res = bytNamnKategori(kategorier, r.id, namn);
+  else if (r.typ === 'ny-faktor') res = laggTillFaktor(kategorier, katId, namn);
+  else if (r.typ === 'byt-faktor') res = bytNamnFaktor(kategorier, katId, r.id, namn);
+  else if (r.typ === 'ny-val') res = laggTillVal(kategorier, katId, r.faktorId, namn);
+  else if (r.typ === 'byt-val') res = bytNamnVal(kategorier, katId, r.faktorId, r.id, namn);
+  else if (r.typ === 'ny-under') res = laggTillUnderval(kategorier, katId, r.faktorId, r.valId, namn);
+  else if (r.typ === 'byt-under') res = bytNamnUnderval(kategorier, katId, r.faktorId, r.valId, r.id, namn);
+  if (!res.ok) { felNamn(res); return; }
+  if (r.typ === 'ny-kategori' && utkast) {
+    utkast.kategoriId = res.kategori.id;
+    utkast.val = {};
+  }
+  redigerar = null;
+  await sparaTax();
   rita();
-  input.addEventListener('input', () => {
-    satt(Number(input.value));
+}
+
+async function gorBort(typ, id, data) {
+  const nyckel = `${typ}:${id}`;
+  if (bortNyckel !== nyckel) {
+    bortNyckel = nyckel;
+    clearTimeout(bortTimer);
+    bortTimer = setTimeout(() => {
+      if (bortNyckel === nyckel) { bortNyckel = null; rita(); }
+    }, 4000);
     rita();
-    sparaInstallningar();
-  });
-  lab.append(namn, vis, input);
-  return lab;
+    return;
+  }
+  bortNyckel = null;
+  if (typ === 'kategori') {
+    taBortKategori(kategorier, inspelningar, id);
+    if (utkast?.kategoriId === id) { utkast.kategoriId = null; utkast.val = {}; }
+    if (senast?.kategoriId === id) senast = null;
+    await sparaAndradeInspelningar();
+  } else if (typ === 'faktor') {
+    taBortFaktor(kategorier, inspelningar, utkast.kategoriId, id);
+    if (utkast?.val) delete utkast.val[id];
+    await sparaAndradeInspelningar();
+  } else if (typ === 'val') {
+    taBortVal(kategorier, inspelningar, utkast.kategoriId, data.faktor, id);
+    await sparaAndradeInspelningar();
+  } else if (typ === 'under') {
+    taBortUnderval(kategorier, inspelningar, utkast.kategoriId, data.faktor, data.val, id);
+    await sparaAndradeInspelningar();
+  } else if (typ === 'inspelning') {
+    try { await lager.taBortInspelning(id); }
+    catch (e) { toast('Kunde inte ta bort.'); return; }
+    inspelningar = inspelningar.filter((r) => r.id !== id);
+    lage = 'bibliotek';
+    detaljId = null;
+    await sparaTax();
+    rita();
+    toast('Tog bort inspelningen.');
+    return;
+  }
+  await sparaTax();
+  rita();
+}
+
+function armBekrafta() {
+  clearTimeout(bekraftaTimer);
+  const vad = bekrafta;
+  bekraftaTimer = setTimeout(() => {
+    if (bekrafta === vad) { bekrafta = null; uppdateraFot(); }
+  }, 4000);
+}
+
+function backa() {
+  if (lage === 'markning') { lage = 'kurvor'; rita(); return; }
+  if (lage === 'spelar') {
+    if (bekrafta !== 'avbryt') { bekrafta = 'avbryt'; armBekrafta(); uppdateraFot(); return; }
+    bekrafta = null;
+    avbrytInspelning();
+    return;
+  }
+  if (lage === 'kurvor') {
+    if (bekrafta !== 'slang') { bekrafta = 'slang'; armBekrafta(); uppdateraFot(); return; }
+    bekrafta = null;
+    utkast = null;
+    sparadId = null;
+    lage = 'redo';
+    rita();
+    return;
+  }
+  if (lage === 'detalj') { lage = 'bibliotek'; rita(); return; }
+  if (lage === 'bibliotek' || lage === 'analys') { lage = 'redo'; rita(); return; }
+  location.href = '../lankar/';
+}
+
+async function sparaNasta() {
+  bekrafta = null;
+  if (lage === 'spelar') { avsluta('stopp'); return; }
+  if (lage === 'kurvor' && utkast && !utkast.kategoriId && sparadId !== utkast.id) {
+    lage = 'markning';
+    rita();
+    toast('Välj kategori. Tryck sen på spara igen.');
+    return;
+  }
+  if ((lage === 'kurvor' || lage === 'markning') && utkast && sparadId !== utkast.id) {
+    try { await sparaPagaende(); }
+    catch (e) { toast('Kunde inte spara.'); return; }
+    toast(utkast.kategoriId ? 'Sparat. Tryck Nollställ för nästa.' : 'Sparat utan kategori. Tryck Nollställ för nästa.');
+  } else if (lage === 'redo') {
+    toast('Tryck den gula knappen Nollställ.');
+    return;
+  }
+  andra = false;
+  redigerar = null;
+  lage = 'redo';
+  rita();
+}
+
+async function sparaOchStang() {
+  try {
+    if (lage === 'spelar') avsluta('stopp');
+    if ((lage === 'kurvor' || lage === 'markning') && utkast && sparadId !== utkast.id) await sparaPagaende();
+  } catch (e) {
+    toast('Kunde inte spara.');
+    return;
+  }
+  location.href = '../lankar/';
+}
+
+function oppnaMeny(oppnas) {
+  menyOppet = oppnas;
+  $('meny').hidden = !oppnas;
+  $('menyDold').hidden = !oppnas;
+  $('menyKnapp').setAttribute('aria-expanded', oppnas ? 'true' : 'false');
 }
 
 function filnamn() {
   const d = new Date();
-  const manad = String(d.getMonth() + 1).padStart(2, '0');
-  const dag = String(d.getDate()).padStart(2, '0');
-  return `rorelser-${d.getFullYear()}-${manad}-${dag}.json`;
+  const p = (n) => String(n).padStart(2, '0');
+  return `rorelser-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`;
 }
 
 async function exportera() {
   const data = byggExport({
-    gester,
-    installningar,
-    enhet: enhetInfo(),
-    tid: new Date().toISOString()
+    kategorier, inspelningar, senast, enhet: enhetInfo(), tid: new Date().toISOString()
   });
   const text = JSON.stringify(data);
   const fil = new File([text], filnamn(), { type: 'application/json' });
@@ -893,202 +1052,190 @@ async function hamtaInFil(fil) {
   let data;
   try { data = JSON.parse(await fil.text()); }
   catch (e) { toast('Filen är inte JSON.'); return; }
-  let lista;
-  try { lista = lasImport(data); }
+  let inkommande;
+  try { inkommande = lasImport(data); }
   catch (e) {
     toast(e.kod === 'version' ? 'Filen har en annan version.' : 'Filen är inte en rörelsefil.');
     return;
   }
-  let nya = 0;
-  let uppd = 0;
-  for (const gest of lista) {
-    const i = gester.findIndex((g) => g.id === gest.id);
-    if (i >= 0) { gester[i] = gest; uppd++; }
-    else { gester.push(gest); nya++; }
-    try { await sparaGest(gest); }
-    catch (err) { toast('Kunde inte spara det som hämtades in.'); return; }
+  for (const ins of inkommande.inspelningar) {
+    if (!ins.egenskaper) ins.egenskaper = beraknaEgenskaper(ins, config);
   }
-  sortera();
-  ritaLista();
-  toast(`Lade till ${nya}, uppdaterade ${uppd}.`);
+  const hop = slahopImport({ kategorier, inspelningar, senast }, inkommande);
+  kategorier = hop.kategorier;
+  inspelningar = hop.inspelningar;
+  senast = hop.senast;
+  try { await lager.skrivAllt({ kategorier, inspelningar, senast }); }
+  catch (e) { toast('Kunde inte spara det som hämtades in.'); return; }
+  toast(`Lade till ${hop.nyaIns} inspelningar och ${hop.nyaKat} kategorier.`);
+  if (lage === 'bibliotek' || lage === 'analys' || lage === 'redo') rita();
+}
+
+function hantera(gor, el) {
+  const id = el.dataset.id || '';
+  const data = { faktor: el.dataset.faktor || '', val: el.dataset.val || '' };
+  if (gor === 'nollstall') { tryckNollstall(); return; }
+  if (gor === 'stopp') { avsluta('stopp'); return; }
+  if (gor === 'till-markning') { lage = 'markning'; rita(); return; }
+  if (gor === 'till-kurvor') { lage = 'kurvor'; rita(); return; }
+  if (gor === 'andra') { andra = !andra; redigerar = null; rita(); return; }
+  if (gor === 'avbryt-falt') { redigerar = null; rita(); return; }
+  if (gor === 'bekrafta') { void bekraftaFalt(); return; }
+  if (gor === 'ny-kategori') { redigerar = { typ: 'ny-kategori', nyckel: 'kategori' }; rita(); return; }
+  if (gor === 'byt-kategori') { redigerar = { typ: 'byt-kategori', id, nyckel: 'kategori' }; rita(); return; }
+  if (gor === 'bort-kategori') { void gorBort('kategori', id, data); return; }
+  if (gor === 'valj-kategori') {
+    if (!utkast) return;
+    if (utkast.kategoriId !== id) {
+      utkast.kategoriId = id;
+      const kat = kategorier.find((k) => k.id === id);
+      utkast.val = senast?.kategoriId === id ? giltigtVal(kat, senast.val) : {};
+    }
+    rita();
+    return;
+  }
+  if (gor === 'ny-faktor') { redigerar = { typ: 'ny-faktor', nyckel: 'faktor' }; rita(); return; }
+  if (gor === 'byt-faktor') { redigerar = { typ: 'byt-faktor', id }; rita(); return; }
+  if (gor === 'bort-faktor') { void gorBort('faktor', id, data); return; }
+  if (gor === 'ny-val') { redigerar = { typ: 'ny-val', nyckel: id || data.faktor, faktorId: id || data.faktor }; rita(); return; }
+  if (gor === 'byt-val') { redigerar = { typ: 'byt-val', id, faktorId: data.faktor }; rita(); return; }
+  if (gor === 'bort-val') { void gorBort('val', id, data); return; }
+  if (gor === 'valj-val') {
+    if (!utkast.val) utkast.val = {};
+    const nu = utkast.val[data.faktor];
+    if (nu?.valId === id) delete utkast.val[data.faktor];
+    else utkast.val[data.faktor] = { valId: id, undervalId: null };
+    rita();
+    return;
+  }
+  if (gor === 'ny-under') { redigerar = { typ: 'ny-under', nyckel: data.val, faktorId: data.faktor, valId: data.val }; rita(); return; }
+  if (gor === 'byt-under') { redigerar = { typ: 'byt-under', id, faktorId: data.faktor, valId: data.val }; rita(); return; }
+  if (gor === 'bort-under') { void gorBort('under', id, data); return; }
+  if (gor === 'valj-under') {
+    const nu = utkast.val?.[data.faktor];
+    if (!nu) return;
+    nu.undervalId = nu.undervalId === id ? null : id;
+    rita();
+    return;
+  }
+  if (gor === 'oppna') { detaljId = id; lage = 'detalj'; rita(); return; }
+  if (gor === 'bort-inspelning') { void gorBort('inspelning', id, data); return; }
 }
 
 function koppla() {
-  $('primar').addEventListener('click', () => {
-    if (lage === 'spelar') { avsluta('stopp'); return; }
-    if (lage !== 'idle') return;
-    if (!sensorerPagar) {
-      void startaSensorer();
-      return;
-    }
-    forberedLjud();
-    startaNed('ny');
+  huvud.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-gor]');
+    if (!b || !huvud.contains(b)) return;
+    hantera(b.dataset.gor, b);
   });
-  $('kannKnapp').addEventListener('click', () => {
-    if (!gester.length) { toast('Spara minst en rörelse först.'); return; }
-    if (lage !== 'idle') return;
-    forberedLjud();
-    const p = sensorerPagar ? Promise.resolve(true) : startaSensorer();
-    void p.then((ok) => { if (ok) startaNed('kann'); });
+  huvud.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter') return;
+    if (!ev.target.closest('[data-roll=falt]')) return;
+    ev.preventDefault();
+    void bekraftaFalt();
   });
-  $('bAvbryt').addEventListener('click', avbrytNed);
-  $('mik').addEventListener('click', () => startaTal($('namnFalt')));
-  $('bIgen').addEventListener('click', () => startaTal($('namnFalt')));
-  $('namnFalt').addEventListener('input', () => { $('bSpara').disabled = !$('namnFalt').value.trim(); });
-  $('namnFalt').addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter' && $('namnFalt').value.trim()) $('bSpara').click();
+  $('backa').addEventListener('click', backa);
+  $('sparaNasta').addEventListener('click', () => { void sparaNasta(); });
+  $('sparaStang').addEventListener('click', () => { void sparaOchStang(); });
+  $('menyKnapp').addEventListener('click', () => oppnaMeny(!menyOppet));
+  $('menyDold').addEventListener('click', () => oppnaMeny(false));
+  $('meny').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-meny]');
+    if (!b) return;
+    const vad = b.dataset.meny;
+    oppnaMeny(false);
+    if (vad === 'bibliotek') { lage = 'bibliotek'; rita(); }
+    else if (vad === 'analys') { lage = 'analys'; rita(); }
+    else if (vad === 'export') void exportera();
+    else if (vad === 'import') $('importFil').click();
   });
-  $('bSlang').addEventListener('click', () => { senasteProv = null; stangNamn(); toast('Slängde tagningen.'); });
-  $('bSpara').addEventListener('click', () => {
-    const namn = $('namnFalt').value.trim();
-    if (!namn || !senasteProv) return;
-    void sparaNy(namn);
-  });
-  $('bKannSpara').addEventListener('click', () => {
-    if (!senasteKann?.svar?.ok) return;
-    void laggExempel(senasteKann.svar.bast.id, senasteKann.tagning);
-  });
-  $('bExport').addEventListener('click', () => { void exportera(); });
-  $('bImport').addEventListener('click', () => $('importFil').click());
   $('importFil').addEventListener('change', () => {
     const fil = $('importFil').files && $('importFil').files[0];
     $('importFil').value = '';
     if (fil) void hamtaInFil(fil);
   });
-  $('cbLjud').addEventListener('change', () => { installningar.ljud = $('cbLjud').checked; sparaInstallningar(); });
-  $('cbVibr').addEventListener('change', () => { installningar.vibration = $('cbVibr').checked; sparaInstallningar(); });
-  $('bStandard').addEventListener('click', () => {
-    if ($('bStandard').dataset.saker !== '1') {
-      $('bStandard').dataset.saker = '1';
-      $('bStandard').textContent = 'Återställ på riktigt';
-      setTimeout(() => {
-        $('bStandard').dataset.saker = '';
-        $('bStandard').textContent = 'Standardvärden';
-      }, 4000);
-      return;
-    }
-    localStorage.removeItem(NYCKEL);
-    installningar = structuredClone(standard);
-    slatare = nyaSlatare(installningar.utjamning);
-    byggReglage();
-    toast('Återställde värdena.');
-  });
-  document.querySelector('nav').addEventListener('click', (ev) => {
-    const knapp = ev.target.closest('button[data-flik]');
-    if (!knapp || lage === 'spelar' || lage === 'ned') return;
-    visaFlik(knapp.dataset.flik);
-    if (knapp.dataset.flik === 'sparade') ritaLista();
-  });
-  $('lista').addEventListener('click', (ev) => { void listaKlick(ev); });
+  addEventListener('resize', () => { if (kurvRitning) kurvRitning.rita(); });
+  addEventListener('keydown', (ev) => { if (ev.key === 'Escape') oppnaMeny(false); });
 }
 
-async function listaKlick(ev) {
-  const artikel = ev.target.closest('article[data-id]');
-  if (!artikel) return;
-  const gest = gester.find((g) => g.id === artikel.dataset.id);
-  if (!gest) return;
-  const knapp = ev.target.closest('button[data-gor]');
-  if (!knapp) return;
-  const gor = knapp.dataset.gor;
-  const vald = gest.exempel.find((e) => e.id === valdExempel.get(gest.id)) || gest.exempel[gest.exempel.length - 1];
-  if (gor === 'valj') {
-    valdExempel.set(gest.id, knapp.dataset.exempel);
-    if (spel?.gestId === gest.id) spel = null;
-    ritaLista();
-    return;
+function tick() {
+  const el = document.getElementById('klocka');
+  if (el && rec?.aktiv) {
+    const t = (performance.now() - rec.start) / 1000;
+    el.textContent = formSek(t);
   }
-  if (gor === 'spela' && vald) {
-    startaSpel(gest, vald);
-    return;
-  }
-  if (gor === 'stoppa-spel') {
-    spel = null;
-    ritaLista();
-    return;
-  }
-  if (gor === 'exempel') {
-    forberedLjud();
-    const p = sensorerPagar ? Promise.resolve(true) : startaSensorer();
-    void p.then((ok) => { if (ok) startaNed('exempel', gest.id); });
-    return;
-  }
-  if (gor === 'byt') {
-    byterNamn = gest.id;
-    ritaLista();
-    const falt = document.querySelector(`article[data-id="${CSS.escape(gest.id)}"] input[data-namn]`);
-    if (falt) falt.focus();
-    return;
-  }
-  if (gor === 'avbryt-namn') {
-    byterNamn = null;
-    ritaLista();
-    return;
-  }
-  if (gor === 'tal-namn') {
-    const falt = artikel.querySelector('input[data-namn]');
-    if (falt) startaTal(falt);
-    return;
-  }
-  if (gor === 'spara-namn') {
-    const falt = artikel.querySelector('input[data-namn]');
-    const namn = falt ? falt.value.trim() : '';
-    if (!namn) return;
-    gest.namn = namn;
-    gest.uppdaterad = new Date().toISOString();
-    try { await sparaGest(gest); }
-    catch (e) { toast('Kunde inte byta namn.'); return; }
-    byterNamn = null;
-    ritaLista();
-    return;
-  }
-  if (gor === 'ta-bort') {
-    if (knapp.dataset.saker !== '1') {
-      knapp.dataset.saker = '1';
-      knapp.textContent = 'Ta bort på riktigt';
-      knapp.classList.add('saker');
-      setTimeout(() => {
-        if (knapp.isConnected) {
-          knapp.dataset.saker = '';
-          knapp.textContent = 'Ta bort';
-          knapp.classList.remove('saker');
-        }
-      }, 4000);
-      return;
-    }
-    try { await taBortGest(gest.id); }
-    catch (e) { toast('Kunde inte ta bort.'); return; }
-    gester = gester.filter((g) => g.id !== gest.id);
-    if (spel?.gestId === gest.id) spel = null;
-    ritaLista();
-    toast('Tog bort rörelsen.');
-  }
+  requestAnimationFrame(tick);
 }
 
 async function start() {
-  const svar = await fetch(new URL('./installningar.json', import.meta.url));
-  if (!svar.ok) throw new Error('installningar');
-  standard = await svar.json();
-  let sparad = null;
-  try { sparad = JSON.parse(localStorage.getItem(NYCKEL) || 'null'); } catch (e) { sparad = null; }
-  installningar = slaIhop(standard, sparad);
-  slatare = nyaSlatare(installningar.utjamning);
-  byggReglage();
-  try {
-    db = await oppnaDb();
-    gester = await idbAlla();
-  } catch (e) {
-    db = null;
-    try { gester = JSON.parse(localStorage.getItem('ww2-rorelse-gester') || '[]'); }
-    catch (err) { gester = []; }
-    toast('Sparar i webbläsaren. IndexedDB gick inte att öppna.');
-  }
-  sortera();
-  ritaLista();
+  const svar = await fetch(new URL('./config.json', import.meta.url));
+  if (!svar.ok) throw new Error('config');
+  config = await svar.json();
+  lager = skapaLager();
+  await lager.oppna();
+  const data = await lager.las();
+  kategorier = data.kategorier || [];
+  inspelningar = data.inspelningar || [];
+  senast = data.senast || null;
+  lyssna();
   koppla();
-  uppdateraKnappar();
+  rita();
+  klar = true;
+  window.__rorelse = {
+    get redo() { return klar; },
+    get lage() { return lage; },
+    get talTillgang() { return talTillgang; },
+    get antalHandelser() { return antalHandelser; },
+    talLage() {
+      return tal ? { lang: tal.lang, continuous: !!tal.continuous, interimResults: !!tal.interimResults } : null;
+    },
+    utkastLage() {
+      if (!utkast) return null;
+      return {
+        langdSek: utkast.langdSek,
+        antal: utkast.antal,
+        avslut: utkast.avslut,
+        svansSek: utkast.svansSek,
+        kategoriId: utkast.kategoriId || null
+      };
+    },
+    bibliotek() {
+      return {
+        kategorier: structuredClone(kategorier),
+        antal: inspelningar.length,
+        inspelningar: inspelningar.map((ins) => ({
+          id: ins.id,
+          kategoriId: ins.kategoriId,
+          val: ins.val,
+          etikett: ins.etikett,
+          antal: ins.antal,
+          langdSek: ins.langdSek,
+          avslut: ins.avslut,
+          svansSek: ins.svansSek
+        })),
+        senast: senast ? structuredClone(senast) : null
+      };
+    },
+    mata(p) {
+      if (!p) return;
+      if (p.rotRate || p.acc || p.accG) {
+        onMotion({
+          rotationRate: p.rotRate || null,
+          acceleration: p.acc || null,
+          accelerationIncludingGravity: p.accG || null
+        });
+      }
+      if (p.vinkel) onOrient({ alpha: p.vinkel[0], beta: p.vinkel[1], gamma: p.vinkel[2] });
+    },
+    horde(text) {
+      if (!tal || typeof tal.onresult !== 'function') return false;
+      tal.onresult({ resultIndex: 0, results: [{ 0: { transcript: text }, isFinal: true, length: 1 }] });
+      return true;
+    }
+  };
   requestAnimationFrame(tick);
 }
 
 start().catch(() => {
-  $('status').textContent = 'Kunde inte läsa inställningarna.';
+  huvud.textContent = 'Kunde inte läsa inställningarna.';
 });

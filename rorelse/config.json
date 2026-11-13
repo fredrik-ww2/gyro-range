@@ -1,0 +1,62 @@
+{
+  "hjalp": "Tal som går att ändra utan att bygga om sidan. svansSek är sekunderna som klipps bort före ordet slut, så att det inte kommer med när telefonen tas tillbaka.",
+  "svansSek": 0.4,
+  "maxSek": 30,
+  "malHz": 50,
+  "tal": {
+    "sprak": "sv-SE",
+    "ord": "slut",
+    "startaOmMs": 300
+  },
+  "grafHojd": 112,
+  "skalaMinst": { "rot": 40, "acc": 1.5, "accG": 2, "vinkel": 12 },
+  "analys": {
+    "antalSkillnader": 5,
+    "minRelativSkillnad": 0.15,
+    "minAbsolut": {
+      "°/s": 8,
+      "°": 3,
+      "m/s²": 0.4,
+      "m/s": 0.15,
+      "s": 0.08,
+      "default": 0.2
+    },
+    "skalaJamforelse": {
+      "°/s": 200,
+      "°": 45,
+      "m/s²": 10,
+      "m/s": 2,
+      "s": 0.5,
+      "default": 1
+    }
+  },
+  "farger": ["#e25b55", "#5cc27a", "#5aa6e8"],
+  "axlar": {
+    "rot": [
+      { "namn": "Vridning", "enhet": "°/s", "summa": "Total vridning", "summaEnhet": "°" },
+      { "namn": "Tippa", "enhet": "°/s", "summa": "Total vridning", "summaEnhet": "°" },
+      { "namn": "Luta", "enhet": "°/s", "summa": "Total vridning", "summaEnhet": "°" }
+    ],
+    "acc": [
+      { "namn": "Höger", "enhet": "m/s²", "summa": "Fartändring", "summaEnhet": "m/s" },
+      { "namn": "Upp", "enhet": "m/s²", "summa": "Fartändring", "summaEnhet": "m/s" },
+      { "namn": "Ut", "enhet": "m/s²", "summa": "Fartändring", "summaEnhet": "m/s" }
+    ],
+    "accG": [
+      { "namn": "Höger", "enhet": "m/s²", "summa": "Fartändring", "summaEnhet": "m/s" },
+      { "namn": "Upp", "enhet": "m/s²", "summa": "Fartändring", "summaEnhet": "m/s" },
+      { "namn": "Ut", "enhet": "m/s²", "summa": "Fartändring", "summaEnhet": "m/s" }
+    ],
+    "vinkel": [
+      { "namn": "Vridning", "enhet": "°" },
+      { "namn": "Tippa", "enhet": "°" },
+      { "namn": "Luta", "enhet": "°" }
+    ]
+  },
+  "storheter": [
+    { "nyckel": "rot", "rubrik": "Gyro", "text": "Hur fort telefonen vrider sig, grader per sekund." },
+    { "nyckel": "acc", "rubrik": "Acceleration", "text": "Utan gravitation, meter per sekundkvadrat." },
+    { "nyckel": "accG", "rubrik": "Acceleration med gravitation", "text": "Tyngden är med. Ligger telefonen still syns den på en axel." },
+    { "nyckel": "vinkel", "rubrik": "Orientering", "text": "Läget jämfört med nollställningen, i grader." }
+  ]
+}

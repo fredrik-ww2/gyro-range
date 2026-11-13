@@ -1,0 +1,231 @@
+{
+  "version": "Labyrint 01",
+  "brade": {
+    "halvBredd": 0.135,
+    "halvDjup": 0.135,
+    "sargBredd": 0.016,
+    "sargHojd": 0.022,
+    "bottenTjock": 0.016,
+    "vaggHojd": 0.016,
+    "vaggTjock": 0.008,
+    "kappaHojd": 0.0016,
+    "kameraFov": 34,
+    "kameraHojd": 0.4,
+    "kameraBak": 0.34,
+    "kameraMarginal": 1.16,
+    "visuellSkala": 0.7,
+    "visuellMax": 0.16,
+    "lutningMjukSek": 0.09,
+    "pixelRatioTak": 1.5,
+    "maxPixlar": 1400000,
+    "kantutjamning": true,
+    "skuggkarta": 1024,
+    "skuggMjuk": true,
+    "exponering": 1.12,
+    "hemisfar": 1.2,
+    "sol": 2.35,
+    "solX": 0.38,
+    "solY": 0.92,
+    "solZ": 0.28,
+    "bord": 1.15
+  },
+  "farger": {
+    "bakgrund": "#16120f",
+    "bjork": "#e7d3ae",
+    "bjorkLjus": "#f3e6cc",
+    "bjorkMork": "#c4a57a",
+    "ek": "#b07a43",
+    "ekMork": "#6d4524",
+    "ekDjup": "#3e2918",
+    "bord": "#2a1d14",
+    "stal": "#8b949e",
+    "stalGlans": "#ffffff",
+    "massing": "#c6a15a",
+    "hal": "#0c0907",
+    "spar": "#5a3a22",
+    "text": "#f6f1e6",
+    "accent": "#e3c88e"
+  },
+  "fysik": {
+    "g": 9.81,
+    "kulaRadie": 0.011,
+    "rullfriktion": 0.048,
+    "viskos": 2.05,
+    "vaggStuds": 0.34,
+    "vaggFriktion": 0.22,
+    "vilaStuds": 0.06,
+    "studsFart": 0.09,
+    "maxFart": 0.72,
+    "halFastna": 0.4,
+    "halDjup": 0.042,
+    "halPaus": 0.85,
+    "halDrag": 1.15,
+    "startSkal": 0.045,
+    "malSkal": 0.42,
+    "malFart": 0.16,
+    "malTid": 0.22,
+    "dtMax": 0.033,
+    "steg": 0.004
+  },
+  "gyro": {
+    "kanslighet": 1,
+    "kanslighetMin": 0.4,
+    "kanslighetMax": 2.2,
+    "dodzon": 1.4,
+    "dodzonMin": 0,
+    "dodzonMax": 6,
+    "maxGrader": 18,
+    "utjamningSek": 0.07,
+    "tangentGrader": 10,
+    "pekGraderPerPixel": 0.09,
+    "pekAtergangSek": 0.16,
+    "invertFram": false,
+    "invertSida": false
+  },
+  "ljud": {
+    "pa": true,
+    "roster": 8,
+    "takDbtp": -1.2,
+    "master": 0.9,
+    "rullVolym": 0.22,
+    "studsVolym": 0.4,
+    "halVolym": 0.55,
+    "malVolym": 0.42,
+    "rullFart": 0.45
+  },
+  "strombrytare": {
+    "ljud": true,
+    "hjalpbanor": true,
+    "skuggor": true
+  },
+  "texter": {
+    "titel": "Kul-labyrint",
+    "ogonbryn": "TRÄ · STÅLKULA",
+    "ingress": "Luta telefonen som en riktig trälåda. Framåt rullar kulan uppåt på brädet, bakåt hemåt, åt sidan åt sidan.",
+    "startGyro": "Starta gyro",
+    "startFinger": "Finger",
+    "hjalpText": "Luta telefonen som lådan. Framåt är uppåt på brädet, bakåt hemåt, åt sidan åt sidan. Dra i brädet eller använd piltangenter om du saknar gyro. Första starten och Platta ut sätter greppet som plan yta.",
+    "nollstall": "Nollställ / Platta ut",
+    "meny": "Meny",
+    "stang": "Stäng",
+    "ljud": "Ljud",
+    "hjalp": "Hjälpbanor",
+    "kanslighet": "Känslighet",
+    "dodzon": "Dödzon",
+    "bana": "Bana",
+    "prestanda": "Prestanda",
+    "lankar": "Länkar",
+    "allaLankar": "Alla länkar",
+    "hal": "Hål",
+    "mal": "Mål",
+    "igen": "Igen",
+    "nasta": "Nästa bana",
+    "ingenSensor": "Ingen rörelsesensor. Dra i brädet, eller använd piltangenter.",
+    "gyroPa": "Gyro på. Platta ut om greppet ändras.",
+    "nekad": "Rörelsesensorn nekades. Spela med finger i stället.",
+    "startFack": "START",
+    "malFack": "MÅL"
+  },
+  "banor": [
+    {
+      "id": "latt",
+      "nummer": 1,
+      "namn": "Lätt",
+      "maxLutning": 6.5,
+      "start": { "x": 0, "z": 0.1, "radie": 0.016 },
+      "mal": { "x": 0, "z": -0.104, "radie": 0.02 },
+      "checkpoint": [],
+      "hal": [
+        { "x": -0.082, "z": 0.078, "radie": 0.014 },
+        { "x": 0.02, "z": 0.012, "radie": 0.008 },
+        { "x": 0.078, "z": -0.082, "radie": 0.013 }
+      ],
+      "vaggar": [
+        { "x": -0.05, "z": 0.028, "b": 0.19, "d": 0.008 },
+        { "x": 0.05, "z": -0.038, "b": 0.19, "d": 0.008 }
+      ],
+      "spar": [
+        { "x": 0, "z": 0.1, "n": 1 },
+        { "x": 0.09, "z": 0.1, "n": 2 },
+        { "x": 0.102, "z": 0.082 },
+        { "x": 0.102, "z": 0.002, "n": 3 },
+        { "x": 0.084, "z": -0.012 },
+        { "x": -0.084, "z": -0.012, "n": 4 },
+        { "x": -0.102, "z": -0.028 },
+        { "x": -0.102, "z": -0.084, "n": 5 },
+        { "x": -0.078, "z": -0.1 },
+        { "x": 0, "z": -0.104, "n": 6 }
+      ]
+    },
+    {
+      "id": "mellan",
+      "nummer": 2,
+      "namn": "Mellan",
+      "maxLutning": 7.5,
+      "start": { "x": -0.084, "z": 0.1, "radie": 0.015 },
+      "mal": { "x": 0, "z": -0.106, "radie": 0.018 },
+      "checkpoint": [
+        { "x": 0.1, "z": -0.04, "radie": 0.016 }
+      ],
+      "hal": [
+        { "x": 0.082, "z": 0.092, "radie": 0.013 },
+        { "x": 0.04, "z": 0.036, "radie": 0.008 },
+        { "x": -0.086, "z": -0.04, "radie": 0.012 },
+        { "x": -0.08, "z": -0.098, "radie": 0.011 },
+        { "x": 0.084, "z": -0.096, "radie": 0.011 }
+      ],
+      "vaggar": [
+        { "x": 0.048, "z": 0.05, "b": 0.194, "d": 0.008 },
+        { "x": -0.048, "z": -0.012, "b": 0.194, "d": 0.008 },
+        { "x": -0.086, "z": -0.07, "b": 0.118, "d": 0.008 },
+        { "x": 0.086, "z": -0.07, "b": 0.118, "d": 0.008 }
+      ],
+      "spar": [
+        { "x": -0.084, "z": 0.1, "n": 1 },
+        { "x": -0.1, "z": 0.09 },
+        { "x": -0.1, "z": 0.02, "n": 2 },
+        { "x": 0.098, "z": 0.008, "n": 3 },
+        { "x": 0.1, "z": -0.04, "n": 4 },
+        { "x": 0.02, "z": -0.04, "n": 5 },
+        { "x": 0, "z": -0.052 },
+        { "x": 0, "z": -0.106, "n": 6 }
+      ]
+    },
+    {
+      "id": "svar",
+      "nummer": 3,
+      "namn": "Svår",
+      "maxLutning": 8,
+      "start": { "x": 0.07, "z": 0.104, "radie": 0.014 },
+      "mal": { "x": 0.028, "z": -0.104, "radie": 0.016 },
+      "checkpoint": [
+        { "x": -0.1, "z": 0.03, "radie": 0.014 },
+        { "x": 0.1, "z": -0.032, "radie": 0.014 }
+      ],
+      "hal": [
+        { "x": 0.045, "z": 0.078, "radie": 0.008 },
+        { "x": 0.09, "z": 0.124, "radie": 0.009 },
+        { "x": -0.02, "z": 0.054, "radie": 0.007 },
+        { "x": 0.04, "z": -0.052, "radie": 0.008 },
+        { "x": 0.112, "z": -0.05, "radie": 0.009 },
+        { "x": -0.07, "z": -0.122, "radie": 0.01 }
+      ],
+      "vaggar": [
+        { "x": 0.038, "z": 0.062, "b": 0.214, "d": 0.008 },
+        { "x": -0.038, "z": -0.002, "b": 0.214, "d": 0.008 },
+        { "x": 0.038, "z": -0.066, "b": 0.214, "d": 0.008 }
+      ],
+      "spar": [
+        { "x": 0.07, "z": 0.104, "n": 1 },
+        { "x": -0.02, "z": 0.104, "n": 2 },
+        { "x": -0.098, "z": 0.092 },
+        { "x": -0.1, "z": 0.03, "n": 3 },
+        { "x": 0.098, "z": 0.028, "n": 4 },
+        { "x": 0.1, "z": -0.028, "n": 5 },
+        { "x": -0.098, "z": -0.028, "n": 6 },
+        { "x": -0.1, "z": -0.09, "n": 7 },
+        { "x": 0.028, "z": -0.104, "n": 8 }
+      ]
+    }
+  ]
+}

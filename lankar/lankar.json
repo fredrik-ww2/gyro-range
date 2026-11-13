@@ -94,6 +94,11 @@
           "sokvag": "vagn-test/"
         },
         {
+          "namn": "Kul-labyrint",
+          "text": "Luta telefonen och rulla stålkulan genom trälabyrinten.",
+          "sokvag": "labyrint/"
+        },
+        {
           "namn": "Rörelsetest",
           "text": "Mät gyro, acceleration och vibration.",
           "sokvag": "rorelse-test/"

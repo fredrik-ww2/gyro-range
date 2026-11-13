@@ -17,6 +17,7 @@ const AXLAR = ['styra', 'torn', 'eldror'];
 
 export const STANDARD = {
   visaMat: false,
+  ljud: true,
   axlar: {
     styra: {dodzon: 2.5, kanslighet: 1, full: 36, utjamning: 0.22, invertera: false},
     torn: {dodzon: 3, kanslighet: 1, full: 30, utjamning: 0.16, invertera: false},
@@ -43,6 +44,7 @@ export function normalStyr(raw) {
   const t = raw?.trosklar || {};
   return {
     visaMat: !!(raw?.visaMat),
+    ljud: raw?.ljud !== false,
     axlar,
     trosklar: {
       broms: klamp(Number.isFinite(+t.broms) ? +t.broms : STANDARD.trosklar.broms, 1, 40),
@@ -194,5 +196,6 @@ export function sjalvtest() {
   stegaVagn(h, pivot, 0.2);
   krav('högersväng bär åt höger', h.x > 0 && h.yaw < 0);
   krav('känslighet kläms', normalAxel({kanslighet: 9}, STANDARD.axlar.styra).kanslighet === 3);
+  krav('ljud är på som standard', normalStyr({}).ljud === true && normalStyr({ljud: false}).ljud === false);
   return fel;
 }

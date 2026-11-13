@@ -16,20 +16,44 @@ h1{margin:6px 0 6px;font-size:30px;font-weight:700;letter-spacing:-.03em}
 #startKort p{margin:0 0 14px;line-height:1.4;color:#d5dece;font-size:16px}
 #starta{width:100%;min-height:72px;border:0;border-radius:20px;background:var(--lime);color:#19221a;font-size:30px;font-weight:800}
 #startKort small{display:block;margin-top:10px;color:#b7c4bb;font-size:13px;line-height:1.35}
-#hint{position:absolute;z-index:4;left:90px;right:120px;bottom:max(8px,env(safe-area-inset-bottom));text-align:center;color:#f4f7ee;text-shadow:0 1px 3px #000;font-size:14px;pointer-events:none}
-#gas{position:absolute;z-index:5;left:max(8px,env(safe-area-inset-left));top:calc(max(8px,env(safe-area-inset-top)) + 30px);bottom:max(8px,env(safe-area-inset-bottom));width:74px;display:flex;flex-direction:column;align-items:center;gap:6px}
-#gasFart{font-size:18px;font-weight:800;color:#fff;text-shadow:0 1px 3px #000;min-height:22px}
+#hint{position:absolute;z-index:4;left:188px;right:124px;bottom:max(44px,env(safe-area-inset-bottom));text-align:center;color:#f4f7ee;text-shadow:0 1px 3px #000;font-size:14px;pointer-events:none}
+#spakar{position:absolute;z-index:5;left:max(8px,env(safe-area-inset-left));top:calc(max(8px,env(safe-area-inset-top)) + 30px);bottom:max(8px,env(safe-area-inset-bottom));display:flex;gap:8px;align-items:stretch}
+#vaxel,#gas{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:0}
+#vaxel{width:70px}
+#gas{width:74px}
+#vaxelLage,#gasFart{font-size:18px;font-weight:800;color:#fff;text-shadow:0 1px 3px #000;min-height:22px}
+#vaxelLage{color:var(--sand)}
 #gasFart small{font-size:11px;font-weight:700;color:var(--sand)}
-#gasSpar{position:relative;flex:1;width:58px;border-radius:29px;background:#101612cc;border:2px solid #ffffff2e;touch-action:none;box-shadow:inset 0 0 0 8px #1a2420}
-.gasNamn{position:absolute;left:0;right:0;text-align:center;font-size:11px;font-weight:800;letter-spacing:.04em;color:#d5dece;pointer-events:none}
+#vaxelRad{position:relative;flex:1;width:100%;display:flex;align-items:stretch;gap:3px;min-height:0}
+#vaxelNamn{position:relative;width:14px;flex:none}
+#vaxelNamn b{position:absolute;left:0;font-size:12px;line-height:1;font-weight:800;color:#b7ad9e;transform:translateY(50%)}
+#vaxelNamn b.nu{color:var(--sand)}
+#vaxelSpar{position:relative;flex:1;min-height:0;border-radius:14px;background:linear-gradient(#2c261e,#12100d);border:2px solid #8d8476;touch-action:none;box-shadow:inset 0 0 0 5px #1a1713,inset 0 8px 12px #0008}
+#vaxelSpar::before{content:"";position:absolute;top:7px;bottom:7px;left:50%;width:10px;margin-left:-5px;border-radius:6px;background:#0d0b09;box-shadow:inset 0 2px 5px #000,0 1px 0 #3d362d;pointer-events:none}
+#vaxelHack,#gasHack{position:absolute;inset:0;pointer-events:none}
+#vaxelHack i{position:absolute;left:7px;right:7px;height:2px;margin-bottom:-1px;background:#6a6156;border-radius:1px}
+#vaxelHack i.nu{background:var(--sand);height:3px}
+#vaxelHack i.ande{height:4px;margin-bottom:-2px;background:#d9c7a2}
+#vaxelHack i.ande.nu{background:var(--lime)}
+#vaxelKnopp{position:absolute;z-index:2;left:50%;width:34px;height:26px;margin-left:-17px;border-radius:8px;background:linear-gradient(#e6dfd0,#9a9284 42%,#3f3a33);border:1px solid #241f1a;box-shadow:0 3px 0 #16130f,0 7px 8px #0007;pointer-events:none}
+#vaxelKnopp::after{content:"";position:absolute;left:7px;right:7px;top:5px;height:3px;border-radius:2px;background:#f3ecdeaa}
+#vaxelText,#gasText{font-size:13px;font-weight:750;color:#fff;text-shadow:0 1px 2px #000}
+#gasSpar{position:relative;flex:1;width:58px;min-height:0;border-radius:29px;background:#101612cc;border:2px solid #ffffff2e;touch-action:none;box-shadow:inset 0 0 0 8px #1a2420}
+#gasSpar.tryck,#vaxelSpar.tryck{border-color:var(--sand)}
+.gasNamn{position:absolute;left:0;right:0;text-align:center;font-size:11px;font-weight:800;letter-spacing:.04em;color:#d5dece;pointer-events:none;z-index:1}
 .gasNamn.fram{top:8px}
-.gasNamn.back{bottom:8px;color:#e7b1a4}
-#gasNoll{position:absolute;left:8px;right:8px;height:2px;background:var(--sand);pointer-events:none}
+.gasNamn.tom{bottom:8px;color:#e7d7b1}
+#gasHack i{position:absolute;left:14px;right:14px;height:2px;margin-bottom:-1px;background:#ffffff38;border-radius:1px}
+#gasHack i.ande{left:10px;right:10px;height:4px;margin-bottom:-2px;background:var(--sand)}
+#gasHack i.nu{background:var(--lime);height:3px}
 #gasFyll{position:absolute;left:16px;right:16px;border-radius:8px;pointer-events:none}
 #gasFyll.fram{background:#e0f1a488}
 #gasFyll.back{background:#e07a6288}
-#gasKnopp{position:absolute;left:50%;width:48px;height:34px;margin-left:-24px;border-radius:17px;background:var(--lime);box-shadow:0 2px 8px #0008;pointer-events:none}
-#gasText{font-size:13px;font-weight:750;color:#fff;text-shadow:0 1px 2px #000}
+#gasFyll.tom{background:#e7d7b144}
+#gasKnopp{position:absolute;z-index:2;left:50%;width:48px;height:34px;margin-left:-24px;border-radius:17px;background:linear-gradient(#f4f8e4,#c5d48a 46%,#8ea05a);box-shadow:0 3px 0 #3d4a28,0 6px 8px #0008;pointer-events:none}
+#vaxelKnopp.hack,#gasKnopp.hack{animation:spakHack .11s ease-out}
+@keyframes spakHack{0%{transform:translateY(calc(var(--kick) * -.45))}32%{transform:translateY(var(--kick))}60%{transform:translateY(calc(var(--kick) * -.2))}100%{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){#vaxelKnopp.hack,#gasKnopp.hack{animation:none}}
 #topp{position:absolute;z-index:6;top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));display:flex;gap:8px}
 #topp button{min-height:48px;padding:8px 14px;font-size:16px;font-weight:750}
 #karta{position:absolute;z-index:5;right:max(10px,env(safe-area-inset-right));bottom:calc(max(10px,env(safe-area-inset-bottom)) + 118px);width:112px;height:112px;border-radius:16px;border:1px solid #ffffff30;background:#121816cc;pointer-events:none}
@@ -78,6 +102,8 @@ h1{margin:6px 0 6px;font-size:30px;font-weight:700;letter-spacing:-.03em}
   #eld b{font-size:22px}
   #karta{width:96px;height:96px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 102px)}
   #kartaText{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 200px);width:120px}
-  #gas{width:66px}
-  #gasSpar{width:52px}
+  #spakar{gap:6px}
+  #gas{width:62px}
+  #vaxel{width:60px}
+  #gasSpar{width:48px}
 }

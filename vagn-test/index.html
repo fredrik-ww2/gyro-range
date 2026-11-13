@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1a221c">
 <link rel="icon" href="data:,">
 <title>Vagntest</title>
-<link rel="stylesheet" href="./stil.css">
+<link rel="stylesheet" href="./stil.css?v=2">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
@@ -21,25 +21,35 @@
 </div>
 <p id="besked" hidden></p>
 <p id="flygtid" hidden></p>
-<div id="version">Vagntest 01</div>
+<div id="version">Vagntest 02</div>
 <section id="startKort">
 <span class="ogonbryn">NORMANDIE · SKYTTESIKTE</span>
 <h1>Håll telefonen på sidan</h1>
-<p id="startText">Som en ratt. Gasen till vänster stannar där du släpper. Luta för att svänga, vrid för tornet, tippa ovansidan för eldröret.</p>
+<p id="startText">Som en ratt. Växelspaken hackar mellan back, neutral och fyra växlar. Gasen klickar i grova steg och stannar där du släpper. Luta för att svänga, vrid för tornet, tippa ovansidan för eldröret.</p>
 <button id="starta" type="button" disabled>Laddar…</button>
-<small>På en dator: A och D svänger, pilarna siktar, dra i gasen.</small>
+<small>På en dator: A och D svänger, pilarna siktar, dra i växeln och gasen.</small>
 </section>
 <p id="hint" hidden>Ingen rörelsesensor. A och D svänger, pilarna siktar.</p>
-<div id="gas" hidden>
+<div id="spakar" hidden>
+<div id="vaxel">
+<b id="vaxelLage">N</b>
+<div id="vaxelRad">
+<div id="vaxelNamn"></div>
+<div id="vaxelSpar" role="slider" aria-label="Växelspak" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="5" aria-valuenow="1" aria-valuetext="Neutral"></div>
+</div>
+<small id="vaxelText">Neutral</small>
+</div>
+<div id="gas">
 <b id="gasFart">0</b>
-<div id="gasSpar">
-<span class="gasNamn fram">Fram</span>
-<span class="gasNamn back">Back</span>
-<div id="gasNoll"></div>
+<div id="gasSpar" role="slider" aria-label="Gasreglage" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0%">
+<span class="gasNamn fram">Full</span>
+<span class="gasNamn tom">Tom</span>
+<div id="gasHack"></div>
 <div id="gasFyll"></div>
 <div id="gasKnopp"></div>
 </div>
 <small id="gasText">0%</small>
+</div>
 </div>
 <div id="topp" hidden>
 <button id="noll" type="button">Nollställ</button>
@@ -63,9 +73,10 @@
 <label class="reglage">Backande band från <span data-vis="backBand"></span><input data-troskel="backBand" type="range" min="8" max="60" step="1"></label>
 </details>
 <label class="check"><input id="visaMat" type="checkbox"> Visa mätvärden</label>
+<label class="check"><input id="ljudPa" type="checkbox" checked> Mekanikljud</label>
 <button id="standard" type="button">Standard</button>
 </section>
-<script type="module" src="./spel.js"></script>
+<script type="module" src="./spel.js?v=2"></script>
 <script>
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});

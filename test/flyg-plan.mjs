@@ -122,23 +122,23 @@ try {
   const tillbaka = await sida.evaluate(() => ({
     namn: document.getElementById('aircraftName').textContent,
     lagrad: localStorage.getItem('gyro-flyg-valt-plan'),
-    kvat: !!window.flygTest.fm.kvaternion,
-    tips: document.getElementById('fartTips').textContent
+    kvat: !!window.flygTest.fm.kvaternion
   }));
-  if (!/Typhoon/.test(tillbaka.namn) || tillbaka.lagrad !== 'typhoon' || tillbaka.kvat) fel.push('tillbaka till typhoon ' + JSON.stringify(tillbaka));
+  if (!/Typhoon/.test(tillbaka.namn) || tillbaka.lagrad !== 'typhoon' || !tillbaka.kvat) fel.push('tillbaka till typhoon ' + JSON.stringify(tillbaka));
   await sida.click('#closeSettings');
 
   await sida.click('#start');
-  await sida.waitForSelector('#vanster:not([hidden])');
+  await sida.waitForSelector('#jaktpanel:not([hidden])');
   const instrument = await sida.evaluate(() => {
-    const box = (id) => {
-      const el = document.getElementById(id);
-      const r = el.getBoundingClientRect();
-      return { w: r.width, h: r.height, text: el.textContent };
+    const el = document.getElementById('jaktpanel');
+    const r = el.getBoundingClientRect();
+    const gas = document.getElementById('gasreglage').getBoundingClientRect();
+    return {
+      w: r.width, h: r.height, bottom: r.bottom, gasTop: gas.top,
+      enhet: el.dataset.enhet, spak: !!document.getElementById('spak'), text: !!document.getElementById('instrument')
     };
-    return { fart: box('fartTal'), hojd: box('hojdTal'), gas: !document.getElementById('gasreglage').hidden, spak: box('spak') };
   });
-  if (!(instrument.fart.w > 8 && instrument.hojd.w > 8 && instrument.gas && instrument.spak.w > 40)) fel.push('instrument ' + JSON.stringify(instrument));
+  if (!(instrument.w > 200 && instrument.h > 70 && instrument.bottom <= instrument.gasTop + 2 && instrument.enhet === 'km/h,m' && !instrument.spak && !instrument.text)) fel.push('instrument ' + JSON.stringify(instrument));
 
   if (konsol.length) fel.push('konsol: ' + konsol.slice(0, 6).join(' | '));
   if (trasiga.length) fel.push('trasiga resurser: ' + trasiga.slice(0, 8).join(' | '));

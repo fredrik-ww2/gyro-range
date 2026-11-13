@@ -205,6 +205,23 @@ export class KvantFlyg {
     const pitch = Number.isFinite(input?.pitch) ? input.pitch : 0;
     const roll = Number.isFinite(input?.roll) ? input.roll : 0;
     this.de = clamp(pitch / A.spak_max_pitch, -1, 1);
+    // Zon 2: fullt skevroder. Planets tröghet och fart bestämmer hur fort det rollar.
+    if (input?.fullSkev) {
+      const da = Number.isFinite(input.da) ? input.da : Math.sign(roll || 1);
+      this.da = clamp(da, -1, 1);
+      return { de: this.de, da: this.da };
+    }
+    // Zon 1: håll önskad bank. Dämpningen sitter i bankKd och i cl_p.
+    if (input?.hall) {
+      const kp = Number.isFinite(input.bankKp) ? input.bankKp : (A.bank_kp ?? 1.4);
+      const kd = Number.isFinite(input.bankKd) ? input.bankKd : (A.bank_kd ?? 0.45);
+      const max = Number.isFinite(input.daMax) ? input.daMax : (A.bank_da_max ?? 0.75);
+      let fel = (Number.isFinite(input.bankMal) ? input.bankMal : 0) - this.bank();
+      while (fel > Math.PI) fel -= 2 * Math.PI;
+      while (fel < -Math.PI) fel += 2 * Math.PI;
+      this.da = clamp(kp * fel - kd * this.rollRate, -max, max);
+      return { de: this.de, da: this.da };
+    }
     this.da = clamp(roll / A.spak_max_roll, -1, 1);
     return { de: this.de, da: this.da };
   }
@@ -293,19 +310,27 @@ export class KvantFlyg {
     const pq = this.pitchRate;
     const pr = this.rollRate;
     const py = this.yawRate;
-    const niva = A.niva_k > 0 && Math.abs(de) < A.niva_dodzon && Math.abs(da) < A.niva_dodzon;
+    const spakLugnt = Math.abs(de) < A.niva_dodzon;
+    const rollLugnt = Math.abs(da) < A.niva_dodzon;
+    const haller = !!(input && (input.hall || input.fullSkev));
+    // Höjdtrimmen ska vara kvar i en hållen sväng. Skevrodret är inte noll där,
+    // men höjdrodret är det, och nosen får inte vika av bara för att vingen lutar.
+    const pitchNiva = A.niva_k > 0 && spakLugnt && (rollLugnt || !!(input && input.hall));
     let aRef = a0;
-    if (niva) {
+    if (pitchNiva) {
       const cl1 = (m * g) / Math.max(1, q * A.vingyta_m2);
       aRef = clamp(a0 + cl1 / A.cl_alfa_per_rad, a0, A.alfa_niva_max);
     }
     let Cm = A.cm_hojd * de - A.cm_alfa * (alpha - aRef) - A.cm_q * pq * c / (2 * Vref);
-    if (niva) Cm += A.cm_niva * A.niva_k * (aRef - alpha);
+    if (pitchNiva) Cm += A.cm_niva * A.niva_k * (aRef - alpha);
     Cm += A.koppling_roll_tipp * pr * da;
     if (this._stallLas) Cm -= A.cm_stall * (1 + Math.max(0, alpha - ak) * A.stall_nos_faktor);
     let Clm = A.cl_skev * da - A.cl_p * pr * b / (2 * Vref) + A.cl_r * py * b / (2 * Vref) - A.cl_beta * beta;
     let Cn = A.cn_sida * dr - A.cn_beta * beta - A.cn_r * py * b / (2 * Vref) - A.cn_skev * da + A.cn_p * pr * b / (2 * Vref);
-    if (niva) Clm += -A.cl_niva * A.niva_k * this.bank();
+    // Bankhållning och full roll sköter skevrodret själva. Den gamla nivelleringen
+    // mot noll skulle annars slåss mot en hållen sväng.
+    const rollNiva = A.niva_k > 0 && spakLugnt && rollLugnt && !haller;
+    if (rollNiva) Clm += -A.cl_niva * A.niva_k * this.bank();
     const bas = q * A.vingyta_m2;
     this.pitchRate = clamp(pq + bas * c * Cm / A.troget_tipp * dt, -A.max_tipp_rad_s, A.max_tipp_rad_s);
     this.rollRate = clamp(pr + bas * b * Clm / A.troget_roll * dt, -A.max_roll_rad_s, A.max_roll_rad_s);

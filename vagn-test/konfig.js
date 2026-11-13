@@ -1,7 +1,7 @@
 // Finjustera hack, spärrar och ljudnivåer här.
 // Andelar är av avståndet mellan två lägen om inget annat står.
 
-import {BACKGAS} from './styr.js?v=3';
+import {BACKGAS} from './styr.js?v=4';
 
 export const MEKANIK = {
   // Växelspak, R–N–1–2–3–4. Högre bryt = trögare att lämna läget.

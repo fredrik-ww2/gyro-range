@@ -1,11 +1,103 @@
-// Mekaniska växellåds- och gashack utan ljudfiler.
-// AudioContext skapas först vid en beröring. Högst 8 röster, och varje nod kopplas loss.
+// Mekaniska växellåds- och gashack, plus avkodade kanon-, motor- och bandklipp.
+// AudioContext skapas först vid en beröring. Högst 8 engångsröster, och varje nod kopplas loss.
+// Loopar (motor, band, torn, eldrör) är en egen liten grupp som städas när de tystnar.
 
-import {LJUD} from './konfig.js?v=3';
+import {LJUD} from './konfig.js?v=4';
 
 export {LJUD};
 
 const TAK = 10 ** (LJUD.takDbtp / 20);
+const BAS = new URL('./ljud/', import.meta.url);
+
+export const KLIPP = [
+  'uppladdad_skott_serie.mp3',
+  'uppladdad_explosion_stor.mp3',
+  'uppladdad_explosion_b.mp3',
+  'uppladdad_kanon_eko.mp3',
+  'uppladdad_kanon_eko_b.mp3',
+  'uppladdad_traff_kort.mp3',
+  'uppladdad_mekanik_kort.mp3',
+  'uppladdad_torn_surr.mp3',
+  'uppladdad_eldror_surr.mp3',
+  'uppladdad_band_surr.mp3',
+  'uppladdad_motor_loop.mp3',
+  'ww2_kanon_75.mp3',
+  'ww2_kanon_88.mp3',
+  'ww2_kanon_fjarran.mp3',
+  'ww2_explosion_mark.mp3',
+  'ww2_explosion_traff.mp3',
+  'ww2_motor_tomgang.mp3',
+  'ww2_motor_marsch.mp3',
+  'ww2_band_hog.mp3',
+  'ww2_band_gnissel.mp3'
+];
+
+const KLANG = {
+  'uppladdad_torn_surr.mp3': {type: 'lowpass', q: 0.8, hz: 700},
+  'uppladdad_eldror_surr.mp3': {type: 'bandpass', q: 1.8, hz: 2200},
+  'uppladdad_motor_loop.mp3': {type: 'lowpass', q: 0.65, hz: 900},
+  'ww2_motor_tomgang.mp3': {type: 'lowpass', q: 0.5, hz: 800},
+  'ww2_motor_marsch.mp3': {type: 'lowpass', q: 0.6, hz: 1100},
+  'uppladdad_band_surr.mp3': {type: 'lowpass', q: 0.75, hz: 1400},
+  'ww2_band_hog.mp3': {type: 'bandpass', q: 0.7, hz: 1800},
+  'ww2_band_gnissel.mp3': {type: 'bandpass', q: 2.1, hz: 2200}
+};
+
+export function klangFor(fil) {
+  return KLANG[fil] || {type: 'lowpass', q: 0.7, hz: 1400};
+}
+
+// 30 m full styrka, 250 m märkbart svagare, 700 m dovt dån.
+export function avstandDamp(meter) {
+  const m = Number(meter);
+  const d = Number.isFinite(m) ? Math.max(0, m) : 0;
+  if (d <= 30) return {gain: 1, hz: 12000};
+  const t = Math.min(1.6, Math.log(d / 30) / Math.log(700 / 30));
+  const gain = Math.max(0.05, Math.pow(0.2, t));
+  const hz = Math.max(240, 12000 * Math.pow(0.03, t));
+  return {gain, hz};
+}
+
+// Tomgång 500, topp 2400. Neutral rusar fritt. Låg växel ger högre varv vid samma gas.
+export function motorVarv(gas, kvot, fartMs) {
+  const g = Math.min(1, Math.max(0, +gas || 0));
+  const k = Math.min(1, Math.max(0, Math.abs(+kvot || 0)));
+  const v = Math.min(20, Math.max(0, Math.abs(+fartMs || 0)));
+  const TOM = 500;
+  const TOPP = 2400;
+  if (k < 0.04) return TOM + g * 1000;
+  const last = Math.min(1, v / (12 * k));
+  const bas = last * (0.25 + 0.55 * g) + g * (0.42 + 0.38 * (1 - k));
+  return Math.min(TOPP, Math.max(TOM, TOM + (TOPP - TOM) * Math.min(1, bas)));
+}
+
+export function motorMix(rpm, gas, fartMs, bandMs) {
+  const g = Math.min(1, Math.max(0, +gas || 0));
+  const n = Math.min(1, Math.max(0, ((+rpm || 500) - 500) / 1900));
+  const v = Math.min(1, Math.max(0, Math.abs(+bandMs || fartMs || 0) / 8));
+  return {
+    tomgang: 0.46 * (1 - n * 0.9),
+    motor: 0.18 + n * 0.28,
+    marsch: Math.max(0, n - 0.3) * 0.55,
+    band: v * 0.42,
+    bandHog: Math.max(0, v - 0.45) * 0.4,
+    rate: 0.8 + n * 0.58,
+    hz: 380 + n * 2400 + g * 400
+  };
+}
+
+export function tornLjud(u) {
+  return Math.abs(+u || 0) > 0.025;
+}
+
+export function eldrorLjud(u, eld, min, max) {
+  const x = +u || 0;
+  if (!(Math.abs(x) > 0.025)) return false;
+  const e = +eld || 0;
+  if (e <= (+min || 0) + 0.004 && x < 0) return false;
+  if (e >= (+max || 0) - 0.004 && x > 0) return false;
+  return true;
+}
 
 export function begransaKurva() {
   const n = 2048;
@@ -57,6 +149,15 @@ export function kansla(pulser) {
   }
 }
 
+const hamtat = new Map();
+
+function forhamta() {
+  for (const fil of KLIPP) {
+    if (hamtat.has(fil)) continue;
+    hamtat.set(fil, fetch(new URL(fil, BAS)).then(r => r.ok ? r.arrayBuffer() : null).catch(() => null));
+  }
+}
+
 export function skapaMekanikLjud() {
   let ctx = null;
   let master = null;
@@ -65,6 +166,7 @@ export function skapaMekanikLjud() {
   let pa = true;
   let upplast = false;
   let tystLovande = null;
+  let laddLovande = null;
   let skapade = 0;
   let slappta = 0;
   let vaxelAntal = 0;
@@ -72,8 +174,12 @@ export function skapaMekanikLjud() {
   let stoppAntal = 0;
   let klickAntal = 0;
   let laddAntal = 0;
+  let nedAntal = 0;
+  let rpm = 500;
   const aktiva = [];
   const handelser = [];
+  const buffertar = new Map();
+  const loopar = new Map();
 
   function brusBuffer() {
     if (brus) return brus;
@@ -139,21 +245,47 @@ export function skapaMekanikLjud() {
     } catch { /* kontexten tog inte emot tystnaden */ }
   }
 
+  async function laddaAlla() {
+    if (!ctx) return 0;
+    if (buffertar.size === KLIPP.length) return buffertar.size;
+    if (laddLovande) return laddLovande;
+    if (!hamtat.size) forhamta();
+    laddLovande = (async () => {
+      await Promise.all(KLIPP.map(async fil => {
+        if (buffertar.has(fil)) return;
+        try {
+          const raw = await hamtat.get(fil);
+          if (!raw) return;
+          const buf = await ctx.decodeAudioData(raw.slice(0));
+          if (buf) buffertar.set(fil, buf);
+        } catch { /* ogiltig eller saknad */ }
+      }));
+      laddLovande = null;
+      return buffertar.size;
+    })();
+    return laddLovande;
+  }
+
   function oppna() {
     upplast = true;
     try {
       if (!seTill()) return Promise.resolve(false);
       lasUppMobil();
-      if (ctx.state === 'suspended') return ctx.resume().then(() => true).catch(() => false);
-      return Promise.resolve(true);
+      const resume = ctx.state === 'suspended' ? ctx.resume().catch(() => {}) : Promise.resolve();
+      return resume.then(() => laddaAlla()).then(() => true).catch(() => true);
     } catch {
       return Promise.resolve(false);
     }
   }
 
+  function tystAllaLoopar() {
+    for (const fil of [...loopar.keys()]) stopLoop(fil);
+  }
+
   function satt(nasta) {
     pa = !!nasta;
     if (master) master.gain.value = pa ? LJUD.master : 0;
+    if (!pa) tystAllaLoopar();
   }
 
   function notera(typ, n) {
@@ -265,6 +397,32 @@ export function skapaMekanikLjud() {
     o.stop(t + dur + 0.03);
   }
 
+  function kopplaBuffer(api, fil, tid, volym, rate, hz) {
+    const buf = buffertar.get(fil);
+    if (!buf || !(volym > 0.001)) return 0;
+    const src = api.nod(api.ctx.createBufferSource());
+    src.buffer = buf;
+    src.playbackRate.value = rate || 1;
+    let sist = src;
+    if (hz > 0) {
+      const f = api.nod(api.ctx.createBiquadFilter());
+      f.type = 'lowpass';
+      f.frequency.value = Math.max(80, hz);
+      f.Q.value = 0.7;
+      src.connect(f);
+      sist = f;
+    }
+    const g = api.nod(api.ctx.createGain());
+    g.gain.value = Math.min(1, volym);
+    sist.connect(g);
+    g.connect(api.dest);
+    const start = Math.max(tid, api.ctx.currentTime);
+    src.start(start);
+    const dur = buf.duration / (rate || 1);
+    src.stop(start + dur + 0.05);
+    return dur;
+  }
+
   function vaxla(antal) {
     const n = Math.max(1, Math.min(6, antal | 0));
     return spela('vaxel', n, api => {
@@ -314,7 +472,8 @@ export function skapaMekanikLjud() {
       ton(api, lucka, 'triangle', 220, 62, 0.08, 0.24 * ld);
       klang(api, lucka, 128, 44, 0.06, 0.18 * ld);
       ton(api, lucka + 0.012, 'sine', 860, 230, 0.04, 0.08 * ld);
-      return 0.62;
+      kopplaBuffer(api, 'uppladdad_mekanik_kort.mp3', lucka, 0.7, 1, 0);
+      return 1.15;
     });
     return ok;
   }
@@ -329,6 +488,149 @@ export function skapaMekanikLjud() {
       brusBit(api, t, 0.028, 480, 0.7, 0.09 * k, 0.65);
       return 0.2;
     });
+  }
+
+  function kanon() {
+    return spela('kanon', 1, api => {
+      const t = api.ctx.currentTime + 0.008;
+      kopplaBuffer(api, 'ww2_kanon_75.mp3', t, 0.92, 1, 0);
+      kopplaBuffer(api, 'uppladdad_kanon_eko.mp3', t + 0.03, 0.5, 0.98, 4200);
+      kopplaBuffer(api, 'uppladdad_mekanik_kort.mp3', t + 0.5, 0.78, 1, 0);
+      return 3.7;
+    });
+  }
+
+  function nedslag(avstand) {
+    const damp = avstandDamp(avstand);
+    const stor = (nedAntal++ % 2) ? 'uppladdad_explosion_b.mp3' : 'uppladdad_explosion_stor.mp3';
+    return spela('nedslag', 1, api => {
+      const t = api.ctx.currentTime + 0.005;
+      kopplaBuffer(api, 'ww2_explosion_mark.mp3', t, 0.9 * damp.gain, 1, damp.hz);
+      kopplaBuffer(api, stor, t + 0.04, 0.72 * damp.gain, 1, Math.max(220, damp.hz * 0.85));
+      return 3.8;
+    });
+  }
+
+  function traff(avstand) {
+    const damp = avstandDamp(avstand);
+    return spela('traff', 1, api => {
+      const t = api.ctx.currentTime + 0.004;
+      kopplaBuffer(api, 'uppladdad_traff_kort.mp3', t, 0.95 * damp.gain, 1, damp.hz);
+      kopplaBuffer(api, 'ww2_explosion_traff.mp3', t + 0.02, 0.88 * damp.gain, 1, damp.hz);
+      return 3.6;
+    });
+  }
+
+  function fiendeSkott(avstand) {
+    const d = Math.max(0, +avstand || 0);
+    const damp = avstandDamp(d);
+    const fil = d > 380 ? 'ww2_kanon_fjarran.mp3' : 'ww2_kanon_88.mp3';
+    return spela('fiende', 1, api => {
+      const t = api.ctx.currentTime + 0.004;
+      kopplaBuffer(api, fil, t, 0.95 * damp.gain, 1, damp.hz);
+      kopplaBuffer(api, 'uppladdad_kanon_eko_b.mp3', t + 0.05, 0.48 * damp.gain, 1, Math.max(200, damp.hz * 0.7));
+      if (d > 300) kopplaBuffer(api, 'uppladdad_skott_serie.mp3', t + 0.1, 0.32 * damp.gain, 1, Math.max(180, damp.hz * 0.5));
+      return 3.8;
+    });
+  }
+
+  function forstord(avstand) {
+    const damp = avstandDamp(avstand);
+    return spela('forstord', 1, api => {
+      const t = api.ctx.currentTime + 0.01;
+      kopplaBuffer(api, 'uppladdad_skott_serie.mp3', t, 0.78 * damp.gain, 1, damp.hz);
+      kopplaBuffer(api, 'uppladdad_explosion_stor.mp3', t + 0.08, 0.8 * damp.gain, 1, damp.hz);
+      return 3.4;
+    });
+  }
+
+  function narma(param, mal) {
+    const nu = param.value;
+    param.value = nu + (mal - nu) * 0.22;
+  }
+
+  function startLoop(fil, buf) {
+    const spec = klangFor(fil);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = spec.type;
+    filter.frequency.value = spec.hz;
+    filter.Q.value = spec.q;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.0001;
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(master);
+    try { src.start(); } catch { /* redan startad */ }
+    skapade += 3;
+    const L = {src, filter, gain, timer: 0};
+    loopar.set(fil, L);
+    return L;
+  }
+
+  function stopLoop(fil) {
+    const L = loopar.get(fil);
+    if (!L) return;
+    if (L.timer) clearTimeout(L.timer);
+    loopar.delete(fil);
+    try { L.src.stop(); } catch { /* redan stoppad */ }
+    try { L.src.disconnect(); } catch { /* redan borta */ }
+    try { L.filter.disconnect(); } catch { /* redan borta */ }
+    try { L.gain.disconnect(); } catch { /* redan borta */ }
+    slappta += 3;
+  }
+
+  function hall(fil, volym, rate, hz) {
+    if (!ctx || !pa || !upplast) return;
+    const buf = buffertar.get(fil);
+    if (!buf) return;
+    let L = loopar.get(fil);
+    if (!L) L = startLoop(fil, buf);
+    if (L.timer) { clearTimeout(L.timer); L.timer = 0; }
+    narma(L.gain.gain, Math.max(0.0008, Math.min(1, volym)));
+    narma(L.src.playbackRate, Math.max(0.4, Math.min(2, rate || 1)));
+    narma(L.filter.frequency, Math.max(70, Math.min(16000, hz || 1000)));
+  }
+
+  function slapp(fil) {
+    const L = loopar.get(fil);
+    if (!L || L.timer) return;
+    try { narma(L.gain.gain, 0.0001); } catch { /* noden hann stängas */ }
+    L.timer = setTimeout(() => stopLoop(fil), 240);
+  }
+
+  function drivLoopar(s, rpmNu) {
+    const band = Math.max(Math.abs(+s.band || 0), Math.abs(+s.fart || 0));
+    const mix = motorMix(rpmNu, s.gas, s.fart, band);
+    if (mix.tomgang > 0.03) hall('ww2_motor_tomgang.mp3', mix.tomgang, 0.9 + (mix.rate - 0.8) * 0.4, 820 + mix.hz * 0.15);
+    else slapp('ww2_motor_tomgang.mp3');
+    hall('uppladdad_motor_loop.mp3', mix.motor, mix.rate, mix.hz);
+    if (mix.marsch > 0.03) hall('ww2_motor_marsch.mp3', mix.marsch, 0.86 + (mix.rate - 0.8) * 0.85, 640 + mix.hz * 0.45);
+    else slapp('ww2_motor_marsch.mp3');
+    if (mix.band > 0.03) hall('uppladdad_band_surr.mp3', mix.band, 0.84 + Math.min(1, band / 8) * 0.5, 1200 + Math.min(1, band / 8) * 900);
+    else slapp('uppladdad_band_surr.mp3');
+    if (mix.bandHog > 0.03) hall('ww2_band_hog.mp3', mix.bandHog, 0.9 + Math.min(1, band / 8) * 0.45, 1600 + Math.min(1, band / 8) * 800);
+    else slapp('ww2_band_hog.mp3');
+    const gir = Math.min(1, Math.abs(+s.gir || 0));
+    const gniss = gir * Math.min(1, band / 3);
+    if (gniss > 0.08) hall('ww2_band_gnissel.mp3', 0.12 + gniss * 0.4, 0.86 + gniss * 0.5, 1500 + gniss * 1600);
+    else slapp('ww2_band_gnissel.mp3');
+    const tu = Math.min(1, Math.abs(+s.tornU || 0));
+    if (tornLjud(s.tornU)) hall('uppladdad_torn_surr.mp3', 0.26 + tu * 0.5, 0.76 + tu * 0.46, 320 + tu * 680);
+    else slapp('uppladdad_torn_surr.mp3');
+    const eu = Math.min(1, Math.abs(+s.eldU || 0));
+    if (eldrorLjud(s.eldU, s.eld, s.eldMin, s.eldMax)) hall('uppladdad_eldror_surr.mp3', 0.32 + eu * 0.52, 1.04 + eu * 0.58, 1680 + eu * 1700);
+    else slapp('uppladdad_eldror_surr.mp3');
+  }
+
+  function stega(s) {
+    const dt = Math.max(0, Math.min(0.05, +s?.dt || 0));
+    const mal = motorVarv(s?.gas, s?.kvot, s?.fart);
+    if (dt > 0) rpm += (mal - rpm) * (1 - Math.exp(-dt / 0.2));
+    if (upplast && pa && ctx) drivLoopar(s || {}, rpm);
+    return {rpm};
   }
 
   function provTopp() {
@@ -361,7 +663,8 @@ export function skapaMekanikLjud() {
   }
 
   return {
-    oppna, satt, vaxla, hack, stopp, valjGranat, provTopp, kansla,
+    oppna, satt, vaxla, hack, stopp, valjGranat, provTopp, kansla, stega,
+    kanon, nedslag, traff, fiendeSkott, forstord, ladda: laddaAlla,
     get pa() { return pa; },
     get upplast() { return upplast; },
     get roster() { return aktiva.length; },
@@ -372,9 +675,13 @@ export function skapaMekanikLjud() {
     get stoppAntal() { return stoppAntal; },
     get klickAntal() { return klickAntal; },
     get laddAntal() { return laddAntal; },
-    get handelser() { return handelser.slice(); }
+    get handelser() { return handelser.slice(); },
+    get klipp() { return buffertar.size; },
+    get saknas() { return KLIPP.filter(fil => !buffertar.has(fil)); }
   };
 }
+
+if (typeof document !== 'undefined') forhamta();
 
 export function sjalvtest() {
   const fel = [];
@@ -390,11 +697,39 @@ export function sjalvtest() {
   try {
     const tyst = motor.hack([0]) === false && motor.vaxla(1) === false && motor.stopp() === false && motor.valjGranat() === false;
     krav('tyst innan första beröring', tyst && motor.roster === 0 && motor.skapade === 0 && motor.hackAntal === 0 && motor.klickAntal === 0 && motor.laddAntal === 0);
+    krav('kanon är tyst innan första beröring', motor.kanon() === false && motor.nedslag(40) === false && motor.traff(80) === false && motor.fiendeSkott(400) === false);
   } catch {
     kast = true;
   }
   krav('tyst motor kastar inte', kast === false);
   const monster = haptikMonster([12, 30, 4, 80]);
   krav('haptikmönstret är korta pulser', !!monster && monster[0] === 12 && monster[1] === 8 && monster[2] === 30 && monster.length === 3);
+
+  const uppladdade = [
+    'uppladdad_skott_serie.mp3', 'uppladdad_explosion_stor.mp3', 'uppladdad_explosion_b.mp3',
+    'uppladdad_kanon_eko.mp3', 'uppladdad_kanon_eko_b.mp3', 'uppladdad_traff_kort.mp3',
+    'uppladdad_mekanik_kort.mp3', 'uppladdad_torn_surr.mp3', 'uppladdad_eldror_surr.mp3',
+    'uppladdad_band_surr.mp3', 'uppladdad_motor_loop.mp3'
+  ];
+  for (const fil of uppladdade) krav('med ' + fil, KLIPP.includes(fil));
+  krav('tjugo klipp', KLIPP.length === 20);
+  const nara = avstandDamp(30);
+  const mitt = avstandDamp(250);
+  const langt = avstandDamp(700);
+  krav('30 m är full styrka', nara.gain === 1 && nara.hz >= 8000);
+  krav('250 m är svagare och dovare', mitt.gain < 0.7 && mitt.gain > 0.15 && mitt.hz < nara.hz * 0.4);
+  krav('700 m är ett dovt dån', langt.gain < mitt.gain && langt.hz < 900 && langt.hz < mitt.hz);
+  krav('sidled och höjdled har olika klang', klangFor('uppladdad_torn_surr.mp3').type === 'lowpass' && klangFor('uppladdad_eldror_surr.mp3').type === 'bandpass' && klangFor('uppladdad_eldror_surr.mp3').q > klangFor('uppladdad_torn_surr.mp3').q);
+  const eldMin = -10 * Math.PI / 180;
+  const eldMax = 25 * Math.PI / 180;
+  krav('tornet låter först över tröskeln', tornLjud(0.02) === false && tornLjud(0.03) === true && tornLjud(-0.2) === true);
+  krav('eldröret tystnar i ändstoppet', eldrorLjud(0.2, 0, eldMin, eldMax) === true && eldrorLjud(0.01, 0, eldMin, eldMax) === false && eldrorLjud(-0.2, eldMin, eldMin, eldMax) === false && eldrorLjud(0.2, eldMin, eldMin, eldMax) === true && eldrorLjud(0.2, eldMax, eldMin, eldMax) === false);
+  const tom = motorMix(500, 0, 0, 0);
+  const full = motorMix(2400, 1, 11, 11);
+  krav('tomgång bär motorn', tom.tomgang > tom.marsch && tom.band === 0);
+  krav('marsch och band hörs i fart', full.marsch > tom.marsch && full.band > 0.2 && full.rate > tom.rate);
+  krav('varvtal följer gas och växel', motorVarv(0, 0, 0) < motorVarv(1, 0, 0) && motorVarv(1, 0.28, 0) > motorVarv(1, 1, 0) && motorVarv(1, 1, 11) > motorVarv(1, 1, 0) && motorVarv(1, 1, 11) <= 2400);
+  const still = motor.stega({dt: 0.05, gas: 0, kvot: 0, fart: 0, band: 0, tornU: 0, eldU: 0, eld: 0, eldMin, eldMax, gir: 0});
+  krav('mätaren får ett varvtal utan ljud', still.rpm >= 490 && still.rpm <= 1600 && motor.skapade === 0);
   return fel;
 }

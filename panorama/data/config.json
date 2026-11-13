@@ -36,6 +36,16 @@
     { "id": "springfield", "namn": "Springfield", "under": "6×", "forstoring": 6, "sikte": "kikare", "retikel": "m1903", "ljud": "springfield" },
     { "id": "enfield", "namn": "Enfield", "under": "10×", "forstoring": 10, "sikte": "kikare", "retikel": "mil", "ljud": "enfield" }
   ],
+  "varn": {
+    "langd": 3.2,
+    "hojd": 1.21,
+    "djup": 0.78,
+    "bakom": 0.55,
+    "platser": [
+      { "id": "hundra", "z": -100, "x": 0, "sektioner": 2, "soldater": [-1.05, 1.05] },
+      { "id": "etthundrafemtio", "z": -150, "x": 0, "sektioner": 2, "soldater": [-0.85, 0.95] }
+    ]
+  },
   "soldater": {
     "zoner": { "nara": [15, 35], "medel": [55, 120], "langt": [150, 320] },
     "platser": [

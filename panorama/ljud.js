@@ -321,8 +321,33 @@ export function skapaLjud() {
     }
   }
 
+  function duns(avstand) {
+    if (!pa) return false;
+    try {
+      if (!seTill() || !brus || !master) return false;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      const t = ctx.currentTime;
+      const d = Number.isFinite(+avstand) ? Math.max(1, +avstand) : 40;
+      const topp = Math.max(0.12, 0.55 * Math.exp(-d / 90));
+      const src = ctx.createBufferSource();
+      src.buffer = brus;
+      src.playbackRate.value = 0.55;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 420;
+      const g = ctx.createGain();
+      kurva(g, t, topp, 0.12);
+      src.connect(lp); lp.connect(g); g.connect(master);
+      src.start(t); src.stop(t + 0.14);
+      src.onended = () => { for (const n of [src, lp, g]) { try { n.disconnect(); } catch { /* redan borta */ } } };
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   return {
-    oppna, satt, sattKaraktar, skott, traff, klick,
+    oppna, satt, sattKaraktar, skott, traff, duns, klick,
     get karaktar() { return karaktar; },
     get pa() { return pa; },
     get volym() { return volym; },

@@ -7,13 +7,13 @@
 <meta name="theme-color" content="#1a221c">
 <link rel="icon" href="data:,">
 <title>Panorama · Normandie</title>
-<link rel="stylesheet" href="./stil.css?v=15">
+<link rel="stylesheet" href="./stil.css?v=16">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
 <video id="kamerabild" hidden playsinline muted autoplay></video>
 <canvas id="vy" aria-label="Normandie 1944, se dig om med telefonen"></canvas>
-<div id="version">Panorama 08</div>
+<div id="version">Panorama 09</div>
 <section id="startKort">
 <span class="ogonbryn">NORMANDIE 1944</span>
 <h1>Se dig om</h1>
@@ -59,6 +59,7 @@
 </div>
 <div data-panel="miljo">
 <p class="panelLed">3D-fältet eller telefonens kamera som bakgrund. Soldater och sikte ligger ovanpå.</p>
+<p class="forklaring" id="sensorText">Utan gyro drar du i vyn för att titta. Laserpekaren följer telefonens vinkel. Den här texten ligger i Menyn så fältet hålls fritt.</p>
 <div class="val" id="bakgrundVal">
 <button type="button" data-bakgrund="3d" aria-pressed="true">3D-miljö</button>
 <button type="button" data-bakgrund="kamera" aria-pressed="false">Telefonens kamera</button>
@@ -204,7 +205,7 @@
 <div id="traffBlixt"></div>
 <div id="laserLinje" hidden></div>
 <div id="laserPrick" hidden></div>
-<script type="module" src="./huvud.js?v=15"></script>
+<script type="module" src="./huvud.js?v=16"></script>
 <script>
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});

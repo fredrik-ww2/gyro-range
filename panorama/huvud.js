@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import {skapaBlick, sjalvtest, normalStyr, STANDARD_STYR} from './blick.js?v=15';
-import {byggVarld} from './varld.js?v=15';
+import {byggVarld} from './varld.js?v=16';
 import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=15';
-import {skapaLjud} from './ljud.js?v=13';
+import {skapaLjud} from './ljud.js?v=16';
 import {skapaKansla, pulsFor, sjalvtest as kanslaTest} from './kansla.js?v=11';
 import {skapaBakgrund} from './bakgrund.js?v=11';
-import {laddaConfig} from './config.js?v=15';
+import {laddaConfig} from './config.js?v=16';
 import {skapaEffekt} from './effekt.js?v=13';
 
 const config = await laddaConfig();
@@ -700,12 +700,8 @@ function ritaLaser(nu) {
   for (const id of AXLAR) matareEl[id].style.width = Math.round(m[id] * 100) + '%';
 }
 function visaLaserHint() {
-  if (sedd(HINT_NYCKEL)) return;
+  if ($('laserHint')) $('laserHint').hidden = true;
   markera(HINT_NYCKEL);
-  const el = $('laserHint');
-  el.hidden = false;
-  clearTimeout(hintTimer);
-  hintTimer = setTimeout(() => { el.hidden = true; }, 8000);
 }
 function sattLaser(pa) {
   if (pa === laserPa) return;
@@ -958,6 +954,10 @@ addEventListener('devicemotion', e => {
   taNiva({linjar, omega}, tid);
 }, {passive: true});
 
+function arSack(obj) {
+  for (let n = obj; n; n = n.parent) if (n.userData && n.userData.sack) return true;
+  return false;
+}
 function hoppaOver(obj) {
   for (let n = obj; n; n = n.parent) {
     if (n.name === 'soldat') return true;
@@ -1027,8 +1027,14 @@ function avfyra() {
     return soldat;
   }
   const traff = hittaTraff();
-  if (traff) effekt.damm(traff.point);
-  return {traff: false};
+  if (traff) {
+    effekt.damm(traff.point);
+    if (arSack(traff.object)) {
+      ljud.duns(traff.distance);
+      return {traff: false, sack: true, avstand: traff.distance, punkt: {x: traff.point.x, y: traff.point.y, z: traff.point.z}};
+    }
+  }
+  return {traff: false, sack: false};
 }
 function skjutMot(index) {
   if (!siktaMot(index)) return false;
@@ -1051,7 +1057,7 @@ start.addEventListener('click', async () => {
   start.disabled = true;
   markera(GUIDE_NYCKEL);
   try { await blick.start(); }
-  catch (e) { hint.textContent = 'Sensorerna kunde inte starta. Dra med fingret.'; }
+  catch (e) { if ($('sensorText')) $('sensorText').textContent = 'Sensorerna kunde inte starta. Dra i vyn för att titta. Texten ligger i Menyn.'; }
   $('startKort').hidden = true;
   $('skjut').hidden = false;
   $('menyKnapp').hidden = false;
@@ -1064,7 +1070,11 @@ start.addEventListener('click', async () => {
   if (laser.install.pa) sattLaser(true);
   else lyft();
   requestAnimationFrame(lyft);
-  setTimeout(() => { if (!blick.harGyro) hint.hidden = false; }, 1200);
+  if ($('hint')) $('hint').hidden = true;
+  if ($('laserHint')) $('laserHint').hidden = true;
+  if ($('kameraToast')) $('kameraToast').hidden = true;
+  if ($('testMeny')) $('testMeny').hidden = true;
+  if ($('meny')) $('meny').hidden = true;
 });
 
 function visaFlik(id) {
@@ -1115,11 +1125,7 @@ async function valjBakgrund(lage) {
   const notis = $('kameraMeddelande');
   notis.hidden = !text;
   notis.textContent = text;
-  const toast = $('kameraToast');
-  toast.hidden = !text;
-  toast.textContent = text;
-  clearTimeout(toastTimer);
-  if (text) toastTimer = setTimeout(() => { toast.hidden = true; }, 7000);
+  if ($('kameraToast')) $('kameraToast').hidden = true;
   return res;
 }
 function valjFilter(namn) {
@@ -1168,7 +1174,7 @@ addEventListener('unhandledrejection', e => window.__fel.push(String(e.reason &&
       hallTill = performance.now() + 3000;
       renderer.render(scene, camera);
     },
-    markHojd: varld.markHojd, effekt, config, valjVapen,
+    markHojd: varld.markHojd, effekt, config, valjVapen, varn: varld.varn,
     sattKikare(pa) { valjVapen(pa ? 'kar98k' : 'vanligt'); },
     sattZoom(z) {
       const mal = Number(z);

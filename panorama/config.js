@@ -38,6 +38,16 @@ export const FALLBACK = {
     stillaVrid: 0.12,
     stillaAcc: 1.1
   },
+  varn: {
+    langd: 3.2,
+    hojd: 1.21,
+    djup: 0.78,
+    bakom: 0.55,
+    platser: [
+      {id: 'hundra', z: -100, x: 0, sektioner: 2, soldater: [-1.05, 1.05]},
+      {id: 'etthundrafemtio', z: -150, x: 0, sektioner: 2, soldater: [-0.85, 0.95]}
+    ]
+  },
   soldater: {
     zoner: {nara: [15, 35], medel: [55, 120], langt: [150, 320]},
     platser: [
@@ -149,6 +159,32 @@ function normalSkak(raw) {
   };
 }
 
+function normalVarn(raw) {
+  const bas = FALLBACK.varn;
+  const v = raw && typeof raw === 'object' ? raw : {};
+  const lista = Array.isArray(v.platser) ? v.platser : bas.platser;
+  const platser = [];
+  for (const rad of lista) {
+    if (!rad || typeof rad !== 'object') continue;
+    const sektioner = Math.round(tal(rad.sektioner, 1, 1, 4));
+    const soldater = Array.isArray(rad.soldater) ? rad.soldater.map(x => tal(x, 0, -8, 8)).slice(0, 4) : [];
+    platser.push({
+      id: typeof rad.id === 'string' && rad.id ? rad.id : 'varn',
+      z: tal(rad.z, -100, -400, 400),
+      x: tal(rad.x, 0, -80, 80),
+      sektioner,
+      soldater
+    });
+  }
+  return {
+    langd: tal(v.langd, bas.langd, 1, 8),
+    hojd: tal(v.hojd, bas.hojd, 0.4, 3),
+    djup: tal(v.djup, bas.djup, 0.2, 3),
+    bakom: tal(v.bakom, bas.bakom, 0.2, 2),
+    platser: platser.length ? platser : bas.platser.map(p => ({...p, soldater: p.soldater.slice()}))
+  };
+}
+
 function normalZon(raw, bas) {
   if (!Array.isArray(raw) || raw.length < 2) return bas.slice();
   const a = tal(raw[0], bas[0], 1, 400);
@@ -206,6 +242,7 @@ export function normalConfig(raw) {
     },
     gang: normalGang(t.gang),
     skak: normalSkak(t.skak),
+    varn: normalVarn(t.varn),
     vapen: normalVapen(t.vapen),
     soldater: {
       zoner: {

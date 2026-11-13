@@ -23,7 +23,8 @@ const FILER = {
   tiger: 'tiger_i_heavy_v2_v2_pbr_lod2.glb',
   apple: 'trad_apple_c.glb',
   bok: 'trad_bok_c.glb',
-  ek: 'trad_ek_b.glb'
+  ek: 'trad_ek_b.glb',
+  sack: 'sack_trench.glb'
 };
 
 // Om höjd eller längd hamnar utanför spannet är modellen fel skala. Då enhetlig skala till målet.
@@ -42,7 +43,8 @@ const SKALA = {
   hackTrad: {hojd: [6, 14]},
   apple: {hojd: [3, 8]},
   bok: {hojd: [10, 26]},
-  ek: {hojd: [8, 20]}
+  ek: {hojd: [8, 20]},
+  sack: {hojd: [1.05, 1.4], langd: [2.8, 3.6]}
 };
 
 function klonaSkinn(source) {
@@ -597,13 +599,46 @@ export async function byggVarld(scene, renderer, config, effekt) {
     {x: -230, z: 36, yaw: 0.8}
   ]);
 
+  const varn = config?.varn || {langd: 3.2, hojd: 1.21, djup: 0.78, bakom: 0.55, platser: []};
+  const sackRot = modell.sack.scene;
+  sackRot.position.set(0, 0, 0);
+  sackRot.rotation.set(0, 0, 0);
+  sackRot.scale.set(1, 1, 1);
+  const sackFore = matt(sackRot).size;
+  const sackSkala = behov(sackFore, SKALA.sack);
+  const sackDel = geometriFran(sackRot, sackSkala);
+  const sackPlatser = [];
+  const varnSoldater = [];
+  for (const rad of varn.platser) {
+    const n = Math.max(1, rad.sektioner | 0);
+    for (let i = 0; i < n; i++) {
+      const x = rad.x + (i - (n - 1) / 2) * varn.langd;
+      sackPlatser.push({x, z: rad.z, yaw: 0, y: markHojd(x, rad.z)});
+    }
+    const zSoldat = rad.z - varn.djup / 2 - varn.bakom;
+    for (const sx of rad.soldater) {
+      const x = rad.x + sx;
+      varnSoldater.push({
+        namn: 'tysk', x, z: zSoldat, yaw: 0, beteende: 'vakt',
+        zon: Math.hypot(x, zSoldat) >= 140 ? 'langt' : 'medel'
+      });
+    }
+  }
+  const sackMesh = instans(sackDel.geometry, sackDel.material, sackPlatser, false);
+  if (sackMesh) {
+    sackMesh.name = 'sack';
+    sackMesh.userData.sack = true;
+    miljo.add(sackMesh);
+  }
+  rapport.push({namn: 'sack', fore: [+sackFore.x.toFixed(2), +sackFore.y.toFixed(2), +sackFore.z.toFixed(2)], efter: [+(sackFore.x * sackSkala).toFixed(2), +(sackFore.y * sackSkala).toFixed(2), +(sackFore.z * sackSkala).toFixed(2)], sektioner: sackPlatser.length, skala: +sackSkala.toFixed(3)});
+
   const soldatLista = config?.soldater || {};
   const soldater = stallSoldater(scene, {usa: modell.usa, tysk: modell.tysk}, {
     markHojd,
     effekt,
     traff: config?.traff,
     rayMax: terrang.raycast,
-    platser: soldatLista.platser,
+    platser: [...(soldatLista.platser || []), ...varnSoldater],
     extra: soldatLista.extra
   });
   for (const rad of soldater.status()) {
@@ -612,5 +647,5 @@ export async function byggVarld(scene, renderer, config, effekt) {
 
   draco.dispose();
   ktx2.dispose();
-  return {rapport, oga: OGA, hackAntal: hackPlatser.length, miljo, soldater, markHojd};
+  return {rapport, oga: OGA, hackAntal: hackPlatser.length, miljo, soldater, markHojd, varn: {sektioner: sackPlatser.length, soldater: varnSoldater, hojd: varn.hojd}};
 }

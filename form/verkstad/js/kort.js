@@ -31,6 +31,7 @@ export function monteraKort(el, { original, overrid, visning, beteende, tillbaka
     </p>
     <p class="varning">En 3D-modell gör inte enheten färdig. Vägen till klar står i checklistan.</p>
     <div data-check-hallare>${ritaChecklista(startCheck)}</div>
+    ${stridsTabell(enhet)}
     <div class="forhands" data-forhands>
       <div class="forhands-yta" data-yta></div>
       <p class="hint" data-modellrad>${modell
@@ -44,7 +45,7 @@ export function monteraKort(el, { original, overrid, visning, beteende, tillbaka
       <button type="button" role="tab" id="tab-saknas" aria-selected="false" aria-controls="panel-saknas" data-tab="saknas">Saknas</button>
     </div>
     <div id="panel-varden" role="tabpanel" aria-labelledby="tab-varden" data-panel="varden">
-      ${stridsTabell(enhet)}
+      <p class="fin">Siffrorna står ovanför bilden. Här kan du jämföra och ändra dem.</p>
       ${stapelBlock('Fart på väg', 'fart_per_terrang.vag', enhet, { enhetText: 'km/h' })}
       <section class="grafgrupp">
         <h2>Eldkraft</h2>
@@ -444,32 +445,60 @@ function mobilPanel(enhet) {
     <p class="fin">Grönt är inom gränsen för en enhet på iPhone. Gult är tätt. Rött är för tungt eller saknas.</p>`;
 }
 
+const STRID_NAMN = {
+  'fart_per_terrang.vag': 'Fart på väg',
+  'fart_per_terrang.falt': 'Fart på fält',
+  'fart_per_terrang.skog': 'Fart i skog',
+  'fart_per_terrang.by': 'Fart i by',
+  'eldkraft.kaliber_mm': 'Eld, kaliber',
+  'eldkraft.eldhastighet_skott_min': 'Eldhastighet',
+  'pansar.fram': 'Pansar fram',
+  'pansar.sida': 'Pansar sida',
+  'pansar.bak': 'Pansar bak',
+  'pansar.topp': 'Pansar tak',
+  'rackvidd': 'Räckvidd',
+  'upptackbarhet': 'Upptäckt',
+  'traffchans_per_avstand.100': 'Träff 100 m',
+  'traffchans_per_avstand.250': 'Träff 250 m',
+  'traffchans_per_avstand.500': 'Träff 500 m',
+  'traffchans_per_avstand.1000': 'Träff 1 000 m',
+  'traffchans_per_avstand.1500': 'Träff 1 500 m',
+  'traffchans_per_avstand.2000': 'Träff 2 000 m',
+  'beteendeprofil.profil': 'Besättning'
+};
+
+function stridsNamn(stig) {
+  return STRID_NAMN[stig] || stig.replaceAll('_', ' ').replaceAll('.', ', ');
+}
+
 function stridsTabell(enhet) {
   const rader = stridsrader(enhet).map((rad) => `
     <tr data-strid="${esc(rad.stig)}" data-marke="${esc(rad.marke)}">
-      <td>${esc(rad.stig)}</td>
-      <td>${esc(rad.text)}</td>
+      <td>${esc(stridsNamn(rad.stig))}</td>
+      <td class="${rad.farg === 'gul' ? 'uppskattat' : rad.farg === 'rod' ? 'saknasvarde' : 'kalla'}">${esc(rad.text)}</td>
       <td class="matt-${esc(rad.farg)}">${esc(rad.marke)}</td>
     </tr>`).join('');
+  const profil = enhet?.spelvarden?.beteendeprofil;
+  const besattning = profil?.profil ? `
+    <tr data-strid="besattning" data-marke="uppskattat">
+      <td>Beteendeprofil</td>
+      <td class="uppskattat">${esc(profil.profil)}</td>
+      <td class="matt-gul">uppskattat</td>
+    </tr>` : '';
   return `
     <section class="grafgrupp" data-stridstabell>
       <h2>Alla stridsvärden</h2>
-      <p class="fin">Källa är hämtat. Uppskattat är en gissning. Saknas betyder att värdet inte finns.</p>
-      <table class="stridstabell"><tbody>${rader}</tbody></table>
+      <p class="fargforklaring">Gul färg betyder att värdet är uppskattat. Vanlig färg betyder att det är hämtat ur källdata.</p>
+      <table class="stridstabell"><tbody>${rader}${besattning}</tbody></table>
     </section>`;
 }
 
 function saknasPanel(enhet, check) {
-  const finns = check.punkter.filter((punkt) => punkt.ok);
-  const saknas = check.punkter.filter((punkt) => !punkt.ok);
   const extra = (enhet.saknas || []).map((rad) => `<li class="saknas">${esc(rad)}</li>`).join('');
   return `
     <section data-saknas-panel>
-      <h3>Finns</h3>
-      <ul>${finns.map((punkt) => `<li class="ok">${esc(punkt.text)}</li>`).join('') || '<li>Inget är ikryssat ännu.</li>'}</ul>
-      <h3>Saknas</h3>
-      <ul>${saknas.map((punkt) => `<li class="saknas">${esc(punkt.text)}</li>`).join('') || '<li>Inget saknas på checklistan.</li>'}</ul>
-      ${extra ? `<h3>Övrigt som datapaketet nämner</h3><ul>${extra}</ul>` : ''}
+      ${ritaChecklista(check, 'mini')}
+      ${extra ? `<h3>Ordagrant ur datapaketet</h3><ul>${extra}</ul>` : ''}
       <p class="fin">Eget individbeteende för just den här enheten saknas. De gemensamma reglerna ligger under Beteende.</p>
     </section>`;
 }

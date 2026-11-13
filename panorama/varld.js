@@ -4,6 +4,7 @@ import {MeshoptDecoder} from '../js/vendor/loaders/meshopt_decoder.module.js';
 import {DRACOLoader} from '../flyg/vendor/loaders/DRACOLoader.js';
 import {KTX2Loader} from '../flyg/vendor/loaders/KTX2Loader.js';
 import {mergeGeometries} from '../js/vendor/utils/BufferGeometryUtils.js';
+import {stallSoldater} from './soldat.js?v=11';
 
 const OGA = 1.7;
 const FILER = {
@@ -86,21 +87,6 @@ function behov(size, regel) {
   return 1;
 }
 
-function tona(root, hex, styrka) {
-  const mal = new THREE.Color(hex);
-  root.traverse(n => {
-    if (!n.isMesh) return;
-    const lista = Array.isArray(n.material) ? n.material : [n.material];
-    const nya = lista.map(m => {
-      const c = m.clone();
-      if (/skin|eye|eyebrow|moustache/i.test(c.name || '')) return c;
-      c.color.lerp(mal, styrka);
-      return c;
-    });
-    n.material = Array.isArray(n.material) ? nya : nya[0];
-  });
-}
-
 function bakaSynlig(root) {
   root.updateWorldMatrix(true, true);
   const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
@@ -145,6 +131,34 @@ function stallPaMark(grupp) {
   grupp.updateWorldMatrix(true, true);
 }
 
+function attributSignatur(g) {
+  const namn = Object.keys(g.attributes).sort().join('|');
+  const morph = Object.keys(g.morphAttributes || {}).sort().join('|');
+  return [
+    g.index ? 'i' : 'n',
+    namn,
+    morph,
+    g.morphTargetsRelative ? '1' : '0'
+  ].join(';');
+}
+
+function kanMerga(geoms) {
+  if (geoms.length < 2) return true;
+  const bas = geoms[0];
+  const sign = attributSignatur(bas);
+  for (const g of geoms) {
+    if (attributSignatur(g) !== sign) return false;
+    for (const nyckel of Object.keys(bas.attributes)) {
+      const a = bas.attributes[nyckel];
+      const b = g.attributes[nyckel];
+      if (!b || a.itemSize !== b.itemSize || a.normalized !== b.normalized) return false;
+      if (a.array.constructor !== b.array.constructor) return false;
+      if (a.isInterleavedBufferAttribute || b.isInterleavedBufferAttribute) return false;
+    }
+  }
+  return true;
+}
+
 function slåIhop(grupp) {
   const poster = new Map();
   const meshar = [];
@@ -158,10 +172,7 @@ function slåIhop(grupp) {
   }
   for (const {material, geoms} of poster.values()) {
     let geom = geoms[0];
-    if (geoms.length > 1) {
-      const samma = geoms.every(g => !!g.index === !!geoms[0].index);
-      geom = samma ? mergeGeometries(geoms, false) : null;
-    }
+    if (geoms.length > 1) geom = kanMerga(geoms) ? mergeGeometries(geoms, false) : null;
     if (!geom) { for (const g of geoms) grupp.add(new THREE.Mesh(g, material)); continue; }
     geom.computeBoundingSphere();
     const mesh = new THREE.Mesh(geom, material);
@@ -256,7 +267,7 @@ function jordtyg() {
   return t;
 }
 
-function ljusOchMark(scene) {
+function ljusOchMark(scene, miljo) {
   scene.background = null;
   scene.fog = new THREE.Fog(0xd5dece, 48, 175);
   scene.add(new THREE.HemisphereLight(0xcfe0ea, 0x3e4a30, 0.95));
@@ -286,19 +297,19 @@ function ljusOchMark(scene) {
     fragmentShader: 'varying vec3 vP;uniform vec3 top,horisont,botten;void main(){float h=normalize(vP).y;vec3 c=mix(botten,horisont,smoothstep(-0.22,0.04,h));c=mix(c,top,smoothstep(0.02,0.5,h));gl_FragColor=vec4(c,1.0);}'
   }));
   sky.userData.himlen = true;
-  scene.add(sky);
+  miljo.add(sky);
 
   const mark = new THREE.Mesh(new THREE.PlaneGeometry(520, 520), new THREE.MeshStandardMaterial({map: grastyg(), roughness: 0.94, metalness: 0}));
   mark.rotation.x = -Math.PI / 2;
   mark.receiveShadow = true;
-  scene.add(mark);
+  miljo.add(mark);
   const vag = (w, h, x, z, yaw) => {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({map: jordtyg(), roughness: 0.92, metalness: 0}));
     m.rotation.x = -Math.PI / 2;
     m.rotation.z = yaw;
     m.position.set(x, 0.02, z);
     m.receiveShadow = true;
-    scene.add(m);
+    miljo.add(m);
   };
   vag(3.4, 210, 0, 0, 0);
   vag(150, 2.8, 0, 0, Math.PI / 2);
@@ -335,7 +346,10 @@ function geometriFran(root, faktor) {
 }
 
 export async function byggVarld(scene, renderer) {
-  ljusOchMark(scene);
+  const miljo = new THREE.Group();
+  miljo.name = 'miljo';
+  scene.add(miljo);
+  ljusOchMark(scene, miljo);
   const env = new THREE.Scene();
   env.add(new THREE.Mesh(new THREE.SphereGeometry(8, 10, 6), new THREE.MeshBasicMaterial({color: 0xc5d4c4, side: THREE.BackSide})));
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -401,7 +415,7 @@ export async function byggVarld(scene, renderer) {
   const oppnMesh = instans(modell.oppning.scene.userData.del.geometry, modell.oppning.scene.userData.del.material, avTyp('oppning'));
   const tradHack = instans(modell.hackTrad.scene.userData.del.geometry, modell.hackTrad.scene.userData.del.material, avTyp('trad'));
   const hornMesh = instans(modell.horn.scene.userData.del.geometry, modell.horn.scene.userData.del.material, hornPlatser);
-  for (const m of [hackMesh, oppnMesh, tradHack, hornMesh]) if (m) scene.add(m);
+  for (const m of [hackMesh, oppnMesh, tradHack, hornMesh]) if (m) miljo.add(m);
 
   const trad = [
     {k: 'ek', x: -24, z: -16}, {k: 'ek', x: 24, z: 22}, {k: 'ek', x: -22, z: 30}, {k: 'ek', x: 48, z: -52}, {k: 'ek', x: -50, z: 40},
@@ -411,7 +425,7 @@ export async function byggVarld(scene, renderer) {
   for (const k of ['ek', 'bok', 'apple']) {
     const del = modell[k].scene.userData.del;
     const mesh = instans(del.geometry, del.material, trad.filter(t => t.k === k));
-    if (mesh) scene.add(mesh);
+    if (mesh) miljo.add(mesh);
   }
 
   function placera(namn, x, z, yaw, pose) {
@@ -423,7 +437,7 @@ export async function byggVarld(scene, renderer) {
     stallGrupp(namn, rot);
     wrap.position.set(x, 0, z);
     wrap.rotation.y = yaw;
-    scene.add(wrap);
+    miljo.add(wrap);
   }
 
   {
@@ -447,7 +461,7 @@ export async function byggVarld(scene, renderer) {
     wrap.add(rot);
     wrap.position.set(-8, 0, -55);
     wrap.rotation.y = 2.2;
-    scene.add(wrap);
+    miljo.add(wrap);
   }
   placera('tiger', 11, 66, Math.PI - 0.45);
   {
@@ -464,59 +478,19 @@ export async function byggVarld(scene, renderer) {
     wrap.add(pak);
     wrap.position.set(38, 0, 0);
     wrap.rotation.y = -Math.PI / 2;
-    scene.add(wrap);
+    miljo.add(wrap);
     rapportRad('pak', fore, matt(pak).size, s);
   }
   placera('husA', 20, -52, 0.15);
   placera('husB', -58, 6, Math.PI / 2);
   placera('radhus', -16, 78, 0.05);
 
-  const grupper = [
-    {namn: 'usa', farg: 0x6a5a34, pose: 'Idle_Gun', platser: [[-5, -16, 0.4], [7, -22, -0.5], [-15, -8, 1.0], [3, -30, 0.15]]},
-    {namn: 'tysk', farg: 0x3c4838, pose: 'Idle_Gun', platser: [[16, -4, 2.6], [14, 14, -2.3], [-5, 20, 2.8], [21, 18, -1.7]]}
-  ];
-  for (const grupp of grupper) {
-    const rot = klonaSkinn(modell[grupp.namn].scene);
-    frysPose(rot, modell[grupp.namn].animations, grupp.pose, 0.45);
-    tona(rot, grupp.farg, 0.38);
-    let huvud = null;
-    rot.traverse(n => { if (!huvud && n.name === 'Head') huvud = n; });
-    rot.updateWorldMatrix(true, true);
-    const huvudLokal = new THREE.Vector3();
-    if (huvud) huvud.getWorldPosition(huvudLokal).applyMatrix4(new THREE.Matrix4().copy(rot.matrixWorld).invert());
-    const bak = bakaSynlig(rot);
-    const centrum = matt(bak).box.getCenter(new THREE.Vector3());
-    const motHuvud = huvudLokal.sub(centrum);
-    if (motHuvud.lengthSq() > 1e-6) bak.quaternion.setFromUnitVectors(motHuvud.normalize(), new THREE.Vector3(0, 1, 0));
-    // Huvudbenet pekar mot fötterna i den här exporten, så figuren annars står på huvudet.
-    bak.rotateX(Math.PI);
-    const fore = matt(bak).size.clone();
-    const s = fore.y > 0.2 ? 1.78 / fore.y : 1;
-    if (Math.abs(s - 1) > 0.04) bak.scale.multiplyScalar(s);
-    bak.position.y -= matt(bak).box.min.y;
-    stallPaMark(bak);
-    slåIhop(bak);
-    rapportRad(grupp.namn, fore, matt(bak).size, s);
-    const meshar = [];
-    bak.traverse(n => { if (n.isMesh) meshar.push(n); });
-    for (const mesh of meshar) {
-      const im = new THREE.InstancedMesh(mesh.geometry, mesh.material, grupp.platser.length);
-      const d = new THREE.Object3D();
-      grupp.platser.forEach((p, i) => {
-        d.position.set(p[0], 0, p[1]);
-        d.rotation.set(0, p[2], 0);
-        d.scale.set(1, 1, 1);
-        d.updateMatrix();
-        im.setMatrixAt(i, d.matrix);
-      });
-      im.castShadow = true;
-      im.receiveShadow = true;
-      im.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 90);
-      scene.add(im);
-    }
+  const soldater = stallSoldater(scene, {usa: modell.usa, tysk: modell.tysk});
+  for (const rad of soldater.status()) {
+    rapport.push({namn: rad.sida + '-soldat', fore: [0, 0, 0], efter: [rad.x, 1.78, rad.z], skala: 1});
   }
 
   draco.dispose();
   ktx2.dispose();
-  return {rapport, oga: OGA, hackAntal: hackPlatser.length};
+  return {rapport, oga: OGA, hackAntal: hackPlatser.length, miljo, soldater};
 }

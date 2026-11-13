@@ -85,7 +85,7 @@ export function normalLaser(raw) {
     farg,
     strale: raw?.strale === true,
     sikte: raw?.sikte === 'kikare' ? 'kikare' : 'prick',
-    zoom: klamp(Number.isFinite(+raw?.zoom) ? +raw.zoom : bas.zoom, 1, 4),
+    zoom: klamp(Number.isFinite(+raw?.zoom) ? +raw.zoom : bas.zoom, 1, 6),
     ljud: raw?.ljud !== false,
     volym: klamp(Number.isFinite(+raw?.volym) ? +raw.volym : bas.volym, 0, 1),
     vibrera: raw?.vibrera !== false,
@@ -107,8 +107,8 @@ function prickVarde(raw, bas) {
 // Kikarsiktet delar basens synfält med zoom. Prickläget lämnar synfältet orört.
 export function effektivFov(bas, install) {
   const b = Number.isFinite(+bas) ? +bas : 68;
-  const z = install?.sikte === 'kikare' ? klamp(Number(install.zoom) || 1, 1, 4) : 1;
-  return klamp(b / z, 8, 100);
+  const z = install?.sikte === 'kikare' ? klamp(Number(install.zoom) || 1, 1, 6) : 1;
+  return klamp(b / z, 4, 100);
 }
 
 function sammaKanslighet(install) {
@@ -781,8 +781,9 @@ export function sjalvtest() {
   krav('sikte är prick eller kikare', normalLaser({sikte: 'kikare'}).sikte === 'kikare' && normalLaser({sikte: 'tub'}).sikte === 'prick');
   krav('kikarsikte zoomar synfältet', effektivFov(40, {sikte: 'kikare', zoom: 2}) === 20);
   krav('prickläge zoomar inte', effektivFov(40, {sikte: 'prick', zoom: 2}) === 40);
-  krav('zoom stannar vid 8°', effektivFov(12, {sikte: 'kikare', zoom: 4}) === 8);
-  krav('zoom kläms', normalLaser({zoom: 9}).zoom === 4 && normalLaser({zoom: 0.2}).zoom === 1);
+  krav('zoom stannar vid 4°', effektivFov(12, {sikte: 'kikare', zoom: 4}) === 4);
+  krav('sex gånger zoomar synfältet', effektivFov(66, {sikte: 'kikare', zoom: 6}) === 11);
+  krav('zoom kläms', normalLaser({zoom: 9}).zoom === 6 && normalLaser({zoom: 0.2}).zoom === 1);
   krav('förval behåller siktet', appliceraForval({sikte: 'kikare', zoom: 3, prick: 40}, 'fin').sikte === 'kikare' && appliceraForval({sikte: 'kikare', zoom: 3, prick: 40}, 'fin').zoom === 3);
   return fel;
 }

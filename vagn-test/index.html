@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1a221c">
 <link rel="icon" href="data:,">
 <title>Vagntest</title>
-<link rel="stylesheet" href="./stil.css?v=4">
+<link rel="stylesheet" href="./stil.css?v=5">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
@@ -27,11 +27,11 @@
 </div>
 <p id="besked" hidden></p>
 <p id="flygtid" hidden></p>
-<div id="version">Vagntest 04</div>
+<div id="version">Vagntest 05</div>
 <section id="startKort">
 <span class="ogonbryn">NORMANDIE · SKYTTESIKTE</span>
 <h1>Håll telefonen på sidan</h1>
-<p id="startText">Som en ratt. Växel och gas sitter i ett kort hörn nere till vänster, med fart, varv och eldrör på tre mätare. Luta för att svänga, vrid för tornet, tippa ovansidan för eldröret.</p>
+<p id="startText">Som en ratt. Växel och gas sitter i ett kort hörn nere till vänster, med fart, varv och eldrör på tre mätare. Luta för att svänga, vrid för tornet, tippa ovansidan för eldröret. Kamera och vagn ligger i menyn.</p>
 <button id="starta" type="button" disabled>Laddar…</button>
 <small>På en dator: A och D svänger, pilarna siktar, dra i växeln och gasen. Meny uppe till höger.</small>
 </section>
@@ -58,10 +58,19 @@
 </div>
 <div id="instrument"></div>
 </div>
+<button id="kameraIkon" type="button" hidden aria-pressed="false" aria-label="Byt till tredjeperson">
+<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 7.5h2.2l1.2-2h5.2l1.2 2H20a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18V9A1.5 1.5 0 0 1 4 7.5Zm8 9a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2Z"/></svg>
+</button>
 <button id="menyKnapp" type="button" hidden aria-expanded="false" aria-controls="meny">☰ Meny</button>
 <div id="meny" hidden>
 <button id="noll" type="button">Nollställ</button>
+<button id="kameraKnapp" type="button">Siktesvy</button>
+<button id="vagnKnapp" type="button">Sherman 75 mm</button>
 <button id="installKnapp" type="button" aria-expanded="false" aria-controls="installningar">Inställningar</button>
+<details id="omKalla">
+<summary>Om / Källor</summary>
+<p class="kalla">Höjd och mark: IGN – LiDAR HD MNT, Villers-Bocage. Etalab 2.0 / Licence Ouverte 2.0. Nutida mark.</p>
+</details>
 </div>
 <canvas id="karta" width="220" height="220" hidden aria-label="Karta. Skrovet pekar upp, grönt streck är tornet."></canvas>
 <small id="kartaText" hidden>Skrov upp · torn grönt</small>
@@ -99,9 +108,13 @@
 </details>
 <label class="check"><input id="visaMat" type="checkbox"> Visa mätvärden</label>
 <label class="check"><input id="ljudPa" type="checkbox" checked> Mekanikljud</label>
+<label class="check"><input id="rikoschettPa" type="checkbox" checked> Rikoschett</label>
+<label class="check"><input id="hePansar" type="checkbox"> Spränggranat mot tunn plåt</label>
+<label class="check"><input id="skadaUtan" type="checkbox"> Skada utan genomslag</label>
+<label class="reglage" id="sikteRad">Sikte<select id="sikteVal"></select></label>
 <button id="standard" type="button">Standard</button>
 </section>
-<script type="module" src="./spel.js?v=4"></script>
+<script type="module" src="./spel.js?v=5"></script>
 <script>
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});

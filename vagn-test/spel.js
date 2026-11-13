@@ -1,20 +1,22 @@
 import * as THREE from 'three';
-import {sjalvtest as gyroTest, skapaRorelse} from './gyro.js?v=4';
-import {sjalvtest as styrTest, STANDARD, normalStyr, ordnaTrosklar, skapaJamning, behandlaAxel, bandMal, skapaVagn, stegaVagn, stegaTorn, stegaEldror, ELD_MIN, ELD_MAX} from './styr.js?v=4';
-import {sjalvtest as banTest, banTabell, skapaGranat, stegGranat, delTid, V0} from './ballistik.js?v=4';
-import {byggVarld, stegaMal} from './varld.js?v=4';
-import {sjalvtest as mekTest, MEKANIK, VAXLAR, gasAntal, gasVarde, gasOpt, vaxelOpt, vaxelFranId, draHack, slappHack, drivKommando} from './mekanik.js?v=4';
-import {sjalvtest as ljudTest, skapaMekanikLjud, kansla} from './ljud.js?v=4';
-import {sjalvtest as effektTest, stegFjader, vridMot, nastaSalva, granatSkada, tigerUtslagen, TIGER_HP, nedslagMotSpelare} from './effekt.js?v=4';
+import {sjalvtest as gyroTest, skapaRorelse} from './gyro.js?v=5';
+import {sjalvtest as styrTest, STANDARD, normalStyr, ordnaTrosklar, skapaJamning, behandlaAxel, bandMal, skapaVagn, stegaVagn, stegaTorn, stegaEldror, ELD_MIN, ELD_MAX} from './styr.js?v=5';
+import {sjalvtest as banTest, banTabell, skapaGranat, stegGranat, delTid, V0} from './ballistik.js?v=5';
+import {byggVarld, stegaMal} from './varld.js?v=5';
+import {sjalvtest as mekTest, MEKANIK, VAXLAR, gasAntal, gasVarde, gasOpt, vaxelOpt, vaxelFranId, draHack, slappHack, drivKommando} from './mekanik.js?v=5';
+import {sjalvtest as ljudTest, skapaMekanikLjud, kansla} from './ljud.js?v=5';
+import {sjalvtest as effektTest, stegFjader, vridMot, nastaSalva, tigerUtslagen, nedslagMotSpelare} from './effekt.js?v=5';
+import {sjalvtest as hojdTest, skrovLutning} from './hojd.js?v=5';
+import {sjalvtest as pansarTest, REGLER, VAGN_LISTA, standardRegler, siktenFor, sikteFor, klassFranLokal, bedomTraff} from './pansar.js?v=5';
 
 const NYCKEL = 'vagn_test_v1';
+const REGEL_NYCKEL = 'vagn_test_regler_v5';
 const OMLADD = 7;
-const SIKTE_FOV = 16;
 
 const $ = id => document.getElementById(id);
 const tal = (n, d = 0) => n.toFixed(d).replace('.', ',');
 const canvas = $('vy');
-const teckenfel = [...gyroTest(), ...styrTest(), ...banTest(), ...mekTest(), ...ljudTest(), ...effektTest()];
+const teckenfel = [...gyroTest(), ...styrTest(), ...banTest(), ...mekTest(), ...ljudTest(), ...effektTest(), ...hojdTest(), ...pansarTest()];
 if (teckenfel.length) console.error('Vagntest', teckenfel);
 
 const rorelse = skapaRorelse(canvas);
@@ -33,6 +35,14 @@ const GRANATER = {
   sprang: {id: 'sprang', namn: 'Spränggranat', kort: 'Spräng'},
   pansar: {id: 'pansar', namn: 'Pansargranat', kort: 'Pansar'}
 };
+let vagnId = 'sherman_m4_75';
+let sikteId = 'm70f';
+let kamera = 'sikte';
+let spelRegler = standardRegler();
+try {
+  const sparad = JSON.parse(localStorage.getItem(REGEL_NYCKEL) || 'null');
+  if (sparad) spelRegler = {...standardRegler(), ...sparad, rikoschett: sparad.rikoschett !== false};
+} catch { /* privat läge */ }
 let granatTyp = 'sprang';
 let skottTyp = granatTyp;
 let ladd = 0;
@@ -60,7 +70,7 @@ renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(SIKTE_FOV, 1, 0.35, 2200);
+const camera = new THREE.PerspectiveCamera(sikteFor(vagnId, sikteId).synfalt, 1, 0.3, 7000);
 camera.position.set(0, 2.1, 5);
 
 const tabell = banTabell();
@@ -112,6 +122,12 @@ const lokal = new THREE.Vector3();
 const punkt = new THREE.Vector3();
 const fore = new THREE.Vector3();
 const inv = new THREE.Matrix4();
+const titt = new THREE.Vector3();
+const vel = new THREE.Vector3();
+const rel = new THREE.Vector3();
+const ramH = new THREE.Vector3();
+const upp = new THREE.Vector3(0, 1, 0);
+const qInv = new THREE.Quaternion();
 let varld = null;
 let sol = null;
 const traffLjus = new THREE.PointLight(0xffc078, 0, 22, 2);
@@ -337,7 +353,7 @@ function avfyraTiger(t) {
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);
   const x = t.mesh.position.x + fx * 3.5;
-  const y = 1.85;
+  const y = t.mesh.position.y + 1.85;
   const z = t.mesh.position.z + fz * 3.5;
   const traffForsok = Math.random() < 0.3;
   const rad = traffForsok ? 1.2 + Math.random() * 4.2 : 9 + Math.random() * 16;
@@ -345,7 +361,7 @@ function avfyraTiger(t) {
   const lead = 0.35;
   const tx = vagn.x - Math.sin(vagn.yaw) * vagn.fart * lead + Math.cos(ang) * rad;
   const tz = vagn.z - Math.cos(vagn.yaw) * vagn.fart * lead + Math.sin(ang) * rad;
-  const ty = 0.3;
+  const ty = (t.yVid ? t.yVid(vagn.x, vagn.z) : t.mesh.position.y) + 1.5;
   const dist = Math.hypot(tx - x, ty - y, tz - z);
   t.skott = {x, y, z, tx, ty, tz, flyg: Math.max(0.28, dist / 780), tid: 0};
   t.spar.visible = true;
@@ -413,6 +429,7 @@ function stegaTiger(t, dt) {
   t.mesh.position.x -= Math.sin(yaw) * t.rekyl;
   t.mesh.position.z -= Math.cos(yaw) * t.rekyl;
   t.mesh.rotation.x = -Math.max(0, t.rekyl) * 0.05;
+  if (t.yVid) t.mesh.position.y = t.yVid(t.mesh.position.x, t.mesh.position.z);
   t.rekylFore = t.rekyl;
   t.rekylYaw = yaw;
   if (t.mesh.userData.blixt > 0) {
@@ -645,8 +662,12 @@ function fyllPanel() {
   }
   $('visaMat').checked = !!install.visaMat;
   $('ljudPa').checked = install.ljud !== false;
+  $('hePansar').checked = !!spelRegler.heMotPansar;
+  $('skadaUtan').checked = !!spelRegler.skadaUtan;
+  $('rikoschettPa').checked = spelRegler.rikoschett !== false;
   $('mat').hidden = !install.visaMat;
   ljudMotor.satt(install.ljud !== false);
+  fyllSikte();
 }
 byggPanel();
 fyllPanel();
@@ -663,6 +684,8 @@ $('ljudPa').addEventListener('change', () => {
 });
 $('standard').addEventListener('click', () => {
   install = normalStyr(STANDARD);
+  spelRegler = standardRegler();
+  sparaRegler();
   jamn.styra = jamn.torn = jamn.eldror = 0;
   spara();
   fyllPanel();
@@ -689,6 +712,22 @@ $('noll').addEventListener('click', () => {
   jamn.styra = jamn.torn = jamn.eldror = 0;
   visaMeny(false);
 });
+$('kameraKnapp').addEventListener('click', () => sattKamera(kamera === 'bak' ? 'sikte' : 'bak'));
+$('kameraIkon').addEventListener('click', () => sattKamera(kamera === 'bak' ? 'sikte' : 'bak'));
+$('vagnKnapp').addEventListener('click', () => {
+  const i = VAGN_LISTA.indexOf(vagnId);
+  sattVagn(VAGN_LISTA[(i + 1) % VAGN_LISTA.length]);
+});
+$('sikteVal').addEventListener('change', () => {
+  sikteId = $('sikteVal').value;
+  sattFov(true);
+});
+for (const [id, nyckel] of [['hePansar', 'heMotPansar'], ['skadaUtan', 'skadaUtan'], ['rikoschettPa', 'rikoschett']]) {
+  $(id).addEventListener('change', () => {
+    spelRegler = {...spelRegler, [nyckel]: $(id).checked};
+    sparaRegler();
+  });
+}
 addEventListener('pointerdown', e => {
   if ($('meny').hidden) return;
   if (e.target.closest('#meny') || e.target.closest('#menyKnapp')) return;
@@ -940,30 +979,152 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => tangenter.delete(e.code));
 addEventListener('blur', () => tangenter.clear());
 
+function aktiv() {
+  return varld?.riggar?.[vagnId] || null;
+}
+
+function sparaRegler() {
+  try { localStorage.setItem(REGEL_NYCKEL, JSON.stringify(spelRegler)); } catch { /* privat läge */ }
+}
+
+function sattFov(tvinga) {
+  const mal = kamera === 'bak' ? 58 : sikteFor(vagnId, sikteId).synfalt;
+  if (!tvinga && Math.abs(camera.fov - mal) < 0.02) return;
+  camera.fov = mal;
+  camera.updateProjectionMatrix();
+  if (kamera === 'sikte') passaSikte();
+}
+
+function visaOptik() {
+  const fp = kamera === 'sikte' && igang;
+  $('sikte').hidden = !fp;
+  $('optik').hidden = !fp;
+  $('kameraKnapp').textContent = kamera === 'bak' ? 'Tredjeperson' : 'Siktesvy';
+  $('kameraIkon').setAttribute('aria-pressed', kamera === 'bak' ? 'true' : 'false');
+  $('kameraIkon').setAttribute('aria-label', kamera === 'bak' ? 'Byt till siktesvy' : 'Byt till tredjeperson');
+}
+
+function sattKamera(lage) {
+  kamera = lage === 'bak' ? 'bak' : 'sikte';
+  document.body.dataset.kamera = kamera;
+  visaOptik();
+  sattFov(true);
+  lasFast();
+}
+
+function fyllSikte() {
+  const sel = $('sikteVal');
+  const lista = siktenFor(vagnId);
+  sel.replaceChildren();
+  for (const s of lista) {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = s.text;
+    sel.append(opt);
+  }
+  if (!lista.some(s => s.id === sikteId)) sikteId = lista[0].id;
+  sel.value = sikteId;
+  sel.disabled = lista.length < 2;
+}
+
+function sattVagn(id) {
+  if (!REGLER.vagnar[id] || !varld) return;
+  vagnId = id;
+  $('vagnKnapp').textContent = REGLER.vagnar[id].kort;
+  fyllSikte();
+  const a = aktiv();
+  for (const r of new Set(Object.values(varld.riggar))) r.rigg.visible = r === a;
+  sattFov(true);
+  lasFast();
+}
+
 function lasFast() {
   if (!varld) return;
+  const a = aktiv();
+  if (!a) return;
+  const lut = skrovLutning(vagn.x, vagn.z, vagn.yaw, varld.hf);
   const back = Math.max(0, rekylX);
   const jitter = skak * 0.045;
-  varld.rigg.position.set(
-    vagn.x + Math.sin(vagn.yaw) * back * 0.28,
-    back * 0.05,
-    vagn.z + Math.cos(vagn.yaw) * back * 0.28
+  a.rigg.position.set(
+    vagn.x + Math.sin(vagn.yaw) * back * 0.12,
+    lut.y,
+    vagn.z + Math.cos(vagn.yaw) * back * 0.12
   );
-  varld.rigg.rotation.set(0, vagn.yaw, 0);
-  varld.torn.rotation.y = -vagn.torn;
-  varld.eldror.rotation.x = vagn.eld;
-  const bas = varld.sikte;
-  camera.position.set(
-    bas.x + Math.sin(skakTid * 57) * jitter,
-    bas.y + back * 0.14 + Math.cos(skakTid * 43) * jitter * 0.7,
-    bas.z + back * 0.5
-  );
-  camera.rotation.set(
-    -back * 0.12 + Math.sin(skakTid * 51) * jitter * 0.7,
-    Math.cos(skakTid * 37) * jitter * 0.45,
-    back * 0.015 + Math.sin(skakTid * 33) * jitter * 0.3
-  );
-  varld.rigg.updateMatrixWorld(true);
+  a.rigg.rotation.order = 'YXZ';
+  a.rigg.rotation.set(-lut.pitch, vagn.yaw, -lut.roll);
+  a.torn.rotation.y = -vagn.torn;
+  a.eldror.rotation.x = vagn.eld;
+  if (a.pipa) a.pipa.position.z = back * 0.9;
+  if (kamera === 'bak') {
+    if (camera.parent !== scene) scene.add(camera);
+    const dist = 12;
+    const hoj = 4.4;
+    const sida = 3.2;
+    const fx = -Math.sin(vagn.yaw);
+    const fz = -Math.cos(vagn.yaw);
+    const rx = Math.cos(vagn.yaw);
+    const rz = -Math.sin(vagn.yaw);
+    camera.up.set(0, 1, 0);
+    camera.position.set(vagn.x - fx * dist + rx * sida, lut.y + hoj, vagn.z - fz * dist + rz * sida);
+    titt.set(vagn.x + fx * 6, lut.y + 1.85, vagn.z + fz * 6);
+    camera.lookAt(titt);
+  } else {
+    if (camera.parent !== a.eldror) a.eldror.add(camera);
+    const bas = a.sikte;
+    camera.position.set(
+      bas.x + Math.sin(skakTid * 57) * jitter,
+      bas.y + back * 0.14 + Math.cos(skakTid * 43) * jitter * 0.7,
+      bas.z + back * 0.5
+    );
+    camera.rotation.set(
+      -back * 0.12 + Math.sin(skakTid * 51) * jitter * 0.7,
+      Math.cos(skakTid * 37) * jitter * 0.45,
+      back * 0.015 + Math.sin(skakTid * 33) * jitter * 0.3
+    );
+  }
+  sattFov(false);
+  a.rigg.updateMatrixWorld(true);
+}
+
+function ramFor(tiger) {
+  if (tiger.ram) return tiger.ram;
+  const box = tiger.box;
+  const c = box.getCenter(new THREE.Vector3());
+  let minF = Infinity, maxF = -Infinity, minH = Infinity, maxH = -Infinity;
+  for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+    ramH.set(x - c.x, y - c.y, z - c.z);
+    const f = ramH.dot(tiger.fram);
+    const h = ramH.dot(tiger.hoger);
+    if (f < minF) minF = f;
+    if (f > maxF) maxF = f;
+    if (h < minH) minH = h;
+    if (h > maxH) maxH = h;
+  }
+  tiger.ram = {c, minF, maxF, minH, maxH, minY: box.min.y, maxY: box.max.y};
+  return tiger.ram;
+}
+
+function traffPaTiger(tiger, traffPunkt, traffFore) {
+  const mesh = tiger.mesh;
+  mesh.updateMatrixWorld(true);
+  inv.copy(mesh.matrixWorld).invert();
+  lokal.copy(traffPunkt).applyMatrix4(inv);
+  mesh.getWorldQuaternion(qInv).invert();
+  vel.subVectors(traffPunkt, traffFore);
+  if (vel.lengthSq() < 1e-8) vel.set(0, -0.15, -1);
+  vel.applyQuaternion(qInv).normalize();
+  const ram = ramFor(tiger);
+  rel.copy(lokal).sub(ram.c);
+  const f = rel.dot(tiger.fram);
+  const h = rel.dot(tiger.hoger);
+  const nz = (f - (ram.minF + ram.maxF) / 2) / Math.max(0.01, (ram.maxF - ram.minF) / 2);
+  const nx = (h - (ram.minH + ram.maxH) / 2) / Math.max(0.01, (ram.maxH - ram.minH) / 2);
+  const ny = (lokal.y - ram.minY) / Math.max(0.01, ram.maxY - ram.minY);
+  return {
+    klass: klassFranLokal(nx, ny, nz),
+    sida: h >= 0 ? 1 : -1,
+    skott: {x: vel.dot(tiger.hoger), y: vel.dot(upp), z: vel.dot(tiger.fram)}
+  };
 }
 
 function iMal(mesh, box, punkt) {
@@ -984,40 +1145,62 @@ function visaBesked(text, traff) {
   beskedTid = 3.2;
 }
 
-function traffa(punkt, tiger) {
+function traffa(traffPunkt, tiger) {
   if (tiger) traffor += 1;
   granat = null;
   spar.visible = false;
-  const avstand = Math.hypot(punkt.x - vagn.x, punkt.z - vagn.z);
+  const avstand = Math.hypot(traffPunkt.x - vagn.x, traffPunkt.z - vagn.z);
+  let text = 'Nedslag · ' + Math.round(avstand) + ' m';
+  let traff = false;
   if (tiger) {
-    tiger.skada = (tiger.skada || 0) + granatSkada(skottTyp);
+    const det = traffPaTiger(tiger, traffPunkt, fore);
+    const bed = bedomTraff({
+      mal: 'tiger_i',
+      vapen: REGLER.vagnar[vagnId].vapen,
+      granat: skottTyp,
+      avstand,
+      klass: det.klass,
+      skott: det.skott,
+      sida: det.sida,
+      regler: spelRegler
+    });
+    senTraff = bed;
+    tiger.skada = (tiger.skada || 0) + bed.skada;
     const blev = tigerUtslagen(tiger.skada) && !tiger.utslagen;
     if (tigerUtslagen(tiger.skada)) tiger.utslagen = true;
-    tiger.mesh.userData.blixt = 0.45;
-    tiger.mesh.material.emissive?.setHex(0xff7a3a);
+    tiger.mesh.userData.blixt = bed.genomslag ? 0.45 : 0.2;
+    tiger.mesh.material.emissive?.setHex(bed.genomslag ? 0xff7a3a : 0x8a6a3a);
     tonaTiger(tiger);
     ljudMotor.traff(avstand);
     if (blev) ljudMotor.forstord(avstand);
-    salvaNedslag(punkt, skottTyp === 'pansar' ? 'pansar' : 'traff');
+    salvaNedslag(traffPunkt, bed.genomslag ? 'pansar' : skottTyp === 'pansar' ? 'pansar' : 'traff');
+    text = bed.text + (blev ? ' · utslagen' : '');
+    traff = bed.genomslag;
   } else {
     ljudMotor.nedslag(avstand);
-    salvaNedslag(punkt, 'mark');
+    salvaNedslag(traffPunkt, 'mark');
+    senTraff = {text, genomslag: false, klass: 'mark'};
   }
-  traffLjus.position.copy(punkt);
+  traffLjus.position.copy(traffPunkt);
   ljusTid = 0.28;
   blixt();
-  const tid = granatTid;
-  const extra = tiger ? (tiger.utslagen ? ' · utslagen' : ' · ' + tiger.skada + '/' + TIGER_HP) : '';
-  visaBesked((tiger ? 'Träff' : 'Nedslag') + ' ' + GRANATER[skottTyp].kort + ' ' + Math.round(avstand) + ' m · ' + tal(tid, 1) + ' s' + extra, !!tiger);
+  visaBesked(text, traff);
 }
 let granatTid = 0;
 let senSkott = null;
+let senTraff = null;
 
 function avfyra() {
   if (!igang || ladd > 0 || granat || !varld) return;
   lasFast();
-  camera.getWorldPosition(mun);
-  camera.getWorldDirection(dir);
+  const pipa = kamera === 'bak' ? aktiv()?.mynning : null;
+  if (pipa) {
+    pipa.getWorldPosition(mun);
+    pipa.getWorldDirection(dir);
+  } else {
+    camera.getWorldPosition(mun);
+    camera.getWorldDirection(dir);
+  }
   const start = mun.clone().addScaledVector(dir, 1.6);
   granat = skapaGranat(start.x, start.y, start.z, dir.x * V0, dir.y * V0, dir.z * V0);
   granatTid = 0;
@@ -1134,8 +1317,9 @@ function stegaGranat(dt) {
           return;
         }
       }
-      if (granat.y <= 0.05) {
-        punkt.y = 0.08;
+      const markY = varld.hojd ? varld.hojd(granat.x, granat.z) : 0;
+      if (granat.y <= markY + 0.2) {
+        punkt.y = markY + 0.12;
         traffa(punkt, null);
         return;
       }
@@ -1168,6 +1352,8 @@ function tick(dt) {
   const tro = effektiv();
   const mal = bandMal(drivKommando(vaxelIndex, gas), behandlad.styra.grader, tro);
   stegaVagn(vagn, mal, dt);
+  vagn.x = Math.max(-980, Math.min(980, vagn.x));
+  vagn.z = Math.max(-980, Math.min(980, vagn.z));
   vagn.torn = stegaTorn(vagn.torn, behandlad.torn.u, dt);
   vagn.eld = stegaEldror(vagn.eld, behandlad.eldror.u, dt);
   for (const t of varld.tigrar) stegaTiger(t, dt);
@@ -1199,9 +1385,14 @@ function tick(dt) {
   ritaMat(rav);
   ritaKarta();
   if (sol) {
-    sol.position.set(vagn.x - 36, 70, vagn.z + 24);
-    sol.target.position.set(vagn.x, 0, vagn.z);
+    const mark = varld.hojd ? varld.hojd(vagn.x, vagn.z) : 0;
+    sol.position.set(vagn.x - 36, mark + 80, vagn.z + 24);
+    sol.target.position.set(vagn.x, mark, vagn.z);
     sol.target.updateMatrixWorld();
+  }
+  if (varld.sky && varld.sky.parent !== camera) {
+    varld.sky.position.set(0, 0, 0);
+    camera.add(varld.sky);
   }
 }
 
@@ -1225,7 +1416,8 @@ requestAnimationFrame(loop);
 function visaSpel() {
   igang = true;
   $('startKort').hidden = true;
-  for (const id of ['spakar', 'menyKnapp', 'karta', 'kartaText', 'granatKnapp', 'eldWrap', 'sikte', 'optik']) $(id).hidden = false;
+  for (const id of ['spakar', 'menyKnapp', 'kameraIkon', 'karta', 'kartaText', 'granatKnapp', 'eldWrap']) $(id).hidden = false;
+  visaOptik();
   if (!rorelse.harGyro) setTimeout(() => { if (!rorelse.harGyro) $('hint').hidden = false; }, 900);
   passa();
 }
@@ -1245,6 +1437,7 @@ const start = $('starta');
 byggVarld(scene, renderer).then(v => {
   varld = v;
   sol = v.sol;
+  if (v.sky) camera.add(v.sky);
   v.eldror.add(camera);
   camera.position.copy(v.sikte);
   camera.rotation.set(0, 0, 0);
@@ -1271,8 +1464,21 @@ byggVarld(scene, renderer).then(v => {
     get skott() { return skott; },
     get ladd() { return ladd; },
     get rpm() { return senRpm; },
-    get tigrar() { return varld.tigrar.map(t => ({skada: t.skada || 0, utslagen: !!t.utslagen})); },
-    noll: () => rorelse.nollstall()
+    get tigrar() { return varld.tigrar.map(t => ({skada: t.skada || 0, utslagen: !!t.utslagen, y: +t.mesh.position.y.toFixed(2)})); },
+    noll: () => rorelse.nollstall(),
+    sattKamera, sattVagn,
+    sattSikte(id) { sikteId = id; fyllSikte(); sattFov(true); },
+    sattRegler(r) { spelRegler = {...spelRegler, ...r}; fyllPanel(); },
+    get kamera() { return kamera; },
+    get vagnId() { return vagnId; },
+    get sikteId() { return sikteId; },
+    get regler() { return spelRegler; },
+    get senTraff() { return senTraff; },
+    get fov() { return camera.fov; },
+    aktiv: () => aktiv(),
+    hojd: (x, z) => varld.hojd(x, z),
+    lutning: () => skrovLutning(vagn.x, vagn.z, vagn.yaw, varld.hf),
+    bedom: bedomTraff
   };
   window.__redo = teckenfel.length === 0;
 }).catch(e => {

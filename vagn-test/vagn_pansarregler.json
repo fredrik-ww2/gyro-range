@@ -1,0 +1,1122 @@
+{
+  "namn": "vagn_pansarregler",
+  "version": "1.0",
+  "datum": "2026-11-13",
+  "agent": "Spelutveckling WW2",
+  "syfte": "Verifierat underlag för träff-, pansar-, avstånds- och granatgenomslagsregler i gyro-range vagn-test. Inga nya värden är påhittade; status följer källfilerna.",
+  "konventioner": {
+    "mm": "Plåttjocklek vinkelrätt mot plåten.",
+    "lutning_fran_lodlinjen": "Grader; 0 = lodrät plåt, 90 = vågrätt tak. Spelet räknar sammansatt anslagsvinkel ur geometrin.",
+    "plat_vinkel_grader": "Från plåtens normal (0 = vinkelrätt). Tyska tabeller '60° mot horisontalen' = 30° här.",
+    "statusord": {
+      "kalla": "Angivet som källa i data/ballistics (ofta sekundär sammanställning).",
+      "uppskattning": "Uttryckligen märkt uppskattning i källfilen.",
+      "omraknad": "Omräknat (t.ex. yard→meter) i guns/*.json.",
+      "Finns / BRA_KALLA/EXTERN_DJUPANALYS / BOR_GRANSKAS / overifierad / BERAKNAD_LIKNANDE": "Strängare märkning i GENOMSLAG.json efter VD-beslut 20:10 (2026-10-23). Tyska panzerworld-rader är typiskt BOR_GRANSKAS eftersom primärhandling inte setts av UA2. Amerikanska 0°-värden ur Bird & Livingston är BRA_KALLA/EXTERN_DJUPANALYS. 30°-värden är ofta BERAKNAD_LIKNANDE eller overifierad."
+    },
+    "genomslag_villkor": "Genomslag om pen(avstånd, typ) * f(typ, vinkel) >= mm, enligt data/ballistics/vinkel.json. HEAT mot siktlinjetjocklek mm/cos(vinkel), oberoende av avstånd.",
+    "kallor_primara_mappar": [
+      "data/ballistics/tanks/",
+      "data/ballistics/guns/",
+      "data/ballistics/vinkel.json",
+      "data/knowledge/enhetsregister/GENOMSLAG.json",
+      "data/knowledge/enhetsregister/TIGERFIBEL_JAMFORELSE_28.json",
+      "data/settings/spelvariabler.json",
+      "data/tanks/",
+      "assets/models/enhetsmappar/USA/sherman_m4_75/sikte/SIKTE.md",
+      "docs/reference/MALLAR/EXEMPEL_HIERARKI/ALLA_ENHETER/USA/stridsvagnar_medeltunga/m4a3_76w_sherman/FALT/sikte/SIKTE.md"
+    ]
+  },
+  "dokumentluckor": {
+    "CATALOG.md": "Finns INTE under /workspace/ww2_assets/CATALOG.md. Närmaste: docs/CATALOG_v2.md och KATALOG/KATALOG.md.",
+    "README_PROJEKT.md": "Finns INTE under /workspace/ww2_assets/README_PROJEKT.md. Närmaste: docs/README_PROJEKT_v2_2.md (även v2 och v2_1).",
+    "AGENT_REGLER.md": "Finns som /workspace/ww2_assets/AGENT_REGLER.md. R62 (mobiloptimering: culling, återanvända texturer, LOD-kedja, alfa-vegetation, skuggproxies) gäller enligt LAS_FORST_RUTINER.md v0.14.",
+    "sherman_m4_75 i data/tanks/": "Ingen egen data/tanks/sherman_m4_75.json finns. Pansar står i data/ballistics/tanks/sherman_m4_75.json; sikte i enhetsmappens SIKTE.md och som jämförelse i sherman_order.json (75 mm: M70F / M10C).",
+    "skrov_bak och sidor Sherman 75 mm": "skrov_sida 38 mm och skrov_bak 38 mm är status=uppskattning (sida: 'allmänt angivet (Hunnicutt) – ej kontrollerat här'; bak: 'uppskattning'). Lutning bak 10° är uppskattning.",
+    "Sherman 75 mm torn/mantel/tak/nos": "mantel 89, torn_front 76/30°, torn_sida 51/5°, tak 19 och skrov_nos 51/30° är alla status=uppskattning. torn_bak saknas som egen zon.",
+    "Tiger skrov_glacis_kort": "60 mm / 80° är status=uppskattning (tjocklek uppskattad; Jentz anger 81°).",
+    "Tiger skrov_bak lutning": "80 mm är kalla, men källraden säger '(lutning uppskattad)' för 8°.",
+    "Tiger mantel 120 vs 200 vs fibel 120": "ballistics anger 120 mm kalla (Jentz). Not: PDF 'Pansar och slag' upp till 200 mm lokalt vid kanonfästet. Tigerfibel s. 84: Blende 120 mm. TIGERFIBEL_JAMFORELSE_28 flaggar registret 'mantel upp till 200' mot fibel 120 mm (−40 %) till VD.",
+    "genomslag 0° tyska Pzgr i guns/*.json": "kwk36_l56.json märker 0°-kurvan för Pzgr. 39 och Pzgr. 40 som uppskattning. GENOMSLAG.json har andra 0°-tal ur Bird & Livingston (Pzgr. 39 780 m/s: 162/151/138/126/116 mm) med status BRA_KALLA/EXTERN_DJUPANALYS – de överensstämmer INTE med guns-filens 146/134/122/111/102.",
+    "genomslag 30° tyska tabeller": "guns/*.json märker 30° som kalla (panzerworld/Geschoßringbuch). GENOMSLAG.json märker samma typ av rader BOR_GRANSKAS efter VD-beslut 20:10 (primärhandling ej sedd av UA2). Pzgr. 39 30° 1000 m är 100 mm i guns-filen och 99 mm i GENOMSLAG BOR_GRANSKAS.",
+    "US 30° saknade avstånd": "I m3_75.json och m1_76.json saknas ofta 100 m och ibland 2000 m vid 30°. Status för 30° är 'omraknad' (Hunnicutt yard→m). GENOMSLAG märker motsvarande 30°-rader BERAKNAD_LIKNANDE eller overifierad.",
+    "sprängverkan mot pansar": "Ingen genomslagskurva för HE i guns/*.json, bara sprängämnesvikt. spelvariabler.json flaggan modul.he_mot_pansar (standard false): 'Spränggranat slår igenom bara tunn plåt (≈ kaliber/4 mm)' – spelregel, inte uppmätt kurva. modul.skada_utan_genomslag (standard false): effekt när pe ≥ 0,9×mm.",
+    "M71D förstoring/synfält": "Beteckning M71D är Finns (TM 9-759). 5× och 13° är sekundära (theshermantank.com / ordnance.com). SIKTE.md: 'Förstoring ?' / 'Synfält ?'.",
+    "M70F förstoring/synfält": "Beteckning M70F är Finns (TM 9-759 par. 177). 3× och 12°19′ är sekundära. SIKTE.md märker dem med ?.",
+    "M10C / M10G synfält": "M10C (75 mm, TM 9-759 par. 180) och M10G (76 mm, par. 199) är Finns som 1×- och 6×-system. Synfält saknas i primärkällan (?). 42° (1×) och 11,33° (6×) anges i 76 mm-SIKTE.md som sekundärt (ww2f.com citerar Hunnicutt, 'gäller M10 i allmänhet'). 1×-sikteskors för M10C saknas som utskuren bild.",
+    "data/tanks saknar färdiga siktfält som spelvärden": "Optiken ligger i tiger_order.json / sherman_order.json och SIKTE.md, inte som färdiga grader i data/tanks/<id>.json utöver KZF 2-raden på Tigerns kulspruta."
+  },
+  "vagnar": {
+    "tiger_i": {
+      "id": "tiger_i",
+      "namn": "Tiger I (Ausf. E)",
+      "vapen": "kwk36_l56",
+      "kalla_fil": "data/ballistics/tanks/tiger_i.json",
+      "format": "mm = plåttjocklek vinkelrätt mot plåten; lutning_fran_lodlinjen i grader (0 = lodrät, 90 = vågrät tak). Spelet räknar ut sammansatt anslagsvinkel ur geometrin.",
+      "zoner": [
+        {
+          "zon": "mantel",
+          "mm": 120,
+          "lutning_fran_lodlinjen": 0,
+          "status": "kalla",
+          "kalla": "Jentz, Germany's Tiger Tanks – Combat Tactics, via https://id3486.securedata.net/fprado/armorsite/tiger1-02.htm [sekundär]",
+          "not": "PDF:en 'Pansar och slag' anger upp till 200 mm lokalt (dubbel tjocklek vid kanonfästet)"
+        },
+        {
+          "zon": "torn_front",
+          "mm": 100,
+          "lutning_fran_lodlinjen": 10,
+          "status": "kalla",
+          "kalla": "Jentz, Germany's Tiger Tanks – Combat Tactics, via https://id3486.securedata.net/fprado/armorsite/tiger1-02.htm [sekundär]"
+        },
+        {
+          "zon": "torn_sida",
+          "mm": 80,
+          "lutning_fran_lodlinjen": 0,
+          "status": "kalla",
+          "kalla": "Jentz, Germany's Tiger Tanks – Combat Tactics, via https://id3486.securedata.net/fprado/armorsite/tiger1-02.htm [sekundär]"
+        },
+        {
+          "zon": "torn_bak",
+          "mm": 80,
+          "lutning_fran_lodlinjen": 0,
+          "status": "kalla",
+          "kalla": "Jentz, Germany's Tiger Tanks – Combat Tactics, via https://id3486.securedata.net/fprado/armorsite/tiger1-02.htm [sekundär]"
+        },
+        {
+          "zon": "torn_tak",
+          "mm": 25,
+          "lutning_fran_lodlinjen": 90,
+          "status": "kalla",
+          "kalla": "https://panzerworld.com/pz-kpfw-tiger-ausf-e"
+        },
+        {
+          "zon": "skrov_front_overbyggnad",
+          "mm": 100,
+          "lutning_fran_lodlinjen": 9,
+          "status": "kalla",
+          "kalla": "Jentz, Germany's Tiger Tanks – Combat Tactics, via https://id3486.securedata.net/fprado/armorsite/tiger1-02.htm [sekundär]",
+          "not": "Förarplåten (Driver's Front Plate)"
+        },
+        {
+          "zon": "skrov_nos",
+          "mm": 100,
+          "lutning_fran_lodlinjen": 25,
+          "status": "kalla",
+          "kalla": "Jentz, Germany's Tiger Tanks – Combat Tactics, via https://id3486.securedata.net/fprado/armorsite/tiger1-02.htm [sekundär]"
+        },
+        {
+          "zon": "skrov_glacis_kort",
+          "mm": 60,
+          "lutning_fran_lodlinjen": 80,
+          "status": "uppskattning",
+          "kalla": "fprado/Jentz (81° från lodlinjen) – tjocklek 60 mm uppskattad"
+        },
+        {
+          "zon": "skrov_sida_overbyggnad",
+          "mm": 80,
+          "lutning_fran_lodlinjen": 0,
+          "status": "kalla",
+          "kalla": "Jentz, Germany's Tiger Tanks – Combat Tactics, via https://id3486.securedata.net/fprado/armorsite/tiger1-02.htm [sekundär]"
+        },
+        {
+          "zon": "skrov_sida_nedre",
+          "mm": 60,
+          "lutning_fran_lodlinjen": 0,
+          "status": "kalla",
+          "kalla": "Jentz, Germany's Tiger Tanks – Combat Tactics, via https://id3486.securedata.net/fprado/armorsite/tiger1-02.htm [sekundär]"
+        },
+        {
+          "zon": "skrov_bak",
+          "mm": 80,
+          "lutning_fran_lodlinjen": 8,
+          "status": "kalla",
+          "kalla": "Jentz, Germany's Tiger Tanks – Combat Tactics, via https://id3486.securedata.net/fprado/armorsite/tiger1-02.htm [sekundär] (lutning uppskattad)"
+        },
+        {
+          "zon": "skrov_tak",
+          "mm": 25,
+          "lutning_fran_lodlinjen": 90,
+          "status": "kalla",
+          "kalla": "https://panzerworld.com/pz-kpfw-tiger-ausf-e"
+        }
+      ],
+      "svaga_punkter": [
+        {
+          "zon": "forarens_synlucka",
+          "mm": 100,
+          "lutning_fran_lodlinjen": 9,
+          "status": "uppskattning",
+          "kalla": "uppskattning – sitter i förarplåten; glipa/glas räknas som svagare",
+          "faktor_mot_zon": 0.7
+        },
+        {
+          "zon": "kulsprutekula_skrov",
+          "mm": 100,
+          "lutning_fran_lodlinjen": 9,
+          "status": "uppskattning",
+          "kalla": "uppskattning",
+          "faktor_mot_zon": 0.75
+        },
+        {
+          "zon": "tornring_spalt",
+          "mm": 0,
+          "lutning_fran_lodlinjen": 0,
+          "status": "uppskattning",
+          "kalla": "uppskattning – träff i spalten kan låsa tornet utan genomslag",
+          "effekt_utan_genomslag": "tornet låst"
+        },
+        {
+          "zon": "luckor_tak",
+          "mm": 25,
+          "lutning_fran_lodlinjen": 90,
+          "status": "uppskattning",
+          "kalla": "uppskattning"
+        }
+      ],
+      "datablad_pansar_mm": {
+        "falt": "pansar_mm",
+        "varde": "skrov front 100, sidor/bak 60–80, tak 25; torn front 70–145 (mantel upp till 200 enligt PDF), sidor/bak 80, tak 25",
+        "kalla": "https://panzerworld.com/pz-kpfw-tiger-ausf-e; Pansar och slag (användarens PDF), avsnitt 6"
+      },
+      "spelvarden_klass_1_10": {
+        "vagnskort": {
+          "front": 8,
+          "sida": 6,
+          "bak": 6,
+          "tak": 2
+        },
+        "pansar_och_slag": {
+          "skrov": [
+            8,
+            6,
+            6
+          ],
+          "torn": [
+            9,
+            6,
+            6
+          ]
+        },
+        "kontroll": "Effektiv front 100 mm → klass 8 (100–139), sida 80 → 6 (71–85), bak 80 → 6; tornfront/mantel 140–189 → 9. Vagnskort och PDF stämmer för skrovet; PDF ger tornet 9 fram.",
+        "tak_anm": "Tak 25 mm → klass 2 (16–30) enligt PDF-skalan, = Vagnskort."
+      },
+      "rackvidd_m": {
+        "varde": 2900,
+        "status": "[F]",
+        "kalla": "TRAFFSANNOLIKHET_historisk.md 8.2: 20 %-gränsen ~2 900 m (stridskolumn, Jentz 1996 s. 9)"
+      },
+      "tigerfibel_omgang_28": {
+        "kalla": "Tigerfibel D 656/27 (rang 1), kallor/de/tigerfibel_ocr.txt (intern)",
+        "stod_utan_statusandring": [
+          "REG vikt 57 t vs fibel 60 t (+5,3 %) s. 2/14",
+          "REG fart_vag 45 s. 2",
+          "REG fart_terrang 20–25 vs 20 s. 2",
+          "REG pansar fram/sida/bak 100/80/80 s. 84"
+        ],
+        "till_VD_over_30_pansar": [
+          {
+            "falt": "REG tiger_i.pansar_fram_mm 'mantel upp till 200'",
+            "fibel": "Blende 120 mm (s. 84)",
+            "avvikelse": "-40 %"
+          }
+        ]
+      },
+      "sikte": {
+        "riktare_huvudsikte": {
+          "modeller": [
+            "TZF 9b",
+            "TZF 9c"
+          ],
+          "TZF_9b": {
+            "forstoring": "2,5×",
+            "synfalt": "25–26°",
+            "status": "angivet i tiger_order.json poster.3.1_optik / 3.2_synfalt (status klar/delvis)"
+          },
+          "TZF_9c": {
+            "forstoring": "2,5× / 5×",
+            "synfalt": "ej separat angivet utöver 9b",
+            "status": "samma poster"
+          },
+          "kalla": "data/tanks/tiger_order.json; Die Tigerfibel D 656/27 (1943) via RAPPORT_sikt_per_position.md"
+        },
+        "kulspruta_skrov": {
+          "modell": "KZF 2",
+          "forstoring_i_order": "1,8×",
+          "forstoring_i_tiger_i_json": "1,75×",
+          "synfalt": "18°",
+          "not": "Liten avvikelse 1,8× (order) mot 1,75× (data/tanks/tiger_i.json kulsprutor.sikte). Inte avgjord här."
+        },
+        "ovrigt": "Förare: springa + periskop. Laddare: siktspringor. Chef: låg gjuten kupol med 7 periskop (från juli 1943). Lucka: synfält per förar- och kupolperiskop saknas (3.2 status delvis)."
+      }
+    },
+    "sherman_m4_75": {
+      "id": "sherman_m4_75",
+      "namn": "M4/M4A1/M4A2 Sherman (75 mm, tidig)",
+      "tydlig_typ": "Tidig M4 / M4A1 / M4A2 med 75 mm Gun M3 (L/40), inte 76 mm-vagnen.",
+      "vapen": "m3_75",
+      "kalla_fil": "data/ballistics/tanks/sherman_m4_75.json",
+      "format": "mm = plåttjocklek vinkelrätt mot plåten; lutning_fran_lodlinjen i grader (0 = lodrät, 90 = vågrät tak). Spelet räknar ut sammansatt anslagsvinkel ur geometrin.",
+      "zoner": [
+        {
+          "zon": "skrov_front_ovre",
+          "mm": 51,
+          "lutning_fran_lodlinjen": 56,
+          "status": "kalla (sekundär)",
+          "kalla": "Wa Prüf 1 via Jentz/Doyle (Osprey): 'standard 56°-glacis' – https://en.wikipedia.org/wiki/75_mm_gun_M2/M3/M6 ; tjocklek 51 mm allmänt angiven"
+        },
+        {
+          "zon": "skrov_nos",
+          "mm": 51,
+          "lutning_fran_lodlinjen": 30,
+          "status": "uppskattning",
+          "kalla": "uppskattning"
+        },
+        {
+          "zon": "skrov_sida",
+          "mm": 38,
+          "lutning_fran_lodlinjen": 0,
+          "status": "uppskattning",
+          "kalla": "allmänt angivet (Hunnicutt) – ej kontrollerat här"
+        },
+        {
+          "zon": "skrov_bak",
+          "mm": 38,
+          "lutning_fran_lodlinjen": 10,
+          "status": "uppskattning",
+          "kalla": "uppskattning"
+        },
+        {
+          "zon": "mantel",
+          "mm": 89,
+          "lutning_fran_lodlinjen": 0,
+          "status": "uppskattning",
+          "kalla": "uppskattning (76 + 13 mm sköld)"
+        },
+        {
+          "zon": "torn_front",
+          "mm": 76,
+          "lutning_fran_lodlinjen": 30,
+          "status": "uppskattning",
+          "kalla": "uppskattning"
+        },
+        {
+          "zon": "torn_sida",
+          "mm": 51,
+          "lutning_fran_lodlinjen": 5,
+          "status": "uppskattning",
+          "kalla": "uppskattning"
+        },
+        {
+          "zon": "tak",
+          "mm": 19,
+          "lutning_fran_lodlinjen": 90,
+          "status": "uppskattning",
+          "kalla": "uppskattning"
+        }
+      ],
+      "svaga_punkter": [
+        {
+          "zon": "applikationsplatar_sida",
+          "mm": 25,
+          "lutning_fran_lodlinjen": 0,
+          "status": "kalla (kvalitativt)",
+          "kalla": "ORS-rapport 12: extra påsvetsade plåtar stoppade aldrig någon träff i urvalet – https://scholars.wlu.ca/cmh/vol7/iss1/8"
+        }
+      ],
+      "brand": "Torr stuvning: ORS 12 – 33 av 40 (82 %) brann, i snitt 1,89 genomslag per vagn – https://scholars.wlu.ca/cmh/vol7/iss1/8 ; https://en.wikipedia.org/wiki/M4_Sherman",
+      "saknad_zon": "torn_bak och skrov_tak som egna fält saknas; 'tak' 19 mm täcker tak utan att skilja skrov/torn.",
+      "sikte": {
+        "riktare_direktsikte_1944": {
+          "modell": "Telescope M70F (Instrument Light M32)",
+          "beteckning_status": "Finns, TM 9-759 par. 177",
+          "forstoring": {
+            "varde": "3×",
+            "status": "sekundär / ? i SIKTE.md (tanknet, franktankrants)"
+          },
+          "synfalt": {
+            "varde": "12°19′",
+            "status": "sekundär / ? i SIKTE.md (tanknet)"
+          },
+          "sikteskors": "graderat för APC M61, 2 030 ft/s, 5 mils per linje (par. 178)",
+          "kalla": "assets/models/enhetsmappar/USA/sherman_m4_75/sikte/SIKTE.md; sherman_order.json 3.2"
+        },
+        "riktare_alternativ_periskop": {
+          "modell": "Periscope M10C",
+          "system": "1× och 6×",
+          "beteckning_status": "Finns, TM 9-759 par. 180",
+          "synfalt": {
+            "varde": null,
+            "status": "saknas (SIKTE.md: Synfält ?)"
+          },
+          "sikteskors_6x": "samma som M70F fig. 202",
+          "lucka": "1×-sikteskorset för 75 mm (fig. 223-varianten) är inte utskuret"
+        },
+        "riktare_periskop_standard": {
+          "modell": "Periscope M4A1 med Telescope M38A2 (även M38 i M4 / M55 3× år 1943)",
+          "M38_forstoring": {
+            "varde": "1,5×",
+            "status": "Finns, FM 17-12 par. 45 (för M38, ej bekräftat för M38A2)"
+          },
+          "M38A2_forstoring_synfalt": {
+            "varde": "ca 1,44× och 9°",
+            "status": "Hunnicutt via sekundära källor, inte bekräftat"
+          }
+        }
+      }
+    },
+    "sherman_m4a3_76w": {
+      "id": "sherman_m4a3_76w",
+      "namn": "M4A3(76)W Sherman",
+      "tydlig_typ": "M4A3(76)W – 76 mm Gun M1A1/M1A2, våt ammunitionstuvning. Inte densamma som 75 mm-Sherman.",
+      "vapen": "m1_76",
+      "kalla_fil": "data/ballistics/tanks/sherman_m4a3_76w.json",
+      "format": "mm = plåttjocklek vinkelrätt mot plåten; lutning_fran_lodlinjen i grader (0 = lodrät, 90 = vågrät tak). Spelet räknar ut sammansatt anslagsvinkel ur geometrin.",
+      "zoner": [
+        {
+          "zon": "skrov_front_ovre",
+          "mm": 64,
+          "lutning_fran_lodlinjen": 47,
+          "status": "kalla",
+          "kalla": "data/tanks/sherman_m4a3_76w.json (källor där)"
+        },
+        {
+          "zon": "skrov_nos",
+          "mm": 51,
+          "lutning_fran_lodlinjen": 30,
+          "status": "uppskattning",
+          "kalla": "uppskattning – gjuten/rundad nos 51–108 mm"
+        },
+        {
+          "zon": "skrov_sida",
+          "mm": 38,
+          "lutning_fran_lodlinjen": 0,
+          "status": "kalla",
+          "kalla": "data/tanks/sherman_m4a3_76w.json"
+        },
+        {
+          "zon": "skrov_bak",
+          "mm": 38,
+          "lutning_fran_lodlinjen": 10,
+          "status": "kalla",
+          "kalla": "data/tanks/sherman_m4a3_76w.json (lutning uppskattad)"
+        },
+        {
+          "zon": "mantel",
+          "mm": 89,
+          "lutning_fran_lodlinjen": 0,
+          "status": "kalla",
+          "kalla": "data/tanks/sherman_m4a3_76w.json"
+        },
+        {
+          "zon": "torn_front",
+          "mm": 64,
+          "lutning_fran_lodlinjen": 42,
+          "status": "kalla",
+          "kalla": "data/tanks/sherman_m4a3_76w.json (40–45°)"
+        },
+        {
+          "zon": "torn_sida",
+          "mm": 64,
+          "lutning_fran_lodlinjen": 0,
+          "status": "kalla",
+          "kalla": "data/tanks/sherman_m4a3_76w.json"
+        },
+        {
+          "zon": "torn_bak",
+          "mm": 64,
+          "lutning_fran_lodlinjen": 0,
+          "status": "uppskattning",
+          "kalla": "data/tanks/sherman_m4a3_76w.json (uppskattat = sida)"
+        },
+        {
+          "zon": "skrov_tak",
+          "mm": 19,
+          "lutning_fran_lodlinjen": 90,
+          "status": "kalla",
+          "kalla": "data/tanks/sherman_m4a3_76w.json"
+        },
+        {
+          "zon": "torn_tak",
+          "mm": 25,
+          "lutning_fran_lodlinjen": 90,
+          "status": "kalla",
+          "kalla": "data/tanks/sherman_m4a3_76w.json"
+        }
+      ],
+      "svaga_punkter": [
+        {
+          "zon": "kulsprutekula",
+          "mm": 64,
+          "lutning_fran_lodlinjen": 47,
+          "status": "uppskattning",
+          "kalla": "uppskattning",
+          "faktor_mot_zon": 0.75
+        },
+        {
+          "zon": "forarluckor_tak",
+          "mm": 19,
+          "lutning_fran_lodlinjen": 90,
+          "status": "uppskattning",
+          "kalla": "uppskattning"
+        },
+        {
+          "zon": "tornring_spalt",
+          "mm": 0,
+          "lutning_fran_lodlinjen": 0,
+          "status": "uppskattning",
+          "kalla": "uppskattning",
+          "effekt_utan_genomslag": "tornet låst"
+        }
+      ],
+      "brand": "Våt stuvning: 10–15 % brann efter genomslag mot 60–80 % för torr stuvning (US-studie 1945, via https://en.wikipedia.org/wiki/M4_Sherman) [sekundär]",
+      "datablad_pansar_mm": {
+        "falt": "pansar_mm",
+        "varde": "övre front 64 mm/47°, sidor 38, bak 38, tak 19; torn: mantel 89, front 64/40–45°, sidor 64, tak 25",
+        "kalla": "https://afvdatabase.com/usa/m4sherman.html"
+      },
+      "spelvarden_klass_1_10": {
+        "vagnskort": {
+          "front": 5,
+          "sida": 3,
+          "bak": 3,
+          "tak": 1
+        },
+        "pansar_och_slag": {
+          "skrov": [
+            7,
+            3,
+            3
+          ],
+          "torn": [
+            7,
+            5,
+            5
+          ]
+        },
+        "kontroll": "Övre front 64 mm/47° ⇒ effektivt ≈ 94 mm → klass 7 (86–99). Sidor 38 → 3 (31–45). Tornmantel 89 → 7, tornsidor 64 → 5 (56–70). PDF stämmer med beräkningen.",
+        "avvikelse": "Vagnskort anger front 5 – avviker från PDF och beräkning (7). Ej ändrat; behöver beslut. Tak 19 mm → klass 2 enligt PDF-skalan, Vagnskort anger 1."
+      },
+      "rackvidd_m": {
+        "varde": 914,
+        "status": "[F]",
+        "kalla": "TRAFFSANNOLIKHET_historisk.md 8.2: ingen tabell; 1 000 yd (914 m) där FM 17-12 kräver gaffling",
+        "not": "914 m = 1 000 yd där FM 17-12 kräver gaffling; inte samma sak som maximal genomslagsräckvidd."
+      },
+      "avvikelse_vagnskort": "Vagnskort anger front 5 – avviker från PDF och beräkning (7). Ej ändrat; behöver beslut. Tak 19 mm → klass 2 enligt PDF-skalan, Vagnskort anger 1.",
+      "sikte": {
+        "riktare_direktsikte": {
+          "modell": "Telescope M71D i Telescope Mount M57, Instrument Light M33",
+          "beteckning_status": "Finns, TM 9-759 par. 196–197",
+          "forstoring": {
+            "varde": "5×",
+            "status": "sekundär (ordnance.com / theshermantank.com); SIKTE.md: Förstoring ?"
+          },
+          "synfalt": {
+            "varde": "13°",
+            "status": "sekundär; SIKTE.md: Synfält ?"
+          },
+          "kalla": "docs/.../m4a3_76w_sherman/FALT/sikte/SIKTE.md; data/tanks/sherman_order.json 3.1_optik / 3.2_synfalt"
+        },
+        "riktare_alternativ_periskop": {
+          "modell": "Periscope M10G",
+          "system": "1× och 6×",
+          "beteckning_status": "Finns, TM 9-759 par. 199",
+          "synfalt": {
+            "1x": {
+              "varde": "42°",
+              "status": "sekundär (ww2f.com citerar Hunnicutt; 'gäller M10 i allmänhet'), ? i SIKTE.md"
+            },
+            "6x": {
+              "varde": "11,33°",
+              "status": "samma, ? i SIKTE.md"
+            }
+          },
+          "sikteskors_1x": "76-M62 (TM 9-759 fig. 223)",
+          "sikteskors_6x": "samma som M71D fig. 220"
+        },
+        "riktare_periskop_standard": {
+          "modell": "Periscope M4A1 med Telescope M47A2",
+          "forstoring_synfalt": {
+            "varde": "ca 1,44× och 9°",
+            "status": "inte bekräftat (sherman_order.json 3.2 luckor)"
+          }
+        },
+        "vagnchef": "Kupol med 6 siktblock + M6-periskop; kikare M3 6×30 med öppen lucka (TM 9-575). Synfält för M6 och förarperiskop saknas."
+      }
+    }
+  },
+  "kanoner": {
+    "kwk36_l56": {
+      "id": "kwk36_l56",
+      "namn": "8,8 cm KwK 36 L/56",
+      "nation": "Tyskland",
+      "kaliber_mm": 88,
+      "bärare": [
+        "tiger_i"
+      ],
+      "ammunitionslast": {
+        "bärare_antal_skott": 92,
+        "officiell_fordelning": "1. Ausstattung 125 Sprgr + 125 Pzgr 39 (50/50); Gr 39 Hl som alternativ",
+        "kalla": "https://panzerworld.com/german-ammunition-loadouts (Zahlenangaben für den Munitionsnachschub 1.5.44, NARA T283 R146)"
+      },
+      "kalla_fil": "data/ballistics/guns/kwk36_l56.json",
+      "granater": [
+        {
+          "id": "pzgr39",
+          "namn": "8,8 cm Pzgr. 39",
+          "typ": "APCBC-HE-T",
+          "massa_kg": 10.2,
+          "v0_ms": 773,
+          "genomslag_mm": {
+            "30": {
+              "100": 120,
+              "500": 110,
+              "1000": 100,
+              "1500": 91,
+              "2000": 84
+            },
+            "0": {
+              "100": 146,
+              "500": 134,
+              "1000": 122,
+              "1500": 111,
+              "2000": 102
+            }
+          },
+          "status": {
+            "30": "kalla",
+            "0": "uppskattning"
+          },
+          "kalla": "https://panzerworld.com/armor-penetration-table (Geschoßringbuch/Merkblätter, Wa Prüf; tysk plåt 60° mot horisontalen = 30° från lodlinjen)"
+        },
+        {
+          "id": "pzgr40",
+          "namn": "8,8 cm Pzgr. 40",
+          "typ": "APCR-T",
+          "massa_kg": 7.3,
+          "v0_ms": 930,
+          "genomslag_mm": {
+            "30": {
+              "100": 170,
+              "500": 155,
+              "1000": 138,
+              "1500": 123,
+              "2000": 110
+            },
+            "0": {
+              "100": 233,
+              "500": 212,
+              "1000": 189,
+              "1500": 168,
+              "2000": 151
+            }
+          },
+          "status": {
+            "30": "kalla",
+            "0": "uppskattning"
+          },
+          "kalla": "https://panzerworld.com/armor-penetration-table (Geschoßringbuch/Merkblätter, Wa Prüf; tysk plåt 60° mot horisontalen = 30° från lodlinjen)",
+          "not": "Sällsynt (volframbrist)."
+        },
+        {
+          "id": "gr39hl",
+          "namn": "8,8 cm Gr. 39 Hl",
+          "typ": "HEAT",
+          "massa_kg": 7.65,
+          "v0_ms": 600,
+          "genomslag_mm": {
+            "30": {
+              "100": 90,
+              "500": 90,
+              "1000": 90,
+              "1500": 90,
+              "2000": 90
+            }
+          },
+          "status": {
+            "30": "kalla"
+          },
+          "kalla": "https://panzerworld.com/armor-penetration-table (Geschoßringbuch/Merkblätter, Wa Prüf; tysk plåt 60° mot horisontalen = 30° från lodlinjen)"
+        },
+        {
+          "id": "sprgr_az",
+          "namn": "8,8 cm Sprgr. L/4,5 m. A.Z. 23/28",
+          "typ": "HE",
+          "massa_kg": 9.2,
+          "v0_ms": 820,
+          "sprangamne_g": 900,
+          "sprangamne_typ": "amatol 60/40",
+          "zunder": "A.Z. 23/28 – anslag, momentan (o.V.) eller 0,11 s fördröjning (m.V.)",
+          "kalla": "TM E9-369A (US War Dept 1943) https://lonesentry.com/manuals/88mm-antiaircraft-gun/ammunition-german-88-mm-aa-gun.html ; TM 9-1985-3 fig. 434/435 http://michaelhiske.de/Allierte/USA/TManual/9_1985_3/Chap05/Fig_434.htm"
+        },
+        {
+          "id": "sprgr_zt",
+          "namn": "8,8 cm Sprgr. L/4,5 m. Zt.Z. S/30",
+          "typ": "HE, tidrör (luftbrisad)",
+          "massa_kg": 9.1,
+          "v0_ms": 820,
+          "sprangamne_g": 900,
+          "zunder": "Zt.Z. S/30 – mekaniskt tidrör upp till 30 s, inget anslagsrör",
+          "kalla": "TM E9-369A (US War Dept 1943) https://lonesentry.com/manuals/88mm-antiaircraft-gun/ammunition-german-88-mm-aa-gun.html ; TM 9-1985-3 fig. 434/435 http://michaelhiske.de/Allierte/USA/TManual/9_1985_3/Chap05/Fig_434.htm",
+          "not": "TM 9-1985-3 anger KwK 36 som vapen för Sprgr L/4,5 Zt.Z. Tidrörsgranaten är främst Flak-ammunition; hur mycket Tigrar bar är inte belagt. 9. Pz.Div:s 8,8 cm Flak sköt 6 773–7 291 tidrör mot 9 414–9 932 anslagsrör 1942–43 (https://panzerworld.com/german-ammunition-loadouts (Zahlenangaben für den Munitionsnachschub 1.5.44, NARA T283 R146))."
+        }
+      ],
+      "genomslag_jamforelse_GENOMSLAG_json": {
+        "not": "GENOMSLAG.json (1476 rader, 2026-10-23) behåller motstridiga värden sida vid sida. Nedan är de mest relevanta mot guns-filens arbetsvärden. Inte en ny beräkning.",
+        "Pzgr39_APCBC_30_grader_arbetsvarde_i_guns": {
+          "100": 120,
+          "500": 110,
+          "1000": 100,
+          "1500": 91,
+          "2000": 84,
+          "status_i_guns": "kalla"
+        },
+        "Pzgr39_30_grader_i_GENOMSLAG": "BOR_GRANSKAS typiskt 120/110/99/91/83 mm (panzerworld-typ). Andra rader overifierade: 132/110/99/91/83; sovjetisk De Marre 98/91/84/78/72; 10,2 kg-variant 120–123 / 110–113 / 100–102 / 91–92 / 84.",
+        "Pzgr39_0_grader_i_guns": {
+          "100": 146,
+          "500": 134,
+          "1000": 122,
+          "1500": 111,
+          "2000": 102,
+          "status_i_guns": "uppskattning"
+        },
+        "Pzgr39_0_grader_B_and_L_i_GENOMSLAG": {
+          "ammo_etikett": "Pzgr. 39 (APCBC-HE), 780 m/s",
+          "100": 162,
+          "500": 151,
+          "1000": 138,
+          "1500": 126,
+          "2000": 116,
+          "status": "BRA_KALLA/EXTERN_DJUPANALYS",
+          "plat": "RHA, 50 % ballistisk gräns"
+        },
+        "Pzgr40_APCR_30_grader_arbetsvarde_i_guns": {
+          "100": 170,
+          "500": 155,
+          "1000": 138,
+          "1500": 123,
+          "2000": 110,
+          "status_i_guns": "kalla"
+        },
+        "Pzgr40_0_grader_B_and_L_i_GENOMSLAG": {
+          "100": 219,
+          "500": 200,
+          "1000": 179,
+          "1500": 160,
+          "2000": 143,
+          "status": "BRA_KALLA/EXTERN_DJUPANALYS",
+          "not": "guns-filen har andra 0°-tal 233/212/189/168/151 märkta uppskattning"
+        },
+        "Gr39Hl_HEAT": {
+          "30_grader_alla_avstand": 90,
+          "status_i_guns": "kalla",
+          "status_i_GENOMSLAG_30": "BOR_GRANSKAS",
+          "0_grader_B_and_L": {
+            "100": 110,
+            "status": "BRA_KALLA/EXTERN_DJUPANALYS",
+            "not": "HEAT oberoende av avstånd; 0° bara angiven vid 100 m i utdraget"
+          }
+        },
+        "Sprgr_HE": "Ingen genomslagskurva. 900 g amatol 60/40 enligt TM E9-369A."
+      }
+    },
+    "m3_75": {
+      "id": "m3_75",
+      "namn": "75 mm Gun M3 (L/40)",
+      "nation": "USA",
+      "kaliber_mm": 75,
+      "bärare": [
+        "sherman_m4_75"
+      ],
+      "ammunitionslast": {
+        "bärare_antal_skott": "97 (torr stuvning) / 104 (våt stuvning)",
+        "faktisk_forbrukning": "ca 70 % HE, 20 % AP, 10 % rök",
+        "kalla": "https://en.wikipedia.org/wiki/76_mm_gun_M1 (Leventhal 1996, TM 9-1901) ; Zaloga, M4 (76mm) Sherman (2003) s. 7: ca 70 % HE, 20 % AP, 10 % rök; 13th Tank Bn aug–dec 1944: 55 M62 mot 19 634 M42 HE (Green 2007) – via https://en.wikipedia.org/wiki/76_mm_gun_M1"
+      },
+      "kalla_fil": "data/ballistics/guns/m3_75.json",
+      "granater": [
+        {
+          "id": "m61",
+          "namn": "APC M61/M61A1",
+          "typ": "APCBC-HE-T",
+          "massa_kg": 6.63,
+          "v0_ms": 618,
+          "genomslag_mm": {
+            "0": {
+              "100": 88,
+              "500": 81,
+              "1000": 73,
+              "1500": 65,
+              "2000": 59
+            },
+            "30": {
+              "500": 65,
+              "1000": 59,
+              "1500": 54
+            }
+          },
+          "genomslag_30_yd": {
+            "500": 66,
+            "1000": 60,
+            "1500": 55,
+            "2000": 50
+          },
+          "status": {
+            "0": "kalla (B&L, sekundär)",
+            "30": "omraknad (Hunnicutt yd -> m)"
+          },
+          "kalla": "Bird & Livingston, WWII Ballistics: Armor and Gunnery (2001) s. 59–63 via Wikipedia-sidorna för resp. kanon (0°, RHA, 50 %-kriterium, beräknat ur provskjutning) [sekundär] ; Hunnicutt, Sherman (1978) s. 562–564 via https://en.wikipedia.org/wiki/75_mm_gun_M2/M3/M6 och https://en.wikipedia.org/wiki/76_mm_gun_M1 (30° från lodlinjen, RHA, US 50 %-kriterium)",
+          "not": "De flesta M61 levererades utan sprängladdning (Wikipedia, utan belägg)."
+        },
+        {
+          "id": "m72",
+          "namn": "AP M72",
+          "typ": "AP-T (ohättad)",
+          "massa_kg": 6.32,
+          "v0_ms": 619,
+          "genomslag_mm": {
+            "0": {
+              "100": 109,
+              "500": 92,
+              "1000": 76,
+              "1500": 62,
+              "2000": 51
+            },
+            "30": {
+              "500": 75,
+              "1000": 61,
+              "1500": 49
+            }
+          },
+          "status": {
+            "0": "kalla (B&L)",
+            "30": "omraknad"
+          },
+          "kalla": "Bird & Livingston, WWII Ballistics: Armor and Gunnery (2001) s. 59–63 via Wikipedia-sidorna för resp. kanon (0°, RHA, 50 %-kriterium, beräknat ur provskjutning) [sekundär] ; Hunnicutt, Sherman (1978) s. 562–564 via https://en.wikipedia.org/wiki/75_mm_gun_M2/M3/M6 och https://en.wikipedia.org/wiki/76_mm_gun_M1 (30° från lodlinjen, RHA, US 50 %-kriterium)"
+        },
+        {
+          "id": "m48",
+          "namn": "HE M48 (supercharge)",
+          "typ": "HE",
+          "massa_kg": 6.76,
+          "v0_ms": 594,
+          "sprangamne_g": 680,
+          "sprangamne_typ": "TNT",
+          "zunder": "Anslagsrör (PD) med inställning SQ (momentan) eller fördröjning 0,05 / 0,15 s",
+          "kalla": "https://en.wikipedia.org/wiki/75_mm_gun_M2/M3/M6 (TM 9-1901, Sherman Tank Site spec booklet)"
+        },
+        {
+          "id": "m64",
+          "namn": "WP M64",
+          "typ": "Vit fosfor (rök/brand)",
+          "kalla": "https://en.wikipedia.org/wiki/75_mm_gun_M2/M3/M6 (TM 9-1901, Sherman Tank Site spec booklet)"
+        },
+        {
+          "id": "m89",
+          "namn": "Smoke M89 HC",
+          "typ": "Rök (basutkastning)",
+          "kalla": "https://en.wikipedia.org/wiki/75_mm_gun_M2/M3/M6 (TM 9-1901, Sherman Tank Site spec booklet)"
+        }
+      ],
+      "genomslag_luckor": "M61 och M72: 30°-värden saknas vid 100 m i guns-filen. M61 30° 2000 m finns bara som genomslag_30_yd (50 mm / 2000 yd), inte i genomslag_mm. HE M48, WP M64 och Smoke M89 har ingen pansarkurva."
+    },
+    "m1_76": {
+      "id": "m1_76",
+      "namn": "76 mm Gun M1A1/M1A2 (L/52)",
+      "nation": "USA",
+      "kaliber_mm": 76.2,
+      "bärare": [
+        "sherman_m4a3_76w"
+      ],
+      "ammunitionslast": {
+        "bärare_antal_skott": 71,
+        "faktisk_forbrukning": "ca 70 % HE, 20 % AP, 10 % rök",
+        "kalla": "https://en.wikipedia.org/wiki/76_mm_gun_M1 (Leventhal 1996, TM 9-1901) ; Zaloga, M4 (76mm) Sherman (2003) s. 7: ca 70 % HE, 20 % AP, 10 % rök; 13th Tank Bn aug–dec 1944: 55 M62 mot 19 634 M42 HE (Green 2007) – via https://en.wikipedia.org/wiki/76_mm_gun_M1"
+      },
+      "kalla_fil": "data/ballistics/guns/m1_76.json",
+      "granater": [
+        {
+          "id": "m62",
+          "namn": "APC M62A1",
+          "typ": "APCBC-HE-T",
+          "massa_kg": 7.0,
+          "v0_ms": 792,
+          "sprangamne_g": 65,
+          "genomslag_mm": {
+            "0": {
+              "100": 125,
+              "500": 116,
+              "1000": 106,
+              "1500": 97,
+              "2000": 89
+            },
+            "30": {
+              "500": 93,
+              "1000": 87,
+              "1500": 79
+            }
+          },
+          "genomslag_30_yd": {
+            "500": 93,
+            "1000": 88,
+            "1500": 81,
+            "2000": 75
+          },
+          "status": {
+            "0": "kalla (B&L)",
+            "30": "omraknad"
+          },
+          "kalla": "Bird & Livingston, WWII Ballistics: Armor and Gunnery (2001) s. 59–63 via Wikipedia-sidorna för resp. kanon (0°, RHA, 50 %-kriterium, beräknat ur provskjutning) [sekundär] ; Hunnicutt, Sherman (1978) s. 562–564 via https://en.wikipedia.org/wiki/75_mm_gun_M2/M3/M6 och https://en.wikipedia.org/wiki/76_mm_gun_M1 (30° från lodlinjen, RHA, US 50 %-kriterium) ; https://en.wikipedia.org/wiki/76_mm_gun_M1 (Leventhal 1996, TM 9-1901)"
+        },
+        {
+          "id": "m93",
+          "namn": "HVAP-T M93 (T4)",
+          "typ": "APCR/HVAP (volframkärna)",
+          "massa_kg": 3.4,
+          "v0_ms": 1036,
+          "genomslag_mm": {
+            "0": {
+              "100": 239,
+              "500": 208,
+              "1000": 175,
+              "1500": 147,
+              "2000": 124
+            },
+            "30": {
+              "500": 155,
+              "1000": 131,
+              "1500": 111
+            }
+          },
+          "genomslag_30_yd": {
+            "500": 157,
+            "1000": 134,
+            "1500": 116,
+            "2000": 98
+          },
+          "status": {
+            "0": "kalla (B&L)",
+            "30": "omraknad"
+          },
+          "kalla": "Bird & Livingston, WWII Ballistics: Armor and Gunnery (2001) s. 59–63 via Wikipedia-sidorna för resp. kanon (0°, RHA, 50 %-kriterium, beräknat ur provskjutning) [sekundär] ; Hunnicutt, Sherman (1978) s. 562–564 via https://en.wikipedia.org/wiki/75_mm_gun_M2/M3/M6 och https://en.wikipedia.org/wiki/76_mm_gun_M1 (30° från lodlinjen, RHA, US 50 %-kriterium)",
+          "not": "Bristvara 1944–45, främst till pansarvärnsvagnar."
+        },
+        {
+          "id": "m79",
+          "namn": "AP M79",
+          "typ": "AP-T (solid)",
+          "massa_kg": 6.8,
+          "v0_ms": 792,
+          "genomslag_mm": {
+            "30": {
+              "500": 107,
+              "1000": 89,
+              "1500": 73
+            }
+          },
+          "status": {
+            "30": "omraknad"
+          },
+          "kalla": "Hunnicutt, Sherman (1978) s. 562–564 via https://en.wikipedia.org/wiki/75_mm_gun_M2/M3/M6 och https://en.wikipedia.org/wiki/76_mm_gun_M1 (30° från lodlinjen, RHA, US 50 %-kriterium)"
+        },
+        {
+          "id": "m42a1",
+          "namn": "HE M42A1",
+          "typ": "HE",
+          "massa_kg": 5.84,
+          "v0_ms": 820,
+          "sprangamne_g": 390,
+          "sprangamne_typ": "TNT eller TNT/amatol",
+          "zunder": "Anslagsrör (PD), SQ/fördröjning – exakt rörmodell ej kontrollerad",
+          "kalla": "https://en.wikipedia.org/wiki/76_mm_gun_M1 (Leventhal 1996, TM 9-1901)"
+        },
+        {
+          "id": "m88",
+          "namn": "Smoke M88 HC",
+          "typ": "Rök",
+          "kalla": "https://en.wikipedia.org/wiki/76_mm_gun_M1 (Leventhal 1996, TM 9-1901)"
+        }
+      ],
+      "genomslag_luckor": "M62, M93 och M79: 30°-värden saknas vid 100 m i guns-filen. M79 saknar helt 0°-kurva i guns-filen (finns i GENOMSLAG som B&L RHA/FHA, BRA_KALLA). HE M42A1 och Smoke M88 har ingen pansarkurva. M93 (HVAP) var bristvara 1944–45."
+    }
+  },
+  "vinkel_och_traffregler": {
+    "kalla_fil": "data/ballistics/vinkel.json",
+    "beskrivning": "Faktor f(typ, vinkel) = genomslag vid vinkel / genomslag vid 0°, mot plåttjocklek mätt vinkelrätt mot plåten. Genomslag om pen_0(avstånd) * f >= mm. Vinkel = från plåtens normal (0 = rakt på).",
+    "konventioner": {
+      "Tyskland": "Plåtvinkel räknas från horisontalen: '60°' i tyska tabeller = 30° från lodlinjen/normalen. Standardtabeller vid 30°.",
+      "USA": "Obliquity räknas från normalen (0 = vinkelrätt). Tabeller oftast vid 30° (ibland 20° eller 0°). 50 %-kriterium (ballistisk gräns).",
+      "Storbritannien": "Från normalen, oftast 30°. W/R 50 %-kriterium.",
+      "Sovjetunionen": "'Träffvinkel' mot plåtytan: 90° = vinkelrätt träff, 60° = 30° från normalen. Kriterium: 75 % av splittren bakom plåten; tabeller med 20 % (möjligt) och 80 % (garanterat) genomslag.",
+      "kallor": [
+        "https://www.tankarchives.com/2013/03/penetration.html",
+        "https://battlefield.ru/content/view/137/66/lang,ru/",
+        "John Salt-sammanställning, inledning https://i.4pcdn.org/tg/1464755436885.pdf",
+        "http://panzer-war.com/page60.html"
+      ]
+    },
+    "faktorer": {
+      "APCBC": {
+        "0": 1.0,
+        "30": 0.82,
+        "45": 0.62,
+        "55": 0.43,
+        "60": 0.34,
+        "65": 0.25,
+        "70": 0.15,
+        "status": {
+          "30": "kalla (medel av 85 mm BR-365 0,81–0,82; 76 mm M62 ~0,83; 75 mm M61 ~0,80)",
+          "55": "kalla (90 mm M82: 55°/30° = 0,52 → 0,82×0,52)",
+          "45": "interpolerad",
+          "60": "extrapolerad (uppskattning)"
+        }
+      },
+      "APBC_trubbnos": {
+        "0": 1.0,
+        "30": 0.82,
+        "45": 0.64,
+        "55": 0.45,
+        "60": 0.37,
+        "65": 0.27,
+        "70": 0.17,
+        "status": {
+          "30": "kalla (BR-365)",
+          "55": "kalla (90 mm T33 APBC 55°/30° = 0,55)",
+          "45": "interpolerad",
+          "60": "uppskattning"
+        }
+      },
+      "AP_spets_ohattad": {
+        "0": 1.0,
+        "30": 0.8,
+        "45": 0.58,
+        "55": 0.4,
+        "60": 0.3,
+        "65": 0.21,
+        "70": 0.12,
+        "status": {
+          "30": "kalla (BR-365K 0,82; BR-350A 0,79)",
+          "övrigt": "uppskattning"
+        }
+      },
+      "APCR_HVAP": {
+        "0": 1.0,
+        "30": 0.73,
+        "45": 0.47,
+        "55": 0.27,
+        "60": 0.2,
+        "65": 0.13,
+        "70": 0.07,
+        "status": {
+          "30": "kalla (85 mm BR-365P 0,71; 76 mm M93 ~0,75)",
+          "55": "kalla (90 mm HVAP M304: 55°/30° = 0,37 → 0,73×0,37)",
+          "45": "interpolerad",
+          "60": "uppskattning"
+        }
+      },
+      "APDS": {
+        "0": 1.0,
+        "30": 0.73,
+        "45": 0.55,
+        "55": 0.4,
+        "60": 0.33,
+        "65": 0.24,
+        "70": 0.14,
+        "status": {
+          "30": "kalla [?] (17-pdr: 187 mm/500 yd 30° Bovington mot 256 mm/500 m 0° B&L)",
+          "övrigt": "uppskattning"
+        }
+      },
+      "HEAT": {
+        "regel": "Genomslag mot siktlinjetjocklek: mm/cos(vinkel) <= HEAT-värde (oberoende av avstånd).",
+        "status": "kalla (princip) – https://amizaur.prv.pl/www.wargamer.org/GvA/background/pentypes17.html"
+      }
+    },
+    "overmatch": {
+      "regel_forslag": "Om kaliber/mm >= 1,5 och vinkel > 30°: f(vinkel) = max(f_tabell(vinkel), 0,62 × cos(vinkel)). Konstanten 0,62 är kalibrerad så att modellen återger Wa Prüf 1: KwK 42 slår igenom T-34-85:s glacis (45 mm/60°) på ~300 m men KwK 36 aldrig Shermans glacis (51 mm/56°).",
+      "belagg": "Kubinka dec 1943 mot Panthers glacis 80–85 mm/55°: 85 mm D-5 inga genomslag ens på 100 m; 100 mm D-10 1 200–1 500 m; 122 mm D-25 2 000–2 500 m (https://www.tankarchives.com/2017/01/comparative-penetration.html ; https://battlefield.ru/en/documents/80-armor-and-equipment/289-testings-100mm-122mm.html). Tank Archives förklarar skillnaden med overmatch.",
+      "status": "regeln är en UPPSKATTNING; belägget är kvalitativt"
+    },
+    "rikoschett_forslag": {
+      "regel": "Inget genomslag och vinkel >= gräns → rikoschett; annars buckla/märke; om pen_eff >= 0,9×mm → sprickor/avspjälkning inuti (skada utan genomslag).",
+      "grans_grader": {
+        "APCBC": 70,
+        "APBC_trubbnos": 70,
+        "AP_spets_ohattad": 65,
+        "APCR_HVAP": 60,
+        "APDS": 65
+      },
+      "status": "UPPSKATTNING – ingen primärkälla med fast gräns hittad. Belägg: BR-365 rikoschetterade mot 55° Panther-glacis på alla avstånd; tysk 88 L/71 'bildar brott och rikoschetterar' mot samma plåt bortom ~650 m."
+    },
+    "faltstatistik_vinkel": "NII-48 1942, 154 T-34: glacis 45 mm/60° – bara 18 % av träffarna slog igenom; lodrät nedre sida 45 mm – 67,6 %; övre sida 40–45 mm/40° – 28,6 %. https://tanks-encyclopedia.com/1942-combat-damage-analysis-of-the-t-34-and-t-70-tanks/"
+  },
+  "spelregler_strombrytare": {
+    "kalla_fil": "data/settings/spelvariabler.json",
+    "not": "Hexkrigsspel 1944, version 1.0 (2026-10-21). Alla flaggor i källan är false som standard. Ingen tärning. Modulerna är av/på enligt RUTIN_TESTBRADE.",
+    "flaggor": {
+      "modul.traffeffekter_per_zon": false,
+      "modul.skada_utan_genomslag": false,
+      "modul.he_mot_pansar": false,
+      "modul.spridningsmodell": false,
+      "modul.siktkoner": false,
+      "skjutregel.14_4_6": false,
+      "tarningsregel.hull_down_minus1": false,
+      "tarningsregel.avstandsband": false
+    },
+    "flaggor_beskrivning": {
+      "modul.siktkoner": {
+        "id": "modul.siktkoner",
+        "standard": false,
+        "beskrivning": "Siktkoner per besättningsplats med död zon och luckläge.",
+        "var": "SAMLAT_SPELUNDERLAG.md 6.11"
+      },
+      "modul.traffeffekter_per_zon": {
+        "id": "modul.traffeffekter_per_zon",
+        "standard": false,
+        "beskrivning": "Fasta effekter per träffzon och skadenivåer B1–B3/H1–H3.",
+        "var": "SAMLAT_SPELUNDERLAG.md 12.5"
+      },
+      "modul.spridningsmodell": {
+        "id": "modul.spridningsmodell",
+        "standard": false,
+        "beskrivning": "Spridning (σ) per avstånd, granat och rörelse för att avgöra träffpunkt utan tärning.",
+        "var": "SAMLAT_SPELUNDERLAG.md 13"
+      },
+      "skjutregel.14_4_6": {
+        "id": "skjutregel.14_4_6",
+        "standard": false,
+        "beskrivning": "Sikta på svag punkt bara inom 274 m (300 yd)",
+        "var": "SAMLAT_SPELUNDERLAG.md 14.4 punkt 6"
+      },
+      "modul.skada_utan_genomslag": {
+        "id": "modul.skada_utan_genomslag",
+        "standard": false,
+        "beskrivning": "Effekt vid \"skada utan genomslag\" (pe ≥ 0,9 × mm): spotting_reduced eller −10 % mm i zonen.",
+        "var": "SAMLAT_SPELUNDERLAG.md 10.2 steg 9"
+      },
+      "modul.he_mot_pansar": {
+        "id": "modul.he_mot_pansar",
+        "standard": false,
+        "beskrivning": "Spränggranat slår igenom bara tunn plåt (≈ kaliber/4 mm).",
+        "var": "SAMLAT_SPELUNDERLAG.md 10.2 steg 10"
+      },
+      "tarningsregel.hull_down_minus1": {
+        "id": "tarningsregel.hull_down_minus1",
+        "standard": false,
+        "beskrivning": "Hull down: −1 att träffa (tornet ensamt träffbart står kvar som geometri) – MARKERAD/BORTTAGEN, väntar på beslut. Får bara slås på som fast regel, aldrig som tärningsslag.",
+        "var": "SAMLAT_SPELUNDERLAG.md 1.2"
+      },
+      "tarningsregel.avstandsband": {
+        "id": "tarningsregel.avstandsband",
+        "standard": false,
+        "beskrivning": "Avståndsband: nära = floor(R/3) +1, långt −1 – MARKERAD/BORTTAGEN, väntar på beslut. Får bara slås på som fast regel, aldrig som tärningsslag.",
+        "var": "SAMLAT_SPELUNDERLAG.md 1.3"
+      }
+    },
+    "he_mot_pansar_arbetsregel": "Om modul.he_mot_pansar slås på: spränggranat slår igenom bara tunn plåt (≈ kaliber/4 mm). Det är en spelregel i SAMLAT_SPELUNDERLAG.md 10.2 steg 10, inte en uppmätt kurva.",
+    "skada_utan_genomslag_arbetsregel": "Om modul.skada_utan_genomslag slås på och pe ≥ 0,9 × mm: spotting_reduced eller −10 % mm i zonen (10.2 steg 9).",
+    "svag_punkt_avstand": "skjutregel.14_4_6 (standard false): sikta på svag punkt bara inom 274 m (300 yd).",
+    "traffzoner_i_biblioteket": "Zonerna är de i data/ballistics/tanks (skrov front/nos/sida/bak/tak, torn front/sida/bak/tak, mantel). Spelet ska räkna sammansatt anslagsvinkel = plåttlutning + sidovinkel från träffgeometrin. Färdiga 3D-hitboxar per zon ingår inte i detta underlag."
+  }
+}

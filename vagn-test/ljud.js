@@ -2,7 +2,7 @@
 // AudioContext skapas först vid en beröring. Högst 8 engångsröster, och varje nod kopplas loss.
 // Loopar (motor, band, torn, eldrör) är en egen liten grupp som städas när de tystnar.
 
-import {LJUD} from './konfig.js?v=4';
+import {LJUD} from './konfig.js?v=5';
 
 export {LJUD};
 

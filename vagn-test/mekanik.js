@@ -1,7 +1,7 @@
 // Grindhack för växelspak och kugghack för gas. Ren matematik, inget ljud.
 
-import {BACKGAS, STANDARD, bandMal, ordnaTrosklar, skapaVagn, stegaVagn} from './styr.js?v=4';
-import {MEKANIK, VAXLAR} from './konfig.js?v=4';
+import {BACKGAS, STANDARD, bandMal, ordnaTrosklar, skapaVagn, stegaVagn} from './styr.js?v=5';
+import {MEKANIK, VAXLAR} from './konfig.js?v=5';
 
 export {MEKANIK, VAXLAR};
 

@@ -58,13 +58,15 @@ async function selectModel(key){const serial=++modelLoadSerial,def=C.modeller[ke
  }finally{$('modelSelect').disabled=false;}}
 function bytFysik(def){const x=fm.x,y=fm.y,z=fm.z,V=Math.max(12,fm.V||0),pa=!!settings.brytare.nivellering;
  const next=new KvantFlyg(def.aero);next.tillampaNivellering(pa);next.reset(x,y,z,V);fm=next;nollZon(zonTillstand);}
+function kortPlan(namn){if(/Typhoon/.test(namn))return 'Typhoon';if(/Mustang/.test(namn))return 'Mustang';if(/109/.test(namn))return 'Bf 109';if(/190/.test(namn))return 'Fw 190';return namn;}
 function ritaPlanMeny(){const e=C.modeller[currentModel]?.egenskaper||{};
- for(const rot of [$('planMeny'),$('planMenyFlyg')]){if(!rot)continue;rot.replaceChildren();
+ const fyll=(rot,kompakt)=>{if(!rot)return;rot.replaceChildren();
   for(const [key,def] of Object.entries(C.modeller)){const b=document.createElement('button');b.type='button';b.className='planval'+(key===currentModel?' vald':'');b.dataset.plan=key;
-   const namn=document.createElement('strong');namn.textContent=def.namn;b.append(namn);
-   const rad=[def.egenskaper?.fart,def.egenskaper?.svang,def.egenskaper?.akrobatik].filter(Boolean).join(' ');
-   if(rad){const s=document.createElement('span');s.textContent=rad;b.append(s);}
-   b.onclick=()=>{void valjPlan(key);};rot.append(b);}}
+   const namn=document.createElement('strong');namn.textContent=kompakt?kortPlan(def.namn):def.namn;b.append(namn);
+   if(!kompakt){const rad=[def.egenskaper?.fart,def.egenskaper?.svang,def.egenskaper?.akrobatik].filter(Boolean).join(' ');
+    if(rad){const s=document.createElement('span');s.textContent=rad;b.append(s);}}
+   b.onclick=()=>{void valjPlan(key);};rot.append(b);}};
+ fyll($('planMeny'),false);fyll($('planMenyFlyg'),true);
  const sel=$('modelSelect');if(sel){sel.replaceChildren();for(const [key,def] of Object.entries(C.modeller)){const o=document.createElement('option');o.value=key;o.textContent=def.namn;sel.append(o);}sel.value=currentModel;}
  const info=[e.fart,e.svang,e.akrobatik].filter(Boolean).join(' ');
  if($('planInfo'))$('planInfo').textContent=info;

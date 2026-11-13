@@ -131,31 +131,50 @@ button.menyknapp[aria-expanded=true]{background:#e3c88e;color:#172724;border-col
 #settings.flygmeny{
  position:fixed;
  z-index:11;
- top:calc(max(8px,env(safe-area-inset-top)) + 52px);
+ top:calc(max(8px,env(safe-area-inset-top)) + 50px);
  right:max(8px,env(safe-area-inset-right));
  left:auto;
  transform:none;
- width:min(340px,calc(100vw - 16px - env(safe-area-inset-right)));
- max-height:min(78dvh,calc(100dvh - 70px - env(safe-area-inset-top)));
+ width:min(372px,calc(100vw - 12px - env(safe-area-inset-right)));
+ max-height:calc(100dvh - max(8px,env(safe-area-inset-top)) - 58px);
  overflow:auto;
  background:#142a27f7;
  border:1px solid #d9c89e70;
- border-radius:16px;
- padding:12px 14px 16px;
+ border-radius:14px;
+ padding:8px 10px 8px;
  box-shadow:0 16px 40px #000a;
  pointer-events:auto;
  touch-action:pan-y;
 }
-#settings.flygmeny h2{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#e3c88e;margin:0 0 8px}
-#settings.flygmeny .meny-topp{justify-content:space-between;margin-bottom:4px}
-#settings.flygmeny .meny-topp h2{font-size:16px;letter-spacing:0;text-transform:none;color:#f6f1e4;margin:0}
-#settings.flygmeny .meny-topp button{min-height:36px;padding:6px 12px}
-#settings.flygmeny h1{font-size:18px;margin:2px 0 8px;line-height:1.2}
-#settings.flygmeny .meny-del{padding:10px 0 4px;border-top:1px solid #d9c89e33}
-#settings.flygmeny #status,#settings.flygmeny #metrics,#settings.flygmeny #flightHud{font-size:12px;line-height:1.35;margin:3px 0;white-space:normal;text-align:left;opacity:1}
-#settings.flygmeny #flightHud{letter-spacing:0}
-#settings.flygmeny .meny-lankar{display:flex;flex-wrap:wrap;gap:8px}
-#settings.flygmeny .meny-lankar a{min-height:44px;display:inline-flex;align-items:center}
+#settings.flygmeny h2{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#e3c88e;margin:0 0 3px;line-height:1.2}
+#settings.flygmeny .meny-topp{justify-content:space-between;margin:0 0 2px}
+#settings.flygmeny .meny-topp h2{font-size:15px;letter-spacing:0;text-transform:none;color:#f6f1e4;margin:0}
+#settings.flygmeny button,#settings.flygmeny a{min-height:32px;padding:4px 8px;font-size:12px;border-radius:8px}
+#settings.flygmeny .meny-topp button{min-height:30px;padding:4px 10px}
+#settings.flygmeny .meny-del{padding:5px 0 2px;border-top:1px solid #d9c89e33}
+#settings.flygmeny .meny-id{display:flex;align-items:baseline;gap:8px;margin:0 0 4px}
+#settings.flygmeny .meny-id h1{font-size:14px;line-height:1.15;margin:0;flex:1}
+#settings.flygmeny #planInfo,#settings.flygmeny .modell-dold{display:none}
+#planMenyFlyg.planmeny{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0}
+#planMenyFlyg .planval{width:auto;min-height:32px;padding:4px 3px;text-align:center}
+#planMenyFlyg .planval strong{font-size:12px;line-height:1.15}
+#planMenyFlyg .planval span{display:none}
+#settings.flygmeny .tele-block{display:flex;flex-direction:column;gap:1px}
+#settings.flygmeny #status,#settings.flygmeny #metrics,#settings.flygmeny #flightHud{font-size:11px;line-height:1.25;margin:0;white-space:normal;overflow:visible;text-overflow:clip;text-align:left;opacity:1;letter-spacing:0}
+#settings.flygmeny .reglage-rad{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px;min-height:26px;font-size:12px;margin:0}
+#settings.flygmeny .reglage-rad input[type=range]{height:22px;margin:0}
+#settings.flygmeny #toggles{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}
+#settings.flygmeny #toggles label{min-height:24px;font-size:11px;line-height:1.15;gap:4px;padding:0}
+#settings.flygmeny .meny-lankar{display:flex;gap:6px}
+#settings.flygmeny .meny-lankar a{flex:1;min-height:34px;display:inline-flex;align-items:center;justify-content:center}
+@media(max-height:520px){
+ #settings.flygmeny{width:min(640px,calc(100vw - 12px - env(safe-area-inset-right)));top:calc(max(4px,env(safe-area-inset-top)) + 46px);max-height:calc(100dvh - max(4px,env(safe-area-inset-top)) - 52px);padding:6px 8px}
+ #settings.flygmeny .meny-kropp{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.15fr);column-gap:10px;align-items:start}
+ #settings.flygmeny .meny-del.plan{grid-column:1;grid-row:1}
+ #settings.flygmeny .meny-del.tele{grid-column:1;grid-row:2}
+ #settings.flygmeny .meny-del.lankar{grid-column:1;grid-row:3}
+ #settings.flygmeny .meny-del.installningar{grid-column:2;grid-row:1 / span 3}
+}
 button.horisontknapp{
  position:fixed;
  z-index:6;

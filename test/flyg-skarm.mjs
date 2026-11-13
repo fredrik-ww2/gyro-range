@@ -13,6 +13,36 @@ const ART = '/opt/cursor/artifacts';
 const TYPER = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.m4a': 'audio/mp4', '.wasm': 'application/wasm', '.ktx2': 'image/ktx2' };
 mkdirSync(ART, { recursive: true });
 
+function menyRyms() {
+  const meny = document.getElementById('settings');
+  const ram = meny.getBoundingClientRect();
+  const klippt = [];
+  const krock = [];
+  const box = (el) => {
+    const r = el.getBoundingClientRect();
+    return { x: r.x, y: r.y, w: r.width, h: r.height, b: r.bottom, t: r.top };
+  };
+  const over = (a, b) => a.w > 2 && b.w > 2 && a.x < b.x + b.w - 1 && a.x + a.w > b.x + 1 && a.y < b.y + b.h - 1 && a.y + a.h > b.y + 1;
+  for (const el of meny.querySelectorAll('h2, #status, #metrics, #flightHud, #back, #allaLankarMeny, #sensitivity, #rollTroskel, #planMenyFlyg button, #toggles label')) {
+    const r = box(el);
+    const namn = el.id || el.textContent.trim().slice(0, 24);
+    if (r.h < 8 || r.w < 8) klippt.push('liten ' + namn);
+    if (r.t < ram.top - 1 || r.b > ram.bottom + 1 || r.x < ram.left - 1 || r.x + r.w > ram.right + 1) klippt.push('utanfor ' + namn);
+  }
+  const delar = [...meny.querySelectorAll('.meny-del')].map((el) => ({ namn: el.className, ...box(el) }));
+  for (let i = 0; i < delar.length; i++) for (let j = i + 1; j < delar.length; j++) if (over(delar[i], delar[j])) krock.push(delar[i].namn + '×' + delar[j].namn);
+  const sel = document.getElementById('modelSelect').getBoundingClientRect();
+  return {
+    scroll: meny.scrollHeight - meny.clientHeight,
+    client: meny.clientHeight,
+    bottom: ram.bottom,
+    inner: innerHeight,
+    klippt,
+    krock,
+    selectSynlig: sel.height > 2 && sel.width > 2
+  };
+}
+
 const http = await new Promise((res) => {
   const h = createServer(async (q, s) => {
     try {
@@ -181,6 +211,9 @@ try {
   if (meny.back !== 'Skjutbana' || meny.lank !== 'Alla länkar') fel.push('länkar ' + meny.back + ' ' + meny.lank);
   if (!/FPS/.test(meny.metrics) || !/km\/h/.test(meny.hud)) fel.push('telemetri ' + meny.metrics + ' | ' + meny.hud);
   console.log('telemetri', meny.fps.toFixed(0) + ' FPS', meny.anrop + ' anrop', Math.round(meny.tris / 1000) + 'k tris');
+  const staendeMeny = await sida.evaluate(menyRyms);
+  if (staendeMeny.scroll > 1 || staendeMeny.bottom > staendeMeny.inner + 1 || staendeMeny.klippt.length || staendeMeny.krock.length || staendeMeny.selectSynlig) fel.push('stående meny ' + JSON.stringify(staendeMeny));
+  console.log('meny 390x844', staendeMeny.client + 'px av ' + staendeMeny.inner + ', scroll ' + staendeMeny.scroll);
   await sida.screenshot({ path: join(ART, 'flyg_staende_meny_oppen_390x844.png') });
   await sida.click('#closeSettings');
   await sida.click('#jaktHorisont');
@@ -237,6 +270,12 @@ try {
   const vantad = jaktHorisont(passning.jw, passning.jh, JAKT);
   if (Math.hypot(passning.kx - (passning.jx + vantad.x), passning.ky - (passning.jy + vantad.y)) > 3) fel.push('horisont ur läge ' + JSON.stringify({ passning, vantad }));
   await sida.screenshot({ path: join(ART, 'flyg_liggande_meny_stangd_844x390.png') });
+  await sida.click('#settingsButton');
+  await sida.waitForSelector('#settings:not([hidden])');
+  const liggMeny = await sida.evaluate(menyRyms);
+  if (liggMeny.scroll > 1 || liggMeny.bottom > liggMeny.inner + 1 || liggMeny.klippt.length || liggMeny.krock.length || liggMeny.selectSynlig) fel.push('liggande meny ' + JSON.stringify(liggMeny));
+  console.log('meny 844x390', liggMeny.client + 'px av ' + liggMeny.inner + ', scroll ' + liggMeny.scroll);
+  await sida.click('#closeSettings');
   await sida.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
 
   for (const [w, h] of storlekar) {

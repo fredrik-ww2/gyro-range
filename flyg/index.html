@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#172724">
 <link rel="icon" href="data:,">
 <title>Flygplan · Gyrotest</title>
-<link rel="stylesheet" href="./style.css?v=12">
+<link rel="stylesheet" href="./style.css?v=13">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
@@ -15,31 +15,33 @@
 <button id="settingsButton" class="menyknapp" type="button" aria-expanded="false" aria-controls="settings"><span class="meny-ikon" aria-hidden="true">☰</span> Meny</button>
 <section id="settings" class="flygmeny" hidden>
 <div class="meny-topp row"><h2>Meny</h2><button id="closeSettings" type="button">Stäng</button></div>
-<section class="meny-del" aria-labelledby="planRubrikFlyg">
+<div class="meny-kropp">
+<section class="meny-del plan" aria-labelledby="planRubrikFlyg">
 <h2 id="planRubrikFlyg">Flygplan &amp; version</h2>
-<div class="eyebrow" id="versionEtikett">Flygprov 08</div>
-<h1 id="aircraftName">Hawker Typhoon Mk Ib</h1>
+<div class="meny-id"><span class="eyebrow" id="versionEtikett">Flygprov 08</span><h1 id="aircraftName">Hawker Typhoon Mk Ib</h1></div>
 <div id="planMenyFlyg" class="planmeny"></div>
 <p class="small" id="planInfo"></p>
-<label>Flygplan <select id="modelSelect"></select></label>
+<label class="modell-dold">Flygplan <select id="modelSelect"></select></label>
 </section>
-<section class="meny-del">
+<section class="meny-del tele">
 <h2>Status &amp; telemetri</h2>
+<div class="tele-block">
 <p id="status" role="status">Förbereder flygplanet…</p>
 <div id="metrics">Laddar…</div>
 <div id="flightHud">HÖJD 75 m</div>
+</div>
 </section>
-<section class="meny-del">
+<section class="meny-del installningar">
 <h2>Inställningar</h2>
-<label>Känslighet <input id="sensitivity" type="range" min="0.4" max="3" step="0.1" value="1"></label>
-<label>Rolltröskel <output id="rollTal"></output><input id="rollTroskel" type="range" min="30" max="55" step="1" value="38"></label>
+<label class="reglage-rad"><span>Känslighet</span><input id="sensitivity" type="range" min="0.4" max="3" step="0.1" value="1"></label>
+<label class="reglage-rad"><span>Rolltröskel <output id="rollTal"></output></span><input id="rollTroskel" type="range" min="30" max="55" step="1" value="38"></label>
 <div id="toggles"></div>
-<p class="small">Ledmarkören visar var nosen ska ligga. Den kan stängas av.</p>
 </section>
-<section class="meny-del">
+<section class="meny-del lankar">
 <h2>Länkar</h2>
 <div class="meny-lankar"><a id="back" href="../">Skjutbana</a><a id="allaLankarMeny" href="../lankar/">Alla länkar</a></div>
 </section>
+</div>
 </section>
 <svg id="reticle" aria-hidden="true" hidden>
 <g id="reticleGlow">
@@ -137,6 +139,6 @@
 </button>
 </div>
 </footer>
-<script type="module" src="./main.js?v=14"></script>
+<script type="module" src="./main.js?v=15"></script>
 <script src="../lankar/horn.js"></script></body>
 </html>

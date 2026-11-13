@@ -190,11 +190,24 @@ for (const [lage, vy] of [['gyro', 'forsta'], ['knyck', 'forsta'], ['gyro', 'bak
 }
 
 const dold = [];
-for (const id of ['menuButton', 'nyttNoll', 'vyKnapp', 'vapenSteg', 'weapon', 'trigger', 'siktVal']) {
+for (const id of ['menuButton', 'vapenSteg', 'trigger']) {
   const t = await traff(id);
   if (t.saknas || !t.traff || t.left < -1 || t.top < -1 || t.right > t.w + 1 || t.bottom > t.h + 1) dold.push(t);
 }
 if (dold.length) krav.push('porträtt ' + JSON.stringify(dold));
+await sida.evaluate(() => document.getElementById('menuButton').click());
+const menyKnappar = [];
+for (const id of ['nyttNoll', 'settingsButton']) {
+  const t = await traff(id);
+  if (t.saknas || !t.traff) menyKnappar.push(t);
+}
+await sida.evaluate(() => document.querySelector('#menyFlikar button[data-flik=vapen]').click());
+for (const id of ['vyKnapp', 'weapon', 'siktVal']) {
+  const t = await traff(id);
+  if (t.saknas || !t.traff) menyKnappar.push(t);
+}
+if (menyKnappar.length) krav.push('meny ' + JSON.stringify(menyKnappar));
+await sida.evaluate(() => document.getElementById('menuButton').click());
 
 await starta(844, 390);
 const kant = await traff('vapenSteg');
@@ -202,9 +215,9 @@ if (kant.saknas || kant.kant < 24) krav.push('axel för nära kanten ' + JSON.st
 await sida.evaluate(() => { window.gyroGest.satt('stallning.satt', 'knyck'); window.gyroGest.vapen(2); });
 await sov(300);
 const landDold = [];
-for (const id of ['menuButton', 'nyttNoll', 'vyKnapp', 'vapenSteg', 'weapon', 'trigger', 'siktVal', 'knappHuka', 'stallningNamn']) {
+for (const id of ['menuButton', 'vapenSteg', 'trigger', 'knappHuka']) {
   const t = await traff(id);
-  const inne = !t.saknas && t.left >= -1 && t.top >= -1 && t.right <= t.w + 1 && t.bottom <= t.h + 1 && (id === 'stallningNamn' || t.traff);
+  const inne = !t.saknas && t.left >= -1 && t.top >= -1 && t.right <= t.w + 1 && t.bottom <= t.h + 1 && t.traff;
   if (!inne) landDold.push(t);
 }
 if (landDold.length) krav.push('landskap ' + JSON.stringify(landDold));

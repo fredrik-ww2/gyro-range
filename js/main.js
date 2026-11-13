@@ -6,7 +6,7 @@ import {GyroAim} from './gyro.js';
 import {createHaptics} from './haptics.js';
 import {skapaDetektor,nastaStallning,simulera,skapaKnyckStallning,STALLNING_NAMN} from './stallning.js';
 import {gangFaktor,skakSekunder,rorelseStyrka,skakAmplitud} from './gang.js';
-import {skapaStyrning,byggMeny} from './styrning.js';
+import {skapaStyrning,byggMeny,byggSnabb} from './styrning.js';
 import {skapaGyroMeny,byggStyrMeny,skapaLager,skapaTick,graderPerSekund} from './gyroMeny.js';
 import {gangFartFranLutning,kroppFartRad,kroppIVila,hoftMalRad,benFoljer,skapaKnyck,svangFranRoll,knuffUt,sidoAndel} from './rorelse.js';
 import {placeraTestmal,placeraHinder} from './varld.js';
@@ -110,7 +110,7 @@ async function boot(){
  const recoilEuler=new THREE.Euler(0,0,0,'YXZ'),recoilQ=new THREE.Quaternion(),headEuler=new THREE.Euler(0,0,0,'YXZ'),headQuat=new THREE.Quaternion(),kickEuler=new THREE.Euler(0,0,0,'YXZ'),kickQuat=new THREE.Quaternion(),breathEuler=new THREE.Euler(0,0,0,'YXZ'),breathQuat=new THREE.Quaternion(),sightQuat=new THREE.Quaternion(),styrEuler=new THREE.Euler(0,0,0,'YXZ'),styrQuat=new THREE.Quaternion();
  const occBox=new THREE.Box3(),occPts=Array.from({length:5},()=>new THREE.Vector3());
  let renderTick=performance.now();const renderInterval=1000/cfg.kamera.mal_hz;
- let started=false,selected=0,shots=0,hits=0,cooldown=0,deadFor=0,hitUntil=0,queue=[],last=performance.now(),frames=0,fps=0,measureTime=last,enemyCount=0,burstToken=0;
+ let started=false,selected=0,shots=0,hits=0,cooldown=0,deadFor=0,hitUntil=0,queue=[],last=performance.now(),frames=0,fps=0,measureTime=last,enemyCount=0,burstToken=0,stegFas=0;
  let audio=null,voices=[],audioBuffer=null,audioBus=null,clinkBuffer=null;const fileBuffers={},fileLoading={};let holding=false,nextAuto=0;
  let casingAlive=0,clinks=0,clinkReady=0,clinkVoices=0,aimNdcX=0,aimNdcY=0,breechNdcY=0,muzzleNdcY=0,breechWY=0,muzzleWY=0,muzzleWZ=0;
  function loadWeaponSounds(){for(const w of weapons){if(!w.ljudfil||fileLoading[w.id])continue;fileLoading[w.id]=fetch(new URL('../'+w.ljudfil,import.meta.url)).then(r=>{if(!r.ok)throw Error(r.status);return r.arrayBuffer();}).then(b=>new Promise((ok,no)=>audio.decodeAudioData(b,ok,no))).then(buf=>{fileBuffers[w.id]=buf;}).catch(()=>{fileLoading[w.id]=null;});}}
@@ -143,9 +143,30 @@ async function boot(){
   const albedo=new THREE.CanvasTexture(c);albedo.colorSpace=THREE.SRGBColorSpace;albedo.flipY=false;albedo.magFilter=albedo.minFilter=THREE.NearestFilter;
   return {albedo,metal:tex(metal,THREE.NoColorSpace),rough:tex(rough,THREE.NoColorSpace)};
  }
+ function bakaSkinn(root){
+  root.updateWorldMatrix(true,true);
+  const byten=[];
+  root.traverse(o=>{
+   if(!o.isSkinnedMesh||!o.skeleton)return;
+   o.skeleton.update();
+   const geom=o.geometry.clone();
+   const pos=geom.attributes.position;
+   const v=new THREE.Vector3();
+   for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i);o.applyBoneTransform(i,v);pos.setXYZ(i,v.x,v.y,v.z);}
+   pos.needsUpdate=true;
+   geom.computeVertexNormals();
+   geom.computeBoundingBox();geom.computeBoundingSphere();
+   const plain=new THREE.Mesh(geom,o.material);
+   plain.position.copy(o.position);plain.quaternion.copy(o.quaternion);plain.scale.copy(o.scale);
+   plain.castShadow=true;plain.frustumCulled=false;
+   byten.push({parent:o.parent,plain,old:o});
+  });
+  for(const s of byten){s.parent.add(s.plain);s.old.removeFromParent();}
+ }
  function mountGun(gltf,shift){
   const root=gltf.scene;
-  root.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.frustumCulled=false;const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.map){const maps=palettePBR(m.map);if(maps){m.map=maps.albedo;m.metalnessMap=maps.metal;m.roughnessMap=maps.rough;m.metalness=1;m.roughness=1;}}else{m.metalness=.55;m.roughness=.42;}m.envMapIntensity=1.25;}});
+  bakaSkinn(root);
+  root.traverse(o=>{if(!o.isMesh||!o.visible)return;o.castShadow=true;o.frustumCulled=false;const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.map){const maps=palettePBR(m.map);if(maps){m.map=maps.albedo;m.metalnessMap=maps.metal;m.roughnessMap=maps.rough;m.metalness=1;m.roughness=1;}}else{m.metalness=.55;m.roughness=.42;}m.envMapIntensity=1.25;}});
   root.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(root),center=box.getCenter(new THREE.Vector3());
   root.position.sub(center);root.position.z+=shift;
@@ -235,6 +256,36 @@ async function boot(){
  }
  scene.updateMatrixWorld(true);
  riktaPipa(k98Gun.holder);riktaPipa(mgGun.holder);riktaPipa(karbinGun.holder);
+ function lokalAndar(holder){
+  holder.updateWorldMatrix(true,true);
+  const inv=new THREE.Matrix4().copy(holder.matrixWorld).invert();
+  const pts=[];const v=new THREE.Vector3();
+  holder.traverse(o=>{
+   if(!o.isMesh||!o.geometry?.attributes?.position)return;
+   const pos=o.geometry.attributes.position;const steg=Math.max(1,Math.floor(pos.count/80));
+   for(let i=0;i<pos.count;i+=steg){v.fromBufferAttribute(pos,i);o.localToWorld(v);pts.push(v.applyMatrix4(inv).clone());}
+  });
+  if(pts.length<2)return null;
+  const m=new THREE.Vector3();for(const p of pts)m.add(p);m.multiplyScalar(1/pts.length);
+  let xx=0,yy=0,zz=0,xy=0,xz=0,yz=0;
+  for(const p of pts){const x=p.x-m.x,y=p.y-m.y,z=p.z-m.z;xx+=x*x;yy+=y*y;zz+=z*z;xy+=x*y;xz+=x*z;yz+=y*z;}
+  const ax=new THREE.Vector3(0,0,1);
+  for(let i=0;i<16;i++){const x=xx*ax.x+xy*ax.y+xz*ax.z,y=xy*ax.x+yy*ax.y+yz*ax.z,z=xz*ax.x+yz*ax.y+zz*ax.z;ax.set(x,y,z).normalize();}
+  let a=pts[0],b=pts[0];
+  for(const p of pts){if(p.dot(ax)<a.dot(ax))a=p;if(p.dot(ax)>b.dot(ax))b=p;}
+  return {a:a.clone(),b:b.clone()};
+ }
+ function sparaMynning(holder){
+  const and=lokalAndar(holder);if(!and)return;
+  weaponPivot.updateWorldMatrix(true,true);holder.updateWorldMatrix(true,true);
+  const tillPivot=new THREE.Matrix4().copy(weaponPivot.matrixWorld).invert();
+  const az=holder.localToWorld(and.a.clone()).applyMatrix4(tillPivot).z;
+  const bz=holder.localToWorld(and.b.clone()).applyMatrix4(tillPivot).z;
+  const mun=az<bz?and.a:and.b, kolv=az<bz?and.b:and.a;
+  holder.userData.mynning=mun.clone().sub(kolv).normalize();
+  holder.userData.kolvLokal=kolv;
+  holder.userData.munLokal=mun;
+ }
  sammaLinje(k98Gun.holder,mgGun.holder);sammaLinje(k98Gun.holder,karbinGun.holder);
  const mynningar={},pipGrad={};
  function mataMynning(id,holder){
@@ -244,6 +295,7 @@ async function boot(){
   pipGrad[id]=THREE.MathUtils.radToDeg(dir.angleTo(new THREE.Vector3(0,0,-1)));
  }
  mataMynning('gevar',k98Gun.holder);mataMynning('kulspruta',mgGun.holder);mataMynning('karbin',karbinGun.holder);
+ sparaMynning(k98Gun.holder);sparaMynning(mgGun.holder);sparaMynning(karbinGun.holder);
  {
   const lin=pipPunkter(mgGun.holder);
   const mitt=_pipA.copy(lin.bak).lerp(lin.fram,.42);
@@ -427,18 +479,46 @@ async function boot(){
   }
   headEuler.set(head.pitch,-head.yaw,0,'YXZ');headQuat.setFromEuler(headEuler);
  }
+ const _vapenY=new THREE.Vector3(),_vapenZ=new THREE.Vector3(),_vapenQ=new THREE.Quaternion();
+ function roteraPivot(delta){
+  aimRig.updateWorldMatrix(true,false);
+  const aimW=new THREE.Quaternion();aimRig.getWorldQuaternion(aimW);
+  const w=new THREE.Quaternion();weaponPivot.getWorldQuaternion(w);
+  w.premultiply(delta);
+  weaponPivot.quaternion.copy(aimW.invert()).multiply(w);
+  weaponPivot.updateWorldMatrix(true,true);
+ }
  function placeraVapenBak(){
   const id=weapons[selected]?.id||'gevar';
-  const grepp=GREPP[id]||GREPP.gevar;
-  if(stallning==='liggande'){weaponPivot.position.set(.16,.2,-.48);return;}
-  const hand=jag.getObjectByName('hand_r');
-  if(!hand){weaponPivot.position.set(.18,1.05,-.25);return;}
-  hand.updateWorldMatrix(true,false);
-  hand.getWorldPosition(tmp);
-  aimRig.worldToLocal(tmp);
-  _fwd.set(grepp.x,grepp.y,grepp.z).applyQuaternion(weaponPivot.quaternion);
-  weaponPivot.position.copy(tmp).sub(_fwd);
-  if(poseSteg<2)weaponPivot.position.y-=.06;
+  const holder=id==='kulspruta'?mgGun.holder:id==='karbin'?karbinGun.holder:k98Gun.holder;
+  const mal=benpose.senaste();
+  if(!holder||!mal)return null;
+  holder.visible=true;
+  weaponPivot.updateWorldMatrix(true,true);
+  if(!holder.userData.mynning)sparaMynning(holder);
+  const ons=_vapenZ.copy(mal.fram);
+  if(ons.lengthSq()<1e-8)ons.set(0,0,-1);
+  ons.normalize();
+  const nuDir=holder.userData.mynning.clone().transformDirection(holder.matrixWorld);
+  const lik=nuDir.dot(ons);
+  if(lik<-0.999){
+   const axelFlip=Math.abs(nuDir.y)>0.9?_vapenY.set(1,0,0):_vapenY.set(0,1,0);
+   roteraPivot(_vapenQ.setFromAxisAngle(axelFlip,Math.PI));
+   const nu2=holder.userData.mynning.clone().transformDirection(holder.matrixWorld);
+   if(nu2.dot(ons)<0.995)roteraPivot(_vapenQ.setFromUnitVectors(nu2,ons));
+  }else if(lik<0.995)roteraPivot(_vapenQ.setFromUnitVectors(nuDir,ons));
+  const kolvW=holder.localToWorld(holder.userData.kolvLokal.clone());
+  const flytt=mal.grepp.clone().sub(kolvW);
+  const foralderQ=new THREE.Quaternion();
+  weaponPivot.parent.getWorldQuaternion(foralderQ);
+  flytt.applyQuaternion(foralderQ.invert());
+  weaponPivot.position.add(flytt);
+  weaponPivot.updateWorldMatrix(true,true);
+  const kolv=holder.localToWorld(holder.userData.kolvLokal.clone());
+  const mun=holder.localToWorld(holder.userData.munLokal.clone());
+  const grepp=kolv.clone().lerp(mun,.16);grepp.y+=.02;
+  const stod=kolv.clone().lerp(mun,.34);stod.y+=.015;
+  return {grepp,stod,mun,kolv};
  }
  function applyWeaponTransform(raise){
   const up=rekylUpp();
@@ -693,7 +773,8 @@ async function boot(){
  addEventListener('blur',()=>{stopHold();trigger=null;updateRing(0);});
  let scopeAmt=0;
  function syncMynning(){const id=weapons[selected]?.id;const p=mynningar[id];if(p)muzzleObj.position.copy(p);}
- function applyWeapon(){const w=weapons[selected];$('weapon').textContent=w.namn;document.body.dataset.sikte=w.sikte||'';const id=w.id;mgGun.holder.visible=id==='kulspruta';k98Gun.holder.visible=id==='gevar';karbinGun.holder.visible=id==='karbin';belt.visible=id==='kulspruta';sights.visible=id==='kulspruta';syncMynning();if(!w.automat)stopHold();syncPoseUi();}
+ function applyWeapon(){const w=weapons[selected];$('weapon').textContent=w.namn;document.body.dataset.sikte=w.sikte||'';const id=w.id;mgGun.holder.visible=id==='kulspruta';k98Gun.holder.visible=id==='gevar';karbinGun.holder.visible=id==='karbin';belt.visible=id==='kulspruta';sights.visible=id==='kulspruta';syncMynning();try{localStorage.setItem('gyro_vapen_v1',id);}catch{}if(!w.automat)stopHold();syncPoseUi();}
+ try{const sparadVapen=localStorage.getItem('gyro_vapen_v1');const idx=weapons.findIndex(w=>w.id===sparadVapen);if(idx>=0)selected=idx;}catch{}
  $('weapon').onclick=()=>{stopHold();queue=[];trigger=null;updateRing(0);selected=(selected+1)%weapons.length;applyWeapon();};applyWeapon();
  let neutralTimer=null,neutralKvar=3;
  function visaNeutral(){$('startPanel').hidden=true;$('neutralPanel').hidden=false;neutralKvar=3;$('neutralTid').textContent='3';clearInterval(neutralTimer);neutralTimer=setInterval(()=>{neutralKvar-=1;$('neutralTid').textContent=String(Math.max(0,neutralKvar));if(neutralKvar<=0)bekraftaNeutral();},1000);}
@@ -705,14 +786,20 @@ async function boot(){
  $('neutralKlar').onclick=bekraftaNeutral;
  $('nyttNoll').onclick=()=>{nollStallGyro();$('status').textContent='Nytt neutralläge satt.';};
  const settingsPanel=$('settings');function showSettings(show){settingsPanel.hidden=!show;$('settingsButton').setAttribute('aria-expanded',String(show));}
+ let aktivFlik='rorelse';
+ function visaFlik(namn){
+  aktivFlik=namn||'rorelse';
+  for(const p of document.querySelectorAll('[data-flikpanel]'))p.hidden=p.dataset.flikpanel!==aktivFlik;
+  for(const b of document.querySelectorAll('#menyFlikar button'))b.classList.toggle('vald',b.dataset.flik===aktivFlik);
+ }
  function closeMenu(){$('menu').hidden=true;$('menuBackdrop').hidden=true;$('menuButton').setAttribute('aria-expanded','false');}
  function visaStyr(visa){$('styrPanel').hidden=!visa;$('styrKnapp').setAttribute('aria-expanded',String(!!visa));if(visa)closeMenu();}
- function openMenu(){if($('styrPanel'))$('styrPanel').hidden=true;$('styrKnapp')?.setAttribute('aria-expanded','false');$('menu').hidden=false;$('menuBackdrop').hidden=false;$('menuButton').setAttribute('aria-expanded','true');refreshStats();}
+ function openMenu(){if($('styrPanel'))$('styrPanel').hidden=true;$('styrKnapp')?.setAttribute('aria-expanded','false');$('menu').hidden=false;$('menuBackdrop').hidden=false;$('menuButton').setAttribute('aria-expanded','true');visaFlik(aktivFlik);refreshStats();}
  $('menuButton').onclick=()=>$('menu').hidden?openMenu():closeMenu();
  $('styrKnapp').onclick=()=>visaStyr($('styrPanel').hidden);
  $('styrStang').onclick=()=>visaStyr(false);
  $('menuBackdrop').onclick=closeMenu;
- $('settingsButton').onclick=()=>{closeMenu();showSettings(true);};$('closeSettings').onclick=()=>showSettings(false);
+ $('settingsButton').onclick=()=>{closeMenu();byggMeny($('labb'),styr);showSettings(true);};$('closeSettings').onclick=()=>showSettings(false);
  function bindTryck(el,fn){
   if(!el)return;
   let senast=0,ned=false;
@@ -730,6 +817,18 @@ async function boot(){
  $('forstoringPa').checked=settings.forstoringPa;$('forstoringPa').onchange=()=>{settings.forstoringPa=$('forstoringPa').checked;if(!settings.forstoringPa)siktVal='ogat';syncSikt();save();};
  $('forstoringNiva').value=String(settings.forstoringNiva);$('forstoringNiva').onchange=()=>{settings.forstoringNiva=Number($('forstoringNiva').value);save();};
  syncSikt();byggMeny($('labb'),styr);
+ let visaSensor=false;try{visaSensor=localStorage.getItem('gyro_sensordata_v1')==='1';}catch{}
+ function syncSensor(){$('gyroInfo').hidden=!visaSensor;$('stallning').hidden=!visaSensor;const kryss=$('visaSensor');if(kryss)kryss.checked=visaSensor;document.body.dataset.sensor=visaSensor?'ja':'nej';}
+ if($('visaSensor'))$('visaSensor').onchange=()=>{visaSensor=$('visaSensor').checked;try{localStorage.setItem('gyro_sensordata_v1',visaSensor?'1':'0');}catch{}syncSensor();};
+ syncSensor();
+ for(const b of document.querySelectorAll('#menyFlikar button'))b.onclick=()=>{visaFlik(b.dataset.flik);};
+ byggSnabb($('rorelseSnabb'),styr,{
+  lage:()=>gyroMeny.varden.sikta.yaw.lage,
+  sattLage(id){const lage=id==='rorelse'?'rorelse':'foljer';for(const axel of ['yaw','pitch','roll'])gyroMeny.varden.sikta[axel].lage=lage;gyroMeny.satt();},
+  aterga(){const ut=document.createElement('output'),inp=document.createElement('input');inp.type='range';inp.min='0.5';inp.max='6';inp.step='0.1';const visa=()=>{inp.value=String(settings.aterga_s);ut.value=Number(settings.aterga_s).toFixed(1)+' s';};visa();inp.oninput=()=>{settings.aterga_s=Number(inp.value);if($('returnTime'))$('returnTime').value=inp.value;updateReturn();};const span=document.createElement('span');span.style.display='block';span.append(ut,inp);return span;},
+  invertera(){const box=document.createElement('div');box.className='checks';for(const [nyckel,text,id] of [['inverteraX','Invertera pitch','invertX'],['inverteraY','Invertera vridning','invertY'],['inverteraZ','Invertera sidlutning','invertZ']]){const lab=document.createElement('label'),inp=document.createElement('input');inp.type='checkbox';inp.checked=!!settings[nyckel];inp.onchange=()=>{settings[nyckel]=inp.checked;if($(id))$(id).checked=inp.checked;save();};lab.append(inp,document.createTextNode(' '+text));box.append(lab);}return box;},
+  axlar(){visaStyr(true);}
+ });
  function anvendStyr(){settings.kanslighet=styr.varden.sikte.ytterst?styr.varden.sikte.kanslighet*4:styr.varden.sikte.kanslighet;settings.utjamning_s=styr.varden.sikte.ytterst?.012:styr.varden.sikte.utjamning_s;settings.forstoringNiva=styr.varden.kikare.zoom;settings.forstoringPa=siktVal==='kikare';syncPoseUi();syncSikt();}
  styr.lyssna(anvendStyr);anvendStyr();
  $('standUp').onclick=()=>{if(stallning!=='staende')startStallning('staende');};
@@ -944,8 +1043,8 @@ async function boot(){
   if(vy==='bakifran'){
    const till=(namn,mal)=>{const hand=jag.getObjectByName(namn);if(!hand)return;hand.getWorldPosition(_muzzle);_pip.copy(_muzzle).sub(player.position).applyQuaternion(_q.copy(player.quaternion).invert());mal[0]=_pip.x;mal[1]=_pip.y;mal[2]=_pip.z;};
    const hr=[0,0,0],hl=[0,0,0];till('hand_r',hr);till('hand_l',hl);handX=hr[0];handY=hr[1];handZ=hr[2];handLX=hl[0];handLY=hl[1];handLZ=hl[2];
-   const hand=jag.getObjectByName('hand_r');const g=GREPP[weapons[selected].id]||GREPP.gevar;
-   if(hand){hand.getWorldPosition(_muzzle);_pip.copy(g).applyQuaternion(weaponPivot.quaternion).add(weaponPivot.position);aimRig.localToWorld(_pip);greppAvstand=_muzzle.distanceTo(_pip);}
+   const hand=jag.getObjectByName('hand_r');const senGrepp=benpose.senaste()?.grepp;
+   if(hand&&senGrepp){hand.getWorldPosition(_muzzle);greppAvstand=_muzzle.distanceTo(senGrepp);}
   }
   return {stallning,eyeY,kanslighet:settings.kastaKanslighet,meter:detektor.visning(),namn:$('stallningNamn').textContent,meterText:$('diveMeter').textContent,kropp:kropp*180/Math.PI,sikt:siktVal,fov:camera.fov,stadga:stadgaNu,forstoring:settings.forstoringNiva,forstoringPa:settings.forstoringPa,z:player.position.z,x:player.position.x,yaw:gyro.vinklar.yaw*180/Math.PI,roll:gyro.vinklar.roll*180/Math.PI,pitch:gyro.vinklar.pitch*180/Math.PI,lookX:_fwd.x,lookY:_fwd.y,lookZ:_fwd.z,munX:_dir.x,munY:_dir.y,munZ:_dir.z,camYaw:camE.y,gunYaw:gunE.y,py:player.quaternion.y,ndcX:ndc.x,ndcY:ndc.y,skott:shots,traffar:hits,pose:poseSteg,fiendeZ:targets[0].root.position.z,info:document.getElementById('gyroInfo')?.innerText||'',align:snapshot.alignDeg,siktar:document.body.dataset.siktar,fps,vy,vapenSynlig:weaponPivot.visible,jagSynlig:jag.visible,camX:camera.position.x,camY:camera.position.y,camZ:camera.position.z,jagNdcX:jagNdc.x,jagNdcY:jagNdc.y,boj:benpose.böj(),hojd:kroppStor.y,langd:Math.max(kroppStor.x,kroppStor.z),skottText:$('skottRubrik')?.textContent||'',version:$('version')?.textContent||'',vapenId:weapons[selected].id,skak:skakAmpNu,stilla:vapenStilla,pip:pipGrad[weapons[selected].id]||0,hal:halLagda,hinder:hinderLista.length,karbin:document.body.dataset.karbin||'nej',sido:sidoAndel(styr.varden.gang),grepp:greppAvstand,handX,handY,handZ,handLX,handLY,handLZ,yta:senasteTraff?.yta||'',menyStandard:gyroMeny.arStandard(),hopp:lager.hoppHojd,pace:lager.kryss.pace,haptikMetod:styrTick.metod};
  },
@@ -970,8 +1069,21 @@ async function boot(){
  let spak={x:0,y:0,mag:0},platta={x:0,y:0,mag:0};
  function bindSpak(rot,knapp,mal){
   let id=null,x0=0,y0=0;
+  const flytta=(dx,dy)=>{
+   const radie=Math.min(rot.clientWidth,rot.clientHeight)/2;
+   const knopp=Math.min(knapp.offsetWidth||32,knapp.offsetHeight||32)/2;
+   const maxSyn=Math.max(0,radie-knopp-2);
+   const maxSpel=Math.max(maxSyn,radie*.72);
+   const len=Math.hypot(dx,dy);
+   const ux=len>1e-4?dx/len:0,uy=len>1e-4?dy/len:0;
+   const spel=Math.min(maxSpel,len);
+   mal.mag=maxSpel>0?spel/maxSpel:0;
+   mal.x=ux*mal.mag;mal.y=uy*mal.mag;
+   const syn=Math.min(maxSyn,len);
+   knapp.style.transform=`translate(${ux*syn}px,${uy*syn}px)`;
+  };
   rot.addEventListener('pointerdown',e=>{if(!started||(e.button&&e.button!==0))return;id=e.pointerId;const r=rot.getBoundingClientRect();x0=r.left+r.width/2;y0=r.top+r.height/2;try{rot.setPointerCapture(id);}catch{}});
-  rot.addEventListener('pointermove',e=>{if(e.pointerId!==id)return;const max=rot.clientWidth*.36,dx=e.clientX-x0,dy=e.clientY-y0;mal.mag=Math.min(1,Math.hypot(dx,dy)/(max||1));mal.x=dx/(max||1);mal.y=dy/(max||1);knapp.style.transform=`translate(${mal.x*max}px,${mal.y*max}px)`;});
+  rot.addEventListener('pointermove',e=>{if(e.pointerId!==id)return;flytta(e.clientX-x0,e.clientY-y0);});
   const slut=e=>{if(e.pointerId!==id)return;id=null;mal.x=mal.y=mal.mag=0;knapp.style.transform='';};
   rot.addEventListener('pointerup',slut);rot.addEventListener('pointercancel',slut);
  }
@@ -1067,21 +1179,27 @@ async function boot(){
   camera.position.set(player.position.x+clamp(a.x)*sway,eyeY+hoppNu+clamp(a.y)*sway+bobY*.22,player.position.z+clamp(a.z)*sway);
   if(vy==='bakifran'){
    jag.visible=true;jag.rotation.x=0;
-   const spring=gangFartNu>.45&&stallning==='staende'&&poseSteg===0;
-   if(spring){jagAction.paused=false;jagAction.timeScale=1;jagMixer.update(dt);jag.position.y=0;}
-   else{
-    jagAction.paused=true;
-    benpose.applicera(stallning,poseSteg===2,dt);
-    jag.traverse(n=>{if(n.isSkinnedMesh)n.skeleton.update();});
-    jag.position.y=0;jag.updateWorldMatrix(true,true);
-    let lagst=Infinity;jag.traverse(n=>{if(n.isBone&&/foot_|pelvis|hand_/.test(n.name)){n.getWorldPosition(tmp);if(tmp.y<lagst)lagst=tmp.y;}});
-    if(Number.isFinite(lagst))jag.position.y-=lagst;
-   }
+   const axel=poseSteg>=2?1:poseSteg===1?.55:0;
+   const gar=stallning==='staende'&&gangFartNu>.4;
+   if(gangFartNu>.25&&stallning!=='liggande')stegFas+=dt*(3.2+gangFartNu*1.4);
+   jag.position.y=0;
+   if(gar){jagAction.paused=false;jagAction.timeScale=THREE.MathUtils.clamp(gangFartNu/3.1,.55,1.45);jagMixer.update(dt);benpose.ram(stallning,axel);}
+   else{jagAction.paused=true;benpose.kropp(stallning,axel,dt,gangFartNu>.25&&stallning!=='liggande'?stegFas:0);}
    jag.updateWorldMatrix(true,true);
-   placeraVapenBak();
-   const dist=stallning==='liggande'?4.2:2.8,hojd=stallning==='liggande'?1.35:stallning==='hukande'?1.35:1.72;
-   camera.position.set(player.position.x+Math.sin(kropp)*dist,hojd+hoppNu,player.position.z+Math.cos(kropp)*dist);
-   _aim.set(player.position.x,stallning==='liggande'?.28:stallning==='hukande'?.7:1.05,player.position.z);
+   const markNamn=stallning==='liggande'?['pelvis','thigh_l','thigh_r','calf_l','calf_r']:stallning==='knastående'?['foot_l','ball_l','calf_r','foot_r','ball_r']:['foot_l','foot_r','ball_l','ball_r'];
+   let lagst=Infinity;
+   for(const namn of markNamn){const n=jag.getObjectByName(namn);if(!n)continue;n.getWorldPosition(tmp);if(tmp.y<lagst)lagst=tmp.y;}
+   if(Number.isFinite(lagst))jag.position.y-=lagst;
+   jag.updateWorldMatrix(true,true);
+   benpose.mal(stallning,axel);
+   const fatt=placeraVapenBak();
+   if(fatt)benpose.hamta(fatt.grepp,fatt.stod,dt,gar);
+   jag.updateWorldMatrix(true,true);
+   jag.traverse(n=>{if(n.isSkinnedMesh)n.skeleton.update();});
+   const dist=stallning==='liggande'?4.2:2.8,hojd=stallning==='liggande'?1.15:stallning==='hukande'||stallning==='knastående'?1.15:1.62;
+   const vinkel=kropp;
+   camera.position.set(player.position.x+Math.sin(vinkel)*dist,hojd+hoppNu,player.position.z+Math.cos(vinkel)*dist);
+   _aim.set(player.position.x,stallning==='liggande'?.32:(stallning==='hukande'||stallning==='knastående')?.72:1.05,player.position.z);
    camera.up.set(0,1,0);camera.lookAt(_aim);
    if(Math.abs(camera.fov-cfg.kamera.fov)>.05){camera.fov=cfg.kamera.fov;camera.updateProjectionMatrix();}
   }else jag.visible=false;

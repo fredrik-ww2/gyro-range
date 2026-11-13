@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import {skapaBlick, sjalvtest, normalStyr, STANDARD_STYR} from './blick.js?v=8';
-import {byggVarld} from './varld.js?v=10';
-import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=10';
-import {skapaLjud} from './ljud.js?v=10';
-import {skapaKansla, pulsFor, sjalvtest as kanslaTest} from './kansla.js?v=10';
+import {byggVarld} from './varld.js?v=11';
+import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=11';
+import {skapaLjud} from './ljud.js?v=11';
+import {skapaKansla, pulsFor, sjalvtest as kanslaTest} from './kansla.js?v=11';
+import {skapaBakgrund} from './bakgrund.js?v=11';
 
 const NYCKEL = 'panorama_styr_v1';
 const LASER_NYCKEL = 'panorama_laser_v1';
@@ -19,11 +20,12 @@ if (teckenfel.length) console.error('Blicktecken', teckenfel);
 
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance', stencil: false});
+  renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true, powerPreference: 'high-performance', stencil: false});
 } catch (e) {
   $('startText').textContent = 'WebGL saknas i den här webbläsaren.';
   throw e;
 }
+renderer.setClearColor(0x000000, 1);
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -44,6 +46,15 @@ try { laserSparad = normalLaser(JSON.parse(localStorage.getItem(LASER_NYCKEL) ||
 laser.satt(laserSparad);
 const ljud = skapaLjud();
 const kansla = skapaKansla();
+const bakgrund = skapaBakgrund($('kamerabild'));
+const UPP = new THREE.Vector3(0, 1, 0);
+const hallQ = new THREE.Quaternion();
+let soldatApi = {uppdatera() { return []; }, traffa() { return null; }, siktePunkt() { return null; }, status() { return []; }, resFallna() { return 0; }, fyllPa() { return {nytt: null, resta: 0}; }, get antal() { return 0; }};
+let miljoGrupp = null;
+let sparadDimma = null;
+let hallTill = 0;
+let sikteInit = false;
+let toastTimer = 0;
 let laserPa = false;
 let hintTimer = 0;
 let nastaPuls = 0;
@@ -122,33 +133,50 @@ function byggPanel() {
 }
 byggPanel();
 
+function basFov() {
+  if (laserPa) return laser.install.matcha ? matchaFonsterFov() : laser.install.fov;
+  return VANLIG_FOV;
+}
 function aktuellFov() {
-  if (!laserPa) return VANLIG_FOV;
-  const bas = laser.install.matcha ? matchaFonsterFov() : laser.install.fov;
-  return effektivFov(bas, laser.install);
+  return effektivFov(basFov(), laser.install);
+}
+function latSikte(mal, dt) {
+  const zoom = laser.install.sikte === 'kikare' ? laser.install.zoom : 1;
+  if (!(zoom > 1.15)) {
+    sikteInit = false;
+    camera.quaternion.copy(mal);
+    return;
+  }
+  if (!sikteInit) {
+    sikteInit = true;
+    camera.quaternion.copy(mal);
+    return;
+  }
+  const tau = 0.042 * (zoom - 1);
+  const a = 1 - Math.exp(-Math.max(dt, 0.001) / tau);
+  camera.quaternion.slerp(mal, Math.min(1, a));
 }
 function sattFov() {
   camera.fov = Math.min(100, Math.max(8, aktuellFov()));
   camera.updateProjectionMatrix();
 }
 function lyft() {
-  const el = $('kontroller');
+  const el = $('skjut');
   if (!el || el.hidden) return;
   const botten = parseFloat(getComputedStyle(el).bottom) || 0;
-  document.documentElement.style.setProperty('--ovan-kontroll', (botten + el.offsetHeight + 8) + 'px');
+  document.documentElement.style.setProperty('--ovan-kontroll', (botten + el.offsetHeight + 12) + 'px');
 }
 function passa() {
   const w = innerWidth, h = Math.max(1, innerHeight);
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   sattFov();
-  if (laser.install.matcha && !$('laserPanel').hidden) {
+  if (laser.install.matcha) {
     const fovHeltal = Math.round(Math.min(100, Math.max(8, matchaFonsterFov())));
     $('laserFov').value = String(fovHeltal);
     $('laserFovVis').textContent = fovHeltal + '° · fönster';
-    const bas = matchaFonsterFov();
-    $('laserZoomVis').textContent = kom(laser.install.zoom) + '× · ' + Math.round(effektivFov(bas, laser.install)) + '°';
   }
+  visaZoomText();
   lyft();
 }
 passa();
@@ -163,7 +191,10 @@ function loop(nu) {
   senast = nu;
   if (document.hidden) return;
   const vanlig = blick.uppdatera(dt);
-  camera.quaternion.copy(laserPa && blick.harGyro ? laser.uppdatera(dt) : vanlig);
+  const mal = laserPa && blick.harGyro ? laser.uppdatera(dt) : vanlig;
+  if (nu < hallTill) camera.quaternion.copy(hallQ);
+  else latSikte(mal, dt);
+  for (const punkt of soldatApi.uppdatera(dt)) laggPuff(punkt, UPP);
   ritaLaser(nu);
   tickPuff(dt);
   svalna(dt);
@@ -175,11 +206,8 @@ requestAnimationFrame(loop);
 const start = $('starta');
 const horisont = $('horisont');
 const hint = $('hint');
-const styrPanel = $('styrPanel');
-const styrKnapp = $('styrKnapp');
 const laserPanel = $('laserPanel');
 const laserKnapp = $('laserKnapp');
-const laserInstall = $('laserInstall');
 
 function visaHorisont() {
   const pa = laserPa ? laser.install.lasRoll : blick.rak;
@@ -197,18 +225,12 @@ function visaLaserUtseende() {
   rot.setProperty('--laser', inst.farg);
   rot.setProperty('--prick', inst.prick + 'px');
   $('laserPrick').hidden = !laserPa;
-  $('kikare').hidden = !(laserPa && inst.sikte === 'kikare');
+  $('kikare').hidden = inst.sikte !== 'kikare';
   $('laserLinje').hidden = !(laserPa && inst.strale);
   laserKnapp.classList.toggle('pa', laserPa);
   laserKnapp.setAttribute('aria-pressed', laserPa ? 'true' : 'false');
   laserKnapp.textContent = laserPa ? 'Laserpekare på' : 'Laserpekare';
-  laserInstall.hidden = !laserPa;
-  if (!laserPa) {
-    laserPanel.hidden = true;
-    laserInstall.classList.remove('pa');
-    laserInstall.setAttribute('aria-expanded', 'false');
-    $('laserHint').hidden = true;
-  }
+  if (!laserPa) $('laserHint').hidden = true;
   lyft();
 }
 const AXEL_TEXT = {
@@ -299,10 +321,12 @@ function fyllLaser() {
   $('laserDodVis').textContent = inst.dodzon < 0.05 ? 'av' : kom(inst.dodzon) + '°';
   $('laserStorlek').value = String(inst.prick);
   $('laserStorlekVis').textContent = inst.prick + ' px';
-  $('laserZoom').value = String(inst.zoom);
-  const basFov = inst.matcha ? matchaFonsterFov() : inst.fov;
-  $('laserZoomVis').textContent = kom(inst.zoom) + '× · ' + Math.round(effektivFov(basFov, inst)) + '°';
-  $('zoomRad').hidden = inst.sikte !== 'kikare';
+  document.querySelectorAll('#zoomVal button').forEach(knapp => {
+    const pa = inst.sikte === 'kikare' && Math.abs(Number(knapp.dataset.zoom) - inst.zoom) < 0.2;
+    knapp.classList.toggle('pa', pa);
+    knapp.setAttribute('aria-pressed', pa ? 'true' : 'false');
+  });
+  visaZoomText();
   document.querySelectorAll('#sikteVal button').forEach(knapp => {
     const pa = knapp.dataset.sikte === inst.sikte;
     knapp.classList.toggle('pa', pa);
@@ -357,7 +381,8 @@ function ritaLaser(nu) {
     if (linje.style.transform) linje.style.transform = '';
     return;
   }
-  const px = laser.skakPx();
+  const zoomNu = laser.install.sikte === 'kikare' ? Math.max(1, laser.install.zoom) : 1;
+  const px = laser.skakPx() / zoomNu;
   if (px < 0.4) {
     prick.style.transform = '';
     linje.style.transform = '';
@@ -390,28 +415,6 @@ function sattLaser(pa) {
   fyllLaser();
   sattFov();
   if (pa) visaLaserHint();
-  if (window.__pano) window.__pano.laserPa = laserPa;
-}
-function visaStyr(oppna) {
-  styrPanel.hidden = !oppna;
-  styrKnapp.classList.toggle('pa', oppna);
-  styrKnapp.setAttribute('aria-expanded', oppna ? 'true' : 'false');
-  if (oppna) {
-    laserPanel.hidden = true;
-    laserInstall.classList.remove('pa');
-    laserInstall.setAttribute('aria-expanded', 'false');
-  }
-}
-function visaLaserPanel(oppna) {
-  if (oppna && !laserPa) sattLaser(true);
-  laserPanel.hidden = !oppna;
-  laserInstall.classList.toggle('pa', oppna);
-  laserInstall.setAttribute('aria-expanded', oppna ? 'true' : 'false');
-  if (oppna) {
-    visaStyr(false);
-    fyllLaser();
-  }
-  lyft();
 }
 function nollstallAllt() {
   blick.nollstall();
@@ -431,8 +434,6 @@ horisont.addEventListener('click', () => {
     visaHorisont();
   }
 });
-styrKnapp.addEventListener('click', () => visaStyr(styrPanel.hidden));
-$('styrStang').addEventListener('click', () => visaStyr(false));
 $('standard').addEventListener('click', () => {
   blick.satt(STANDARD_STYR);
   spara();
@@ -441,8 +442,6 @@ $('standard').addEventListener('click', () => {
 });
 $('noll').addEventListener('click', nollstallAllt);
 laserKnapp.addEventListener('click', () => sattLaser(!laserPa));
-laserInstall.addEventListener('click', () => visaLaserPanel(laserPanel.hidden));
-$('laserStang').addEventListener('click', () => visaLaserPanel(false));
 $('laserAxlar').addEventListener('change', e => {
   const sel = e.target.closest('select[data-nyckel="lage"]');
   if (!sel) return;
@@ -504,12 +503,13 @@ $('sikteVal').addEventListener('click', e => {
   if (!knapp) return;
   andraLaser({sikte: knapp.dataset.sikte});
 });
-$('laserZoom').addEventListener('input', e => andraLaser({zoom: Number(e.target.value)}));
-$('ljudPa').addEventListener('click', () => {
-  ljud.oppna();
-  andraLaser({ljud: !laser.install.ljud});
+$('zoomVal').addEventListener('click', e => {
+  const knapp = e.target.closest('[data-zoom]');
+  if (!knapp) return;
+  sikteInit = false;
+  andraLaser({sikte: 'kikare', zoom: Number(knapp.dataset.zoom)});
 });
-$('ljudKnapp').addEventListener('click', () => {
+$('ljudPa').addEventListener('click', () => {
   ljud.oppna();
   andraLaser({ljud: !laser.install.ljud});
 });
@@ -528,10 +528,20 @@ $('skjut').addEventListener('click', () => {
 
 function synkaLjud() {
   ljud.satt(laser.install.ljud, laser.install.volym);
-  const knapp = $('ljudKnapp');
-  knapp.classList.toggle('pa', laser.install.ljud);
-  knapp.setAttribute('aria-pressed', laser.install.ljud ? 'true' : 'false');
-  knapp.textContent = laser.install.ljud ? 'Ljud på' : 'Ljud av';
+}
+function visaZoomText() {
+  const el = $('zoomText');
+  if (!el) return;
+  const inst = laser.install;
+  const bas = basFov();
+  const grader = Math.round(aktuellFov());
+  el.textContent = inst.sikte === 'kikare'
+    ? 'Zoom ' + kom(inst.zoom) + '×. Synfält ' + grader + '°.'
+    : 'Kikarsiktet är av. Synfält ' + Math.round(bas) + '°.';
+}
+function visaTraff() {
+  const el = $('traffVis');
+  if (el) el.textContent = String(traffAntal);
 }
 function ritaNiva() {
   const accP = Math.max(0, Math.min(1, visAcc / 8));
@@ -541,6 +551,13 @@ function ritaNiva() {
   $('accVis').textContent = kom(visAcc);
   $('ryckVis').textContent = kom(visRyck);
   $('ryckMatare').classList.toggle('puls', visRyck > 12);
+  const acc2 = $('accStapelLjud');
+  if (acc2) acc2.style.width = Math.round(accP * 100) + '%';
+  const ryck2 = $('ryckStapelLjud');
+  if (ryck2) ryck2.style.width = Math.round(ryckP * 100) + '%';
+  if ($('accVisLjud')) $('accVisLjud').textContent = kom(visAcc);
+  if ($('ryckVisLjud')) $('ryckVisLjud').textContent = kom(visRyck);
+  $('ryckMatareLjud')?.classList.toggle('puls', visRyck > 12);
 }
 function svalna(dt) {
   visAcc *= Math.exp(-dt * 1.6);
@@ -657,24 +674,50 @@ function blixt() {
   void el.offsetWidth;
   el.classList.add('pa');
 }
+function siktaMot(index) {
+  const punkt = soldatApi.siktePunkt(index);
+  if (!punkt) return false;
+  camera.lookAt(punkt);
+  camera.updateMatrixWorld(true);
+  hallQ.copy(camera.quaternion);
+  hallTill = performance.now() + 1600;
+  sikteInit = false;
+  return true;
+}
 function avfyra() {
   const nu = performance.now();
   if (nu - skottTid < 280) return false;
   skottTid = nu;
   skottAntal++;
   ljud.skott();
+  if (laser.install.vibrera && typeof navigator.vibrate === 'function') {
+    try { navigator.vibrate(18); } catch { /* Safari vibrerar inte */ }
+  }
   blixt();
   $('skjut').classList.add('eld');
   setTimeout(() => $('skjut').classList.remove('eld'), 140);
+  camera.updateMatrixWorld(true);
+  raycaster.setFromCamera(MITT, camera);
+  const soldat = soldatApi.traffa(raycaster);
+  if (soldat) {
+    traffAntal++;
+    laggPuff(soldat.punkt, soldat.normal || UPP);
+    ljud.traff(soldat.avstand);
+    visaTraff();
+    return true;
+  }
   const traff = hittaTraff();
   if (traff) {
-    traffAntal++;
     let normal = null;
     if (traff.face) normal = traff.face.normal.clone().transformDirection(traff.object.matrixWorld).normalize();
     laggPuff(traff.point, normal);
-    ljud.traff();
   }
   return true;
+}
+function skjutMot(index) {
+  if (!siktaMot(index)) return false;
+  skottTid = 0;
+  return avfyra();
 }
 
 const vibrHar = $('vibrHar');
@@ -689,21 +732,114 @@ start.addEventListener('click', async () => {
   try { await blick.start(); }
   catch (e) { hint.textContent = 'Sensorerna kunde inte starta. Dra med fingret.'; }
   $('startKort').hidden = true;
-  $('kontroller').hidden = false;
+  $('skjut').hidden = false;
+  $('menyKnapp').hidden = false;
+  $('meny').hidden = true;
   if (laser.install.pa) sattLaser(true);
   else lyft();
   requestAnimationFrame(lyft);
   setTimeout(() => { if (!blick.harGyro) hint.hidden = false; }, 1200);
 });
 
+function visaFlik(id) {
+  document.querySelectorAll('#flikRad button').forEach(knapp => {
+    const pa = knapp.dataset.flik === id;
+    knapp.classList.toggle('pa', pa);
+    knapp.setAttribute('aria-selected', pa ? 'true' : 'false');
+  });
+  document.querySelectorAll('#meny [data-panel]').forEach(panel => {
+    panel.hidden = panel.dataset.panel !== id;
+  });
+}
+function visaMeny(pa) {
+  $('meny').hidden = !pa;
+  $('menyKnapp').classList.toggle('pa', !!pa);
+  $('menyKnapp').setAttribute('aria-expanded', pa ? 'true' : 'false');
+  if (pa) {
+    fyllLaser();
+    visaTraff();
+    visaBakgrundKnappar();
+  }
+}
+function visaBakgrundKnappar() {
+  document.querySelectorAll('#bakgrundVal button').forEach(knapp => {
+    const pa = knapp.dataset.bakgrund === bakgrund.lage;
+    knapp.classList.toggle('pa', pa);
+    knapp.setAttribute('aria-pressed', pa ? 'true' : 'false');
+  });
+  document.querySelectorAll('#filterVal button').forEach(knapp => {
+    const pa = knapp.dataset.filter === bakgrund.filter;
+    knapp.classList.toggle('pa', pa);
+    knapp.setAttribute('aria-pressed', pa ? 'true' : 'false');
+  });
+}
+function appliceraMiljo() {
+  const kamera = bakgrund.lage === 'kamera';
+  if (miljoGrupp) miljoGrupp.visible = !kamera;
+  scene.fog = kamera ? null : sparadDimma;
+  renderer.setClearColor(0x000000, kamera ? 0 : 1);
+}
+async function valjBakgrund(lage) {
+  let res;
+  try { res = await bakgrund.sattLage(lage); }
+  catch (fel) { res = {ok: false, lage: '3d', text: 'Kameran gick inte att öppna. 3D-miljön visas i stället.'}; }
+  appliceraMiljo();
+  visaBakgrundKnappar();
+  const text = res.text || '';
+  const notis = $('kameraMeddelande');
+  notis.hidden = !text;
+  notis.textContent = text;
+  const toast = $('kameraToast');
+  toast.hidden = !text;
+  toast.textContent = text;
+  clearTimeout(toastTimer);
+  if (text) toastTimer = setTimeout(() => { toast.hidden = true; }, 7000);
+  return res;
+}
+function valjFilter(namn) {
+  const vald = bakgrund.sattFilter(namn);
+  visaBakgrundKnappar();
+  return vald;
+}
+$('menyKnapp').addEventListener('click', () => visaMeny($('meny').hidden));
+$('menyStang').addEventListener('click', () => visaMeny(false));
+$('flikRad').addEventListener('click', e => {
+  const knapp = e.target.closest('[data-flik]');
+  if (knapp) visaFlik(knapp.dataset.flik);
+});
+$('bakgrundVal').addEventListener('click', e => {
+  const knapp = e.target.closest('[data-bakgrund]');
+  if (knapp) valjBakgrund(knapp.dataset.bakgrund);
+});
+$('filterVal').addEventListener('click', e => {
+  const knapp = e.target.closest('[data-filter]');
+  if (knapp) valjFilter(knapp.dataset.filter);
+});
+$('resFallna').addEventListener('click', () => soldatApi.resFallna());
+$('fyllPa').addEventListener('click', () => soldatApi.fyllPa());
+visaFlik('miljo');
+visaBakgrundKnappar();
+
 try {
   const varld = await byggVarld(scene, renderer);
+  soldatApi = varld.soldater;
+  miljoGrupp = varld.miljo;
+  sparadDimma = scene.fog;
   window.__pano = {
-    kamera: camera, blick, laser, laserPa, rapport: varld.rapport, teckenfel, renderer, scene,
+    kamera: camera, blick, laser, rapport: varld.rapport, teckenfel, renderer, scene,
     hackAntal: varld.hackAntal, matchFov: matchaFonsterFov, ljud, mataRorelse, skjut: avfyra,
+    soldater: varld.soldater, siktaMot, skjutMot, visaMeny, visaFlik,
+    sattKikare(pa) { sikteInit = false; andraLaser({sikte: pa ? 'kikare' : 'prick'}); },
+    sattZoom(z) { sikteInit = false; andraLaser({sikte: 'kikare', zoom: Number(z)}); },
+    sattBakgrund: valjBakgrund,
+    sattFilter: valjFilter,
+    get laserPa() { return laserPa; },
     get niva() { return {acc: visAcc, ryck: visRyck, senaste: senasteNiva}; },
     get skott() { return skottAntal; },
-    get traffar() { return traffAntal; }
+    get traffar() { return traffAntal; },
+    get fov() { return camera.fov; },
+    get zoom() { return laser.install.zoom; },
+    get kikare() { return laser.install.sikte === 'kikare'; }
   };
   window.__redo = teckenfel.length === 0;
   start.disabled = false;

@@ -7,51 +7,76 @@
 <meta name="theme-color" content="#1a221c">
 <link rel="icon" href="data:,">
 <title>Panorama · Normandie</title>
-<link rel="stylesheet" href="./stil.css?v=10">
+<link rel="stylesheet" href="./stil.css?v=11">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
+<video id="kamerabild" hidden playsinline muted autoplay></video>
 <canvas id="vy" aria-label="Normandie 1944, se dig om med telefonen"></canvas>
-<div id="version">Panorama 04</div>
+<div id="version">Panorama 05</div>
 <section id="startKort">
 <span class="ogonbryn">NORMANDIE 1944</span>
 <h1>Se dig om</h1>
-<p id="startText">Telefonen är ett fönster. Vrid dig för att se runt hela fältet. Luta toppen ned mot marken och upp mot himlen.</p>
-<p id="laserGuide" hidden>Nytt: välj liten röd prick eller kikarsikte, och tryck Skjut. Inställningarna ligger under mitten så pricken syns.</p>
+<p id="startText">Telefonen är ett fönster. Vrid dig för att se fältet. Efter start syns Skjut och en liten Meny. Där väljer du miljö, kikarsikte, laser, ljud och vibration.</p>
+<p id="laserGuide" hidden>Nytt: allt utom Skjut ligger i Menyn. Kikarsiktet zoomar, och soldaterna faller när de träffas.</p>
 <button id="starta" type="button" disabled>Laddar…</button>
 <small>På en dator drar du med musen.</small>
+<a class="allaLankar" href="../lankar/" data-alla-lankar>Alla länkar</a>
 </section>
 <p id="hint" hidden>Ingen rörelsesensor. Dra för att titta.</p>
-<section id="styrPanel" hidden>
-<div class="panelTopp"><b>Styrning</b><button id="styrStang" type="button">Stäng</button></div>
-<p class="panelLed">Varje axel kan följa telefonens vinkel, eller bara lägga till snurr och sedan stanna.</p>
-<details data-axel="vrida">
-<summary>Vrida</summary>
-<div class="axelInre"></div>
-</details>
-<details data-axel="uppner">
-<summary>Luta upp/ner</summary>
-<div class="axelInre"></div>
-</details>
-<details data-axel="sida">
-<summary>Luta åt sidan</summary>
-<div class="axelInre"></div>
-</details>
-<button id="standard" type="button">Standard</button>
-</section>
-<section id="laserPanel" hidden>
-<div class="panelKropp">
-<div class="panelTopp"><b>Laserpekare</b><button id="laserStang" type="button">Stäng</button></div>
+<p id="kameraToast" hidden></p>
+<p id="laserHint" hidden>Vrid telefonen. Pricken visar vart du pekar. Skjut skjuter dit.</p>
+<button id="menyKnapp" type="button" hidden aria-expanded="false" aria-controls="meny">Meny</button>
+<button id="skjut" type="button" hidden>Skjut</button>
+<section id="meny" hidden>
+<div class="panelTopp"><b>Meny</b><button id="menyStang" type="button">Stäng</button></div>
+<div class="flikRad" id="flikRad" role="tablist">
+<button type="button" data-flik="miljo" role="tab" aria-selected="true">Miljö / Kamera</button>
+<button type="button" data-flik="sikte" role="tab" aria-selected="false">Sikte &amp; Zoom</button>
+<button type="button" data-flik="laser" role="tab" aria-selected="false">Laser &amp; Rörelse</button>
+<button type="button" data-flik="ljud" role="tab" aria-selected="false">Ljud &amp; Vibration</button>
+</div>
+<div data-panel="miljo">
+<p class="panelLed">3D-fältet eller telefonens kamera som bakgrund. Soldater och sikte ligger ovanpå.</p>
+<div class="val" id="bakgrundVal">
+<button type="button" data-bakgrund="3d" aria-pressed="true">3D-miljö</button>
+<button type="button" data-bakgrund="kamera" aria-pressed="false">Telefonens kamera</button>
+</div>
+<p class="fargRubrik">Filter på kameran</p>
+<div class="val" id="filterVal">
+<button type="button" data-filter="vanlig">Vanlig</button>
+<button type="button" data-filter="film">WW2-film</button>
+<button type="button" data-filter="natt">Natt</button>
+</div>
+<p class="forklaring">WW2-film är grå och lite sepia. Natt gör bilden mörkare, som att verkligheten ändras.</p>
+<p id="kameraMeddelande" class="kameraNotis" hidden></p>
+</div>
+<div data-panel="sikte" hidden>
+<p class="panelLed">Kikarsiktet är en rund mask med hårkors. Högre zoom smalnar synfältet och gör siktet trögare.</p>
 <div class="val" id="sikteVal">
-<button type="button" data-sikte="prick" aria-pressed="true">Liten röd prick</button>
+<button type="button" data-sikte="prick" aria-pressed="true">Vanligt sikte</button>
 <button type="button" data-sikte="kikare" aria-pressed="false">Kikarsikte</button>
 </div>
+<div class="val" id="zoomVal">
+<button type="button" data-zoom="1">1×</button>
+<button type="button" data-zoom="2">2×</button>
+<button type="button" data-zoom="4">4×</button>
+<button type="button" data-zoom="6">6×</button>
+</div>
+<p class="forklaring" id="zoomText"></p>
+<p class="traffRad">Träffar <b id="traffVis">0</b></p>
+<button id="resFallna" type="button">Res fallna</button>
+<button id="fyllPa" type="button">Fyll på soldater</button>
+</div>
+<div data-panel="laser" hidden>
+<button id="laserKnapp" type="button" aria-pressed="false">Laserpekare</button>
+<section id="laserPanel">
+<div class="panelKropp">
 <div class="rorelseFast">
 <div class="rorelseMatare" id="accMatare"><span>Acceleration</span><em id="accVis">0,0</em><i><b id="accStapel"></b></i></div>
 <div class="rorelseMatare" id="ryckMatare"><span>Ojämnhet</span><em id="ryckVis">0,0</em><i><b id="ryckStapel"></b></i></div>
 </div>
-<p class="forklaring">Pricken har ljus kant mot himlen. Kikarsiktet zoomar. Ojämnhet är rycket, hur snabbt accelerationen ändras.</p>
-<label id="zoomRad" hidden>Kikarzoom <span id="laserZoomVis"></span><input id="laserZoom" type="range" min="1" max="4" step="0.1"></label>
+<p class="forklaring">Pricken har ljus kant mot himlen. Ojämnhet är rycket, hur snabbt accelerationen ändras.</p>
 <label>Prickens storlek <span id="laserStorlekVis"></span><input id="laserStorlek" type="range" min="6" max="56" step="1"></label>
 <p class="panelLed">Position följer vinkeln. Fart rullar på medan du håller ut, och noll stannar. Mus räknar bara när telefonen rör sig.</p>
 <div class="forval" id="laserForval">
@@ -82,59 +107,75 @@
 <p class="forklaring">På: horisonten hålls rak. Av: telefonens lutning syns.</p>
 <button id="laserNoll" type="button">Nollställ riktning</button>
 <button id="laserStandard" type="button">Standard</button>
-<button id="ljudPa" type="button" class="omkopplare" aria-pressed="true">Ljud</button>
+</div>
+</section>
+<section id="styrPanel">
+<div class="panelTopp"><b>Styrning utan laser</b></div>
+<p class="panelLed">Varje axel kan följa telefonens vinkel, eller bara lägga till snurr och sedan stanna.</p>
+<details data-axel="vrida">
+<summary>Vrida</summary>
+<div class="axelInre"></div>
+</details>
+<details data-axel="uppner">
+<summary>Luta upp/ner</summary>
+<div class="axelInre"></div>
+</details>
+<details data-axel="sida">
+<summary>Luta åt sidan</summary>
+<div class="axelInre"></div>
+</details>
+<button id="horisont" type="button" class="pa" aria-pressed="true">Rak horisont</button>
+<button id="noll" type="button">Nollställ riktning</button>
+<button id="standard" type="button">Standard</button>
+</section>
+</div>
+<div data-panel="ljud" hidden>
+<button id="ljudPa" type="button" class="omkopplare" aria-pressed="true">Ljud på</button>
 <label>Volym <span id="ljudVolVis"></span><input id="ljudVol" type="range" min="0" max="1" step="0.05"></label>
-<p class="forklaring">Ljudet slås på när du trycker Starta. Skjut spelar ett gevärsskott, och en träff ger en knäpp.</p>
-<details id="kanslaMer">
-<summary>Mer: vibration vid acceleration</summary>
+<p class="forklaring">Ljudet slås på när du trycker Starta eller Skjut. Skottet har en knall och sedan ett slutstycksklick. En träff ger en duns, eko och en kort bekräftelse.</p>
+<div class="rorelseFast">
+<div class="rorelseMatare"><span>Acceleration</span><em id="accVisLjud">0,0</em><i><b id="accStapelLjud"></b></i></div>
+<div class="rorelseMatare" id="ryckMatareLjud"><span>Ojämnhet</span><em id="ryckVisLjud">0,0</em><i><b id="ryckStapelLjud"></b></i></div>
+</div>
 <button id="vibrera" type="button" class="omkopplare" aria-pressed="true">Vibration vid acceleration</button>
 <label>Styrka <span id="vibrStyrkaVis"></span><input id="vibrStyrka" type="range" min="0.15" max="1" step="0.05"></label>
 <label>Känslighet <span id="vibrKanslVis"></span><input id="vibrKansl" type="range" min="0.4" max="2.5" step="0.1"></label>
 <button id="vibrKlick" type="button" class="omkopplare" aria-pressed="true">Taktilt klickljud</button>
-<p class="forklaring">iPhone och Safari har inte navigator.vibrate, så telefonen vibrerar inte där. Mätarna ovanför visar ändå acceleration och ojämnhet (ryck). Klickljudet är reserven när du vill höra rycket. Det följer Ljud på/av.</p>
+<p class="forklaring">iPhone och Safari har inte navigator.vibrate, så telefonen vibrerar inte där. Mätarna visar ändå acceleration och ojämnhet. Klickljudet är reserven, och det följer Ljud på/av.</p>
 <p class="forklaring" id="vibrHar"></p>
-</details>
 </div>
+<a class="allaLankar" href="../lankar/">Alla länkar</a>
 </section>
-<p id="laserHint" hidden>Vrid telefonen. Pricken visar vart du pekar. Skjut skjuter dit.</p>
 <div id="kikare" hidden>
 <div class="kikareHal"></div>
 <svg class="kikareRit" viewBox="0 0 200 200" aria-hidden="true">
-<circle cx="100" cy="100" r="96" fill="none" stroke="#f4f7ee" stroke-width="2"></circle>
-<circle cx="100" cy="100" r="90" fill="none" stroke="#14110c" stroke-width="5"></circle>
-<g stroke="#f7f3ea" stroke-width="3" stroke-linecap="square">
-<line x1="6" y1="100" x2="86" y2="100"></line><line x1="114" y1="100" x2="194" y2="100"></line>
-<line x1="100" y1="6" x2="100" y2="86"></line><line x1="100" y1="114" x2="100" y2="194"></line>
+<circle cx="100" cy="100" r="97" fill="none" stroke="#f4f1e8" stroke-width="1.4"></circle>
+<circle cx="100" cy="100" r="93" fill="none" stroke="#0c0a08" stroke-width="3.5"></circle>
+<g stroke="#f7f3ea" stroke-width="2.4" stroke-linecap="square">
+<line x1="8" y1="100" x2="84" y2="100"></line><line x1="116" y1="100" x2="192" y2="100"></line>
+<line x1="100" y1="8" x2="100" y2="84"></line><line x1="100" y1="116" x2="100" y2="192"></line>
 </g>
-<g stroke="#16120c" stroke-width="1.25" stroke-linecap="square">
-<line x1="6" y1="100" x2="86" y2="100"></line><line x1="114" y1="100" x2="194" y2="100"></line>
-<line x1="100" y1="6" x2="100" y2="86"></line><line x1="100" y1="114" x2="100" y2="194"></line>
-<line x1="80" y1="93" x2="80" y2="107"></line><line x1="120" y1="93" x2="120" y2="107"></line>
-<line x1="66" y1="96" x2="66" y2="104"></line><line x1="134" y1="96" x2="134" y2="104"></line>
-<line x1="52" y1="93" x2="52" y2="107"></line><line x1="148" y1="93" x2="148" y2="107"></line>
-<line x1="38" y1="96" x2="38" y2="104"></line><line x1="162" y1="96" x2="162" y2="104"></line>
-<line x1="24" y1="93" x2="24" y2="107"></line><line x1="176" y1="93" x2="176" y2="107"></line>
-<line x1="93" y1="80" x2="107" y2="80"></line><line x1="93" y1="120" x2="107" y2="120"></line>
-<line x1="96" y1="66" x2="104" y2="66"></line><line x1="96" y1="134" x2="104" y2="134"></line>
-<line x1="93" y1="52" x2="107" y2="52"></line><line x1="93" y1="148" x2="107" y2="148"></line>
-<line x1="96" y1="38" x2="104" y2="38"></line><line x1="96" y1="162" x2="104" y2="162"></line>
-<line x1="93" y1="24" x2="107" y2="24"></line><line x1="93" y1="176" x2="107" y2="176"></line>
+<g stroke="#120e0a" stroke-width="1.15" stroke-linecap="square">
+<line x1="8" y1="100" x2="84" y2="100"></line><line x1="116" y1="100" x2="192" y2="100"></line>
+<line x1="100" y1="8" x2="100" y2="84"></line><line x1="100" y1="116" x2="100" y2="192"></line>
+<line x1="78" y1="94" x2="78" y2="106"></line><line x1="122" y1="94" x2="122" y2="106"></line>
+<line x1="64" y1="96" x2="64" y2="104"></line><line x1="136" y1="96" x2="136" y2="104"></line>
+<line x1="50" y1="94" x2="50" y2="106"></line><line x1="150" y1="94" x2="150" y2="106"></line>
+<line x1="36" y1="96" x2="36" y2="104"></line><line x1="164" y1="96" x2="164" y2="104"></line>
+<line x1="22" y1="94" x2="22" y2="106"></line><line x1="178" y1="94" x2="178" y2="106"></line>
+<line x1="94" y1="78" x2="106" y2="78"></line><line x1="94" y1="122" x2="106" y2="122"></line>
+<line x1="96" y1="64" x2="104" y2="64"></line><line x1="96" y1="136" x2="104" y2="136"></line>
+<line x1="94" y1="50" x2="106" y2="50"></line><line x1="94" y1="150" x2="106" y2="150"></line>
+<line x1="96" y1="36" x2="104" y2="36"></line><line x1="96" y1="164" x2="104" y2="164"></line>
+<line x1="94" y1="22" x2="106" y2="22"></line><line x1="94" y1="178" x2="106" y2="178"></line>
 </g>
+<circle cx="100" cy="100" r="2.4" fill="#e10600" stroke="#0a0908" stroke-width="1.3"></circle>
 </svg>
 </div>
 <div id="traffBlixt"></div>
 <div id="laserLinje" hidden></div>
 <div id="laserPrick" hidden></div>
-<div id="kontroller" hidden>
-<button id="laserKnapp" type="button" aria-pressed="false">Laserpekare</button>
-<button id="skjut" type="button">Skjut</button>
-<button id="laserInstall" type="button" hidden aria-expanded="false" aria-controls="laserPanel">Inställningar</button>
-<button id="styrKnapp" type="button" aria-expanded="false" aria-controls="styrPanel">Styrning</button>
-<button id="horisont" type="button" class="pa" aria-pressed="true">Rak horisont</button>
-<button id="noll" type="button">Nollställ riktning</button>
-<button id="ljudKnapp" type="button" aria-pressed="true">Ljud på</button>
-</div>
-<script type="module" src="./huvud.js?v=10"></script>
+<script type="module" src="./huvud.js?v=11"></script>
 <script>
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});

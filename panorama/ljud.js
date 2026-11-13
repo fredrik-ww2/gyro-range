@@ -133,80 +133,146 @@ export function skapaLjud() {
       knall.buffer = brus;
       const hp = ctx.createBiquadFilter();
       hp.type = 'highpass';
-      hp.frequency.value = 1400;
+      hp.frequency.value = 900;
       const hg = ctx.createGain();
-      kurva(hg, t, 1.15, 0.07);
+      kurva(hg, t, 1.35, 0.09);
       knall.connect(hp); hp.connect(hg); hg.connect(bus);
-      knall.start(t); knall.stop(t + 0.09);
+      knall.start(t); knall.stop(t + 0.11);
 
       const kropp = ctx.createBufferSource();
       kropp.buffer = brus;
       const bp = ctx.createBiquadFilter();
       bp.type = 'bandpass';
-      bp.frequency.value = 980;
-      bp.Q.value = 0.65;
+      bp.frequency.setValueAtTime(1800, t);
+      bp.frequency.exponentialRampToValueAtTime(420, t + 0.12);
+      bp.Q.value = 0.7;
       const bg = ctx.createGain();
-      kurva(bg, t, 0.85, 0.2);
+      kurva(bg, t, 1.05, 0.24);
       kropp.connect(bp); bp.connect(bg); bg.connect(bus);
-      kropp.start(t); kropp.stop(t + 0.22);
+      kropp.start(t); kropp.stop(t + 0.26);
+
+      const hammare = ctx.createOscillator();
+      hammare.type = 'square';
+      hammare.frequency.setValueAtTime(310, t);
+      hammare.frequency.exponentialRampToValueAtTime(90, t + 0.012);
+      const hg2 = ctx.createGain();
+      kurva(hg2, t, 0.22, 0.018);
+      hammare.connect(hg2); hg2.connect(bus);
+      hammare.start(t); hammare.stop(t + 0.02);
 
       const snart = ctx.createOscillator();
       snart.type = 'triangle';
       snart.frequency.setValueAtTime(2400, t);
-      snart.frequency.exponentialRampToValueAtTime(680, t + 0.045);
+      snart.frequency.exponentialRampToValueAtTime(520, t + 0.05);
       const sg = ctx.createGain();
-      kurva(sg, t, 0.28, 0.05);
+      kurva(sg, t, 0.22, 0.055);
       snart.connect(sg); sg.connect(bus);
       snart.start(t); snart.stop(t + 0.06);
 
       const bas = ctx.createOscillator();
       bas.type = 'sine';
-      bas.frequency.setValueAtTime(170, t);
-      bas.frequency.exponentialRampToValueAtTime(48, t + 0.11);
+      bas.frequency.setValueAtTime(190, t);
+      bas.frequency.exponentialRampToValueAtTime(42, t + 0.16);
       const dg = ctx.createGain();
-      kurva(dg, t, 0.55, 0.14);
+      kurva(dg, t, 0.72, 0.2);
       bas.connect(dg); dg.connect(bus);
-      bas.start(t); bas.stop(t + 0.16);
-      knall.onended = () => {
-        for (const n of [knall, hp, hg, kropp, bp, bg, snart, sg, bas, dg, bus]) {
+      bas.start(t); bas.stop(t + 0.22);
+
+      const skottNoder = [knall, hp, hg, kropp, bp, bg, hammare, hg2, snart, sg, bas, dg, bus];
+      const mekanik = [];
+      for (const [forsening, frek, langd, topp] of [[0.3, 2100, 0.022, 0.2], [0.46, 1280, 0.034, 0.16]]) {
+        const tid = t + forsening;
+        const klickBrus = ctx.createBufferSource();
+        klickBrus.buffer = brus;
+        klickBrus.playbackRate.value = 1.7;
+        const klickTon = ctx.createOscillator();
+        klickTon.type = 'triangle';
+        klickTon.frequency.setValueAtTime(frek, tid);
+        klickTon.frequency.exponentialRampToValueAtTime(Math.max(180, frek * 0.45), tid + langd);
+        const band = ctx.createBiquadFilter();
+        band.type = 'bandpass';
+        band.frequency.value = frek;
+        band.Q.value = 3.2;
+        const kg = ctx.createGain();
+        kurva(kg, tid, topp, langd);
+        klickBrus.connect(band);
+        klickTon.connect(band);
+        band.connect(kg);
+        kg.connect(master);
+        klickBrus.start(tid); klickBrus.stop(tid + langd + 0.02);
+        klickTon.start(tid); klickTon.stop(tid + langd + 0.02);
+        mekanik.push(klickBrus, klickTon, band, kg);
+      }
+      const kopplaLoss = lista => {
+        for (const n of lista) {
           try { n.disconnect(); } catch { /* redan borta */ }
         }
       };
+      knall.onended = () => kopplaLoss(skottNoder);
+      mekanik[5].onended = () => kopplaLoss(mekanik);
       return true;
     } catch {
       return false;
     }
   }
 
-  function traff() {
+  function traff(avstand) {
     if (!pa) return false;
     try {
       if (!seTill() || !brus || !master) return false;
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
       traffAntal++;
-      const t = ctx.currentTime + 0.028;
+      const t = ctx.currentTime + 0.02;
+      const d = Number.isFinite(+avstand) ? Math.max(1, +avstand) : 12;
+      const ekoTid = Math.min(0.42, Math.max(0.045, d / 340));
+      const ekoVol = Math.max(0.08, 0.62 * Math.exp(-d / 38));
       const tick = ctx.createBufferSource();
       tick.buffer = brus;
-      tick.playbackRate.value = 1.4;
+      tick.playbackRate.value = 1.15;
       const hp = ctx.createBiquadFilter();
-      hp.type = 'highpass';
-      hp.frequency.value = 1800;
+      hp.type = 'bandpass';
+      hp.frequency.value = 280;
+      hp.Q.value = 0.7;
       const g = ctx.createGain();
-      kurva(g, t, 0.34, 0.04);
+      kurva(g, t, 0.85, 0.09);
       const ton = ctx.createOscillator();
-      ton.type = 'triangle';
-      ton.frequency.setValueAtTime(1500, t);
-      ton.frequency.exponentialRampToValueAtTime(420, t + 0.04);
+      ton.type = 'sine';
+      ton.frequency.setValueAtTime(210, t);
+      ton.frequency.exponentialRampToValueAtTime(62, t + 0.08);
       const tg = ctx.createGain();
-      kurva(tg, t, 0.16, 0.045);
+      kurva(tg, t, 0.55, 0.1);
+      const bekraft = ctx.createOscillator();
+      bekraft.type = 'triangle';
+      const bt = t + 0.055;
+      bekraft.frequency.setValueAtTime(2400, bt);
+      bekraft.frequency.exponentialRampToValueAtTime(1600, bt + 0.04);
+      const bg = ctx.createGain();
+      kurva(bg, bt, 0.14, 0.045);
+      const eko = ctx.createDelay(0.5);
+      eko.delayTime.value = ekoTid;
+      const ekoFilter = ctx.createBiquadFilter();
+      ekoFilter.type = 'lowpass';
+      ekoFilter.frequency.value = 900;
+      const eg = ctx.createGain();
+      eg.gain.value = ekoVol;
       tick.connect(hp); hp.connect(g); g.connect(master);
       ton.connect(tg); tg.connect(master);
-      tick.start(t); tick.stop(t + 0.05);
-      ton.start(t); ton.stop(t + 0.05);
+      g.connect(eko); tg.connect(eko);
+      eko.connect(ekoFilter); ekoFilter.connect(eg); eg.connect(master);
+      bekraft.connect(bg); bg.connect(master);
+      tick.start(t); tick.stop(t + 0.12);
+      ton.start(t); ton.stop(t + 0.12);
+      bekraft.start(bt); bekraft.stop(bt + 0.06);
+      const slut = t + ekoTid + 0.2;
       tick.onended = () => {
-        for (const n of [tick, hp, g, ton, tg]) {
-          try { n.disconnect(); } catch { /* redan borta */ }
-        }
+        const rensa = () => {
+          for (const n of [tick, hp, g, ton, tg, bekraft, bg, eko, ekoFilter, eg]) {
+            try { n.disconnect(); } catch { /* redan borta */ }
+          }
+        };
+        const vanta = Math.max(0, (slut - ctx.currentTime) * 1000);
+        if (vanta < 20) rensa();
+        else setTimeout(rensa, vanta);
       };
       return true;
     } catch {

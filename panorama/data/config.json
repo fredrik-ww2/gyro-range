@@ -1,5 +1,5 @@
 {
-  "prick": { "standard": 6, "min": 3, "max": 56 },
+  "prick": { "standard": 4, "min": 3, "max": 56 },
   "zoomMax": 12,
   "fovMin": 4,
   "gang": { "fart": 1.55, "dodzon": 0.1, "kanslighet": 2.4, "svang": 1, "svangFart": 1.15, "grans": 400 },

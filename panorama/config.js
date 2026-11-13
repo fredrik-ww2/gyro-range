@@ -1,7 +1,7 @@
 const IDS = ['vanligt', 'kar98k', 'springfield', 'enfield'];
 
 export const FALLBACK = {
-  prick: {standard: 6, min: 3, max: 56},
+    prick: {standard: 4, min: 3, max: 56},
   zoomMax: 12,
   fovMin: 4,
   traff: {kroppsskott: 3, huvudSkottDodar: true, huvudRadie: 0.15},
@@ -108,7 +108,8 @@ function normalPlats(raw) {
     z: tal(raw.z, -20, -400, 400),
     yaw: Number.isFinite(+raw.yaw) ? +raw.yaw : 0,
     beteende,
-    zon
+    zon,
+    vapen: raw.vapen === 'mg42' || raw.vapen === 'gevar' ? raw.vapen : ''
   };
 }
 

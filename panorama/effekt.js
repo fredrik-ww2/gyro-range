@@ -66,6 +66,37 @@ export function skapaEffekt(scene, blod) {
   points.userData.ingenTraff = true;
   scene.add(points);
 
+  const SPAR_N = 32;
+  const sparPos = new Float32Array(SPAR_N * 6);
+  const sparGeo = new THREE.BufferGeometry();
+  sparGeo.setAttribute('position', new THREE.BufferAttribute(sparPos, 3));
+  const sparMat = new THREE.LineBasicMaterial({color: 0xffe1a2, transparent: true, opacity: 0.92, toneMapped: false, depthWrite: false});
+  const sparLinjer = new THREE.LineSegments(sparGeo, sparMat);
+  sparLinjer.frustumCulled = false;
+  sparLinjer.raycast = () => {};
+  sparLinjer.userData.ingenTraff = true;
+  scene.add(sparLinjer);
+  const sparLiv = Array.from({length: SPAR_N}, () => ({t: 1, max: 0.08}));
+  let sparCursor = 0;
+  let nedslag = 0;
+
+  function spar(fran, till) {
+    if (!fran || !till) return false;
+    const s = sparLiv[sparCursor];
+    const i = sparCursor * 6;
+    sparCursor = (sparCursor + 1) % SPAR_N;
+    s.t = 0;
+    s.max = 0.12;
+    sparPos[i] = fran.x;
+    sparPos[i + 1] = fran.y;
+    sparPos[i + 2] = fran.z;
+    sparPos[i + 3] = till.x;
+    sparPos[i + 4] = till.y;
+    sparPos[i + 5] = till.z;
+    sparGeo.attributes.position.needsUpdate = true;
+    return true;
+  }
+
   const p = Array.from({length: N}, (_, i) => ({
     i, aktiv: false, t: 0, max: 1,
     x: 0, y: -20, z: 0, vx: 0, vy: 0, vz: 0,
@@ -207,6 +238,19 @@ export function skapaEffekt(scene, blod) {
     geo.attributes.aLiv.needsUpdate = true;
     geo.attributes.aPx.needsUpdate = true;
     geo.attributes.aFarg.needsUpdate = true;
+    let sparRit = false;
+    for (let i = 0; i < SPAR_N; i++) {
+      const s = sparLiv[i];
+      if (s.t >= s.max) continue;
+      s.t += d;
+      if (s.t >= s.max) {
+        const o = i * 6;
+        sparPos[o] = sparPos[o + 1] = sparPos[o + 2] = 0;
+        sparPos[o + 3] = sparPos[o + 4] = sparPos[o + 5] = 0;
+        sparRit = true;
+      }
+    }
+    if (sparRit) sparGeo.attributes.position.needsUpdate = true;
   }
 
   function status() {
@@ -224,11 +268,15 @@ export function skapaEffekt(scene, blod) {
     } else {
       for (const q of p) if (q.aktiv) aktiva++;
     }
+    let sparAktiva = 0;
+    for (const s of sparLiv) if (s.t < s.max) sparAktiva++;
     return {
       aktiva,
       bakom,
       senasteTyp: senaste ? senaste.typ : null,
-      senasteAntal: senaste ? senaste.antal : 0
+      senasteAntal: senaste ? senaste.antal : 0,
+      nedslag,
+      spar: sparAktiva
     };
   }
 
@@ -237,6 +285,7 @@ export function skapaEffekt(scene, blod) {
     status,
     fast,
     los,
+    spar,
     blod(punkt, riktning) {
       const dir = (riktning || new THREE.Vector3(0, 0, -1)).clone();
       if (dir.lengthSq() < 1e-8) dir.set(0, 0, -1);
@@ -245,6 +294,9 @@ export function skapaEffekt(scene, blod) {
       burst(punkt.clone().addScaledVector(bak, 0.16), bak, 'kropp');
     },
     spray(punkt, riktning) { burst(punkt, riktning, 'huvud'); },
-    damm(punkt) { burst(punkt, new THREE.Vector3(0, 1, 0), 'damm'); }
+    damm(punkt) {
+      nedslag++;
+      burst(punkt, new THREE.Vector3(0, 1, 0), 'damm');
+    }
   };
 }

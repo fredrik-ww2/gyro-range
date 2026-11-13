@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1a221c">
 <link rel="icon" href="data:,">
 <title>Vagntest</title>
-<link rel="stylesheet" href="./stil.css">
+<link rel="stylesheet" href="./stil.css?v=3">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
@@ -21,25 +21,35 @@
 </div>
 <p id="besked" hidden></p>
 <p id="flygtid" hidden></p>
-<div id="version">Vagntest 01</div>
+<div id="version">Vagntest 03</div>
 <section id="startKort">
 <span class="ogonbryn">NORMANDIE · SKYTTESIKTE</span>
 <h1>Håll telefonen på sidan</h1>
-<p id="startText">Som en ratt. Gasen till vänster stannar där du släpper. Luta för att svänga, vrid för tornet, tippa ovansidan för eldröret.</p>
+<p id="startText">Som en ratt. Växelspaken hackar mellan back, neutral och fyra växlar. Gasen klickar i grova steg och stannar där du släpper. Luta för att svänga, vrid för tornet, tippa ovansidan för eldröret.</p>
 <button id="starta" type="button" disabled>Laddar…</button>
-<small>På en dator: A och D svänger, pilarna siktar, dra i gasen.</small>
+<small>På en dator: A och D svänger, pilarna siktar, dra i växeln och gasen.</small>
 </section>
 <p id="hint" hidden>Ingen rörelsesensor. A och D svänger, pilarna siktar.</p>
-<div id="gas" hidden>
+<div id="spakar" hidden>
+<div id="vaxel">
+<b id="vaxelLage">N</b>
+<div id="vaxelRad">
+<div id="vaxelNamn"></div>
+<div id="vaxelSpar" role="slider" aria-label="Växelspak" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="5" aria-valuenow="1" aria-valuetext="Neutral"></div>
+</div>
+<small id="vaxelText">Neutral</small>
+</div>
+<div id="gas">
 <b id="gasFart">0</b>
-<div id="gasSpar">
-<span class="gasNamn fram">Fram</span>
-<span class="gasNamn back">Back</span>
-<div id="gasNoll"></div>
+<div id="gasSpar" role="slider" aria-label="Gasreglage" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0%">
+<span class="gasNamn fram">Full</span>
+<span class="gasNamn tom">Tom</span>
+<div id="gasHack"></div>
 <div id="gasFyll"></div>
 <div id="gasKnopp"></div>
 </div>
 <small id="gasText">0%</small>
+</div>
 </div>
 <div id="topp" hidden>
 <button id="noll" type="button">Nollställ</button>
@@ -47,6 +57,23 @@
 </div>
 <canvas id="karta" width="220" height="220" hidden aria-label="Karta. Skrovet pekar upp, grönt streck är tornet."></canvas>
 <small id="kartaText" hidden>Skrov upp · torn grönt</small>
+<button id="granatKnapp" type="button" hidden aria-haspopup="dialog" aria-expanded="false" aria-controls="granatMeny" aria-label="Spränggranat">
+<svg class="granatMini" data-mini="sprang" viewBox="0 0 80 200" aria-hidden="true"><rect x="34" y="8" width="12" height="16" rx="2" fill="#6d6248"/><rect x="37" y="4" width="6" height="6" rx="1" fill="#c4b48a"/><path d="M28 24 Q40 16 52 24 L56 58 Q40 50 24 58 Z" fill="#6f7a45"/><rect x="22" y="56" width="36" height="108" fill="#5c6840"/><rect x="22" y="78" width="36" height="14" fill="#e2c14a"/><rect x="28" y="60" width="6" height="96" fill="#ffffff22"/><rect x="20" y="150" width="40" height="10" fill="#b87333"/><rect x="22" y="160" width="36" height="22" fill="#4e5838"/><rect x="26" y="182" width="28" height="8" rx="1" fill="#3e4630"/></svg>
+<svg class="granatMini" data-mini="pansar" viewBox="0 0 80 200" hidden aria-hidden="true"><path d="M40 6 L58 62 L22 62 Z" fill="#8d9398"/><path d="M40 6 L58 62 L40 58 Z" fill="#c5ccd1"/><rect x="22" y="60" width="36" height="104" fill="#2c3136"/><rect x="28" y="64" width="5" height="92" fill="#ffffff18"/><rect x="20" y="150" width="40" height="12" fill="#a86b3c"/><rect x="22" y="162" width="36" height="18" fill="#23272b"/><circle cx="40" cy="188" r="6" fill="#e23b2f"/><circle cx="40" cy="188" r="3" fill="#ffb199"/></svg>
+<b id="granatKort">Spräng</b>
+</button>
+<div id="granatMeny" hidden role="dialog" aria-modal="true" aria-label="Välj granat">
+<div id="granatYta">
+<button type="button" class="granatVal vald" data-granat="sprang" aria-pressed="true">
+<svg viewBox="0 0 80 200" aria-hidden="true"><rect x="34" y="8" width="12" height="16" rx="2" fill="#6d6248"/><rect x="37" y="4" width="6" height="6" rx="1" fill="#c4b48a"/><path d="M28 24 Q40 16 52 24 L56 58 Q40 50 24 58 Z" fill="#6f7a45"/><rect x="22" y="56" width="36" height="108" fill="#5c6840"/><rect x="22" y="78" width="36" height="14" fill="#e2c14a"/><rect x="28" y="60" width="6" height="96" fill="#ffffff22"/><rect x="20" y="150" width="40" height="10" fill="#b87333"/><rect x="22" y="160" width="36" height="22" fill="#4e5838"/><rect x="26" y="182" width="28" height="8" rx="1" fill="#3e4630"/></svg>
+<span>Spränggranat</span>
+</button>
+<button type="button" class="granatVal" data-granat="pansar" aria-pressed="false">
+<svg viewBox="0 0 80 200" aria-hidden="true"><path d="M40 6 L58 62 L22 62 Z" fill="#8d9398"/><path d="M40 6 L58 62 L40 58 Z" fill="#c5ccd1"/><rect x="22" y="60" width="36" height="104" fill="#2c3136"/><rect x="28" y="64" width="5" height="92" fill="#ffffff18"/><rect x="20" y="150" width="40" height="12" fill="#a86b3c"/><rect x="22" y="162" width="36" height="18" fill="#23272b"/><circle cx="40" cy="188" r="6" fill="#e23b2f"/><circle cx="40" cy="188" r="3" fill="#ffb199"/></svg>
+<span>Pansargranat</span>
+</button>
+</div>
+</div>
 <div id="eldWrap" hidden>
 <label id="eld" for="hapticSwitch"><b>Eld</b><small id="eldStatus">Redo</small></label>
 <input id="hapticSwitch" type="checkbox" switch tabindex="-1" aria-hidden="true">
@@ -63,9 +90,10 @@
 <label class="reglage">Backande band från <span data-vis="backBand"></span><input data-troskel="backBand" type="range" min="8" max="60" step="1"></label>
 </details>
 <label class="check"><input id="visaMat" type="checkbox"> Visa mätvärden</label>
+<label class="check"><input id="ljudPa" type="checkbox" checked> Mekanikljud</label>
 <button id="standard" type="button">Standard</button>
 </section>
-<script type="module" src="./spel.js"></script>
+<script type="module" src="./spel.js?v=3"></script>
 <script>
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});

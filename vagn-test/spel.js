@@ -1,18 +1,19 @@
 import * as THREE from 'three';
-import {sjalvtest as gyroTest, skapaRorelse} from './gyro.js';
-import {sjalvtest as styrTest, STANDARD, normalStyr, ordnaTrosklar, skapaJamning, behandlaAxel, bandMal, skapaVagn, stegaVagn, stegaTorn, stegaEldror, BACKGAS} from './styr.js';
-import {sjalvtest as banTest, banTabell, skapaGranat, stegGranat, delTid, V0} from './ballistik.js';
-import {byggVarld, stegaMal} from './varld.js';
+import {sjalvtest as gyroTest, skapaRorelse} from './gyro.js?v=3';
+import {sjalvtest as styrTest, STANDARD, normalStyr, ordnaTrosklar, skapaJamning, behandlaAxel, bandMal, skapaVagn, stegaVagn, stegaTorn, stegaEldror} from './styr.js?v=3';
+import {sjalvtest as banTest, banTabell, skapaGranat, stegGranat, delTid, V0} from './ballistik.js?v=3';
+import {byggVarld, stegaMal} from './varld.js?v=3';
+import {sjalvtest as mekTest, MEKANIK, VAXLAR, gasAntal, gasVarde, gasOpt, vaxelOpt, vaxelFranId, draHack, slappHack, drivKommando} from './mekanik.js?v=3';
+import {sjalvtest as ljudTest, skapaMekanikLjud, kansla} from './ljud.js?v=3';
 
 const NYCKEL = 'vagn_test_v1';
-const GAS_ZON = 0.18;
 const OMLADD = 7;
 const SIKTE_FOV = 16;
 
 const $ = id => document.getElementById(id);
 const tal = (n, d = 0) => n.toFixed(d).replace('.', ',');
 const canvas = $('vy');
-const teckenfel = [...gyroTest(), ...styrTest(), ...banTest()];
+const teckenfel = [...gyroTest(), ...styrTest(), ...banTest(), ...mekTest(), ...ljudTest()];
 if (teckenfel.length) console.error('Vagntest', teckenfel);
 
 const rorelse = skapaRorelse(canvas);
@@ -21,7 +22,18 @@ try { install = normalStyr(JSON.parse(localStorage.getItem(NYCKEL) || 'null') ||
 catch { install = STANDARD; }
 const jamn = skapaJamning();
 const vagn = skapaVagn();
+const ljudMotor = skapaMekanikLjud();
+let vaxelIndex = vaxelFranId('N');
+let gasIndex = 0;
 let gas = 0;
+let gasStopp = false;
+let vaxelStopp = false;
+const GRANATER = {
+  sprang: {id: 'sprang', namn: 'Spränggranat', kort: 'Spräng'},
+  pansar: {id: 'pansar', namn: 'Pansargranat', kort: 'Pansar'}
+};
+let granatTyp = 'sprang';
+let skottTyp = granatTyp;
 let ladd = 0;
 let igang = false;
 let granat = null;
@@ -224,7 +236,9 @@ function fyllPanel() {
     document.querySelector(`[data-vis="${input.dataset.troskel}"]`).textContent = Math.round(o[input.dataset.troskel]) + '°';
   }
   $('visaMat').checked = !!install.visaMat;
+  $('ljudPa').checked = install.ljud !== false;
   $('mat').hidden = !install.visaMat;
+  ljudMotor.satt(install.ljud !== false);
 }
 byggPanel();
 fyllPanel();
@@ -233,6 +247,11 @@ $('visaMat').addEventListener('change', () => {
   install.visaMat = $('visaMat').checked;
   spara();
   $('mat').hidden = !install.visaMat;
+});
+$('ljudPa').addEventListener('change', () => {
+  install.ljud = $('ljudPa').checked;
+  ljudMotor.satt(install.ljud);
+  spara();
 });
 $('standard').addEventListener('click', () => {
   install = normalStyr(STANDARD);
@@ -251,55 +270,223 @@ $('noll').addEventListener('click', () => {
   jamn.styra = jamn.torn = jamn.eldror = 0;
 });
 
-function tFranVarde(v) {
-  if (v < 0) return GAS_ZON * (1 + v / BACKGAS);
-  return GAS_ZON + (1 - GAS_ZON) * v;
+const GAS_KNOPP = 34;
+const VAXEL_KNOPP = 26;
+function inom(visT) {
+  return Math.max(0, Math.min(1, Number(visT) || 0));
 }
-function vardeFranT(t) {
-  const u = Math.max(0, Math.min(1, t));
-  if (u <= GAS_ZON) return -BACKGAS * (1 - u / GAS_ZON);
-  return (u - GAS_ZON) / (1 - GAS_ZON);
+function knoppLäge(visT, slag) {
+  const u = inom(visT);
+  return `calc(${(u * 100).toFixed(3)}% - ${(u * slag).toFixed(2)}px)`;
 }
-function ritaGas() {
-  const t = tFranVarde(gas);
-  const sparH = $('gasSpar');
-  $('gasKnopp').style.bottom = (t * 100) + '%';
-  $('gasNoll').style.bottom = (GAS_ZON * 100) + '%';
-  const fyll = $('gasFyll');
-  if (gas >= 0) {
-    fyll.style.bottom = (GAS_ZON * 100) + '%';
-    fyll.style.height = ((t - GAS_ZON) * 100) + '%';
-    fyll.className = 'fram';
-  } else {
-    fyll.style.bottom = (t * 100) + '%';
-    fyll.style.height = ((GAS_ZON - t) * 100) + '%';
-    fyll.className = 'back';
+function mittLäge(visT, slag) {
+  const u = inom(visT);
+  return `calc(${(slag / 2).toFixed(1)}px + ${(u * 100).toFixed(3)}% - ${(u * slag).toFixed(2)}px)`;
+}
+function byggMarken(rot, antal) {
+  rot.replaceChildren();
+  for (let i = 0; i < antal; i++) {
+    const m = document.createElement('i');
+    m.style.bottom = mittLäge(antal > 1 ? i / (antal - 1) : 0, rot.id === 'gasHack' ? GAS_KNOPP : VAXEL_KNOPP);
+    if (i === 0 || i === antal - 1) m.classList.add('ande');
+    rot.append(m);
   }
-  $('gasText').textContent = gas < -0.01 ? 'Back ' + Math.round(-gas / BACKGAS * 100) + '%' : Math.round(gas * 100) + '%';
-  sparH.dataset.gas = String(gas);
+}
+function byggNamn(rot, namn) {
+  rot.replaceChildren();
+  const n = namn.length;
+  for (let i = 0; i < n; i++) {
+    const b = document.createElement('b');
+    b.textContent = namn[i];
+    b.style.bottom = mittLäge(n > 1 ? i / (n - 1) : 0, VAXEL_KNOPP);
+    rot.append(b);
+  }
+}
+function markera(rot, index) {
+  if (!rot) return;
+  const barn = rot.children;
+  for (let i = 0; i < barn.length; i++) barn[i].classList.toggle('nu', i === index);
+}
+const vaxelHack = document.createElement('div');
+vaxelHack.id = 'vaxelHack';
+$('vaxelSpar').append(vaxelHack);
+byggMarken(vaxelHack, VAXLAR.length);
+byggNamn($('vaxelNamn'), VAXLAR.map(v => v.namn));
+byggMarken($('gasHack'), gasAntal());
+const vaxelKnopp = document.createElement('div');
+vaxelKnopp.id = 'vaxelKnopp';
+$('vaxelSpar').append(vaxelKnopp);
+
+function skaka(el, kick) {
+  el.style.setProperty('--kick', kick + 'px');
+  el.classList.remove('hack');
+  void el.offsetWidth;
+  el.classList.add('hack');
+}
+function ritaVaxel(visT) {
+  vaxelKnopp.style.bottom = knoppLäge(visT, VAXEL_KNOPP);
+  const lage = VAXLAR[vaxelIndex];
+  $('vaxelLage').textContent = lage.namn;
+  $('vaxelText').textContent = lage.text;
+  const spar = $('vaxelSpar');
+  spar.dataset.index = String(vaxelIndex);
+  spar.dataset.lage = lage.id;
+  spar.dataset.vis = Number(visT).toFixed(4);
+  spar.setAttribute('aria-valuenow', String(vaxelIndex));
+  spar.setAttribute('aria-valuetext', lage.text);
+  spar.classList.toggle('tryck', vaxelStopp);
+  markera(vaxelHack, vaxelIndex);
+  markera($('vaxelNamn'), vaxelIndex);
+}
+function ritaGas(visT) {
+  $('gasKnopp').style.bottom = knoppLäge(visT, GAS_KNOPP);
+  const fyll = $('gasFyll');
+  fyll.style.bottom = '0%';
+  fyll.style.height = (gas * 100) + '%';
+  const kvot = VAXLAR[vaxelIndex].kvot;
+  fyll.className = kvot < 0 ? 'back' : kvot > 0 ? 'fram' : 'tom';
+  const pct = Math.round(gas * 100);
+  $('gasText').textContent = pct + '%';
+  const spar = $('gasSpar');
+  spar.dataset.gas = String(gas);
+  spar.dataset.index = String(gasIndex);
+  spar.dataset.vis = Number(visT).toFixed(4);
+  spar.setAttribute('aria-valuenow', String(pct));
+  spar.setAttribute('aria-valuetext', pct + '%');
+  spar.classList.toggle('tryck', gasStopp);
+  markera($('gasHack'), gasIndex);
+}
+function sattVaxel(id) {
+  vaxelIndex = vaxelFranId(id);
+  vaxelStopp = false;
+  ritaVaxel(vaxelIndex / (VAXLAR.length - 1));
+  ritaGas(gasIndex / (gasAntal() - 1));
 }
 function sattGas(v) {
-  gas = Math.max(-BACKGAS, Math.min(1, v));
-  if (Math.abs(gas) < 0.03) gas = 0;
-  ritaGas();
+  const n = gasAntal() - 1;
+  gasIndex = Math.max(0, Math.min(n, Math.round(Math.max(0, Math.min(1, Number(v) || 0)) * n)));
+  gas = gasVarde(gasIndex);
+  gasStopp = false;
+  ritaGas(gas);
 }
-ritaGas();
-const gasSpar = $('gasSpar');
-function gasFranY(clientY) {
-  const r = gasSpar.getBoundingClientRect();
-  const t = 1 - (clientY - r.top) / Math.max(1, r.height);
-  let v = vardeFranT(t);
-  if (Math.abs(v) < 0.03) v = 0;
-  return v;
+function draVaxel(fingerT) {
+  const r = draHack(vaxelIndex, fingerT, vaxelOpt());
+  vaxelIndex = r.index;
+  const pulser = [];
+  if (r.passerade.length) {
+    ljudMotor.vaxla(r.passerade.length);
+    for (let i = 0; i < r.passerade.length; i++) pulser.push(MEKANIK.vaxelPulsMs);
+    skaka(vaxelKnopp, r.riktning > 0 ? -6 : 6);
+  }
+  if (r.andstopp && !vaxelStopp) {
+    ljudMotor.stopp();
+    pulser.push(MEKANIK.andstoppPulsMs);
+    skaka(vaxelKnopp, vaxelIndex === 0 ? -5 : 6);
+  }
+  vaxelStopp = r.andstopp;
+  if (pulser.length) kansla(pulser);
+  ritaVaxel(r.visT);
+  ritaGas(gasIndex / (gasAntal() - 1));
 }
-gasSpar.addEventListener('pointerdown', e => {
-  gasSpar.setPointerCapture(e.pointerId);
-  sattGas(gasFranY(e.clientY));
+function draGas(fingerT) {
+  const r = draHack(gasIndex, fingerT, gasOpt());
+  gasIndex = r.index;
+  gas = gasVarde(gasIndex);
+  const pulser = [];
+  if (r.passerade.length) {
+    ljudMotor.hack(r.passerade);
+    for (let i = 0; i < r.passerade.length; i++) pulser.push(MEKANIK.hackPulsMs);
+    skaka($('gasKnopp'), r.riktning > 0 ? -3 : 3);
+  }
+  if (r.andstopp && !gasStopp) {
+    ljudMotor.stopp();
+    pulser.push(MEKANIK.andstoppPulsMs);
+    skaka($('gasKnopp'), gasIndex === 0 ? -4 : 4);
+  }
+  gasStopp = r.andstopp;
+  if (pulser.length) kansla(pulser);
+  ritaGas(r.visT);
+}
+function slappVaxel() {
+  vaxelStopp = false;
+  ritaVaxel(slappHack(vaxelIndex, VAXLAR.length).visT);
+}
+function slappGas() {
+  gasStopp = false;
+  ritaGas(slappHack(gasIndex, gasAntal()).visT);
+}
+ritaVaxel(vaxelIndex / (VAXLAR.length - 1));
+ritaGas(0);
+
+function tFranSpar(spar, clientY) {
+  const r = spar.getBoundingClientRect();
+  return 1 - (clientY - r.top) / Math.max(1, r.height);
+}
+function bindSpak(spar, dra, slapp) {
+  const pek = {id: null};
+  spar.addEventListener('pointerdown', e => {
+    if (e.cancelable) e.preventDefault();
+    pek.id = e.pointerId;
+    try { spar.setPointerCapture(e.pointerId); } catch { /* syntetisk pekare */ }
+    ljudMotor.oppna();
+    dra(tFranSpar(spar, e.clientY));
+  });
+  const flytta = e => {
+    if (pek.id !== e.pointerId) return;
+    dra(tFranSpar(spar, e.clientY));
+  };
+  const upp = e => {
+    if (pek.id !== e.pointerId) return;
+    pek.id = null;
+    try { spar.releasePointerCapture(e.pointerId); } catch { /* ingen fångst */ }
+    slapp();
+  };
+  addEventListener('pointermove', flytta);
+  addEventListener('pointerup', upp);
+  addEventListener('pointercancel', upp);
+}
+bindSpak($('vaxelSpar'), draVaxel, slappVaxel);
+bindSpak($('gasSpar'), draGas, slappGas);
+
+function ritaGranat() {
+  const vald = GRANATER[granatTyp];
+  $('granatKort').textContent = vald.kort;
+  $('granatKnapp').setAttribute('aria-label', vald.namn);
+  for (const el of document.querySelectorAll('[data-mini]')) el.hidden = el.dataset.mini !== granatTyp;
+  for (const el of document.querySelectorAll('.granatVal')) {
+    const pa = el.dataset.granat === granatTyp;
+    el.classList.toggle('vald', pa);
+    el.setAttribute('aria-pressed', pa ? 'true' : 'false');
+  }
+}
+function visaGranatMeny(oppna) {
+  $('granatMeny').hidden = !oppna;
+  $('granatKnapp').setAttribute('aria-expanded', oppna ? 'true' : 'false');
+}
+function valjGranatTyp(id) {
+  if (!GRANATER[id]) return;
+  granatTyp = id;
+  ritaGranat();
+  visaGranatMeny(false);
+  ljudMotor.oppna();
+  ljudMotor.valjGranat();
+}
+ritaGranat();
+$('granatKnapp').addEventListener('click', () => {
+  ljudMotor.oppna();
+  visaGranatMeny($('granatMeny').hidden);
 });
-gasSpar.addEventListener('pointermove', e => {
-  if (!gasSpar.hasPointerCapture(e.pointerId)) return;
-  sattGas(gasFranY(e.clientY));
+for (const knapp of document.querySelectorAll('.granatVal')) {
+  knapp.addEventListener('click', e => {
+    e.stopPropagation();
+    valjGranatTyp(knapp.dataset.granat);
+  });
+}
+$('granatMeny').addEventListener('click', e => {
+  if (e.target.closest('.granatVal') || e.target.closest('#granatYta')) return;
+  visaGranatMeny(false);
 });
+addEventListener('pointerdown', () => { ljudMotor.oppna(); }, {passive: true});
 
 function lasVinklar() {
   if (tvang) return tvang;
@@ -367,7 +554,7 @@ function traffa(punkt, tiger) {
   blixt();
   const avstand = Math.hypot(punkt.x - mun.x, punkt.z - mun.z);
   const tid = granatTid;
-  visaBesked((tiger ? 'Träff' : 'Nedslag') + ' ' + Math.round(avstand) + ' m · ' + tal(tid, 1) + ' s', !!tiger);
+  visaBesked((tiger ? 'Träff' : 'Nedslag') + ' ' + GRANATER[skottTyp].kort + ' ' + Math.round(avstand) + ' m · ' + tal(tid, 1) + ' s', !!tiger);
 }
 let granatTid = 0;
 let senSkott = null;
@@ -380,7 +567,8 @@ function avfyra() {
   const start = mun.clone().addScaledVector(dir, 1.6);
   granat = skapaGranat(start.x, start.y, start.z, dir.x * V0, dir.y * V0, dir.z * V0);
   granatTid = 0;
-  senSkott = {y: +start.y.toFixed(2), dirY: +dir.y.toFixed(4), eld: +vagn.eld.toFixed(4), camY: +mun.y.toFixed(2)};
+  skottTyp = granatTyp;
+  senSkott = {y: +start.y.toFixed(2), dirY: +dir.y.toFixed(4), eld: +vagn.eld.toFixed(4), camY: +mun.y.toFixed(2), typ: skottTyp, typNamn: GRANATER[skottTyp].namn};
   ladd = OMLADD;
   skott += 1;
   spar.visible = true;
@@ -521,7 +709,7 @@ function tick(dt) {
     eldror: behandlaAxel(rav.pitch, install.axlar.eldror, dt, jamn, 'eldror')
   };
   const tro = effektiv();
-  const mal = bandMal(gas, behandlad.styra.grader, tro);
+  const mal = bandMal(drivKommando(vaxelIndex, gas), behandlad.styra.grader, tro);
   stegaVagn(vagn, mal, dt);
   vagn.torn = stegaTorn(vagn.torn, behandlad.torn.u, dt);
   vagn.eld = stegaEldror(vagn.eld, behandlad.eldror.u, dt);
@@ -572,13 +760,14 @@ requestAnimationFrame(loop);
 function visaSpel() {
   igang = true;
   $('startKort').hidden = true;
-  for (const id of ['gas', 'topp', 'karta', 'kartaText', 'eldWrap', 'sikte']) $(id).hidden = false;
+  for (const id of ['spakar', 'topp', 'karta', 'kartaText', 'granatKnapp', 'eldWrap', 'sikte']) $(id).hidden = false;
   if (!rorelse.harGyro) setTimeout(() => { if (!rorelse.harGyro) $('hint').hidden = false; }, 900);
   passa();
 }
 
 $('starta').addEventListener('click', async () => {
   $('starta').disabled = true;
+  ljudMotor.oppna();
   try { await rorelse.start(); }
   catch { $('hint').hidden = false; }
   jamn.styra = jamn.torn = jamn.eldror = 0;
@@ -597,8 +786,14 @@ byggVarld(scene, renderer).then(v => {
   start.textContent = 'Starta';
   window.__vagn = {
     vagn, install, tabell, varld: v, camera, scene, renderer, teckenfel,
+    get granatTyp() { return granatTyp; },
     get gas() { return gas; },
-    sattGas, mata(roll, yaw, pitch) { tvang = {roll, yaw, pitch}; },
+    get vaxel() { return VAXLAR[vaxelIndex].id; },
+    get vaxelIndex() { return vaxelIndex; },
+    get driv() { return drivKommando(vaxelIndex, gas); },
+    sattGas, sattVaxel, draGas, draVaxel, slappGas, slappVaxel,
+    ljud: ljudMotor,
+    mata(roll, yaw, pitch) { tvang = {roll, yaw, pitch}; },
     slapp() { tvang = null; },
     eld: avfyra,
     tick,

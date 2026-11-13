@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#16120f">
+<link rel="icon" href="data:,">
+<title>Kul-labyrint</title>
+<link rel="stylesheet" href="./stil.css">
+</head>
+<body>
+<canvas id="spel" aria-label="Trälabyrint med stålkula"></canvas>
+<div id="startKnappar">
+  <button id="startGyro" type="button">Starta gyro</button>
+  <button id="startFinger" type="button">Finger</button>
+</div>
+<button id="menyKnapp" class="menyknapp" type="button" aria-expanded="false" aria-controls="meny"><span aria-hidden="true">☰</span> <span id="menyOrd">Meny</span></button>
+<section id="meny" hidden>
+  <div class="meny-topp"><h2 id="menyRubrik">Meny</h2><button id="stang" type="button">Stäng</button></div>
+  <p id="hjalpText"></p>
+  <p id="lageText" role="status"></p>
+  <h3 id="banaRubrik">Bana</h3>
+  <div id="banor" class="banor"></div>
+  <div id="malKnappar" hidden>
+    <button id="igen" type="button">Igen</button>
+    <button id="nasta" type="button">Nästa bana</button>
+  </div>
+  <label class="reglage"><span><span id="kanslighetNamn">Känslighet</span> <output id="kanslighetTal"></output></span><input id="kanslighet" type="range" min="0.4" max="2.2" step="0.05"></label>
+  <label class="reglage"><span><span id="dodzonNamn">Dödzon</span> <output id="dodzonTal"></output></span><input id="dodzon" type="range" min="0" max="6" step="0.1"></label>
+  <label class="check"><input id="ljud" type="checkbox"> <span id="ljudNamn">Ljud</span></label>
+  <label class="check"><input id="hjalp" type="checkbox"> <span id="hjalpNamn">Hjälpbanor</span></label>
+  <button id="nollstall" type="button">Nollställ / Platta ut</button>
+  <h3 id="prestandaRubrik">Prestanda</h3>
+  <dl class="mat">
+    <div><dt>Bilder/s</dt><dd id="fps">–</dd></div>
+    <div><dt>Ritningar</dt><dd id="ritningar">–</dd></div>
+    <div><dt>Trianglar</dt><dd id="trianglar">–</dd></div>
+    <div><dt>Laddning</dt><dd id="ladd">–</dd></div>
+    <div><dt>Minne</dt><dd id="minne">–</dd></div>
+  </dl>
+  <p id="version" class="version"></p>
+  <a id="allaLankar" href="../lankar/">Alla länkar</a>
+</section>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

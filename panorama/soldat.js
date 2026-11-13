@@ -261,6 +261,7 @@ export function stallSoldater(scene, kalla, miljo = {}) {
       sida: plats.namn,
       zon: plats.zon || 'nara',
       beteende: plats.beteende,
+      vapen: plats.vapen === 'mg42' ? 'mg42' : plats.vapen === 'gevar' ? 'gevar' : '',
       lever: true,
       fallTid: 0,
       damm: false,
@@ -473,6 +474,7 @@ export function stallSoldater(scene, kalla, miljo = {}) {
       zon: s.zon,
       lever: s.lever,
       beteende: s.beteende,
+      vapen: s.vapen,
       kroppTraff: s.kroppTraff,
       sar: s.sar.filter(m => m.visible).length,
       huvudSar: s.sar.some(m => m.visible && m.userData.typ === 'huvud'),
@@ -496,6 +498,21 @@ export function stallSoldater(scene, kalla, miljo = {}) {
     return n;
   }
 
+  function skyttar() {
+    const ut = [];
+    for (const s of lista) {
+      if (!s.lever || (s.vapen !== 'gevar' && s.vapen !== 'mg42')) continue;
+      ut.push({
+        index: s.index,
+        vapen: s.vapen,
+        x: s.huvud.position.x,
+        y: s.huvud.position.y,
+        z: s.huvud.position.z
+      });
+    }
+    return ut;
+  }
+
   function fyllPa() {
     if (nastaExtra < EXTRA.length) {
       const s = bygg(EXTRA[nastaExtra]);
@@ -506,7 +523,7 @@ export function stallSoldater(scene, kalla, miljo = {}) {
   }
 
   return {
-    uppdatera, traffa, siktePunkt, sikteHuvud, status, resFallna, fyllPa,
+    uppdatera, traffa, siktePunkt, sikteHuvud, status, resFallna, fyllPa, skyttar,
     get antal() { return lista.length; },
     get grans() { return traff.kroppsskott; }
   };

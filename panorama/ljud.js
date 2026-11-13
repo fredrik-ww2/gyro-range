@@ -102,11 +102,11 @@ export function skapaLjud() {
     lasOppTyst();
     try {
       if (!seTill()) return Promise.resolve(false);
-      if (ctx.state === 'suspended') {
-        oppnaLovande = ctx.resume().then(() => true).catch(() => false);
-        return oppnaLovande;
-      }
-      return Promise.resolve(true);
+      const klar = ctx.state === 'suspended'
+        ? ctx.resume().then(() => true).catch(() => false)
+        : Promise.resolve(true);
+      oppnaLovande = klar.then(ok => laddaKlipp().then(() => ok).catch(() => ok));
+      return oppnaLovande;
     } catch {
       return Promise.resolve(false);
     }
@@ -125,19 +125,113 @@ export function skapaLjud() {
     enfield: {hp: 640, kropp: 980, kroppSlut: 240, hammare: 200, snart: 1600, bas: 110, basSlut: 32, mekanik: [[0.36, 1400, 0.03, 0.2], [0.56, 860, 0.046, 0.16]]}
   };
   let karaktar = 'vanligt';
+  let nastaSkott = 0;
+  let bultAntal = 0;
+  let salvaAntal = 0;
+  let vinerAntal = 0;
+  const klipp = {};
+  const klippStatus = {};
+  let laddLofte = null;
+  const KLIPP_NAMN = ['kar98k_skott', 'kar98k_bult', 'bult_cykel', 'springfield_skott', 'enfield_skott', 'mg42_salva'];
+  const PLAN = {
+    vanligt: {skott: '', rate: 1, bult: 'kar98k_bult', bultRate: 1.12, bultEfter: 0.16, minSparr: 0.72},
+    kar98k: {skott: 'kar98k_skott', rate: 1, bult: 'kar98k_bult', bultRate: 1, bultEfter: 0.22, minSparr: 0.86},
+    springfield: {skott: 'springfield_skott', rate: 1, bult: 'bult_cykel', bultRate: 0.98, bultEfter: 0.26, minSparr: 0.98},
+    enfield: {skott: 'enfield_skott', rate: 1.04, bult: 'bult_cykel', bultRate: 1.42, bultEfter: 0.12, minSparr: 0.58}
+  };
 
   function sattKaraktar(id) {
     if (KAR[id]) karaktar = id;
+  }
+
+  function kanSkjuta() {
+    if (!ctx) return true;
+    return ctx.currentTime + 0.012 >= nastaSkott;
+  }
+
+  function lasSparr(plan, skottLangd, bultLangd) {
+    const bult = Math.min(Math.max(0, bultLangd || 0), 0.75);
+    const cykl = (plan.bultEfter || 0) + bult * 0.85 + Math.min(skottLangd || 0, 0.4) * 0.15;
+    return Math.min(1.15, Math.max(plan.minSparr || 0.6, cykl));
+  }
+
+  function spelaKlipp(namn, nar, opt = {}) {
+    const buffer = klipp[namn];
+    if (!buffer || !ctx || !master) return 0;
+    const rate = Math.max(0.5, Math.min(2, Number(opt.rate) || 1));
+    const d = Math.max(0, Number(opt.avstand) || 0);
+    const damp = d > 0 ? Math.max(0.07, Math.min(1, 26 / (d + 10))) : 1;
+    const vol = Math.max(0, Math.min(1.4, Number(opt.vol) || 1)) * damp;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.playbackRate.value = rate;
+    const g = ctx.createGain();
+    g.gain.value = vol;
+    const extra = [];
+    if (d > 14) {
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = Math.max(650, 7200 - d * 28);
+      src.connect(lp);
+      lp.connect(g);
+      extra.push(lp);
+    } else src.connect(g);
+    g.connect(master);
+    const t = Number.isFinite(+nar) ? +nar : ctx.currentTime;
+    const langd = buffer.duration / rate;
+    src.start(t);
+    src.stop(t + langd + 0.03);
+    src.onended = () => {
+      try { src.disconnect(); g.disconnect(); for (const n of extra) n.disconnect(); } catch { /* redan borta */ }
+    };
+    return langd;
+  }
+
+  function laddaKlipp() {
+    if (laddLofte) return laddLofte;
+    laddLofte = (async () => {
+      if (!seTill()) {
+        for (const namn of KLIPP_NAMN) klippStatus[namn] = false;
+        return klippStatus;
+      }
+      await Promise.all(KLIPP_NAMN.map(async namn => {
+        try {
+          const url = new URL('./ljud/' + namn + '.mp3', import.meta.url);
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(String(res.status));
+          const raw = await res.arrayBuffer();
+          klipp[namn] = await ctx.decodeAudioData(raw.slice(0));
+          klippStatus[namn] = !!klipp[namn];
+        } catch {
+          klippStatus[namn] = false;
+        }
+      }));
+      return klippStatus;
+    })();
+    return laddLofte;
   }
 
   function skott() {
     if (!pa) return false;
     try {
       if (!seTill() || !brus || !master) return false;
+      if (!kanSkjuta()) return false;
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      const plan = PLAN[karaktar] || PLAN.vanligt;
+      const harSkott = !!(plan.skott && klipp[plan.skott]);
+      const harBult = !!(plan.bult && klipp[plan.bult]);
+      const t0 = ctx.currentTime;
+      if (harSkott) {
+        const skottLangd = spelaKlipp(plan.skott, t0, {rate: plan.rate, vol: 1});
+        const bultLangd = harBult ? spelaKlipp(plan.bult, t0 + plan.bultEfter, {rate: plan.bultRate, vol: 1}) : 0;
+        if (harBult) bultAntal++;
+        nastaSkott = t0 + lasSparr(plan, skottLangd, bultLangd);
+        skottAntal++;
+        return true;
+      }
       skottAntal++;
       const k = KAR[karaktar] || KAR.vanligt;
-      const t = ctx.currentTime;
+      const t = t0;
       const bus = ctx.createGain();
       bus.gain.value = 0.9;
       bus.connect(master);
@@ -193,7 +287,13 @@ export function skapaLjud() {
 
       const skottNoder = [knall, hp, hg, kropp, bp, bg, hammare, hg2, snart, sg, bas, dg, bus];
       const mekanik = [];
-      for (const [forsening, frek, langd, topp] of k.mekanik) {
+      const medMekanik = !harBult;
+      if (harBult) {
+        const bultLangd = spelaKlipp(plan.bult, t + plan.bultEfter, {rate: plan.bultRate, vol: 1});
+        bultAntal++;
+        nastaSkott = t + lasSparr(plan, 0.2, bultLangd);
+      } else nastaSkott = t + plan.minSparr;
+      if (medMekanik) for (const [forsening, frek, langd, topp] of k.mekanik) {
         const tid = t + forsening;
         const klickBrus = ctx.createBufferSource();
         klickBrus.buffer = brus;
@@ -222,7 +322,7 @@ export function skapaLjud() {
         }
       };
       knall.onended = () => kopplaLoss(skottNoder);
-      mekanik[5].onended = () => kopplaLoss(mekanik);
+      if (mekanik[5]) mekanik[5].onended = () => kopplaLoss(mekanik);
       return true;
     } catch {
       return false;
@@ -321,6 +421,75 @@ export function skapaLjud() {
     }
   }
 
+  function salva(avstand) {
+    if (!pa) return false;
+    try {
+      if (!seTill() || !master) return false;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      salvaAntal++;
+      if (klipp.mg42_salva) {
+        spelaKlipp('mg42_salva', ctx.currentTime, {vol: 1, avstand, rate: 1});
+        return true;
+      }
+      if (!brus) return false;
+      const t = ctx.currentTime;
+      for (let i = 0; i < 6; i++) {
+        const tid = t + i * 0.045;
+        const src = ctx.createBufferSource();
+        src.buffer = brus;
+        src.playbackRate.value = 1.15;
+        const hp = ctx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = 700;
+        const g = ctx.createGain();
+        const d = Math.max(1, Number(avstand) || 20);
+        kurva(g, tid, Math.max(0.08, 0.4 * Math.exp(-d / 80)), 0.04);
+        src.connect(hp); hp.connect(g); g.connect(master);
+        src.start(tid); src.stop(tid + 0.05);
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function viner(avstand) {
+    if (!pa) return false;
+    try {
+      if (!seTill() || !brus || !master) return false;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      vinerAntal++;
+      const t = ctx.currentTime;
+      const d = Math.max(1, Number(avstand) || 12);
+      const topp = Math.max(0.08, Math.min(0.55, 0.7 * Math.exp(-d / 70)));
+      const src = ctx.createBufferSource();
+      src.buffer = brus;
+      src.playbackRate.value = 1.9;
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.setValueAtTime(2800, t);
+      hp.frequency.exponentialRampToValueAtTime(900, t + 0.06);
+      const g = ctx.createGain();
+      kurva(g, t, topp, 0.055);
+      const ton = ctx.createOscillator();
+      ton.type = 'sine';
+      ton.frequency.setValueAtTime(2400, t);
+      ton.frequency.exponentialRampToValueAtTime(700, t + 0.05);
+      const tg = ctx.createGain();
+      kurva(tg, t, topp * 0.35, 0.04);
+      src.connect(hp); hp.connect(g); g.connect(master);
+      ton.connect(tg); tg.connect(master);
+      src.start(t); src.stop(t + 0.07);
+      ton.start(t); ton.stop(t + 0.06);
+      src.onended = () => {
+        for (const n of [src, hp, g, ton, tg]) { try { n.disconnect(); } catch { /* redan borta */ } }
+      };
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   function duns(avstand) {
     if (!pa) return false;
     try {
@@ -347,13 +516,17 @@ export function skapaLjud() {
   }
 
   return {
-    oppna, satt, sattKaraktar, skott, traff, duns, klick,
+    oppna, satt, sattKaraktar, skott, traff, duns, klick, salva, viner, kanSkjuta, ladda: laddaKlipp,
     get karaktar() { return karaktar; },
     get pa() { return pa; },
     get volym() { return volym; },
     get skottAntal() { return skottAntal; },
     get traffAntal() { return traffAntal; },
     get klickAntal() { return klickAntal; },
+    get bultAntal() { return bultAntal; },
+    get salvaAntal() { return salvaAntal; },
+    get vinerAntal() { return vinerAntal; },
+    get klipp() { return {...klippStatus}; },
     get kontext() { return ctx; },
     get redo() { return !!ctx && ctx.state === 'running'; }
   };

@@ -4,8 +4,10 @@ import {MeshoptDecoder} from '../js/vendor/loaders/meshopt_decoder.module.js';
 import {DRACOLoader} from '../flyg/vendor/loaders/DRACOLoader.js';
 import {KTX2Loader} from '../flyg/vendor/loaders/KTX2Loader.js';
 import {mergeGeometries} from '../js/vendor/utils/BufferGeometryUtils.js';
-import {stallSoldater} from './soldat.js?v=15';
+import {stallSoldater} from './soldat.js?v=17';
 import {medForm} from './mark.js?v=13';
+import {husSpec, husVaggar} from './hus.js?v=17';
+import {skyddLista, skyddLador, sackLador, NARA_SACK, mgSkyttar, GEVAR} from './skydd.js?v=17';
 
 const OGA = 1.7;
 const FILER = {
@@ -325,6 +327,7 @@ function ljusOchMark(scene, miljo, markHojd, terrang) {
   };
   vag(3.2, 640, false);
   vag(3.2, 640, true);
+  return mark;
 }
 
 function instans(geom, material, platser, skuggaPa) {
@@ -405,7 +408,8 @@ export async function byggVarld(scene, renderer, config, effekt) {
   const miljo = new THREE.Group();
   miljo.name = 'miljo';
   scene.add(miljo);
-  ljusOchMark(scene, miljo, markHojd, terrang);
+  const markMesh = ljusOchMark(scene, miljo, markHojd, terrang);
+  const hinder = [markMesh];
   const env = new THREE.Scene();
   env.add(new THREE.Mesh(new THREE.SphereGeometry(8, 10, 6), new THREE.MeshBasicMaterial({color: 0xc5d4c4, side: THREE.BackSide})));
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -629,16 +633,90 @@ export async function byggVarld(scene, renderer, config, effekt) {
     sackMesh.name = 'sack';
     sackMesh.userData.sack = true;
     miljo.add(sackMesh);
+    hinder.push(sackMesh);
   }
   rapport.push({namn: 'sack', fore: [+sackFore.x.toFixed(2), +sackFore.y.toFixed(2), +sackFore.z.toFixed(2)], efter: [+(sackFore.x * sackSkala).toFixed(2), +(sackFore.y * sackSkala).toFixed(2), +(sackFore.z * sackSkala).toFixed(2)], sektioner: sackPlatser.length, skala: +sackSkala.toFixed(3)});
 
+  const naraSack = NARA_SACK.map(p => ({...p, yaw: 0, y: markHojd(p.x, p.z)}));
+  const naraSackMesh = instans(sackDel.geometry, sackDel.material, naraSack, true);
+  if (naraSackMesh) {
+    naraSackMesh.name = 'sack-nara';
+    naraSackMesh.userData.sack = true;
+    miljo.add(naraSackMesh);
+    hinder.push(naraSackMesh);
+  }
+  const mgMat = new THREE.MeshStandardMaterial({color: 0x24261f, roughness: 0.42, metalness: 0.6});
+  for (const p of naraSack) {
+    if (!p.mg) continue;
+    const grp = new THREE.Group();
+    grp.name = 'mg42';
+    const pip = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.036, 1.15, 7), mgMat);
+    pip.rotation.x = Math.PI / 2;
+    pip.position.set(0, 0.06, 0.12);
+    const lavett = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.46), mgMat);
+    lavett.position.set(0, -0.02, -0.08);
+    grp.add(pip, lavett);
+    grp.position.set(p.x, markHojd(p.x, p.z) + 1.08, p.z);
+    grp.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; } });
+    miljo.add(grp);
+  }
+
+  const sten = new THREE.MeshStandardMaterial({color: 0x8a847c, roughness: 0.94, metalness: 0.02});
+  const golvMat = new THREE.MeshStandardMaterial({color: 0x5c4632, roughness: 0.88, metalness: 0});
+  const takMat = new THREE.MeshStandardMaterial({color: 0x3e3832, roughness: 0.9, metalness: 0.04});
+  const brostMat = new THREE.MeshStandardMaterial({color: 0x6a645c, roughness: 0.92, metalness: 0.02});
+  const husMark = markHojd(-6, -14);
+  const hus = husSpec();
+  const husGrupp = new THREE.Group();
+  husGrupp.name = 'hus';
+  for (const box of husVaggar(hus, husMark)) {
+    const mat = box.roll === 'golv' ? golvMat : box.roll === 'tak' ? takMat : box.roll === 'bröst' ? brostMat : sten;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(box.sx, box.sy, box.sz), mat);
+    mesh.position.set(box.x, box.y, box.z);
+    mesh.castShadow = box.roll !== 'golv';
+    mesh.receiveShadow = true;
+    mesh.name = 'hus-' + box.roll;
+    mesh.userData.hus = true;
+    mesh.userData.skydd = box.roll !== 'golv' && box.roll !== 'tak';
+    husGrupp.add(mesh);
+  }
+  miljo.add(husGrupp);
+  hinder.push(husGrupp);
+
+  const skyddGrupp = new THREE.Group();
+  skyddGrupp.name = 'skydd';
+  const skydd = [];
+  for (const box of skyddLador(skyddLista(), 0)) {
+    const y = markHojd(box.x, box.z);
+    const lyft = {...box, y: y + box.sy / 2, minY: y, maxY: y + box.sy};
+    const mat = new THREE.MeshStandardMaterial({color: box.farg || 0x6e6a64, roughness: 0.94, metalness: 0});
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(lyft.sx, lyft.sy, lyft.sz), mat);
+    mesh.position.set(lyft.x, lyft.y, lyft.z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.name = lyft.id || 'skydd';
+    mesh.userData.skydd = true;
+    skyddGrupp.add(mesh);
+    skydd.push(lyft);
+  }
+  miljo.add(skyddGrupp);
+  hinder.push(skyddGrupp);
+
+  const sackKoll = sackLador([...sackPlatser, ...naraSack], 0).map(box => {
+    const y = markHojd(box.x, box.z);
+    return {...box, y: y + box.sy / 2, minY: y, maxY: y + box.sy};
+  });
+  const husKoll = husVaggar(hus, husMark);
+  const kollision = [...husKoll, ...skydd, ...sackKoll];
+
   const soldatLista = config?.soldater || {};
+  const eldSoldater = [...mgSkyttar(NARA_SACK), ...GEVAR];
   const soldater = stallSoldater(scene, {usa: modell.usa, tysk: modell.tysk}, {
     markHojd,
     effekt,
     traff: config?.traff,
     rayMax: terrang.raycast,
-    platser: [...(soldatLista.platser || []), ...varnSoldater],
+    platser: [...(soldatLista.platser || []), ...varnSoldater, ...eldSoldater],
     extra: soldatLista.extra
   });
   for (const rad of soldater.status()) {
@@ -647,5 +725,9 @@ export async function byggVarld(scene, renderer, config, effekt) {
 
   draco.dispose();
   ktx2.dispose();
-  return {rapport, oga: OGA, hackAntal: hackPlatser.length, miljo, soldater, markHojd, varn: {sektioner: sackPlatser.length, soldater: varnSoldater, hojd: varn.hojd}};
+  return {
+    rapport, oga: OGA, hackAntal: hackPlatser.length, miljo, soldater, markHojd,
+    varn: {sektioner: sackPlatser.length + naraSack.length, soldater: varnSoldater, hojd: varn.hojd},
+    hus, kollision, hinder, skydd: skydd.length, eld: eldSoldater.length
+  };
 }

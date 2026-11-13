@@ -6,13 +6,18 @@ import {CockpitView} from './CockpitView.js';
 import {improveWorld} from './WorldVisuals.js';
 import {GyroAdapter} from './controls/GyroAdapter.js';
 import config from './config.json' with { type: 'json' };
+import ljudManifest from './ljud.json' with { type: 'json' };
+import {Ljud} from './ljud.js';
 const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=THREE.MathUtils.lerp;
 const control=new ControlModule(config.control),flight=new FlightDynamics(config.flight),gyro=new GyroAdapter(config.gyro);
 let activeControls=control;
 export function setControlModule(provider){if(!['getCyclic','getCollective','getYaw'].every(k=>typeof provider?.[k]==='function'))throw new TypeError('Invalid HelicopterControls provider');activeControls=provider;}
 const settings=$('settings'),result=$('result');
-let playing=false,mode='battle',armor=100,ammo=12,kills=0,firing=false,gunCooldown=0,missileCooldown=0,locked=null,clock=0,last=performance.now(),uiTick=0,soundOn=true;
-let aimTouch={x:0,y:0},aimBase={x:0,y:0},inspectionBlend=0,hold=null,yawPreference=config.control.yawMode;
+const ljud=new Ljud(ljudManifest);
+let soundOn=true;
+try{const saved=localStorage.getItem(ljudManifest.storageKey);if(saved==='0')soundOn=false;}catch{}
+let playing=false,mode='battle',armor=100,ammo=12,kills=0,firing=false,burstLeft=0,gunCooldown=0,missileCooldown=0,locked=null,clock=0,last=performance.now(),uiTick=0,hitClock=0;
+let aimTouch={x:0,y:0},aimBase={x:0,y:0},inspectionBlend=0,hold=null,yawPreference=config.control.yawMode,directSight=null,fingerAim=null;
 const keys=new Set(),touch={x:0,y:0,left:false,right:false},test={pitch:0,roll:0,yaw:0};
 let collective=config.flight.hoverCollective,notice='',noticeUntil=0;
 let renderer;
@@ -60,12 +65,12 @@ const cloudMat=new THREE.MeshBasicMaterial({color:0xf3ead4,transparent:true,opac
 const effects=[],projectiles=[];const glowGeo=new THREE.SphereGeometry(1,6,4),fireMat=new THREE.MeshBasicMaterial({color:0xffc670}),smokeMat=new THREE.MeshBasicMaterial({color:0x4d5149,transparent:true,opacity:.6,depthWrite:false});
 function burst(pos,count=12){for(let i=0;i<count;i++){const particle=new THREE.Mesh(glowGeo,i<count*.5?fireMat:smokeMat);particle.position.copy(pos);const size=1+random()*3;particle.scale.setScalar(size);scene.add(particle);effects.push({mesh:particle,velocity:new THREE.Vector3((random()-.5)*24,random()*15,(random()-.5)*24),life:1+random()*1.2,max:2.2,size,smoke:i>=count*.5});}}
 function flashMessage(message,duration=2.8){notice=message;noticeUntil=clock+duration;}
-function damage(target,amount){if(!target?.alive)return;target.hp-=amount;burst(target.pos,amount>30?14:3);if(target.hp<=0){target.alive=false;target.marker.hidden=true;target.mesh.traverse(o=>{if(o.isMesh)o.material=mat(0x30352e);});kills++;burst(target.pos,24);audioPulse(55,.5,.3);flashMessage('MÅL UTSLAGET · '+kills+' / 5');if(kills===targets.length&&mode==='battle')finish(true);}}
+function impactDistance(pos){return camera.position.distanceTo(pos);}
+function impactSound(pos,kind){const d=impactDistance(pos);if(kind==='explosion')ljud.play('explosion',{distance:d});else if(hitClock<=0){ljud.play('hit',{distance:d});hitClock=.12;}}
+function damage(target,amount){if(!target?.alive)return;target.hp-=amount;burst(target.pos,amount>30?14:3);if(target.hp<=0){target.alive=false;target.marker.hidden=true;target.mesh.traverse(o=>{if(o.isMesh)o.material=mat(0x30352e);});kills++;burst(target.pos,24);impactSound(target.pos,'explosion');flashMessage('MÅL UTSLAGET · '+kills+' / 5');if(kills===targets.length&&mode==='battle')finish(true);}else impactSound(target.pos,amount>30?'explosion':'hit');}
 function spawnProjectile(from,to,{enemy=false,missile=false,target=null}={}){const p=new THREE.Mesh(new THREE.SphereGeometry(missile?.65:.23,6,4),new THREE.MeshBasicMaterial({color:enemy?0xff7d4b:0xffedab}));p.position.copy(from);scene.add(p);const direction=new THREE.Vector3().subVectors(to,from).normalize();p.scale.set(1,1,missile?4:8);p.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),direction);projectiles.push({mesh:p,velocity:direction.multiplyScalar(missile?145:enemy?120:520),life:missile?6:3,enemy,missile,target});}
-let audioCtx,rotorOsc,rotorGain,audioMaster;
-function startAudio(){if(!soundOn)return;try{if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioMaster=audioCtx.createGain();audioMaster.gain.value=.22;audioMaster.connect(audioCtx.destination);rotorOsc=audioCtx.createOscillator();rotorOsc.type='sawtooth';rotorOsc.frequency.value=35;const filter=audioCtx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=120;rotorGain=audioCtx.createGain();rotorGain.gain.value=.12;rotorOsc.connect(filter);filter.connect(rotorGain);rotorGain.connect(audioMaster);rotorOsc.start();}audioCtx.resume();}catch{}}
-function audioPulse(freq,duration,level){if(!audioCtx||!soundOn)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sawtooth';o.frequency.setValueAtTime(freq,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(25,audioCtx.currentTime+duration);g.gain.setValueAtTime(level,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);o.connect(g);g.connect(audioMaster);o.start();o.stop(audioCtx.currentTime+duration);}
-function fireMissile(){if(!playing||settings.open||result.open||missileCooldown>0||ammo<=0)return;if(!locked){flashMessage('Rikta mot ett rött mål för mållåsning.');return;}ammo--;missileCooldown=1.4;const from=weaponOrigin.clone();spawnProjectile(from,locked.pos,{missile:true,target:locked});audioPulse(180,.3,.4);}
+function startAudio(){ljud.setEnabled(soundOn);if(soundOn)ljud.unlock();}
+function fireMissile(){if(!playing||settings.open||result.open||missileCooldown>0||ammo<=0)return;if(!locked){flashMessage('Rikta mot ett rött mål för mållåsning.');return;}ammo--;missileCooldown=config.weapons.missileCooldown;const from=weaponOrigin.clone();spawnProjectile(from,locked.pos,{missile:true,target:locked});ljud.play('rocket');}
 
 
 function fmt(row,value){const n=Number(value),d=row.digits??0;return (d?n.toFixed(d):String(Math.round(n)))+(row.suffix||'');}
@@ -96,7 +101,7 @@ function buildMenu(){
     if(row.text){const small=document.createElement('small');small.textContent=row.text;span.append(small);}
     const input=document.createElement('input');input.type='checkbox';input.id=row.id;input.checked=!!readSetting(row);
     input.onchange=()=>{
-      if(row.id==='sound'){soundOn=input.checked;if(audioMaster)audioMaster.gain.value=soundOn?0.22:0;if(soundOn)startAudio();return;}
+      if(row.id==='sound'){soundOn=input.checked;try{localStorage.setItem(ljudManifest.storageKey,soundOn?'1':'0');}catch{}ljud.setEnabled(soundOn);ljud.play('click');return;}
       if(row.group==='flight')flight.configure({[row.id]:input.checked});
       else control.configure({[row.id]:input.checked});
       syncModeUI();
@@ -125,10 +130,12 @@ function syncModeUI(){
   const tick=(id,on)=>{const el=$(id);if(el)el.checked=!!on;};
   tick('cockpitEnabled',control.settings.cockpitEnabled);tick('aimEnabled',aim);tick('hoverAssist',flight.assists.hover);tick('autoTorque',flight.assists.autoTorque);tick('sound',soundOn);
   $('cyclicBlock').hidden=!(mode==='touch'||mode==='gyro-aim');
-  $('aimControls').hidden=!aim||!(mode==='gyro-flight'||mode==='touch');
+  const touchAim=aim&&(mode==='gyro-flight'||mode==='touch'||(mode==='gyro-both'&&!control.clutch));
+  $('windshield').hidden=!touchAim;
   $('aimFocus').hidden=mode!=='gyro-both'||!aim;
   $('pedals').hidden=(mode==='gyro-flight'||mode==='gyro-both')&&control.settings.yawMode==='orientation';
   $('calibrate').hidden=mode==='touch';
+  const center=$('centerAim');if(center)center.hidden=!aim;
   $('aimFocus').textContent=control.clutch?'STYR HELIKOPTERN':'STYR SIKTET';
   $('aimFocus').setAttribute('aria-pressed',String(!!control.clutch));
   $('lookDown').textContent=view.lookDown?'Se framåt':'Se spaken';
@@ -143,32 +150,45 @@ function applyMode(next){
 }
 function setView(view){control.setView(view);control.setLookDown(false);syncModeUI();}
 function toggleFocus(){if(control.settings.controlMode!=='gyro-both'||!control.settings.aimEnabled)return;control.setAimClutch(!control.clutch);syncModeUI();}
-function resetAim(){control.centerAim();aimTouch={x:0,y:0};aimBase={x:0,y:0};$('aimDot').style.transform='translate(-50%,-50%)';}
-function aimFromPad(e){
-  const r=$('aimPad').getBoundingClientRect();
-  aimTouch.x=clamp((e.clientX-r.left-r.width/2)/(r.width*.45),-1,1);
-  aimTouch.y=clamp(-(e.clientY-r.top-r.height/2)/(r.height*.42),-1,1);
-  $('aimDot').style.transform=`translate(calc(-50% + ${aimTouch.x*r.width*.38}px),calc(-50% - ${aimTouch.y*r.height*.34}px))`;
-  control.setAim({x:clamp((aimBase.x+aimTouch.x)*control.settings.aimSensitivity,-1,1),y:clamp((aimBase.y+aimTouch.y)*control.settings.aimSensitivity,-1,1)});
+function resetAim(){control.centerAim();aimTouch={x:0,y:0};aimBase={x:0,y:0};directSight=null;fingerAim=null;}
+function snapAim(x,y){const prev=control.settings.aimSmoothingSeconds;if(prev!==0)control.configure({aimSmoothingSeconds:0});control.setAim({x,y});control.update(0);if(prev!==0)control.configure({aimSmoothingSeconds:prev});}
+function aimFromWindshield(clientX,clientY){
+  const ndcX=(clientX/innerWidth)*2-1,ndcY=-(clientY/innerHeight)*2+1;
+  raycaster.setFromCamera(aimNdc.set(ndcX,ndcY),camera);
+  aimLocal.copy(raycaster.ray.direction).applyQuaternion(aimQuat.copy(heli.quaternion).invert());
+  const yaw=Math.atan2(aimLocal.x,-aimLocal.z),pitch=Math.asin(clamp(aimLocal.y,-1,1));
+  directSight={yaw,pitch};
+  const limits=control.settings;
+  snapAim(clamp(yaw/(limits.aimYawLimitDeg*Math.PI/180),-1,1),clamp((pitch-config.cockpit.boreSightDeg*Math.PI/180)/(limits.aimPitchLimitDeg*Math.PI/180),-1,1));
+  fingerAim={x:clientX,y:clientY};
 }
-function aimPadEnd(){const a=control.getAimOffset();aimBase={x:a.yaw/(control.settings.aimYawLimitDeg*Math.PI/180),y:a.pitch/(control.settings.aimPitchLimitDeg*Math.PI/180)};aimTouch={x:0,y:0};$('aimDot').style.transform='translate(-50%,-50%)';}
-function releaseInputs(){keys.clear();touch.x=touch.y=0;aimTouch={x:0,y:0};touch.left=touch.right=false;firing=false;control.releaseMomentaryInputs();$('stick').style.transform='translate(-50%,-50%)';document.querySelectorAll('.held').forEach(e=>e.classList.remove('held'));syncModeUI();}
-function updateCollectiveUI(){const pct=Math.round(collective*100);$('collectiveValue').textContent=pct+'%';$('collectiveThumb').style.bottom=`calc(${pct}% - 15px)`;$('collectiveFill').style.height=pct+'%';$('collective').setAttribute('aria-valuenow',pct);}
+function releaseInputs(){keys.clear();touch.x=touch.y=0;aimTouch={x:0,y:0};touch.left=touch.right=false;firing=false;burstLeft=0;fingerAim=null;control.releaseMomentaryInputs();$('stick').style.transform='translate(-50%,-50%)';document.querySelectorAll('.held,.grown').forEach(e=>e.classList.remove('held','grown'));syncModeUI();}
+function updateCollectiveUI(){const pct=Math.round(collective*100);$('collectiveValue').textContent='LYFT '+pct+'%';$('collective').setAttribute('aria-valuenow',pct);}
 function setCollective(value){collective=clamp(value,0,1);control.setCollective(collective);updateCollectiveUI();}
 function bindDrag(element,onMove,onEnd){let pointer=null;element.addEventListener('pointerdown',e=>{if(pointer!==null)return;e.preventDefault();pointer=e.pointerId;element.setPointerCapture(pointer);onMove(e);});element.addEventListener('pointermove',e=>{if(e.pointerId===pointer)onMove(e);});const end=e=>{if(e.pointerId!==pointer)return;pointer=null;onEnd?.();};element.addEventListener('pointerup',end);element.addEventListener('pointercancel',end);element.addEventListener('lostpointercapture',end);}
-bindDrag($('collective'),e=>{const r=$('collective').getBoundingClientRect();setCollective(1-(e.clientY-r.top)/r.height);});
+bindDrag($('collective'),e=>{if(!$('collective').classList.contains('dragging')){$('collective').classList.add('dragging');ljud.play('click');}const r=$('collective').getBoundingClientRect();setCollective(1-(e.clientY-r.top)/r.height);},()=>$('collective').classList.remove('dragging'));
 $('collective').addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','Home','End'].includes(e.key)){e.preventDefault();e.stopPropagation();setCollective(e.key==='Home'?0:e.key==='End'?1:collective+(e.key==='ArrowUp'?0.02:-0.02));}});
 bindDrag($('cyclic'),e=>{const r=$('cyclic').getBoundingClientRect(),radius=r.width*.35;touch.x=clamp((e.clientX-r.left-r.width/2)/radius,-1,1);touch.y=clamp(-(e.clientY-r.top-r.height/2)/radius,-1,1);$('stick').style.transform=`translate(calc(-50% + ${touch.x*radius}px), calc(-50% - ${touch.y*radius}px))`;},()=>{touch.x=touch.y=0;$('stick').style.transform='translate(-50%,-50%)';});
 function holdButton(id,fn){const el=$(id);bindDrag(el,()=>{el.classList.add('held');fn(true);},()=>{el.classList.remove('held');fn(false);});}
-holdButton('yawLeft',v=>touch.left=v);holdButton('yawRight',v=>touch.right=v);holdButton('fire',v=>{firing=v;if(v)startAudio();});
-$('missile').onclick=fireMissile;bindDrag($('aimPad'),aimFromPad,aimPadEnd);$('centerAim').onclick=resetAim;$('aimFocus').onclick=toggleFocus;
+holdButton('yawLeft',v=>{touch.left=v;if(v)ljud.play('pedal');});holdButton('yawRight',v=>{touch.right=v;if(v)ljud.play('pedal');});
+bindDrag($('windshield'),e=>{if($('windshield').hidden)return;aimFromWindshield(e.clientX,e.clientY);},()=>{fingerAim=null;});
+let firePointer=null,fireStamp=0,fireHold=0,fireTaps=0,fireWait=0;
+function clearFireWait(){if(fireWait){clearTimeout(fireWait);fireWait=0;}}
+$('fire').addEventListener('pointerdown',e=>{if(firePointer!==null)return;e.preventDefault();firePointer=e.pointerId;$('fire').setPointerCapture(firePointer);fireStamp=performance.now();$('fire').classList.add('held');startAudio();clearTimeout(fireHold);fireHold=setTimeout(()=>{firing=true;clearFireWait();fireTaps=0;},config.weapons.tapMs);});
+function endFire(e){if(e.pointerId!==firePointer)return;firePointer=null;$('fire').classList.remove('held');clearTimeout(fireHold);const held=firing;firing=false;if(held)return;fireTaps++;if(fireTaps>=2){fireTaps=0;clearFireWait();fireMissile();}else{clearFireWait();fireWait=setTimeout(()=>{fireTaps=0;fireWait=0;burstLeft=config.weapons.gunBurst;},config.weapons.doubleTapMs);}}
+$('fire').addEventListener('pointerup',endFire);$('fire').addEventListener('pointercancel',endFire);
+$('centerAim').onclick=()=>{resetAim();ljud.play('click');};$('aimFocus').onclick=toggleFocus;
+for(const el of document.querySelectorAll('.gauge')){
+  el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();el.setPointerCapture(e.pointerId);const scale=config.layout.gaugeHoldScale;const r=el.getBoundingClientRect();const cx=r.left+r.width/2;const half=r.width*scale/2;let origin=50;if(cx-half<8)origin=12;else if(cx+half>innerWidth-8)origin=88;el.style.transformOrigin=origin+'% 100%';el.classList.add('grown');});
+  const shrink=e=>{el.classList.remove('grown');};el.addEventListener('pointerup',shrink);el.addEventListener('pointercancel',shrink);
+}
 async function calibrate(){try{await gyro.requestPermission();}catch{}gyro.calibrate();control.feedOrientation({pitch:0,roll:0,yaw:0});control.calibrate();flashMessage('Den här lutningen är nu noll.');}
 $('calibrate').onclick=calibrate;
 $('testCalibrate').onclick=()=>{control.feedOrientation(test);calibrate();};
 for(const axis of ['Pitch','Roll','Yaw'])$('test'+axis).oninput=e=>{test[axis.toLowerCase()]=+e.target.value;$('test'+axis+'Out').textContent=e.target.value+'°';};
-function showSettings(){releaseInputs();settings.showModal();if(audioMaster)audioMaster.gain.value=0;}
+function showSettings(){releaseInputs();ljud.play('click');settings.showModal();ljud.setDucked(true);}
 $('menuBtn').onclick=showSettings;$('closeSettings').onclick=()=>settings.close();
-settings.addEventListener('close',()=>{releaseInputs();if(audioMaster)audioMaster.gain.value=soundOn?0.22:0;last=performance.now();});
+settings.addEventListener('close',()=>{releaseInputs();ljud.setDucked(false);last=performance.now();});
 settings.addEventListener('click',e=>{if(e.target===settings){const r=settings.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)settings.close();}});
 function start(which){
   mode=which;playing=true;armor=100;ammo=12;kills=0;flight.reset();setCollective(flight.params.hoverCollective);releaseInputs();
@@ -178,13 +198,13 @@ function start(which){
   $('missionLabel').textContent=mode==='practice'?'TRÄNING / FRI FLYGNING':'OPERATION / SKÄRGÅRD';
   for(const t of targets){t.hp=t.maxHp;t.alive=true;t.cooldown=6+random()*4;t.mesh.traverse(o=>{if(o.isMesh)o.material=mat(t.type==='ship'?0x6e7a6b:0x5d654c);});}
   for(const p of projectiles)removeProjectile(p);projectiles.length=0;for(const e of effects)scene.remove(e.mesh);effects.length=0;
-  camera.position.set(flight.x,flight.y+8,flight.z+18);camLook.set(flight.x,flight.y,flight.z-40);startAudio();
+  camera.position.set(flight.x,flight.y+8,flight.z+18);camLook.set(flight.x,flight.y,flight.z-40);ljud.setDucked(false);ljud.setEnabled(soundOn);startAudio();
   flashMessage(mode==='practice'?'Fri flygning. Luta telefonen och känn efter.':'Slå ut de fem markerade målen.',4);
   resetAim();syncModeUI();
 }
 async function begin(which){let access=null;try{access=await gyro.requestPermission();}catch{}start(which);if(access&&access.allowed===false)flashMessage('Gyrot är avstängt i telefonen. Välj Bara spakar i menyn.',4);}
 $('startBattle').onclick=()=>begin('battle');$('startPractice').onclick=()=>begin('practice');$('restart').onclick=()=>begin(mode);$('playAgain').onclick=()=>begin(mode);$('practiceAgain').onclick=()=>begin('practice');
-function finish(win){if(result.open)return;releaseInputs();$('resultEyebrow').textContent=win?'UPPDRAG SLUTFÖRT':'UPPDRAG AVBRUTET';$('resultTitle').textContent=win?'Området säkrat.':'Helikoptern utslagen.';$('resultText').textContent=win?`Alla fem mål utslagna. Flygtid ${Math.floor(flight.elapsed/60)}:${String(Math.floor(flight.elapsed%60)).padStart(2,'0')}. Pansar kvar: ${Math.ceil(armor)}%.`:'Försök igen, eller träna på att hålla höjden under fri flygning.';result.showModal();if(audioMaster)audioMaster.gain.value=0;}
+function finish(win){if(result.open)return;releaseInputs();$('resultEyebrow').textContent=win?'UPPDRAG SLUTFÖRT':'UPPDRAG AVBRUTET';$('resultTitle').textContent=win?'Området säkrat.':'Helikoptern utslagen.';$('resultText').textContent=win?`Alla fem mål utslagna. Flygtid ${Math.floor(flight.elapsed/60)}:${String(Math.floor(flight.elapsed%60)).padStart(2,'0')}. Pansar kvar: ${Math.ceil(armor)}%.`:'Försök igen, eller träna på att hålla höjden under fri flygning.';result.showModal();ljud.setDucked(true);}
 result.addEventListener('cancel',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!settings.open&&!result.open)showSettings();return;}if(settings.open||result.open||/INPUT|SELECT/.test(e.target.tagName))return;const k=e.key.toLowerCase();if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='x')fireMissile();if(k==='c')calibrate();if(k==='h'){flight.configure({hoverAssist:!flight.assists.hover});syncModeUI();}if(k==='v')setView(control.settings.view==='cockpit'?'external':'cockpit');if(k==='b'){control.configure({aimEnabled:!control.settings.aimEnabled});syncModeUI();}if(k==='g')toggleFocus();if(k==='o'){control.setLookDown(!control.getViewState().lookDown);syncModeUI();}if(k==='z')resetAim();});
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
@@ -220,8 +240,8 @@ function updateInput(dt){
     }
     const ax=(keys.has('l')?1:0)-(keys.has('j')?1:0),ay=(keys.has('i')?1:0)-(keys.has('k')?1:0);
     if(control.settings.aimEnabled&&!control.clutch&&(flightMode==='gyro-flight'||flightMode==='touch')&&(ax||ay)){
-      const a=control.getAimOffset();
-      control.setAim({x:clamp(a.yaw/(control.settings.aimYawLimitDeg*Math.PI/180)+ax*dt*.8,-1,1),y:clamp(a.pitch/(control.settings.aimPitchLimitDeg*Math.PI/180)+ay*dt*.8,-1,1)});
+      if(directSight){directSight.yaw=clamp(directSight.yaw+ax*dt*.7,-1.15,1.15);directSight.pitch=clamp(directSight.pitch+ay*dt*.55,-1.05,.7);}
+      else{const a=control.getAimOffset();control.setAim({x:clamp(a.yaw/(control.settings.aimYawLimitDeg*Math.PI/180)+ax*dt*.8,-1,1),y:clamp(a.pitch/(control.settings.aimPitchLimitDeg*Math.PI/180)+ay*dt*.8,-1,1)});}
     }
     const gyroYaw=(flightMode==='gyro-flight'||flightMode==='gyro-both')&&control.settings.yawMode==='orientation';
     if(!gyroYaw)control.setYaw(axes.pedal);
@@ -258,7 +278,17 @@ window.helicopterInput=Object.freeze({
 
 const projected=new THREE.Vector3(),temp=new THREE.Vector3(),forward=new THREE.Vector3(),camGoal=new THREE.Vector3(),lookGoal=new THREE.Vector3(),camLook=new THREE.Vector3();
 const weaponDirection=new THREE.Vector3(),weaponOrigin=new THREE.Vector3(),aimPoint=new THREE.Vector3(),sightNdc=new THREE.Vector3(),cockpitPosition=new THREE.Vector3(),cameraPosition=new THREE.Vector3(),externalRotation=new THREE.Quaternion(),cockpitRotation=new THREE.Quaternion(),cameraRotation=new THREE.Quaternion(),headRotation=new THREE.Quaternion(),cameraMatrix=new THREE.Matrix4();
-function sightLine(){const a=typeof activeControls.getAimOffset==='function'?activeControls.getAimOffset():{yaw:0,pitch:0},pitch=-14*Math.PI/180+a.pitch;weaponDirection.set(Math.sin(a.yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(a.yaw)*Math.cos(pitch)).applyQuaternion(heli.quaternion).normalize();weaponOrigin.set(0,-1.2,-5.8).applyQuaternion(heli.quaternion).add(heli.position);aimPoint.copy(weaponOrigin).addScaledVector(weaponDirection,900);sightNdc.copy(aimPoint).project(camera);const visible=sightNdc.z<1;const rx=clamp((sightNdc.x*.5+.5)*innerWidth,24,innerWidth-24),ry=clamp((-.5*sightNdc.y+.5)*innerHeight,85,innerHeight-30);$('reticle').style.left=rx+'px';$('reticle').style.top=ry+'px';$('reticle').style.opacity=visible?1:.35;}
+const raycaster=new THREE.Raycaster(),aimNdc=new THREE.Vector2(),aimLocal=new THREE.Vector3(),aimQuat=new THREE.Quaternion();
+function sightLine(){
+  let yaw,pitch;
+  if(directSight&&(control.settings.controlMode==='gyro-flight'||control.settings.controlMode==='touch'||(control.settings.controlMode==='gyro-both'&&!control.clutch))){yaw=directSight.yaw;pitch=directSight.pitch;}
+  else{const a=typeof activeControls.getAimOffset==='function'?activeControls.getAimOffset():{yaw:0,pitch:0};yaw=a.yaw;pitch=config.cockpit.boreSightDeg*Math.PI/180+a.pitch;}
+  const cp=Math.cos(pitch);weaponDirection.set(Math.sin(yaw)*cp,Math.sin(pitch),-Math.cos(yaw)*cp).applyQuaternion(heli.quaternion).normalize();weaponOrigin.set(0,-1.2,-5.8).applyQuaternion(heli.quaternion).add(heli.position);aimPoint.copy(weaponOrigin).addScaledVector(weaponDirection,900);sightNdc.copy(aimPoint).project(camera);const visible=sightNdc.z<1;
+  const margin=config.layout.reticleMargin??10;
+  const rx=fingerAim?fingerAim.x:clamp((sightNdc.x*.5+.5)*innerWidth,margin,innerWidth-margin);
+  const ry=fingerAim?fingerAim.y:clamp((-.5*sightNdc.y+.5)*innerHeight,margin,innerHeight-margin);
+  $('reticle').style.left=rx+'px';$('reticle').style.top=ry+'px';$('reticle').style.opacity=visible||fingerAim?1:.35;
+}
 function lineClear(a,b){for(let k=1;k<20;k++){const t=k/20,x=lerp(a.x,b.x,t),y=lerp(a.y,b.y,t),z=lerp(a.z,b.z,t);if(y<Math.max(0,heightAt(x,z)))return false;}return true;}
 function chooseTarget(){sightLine();let best=.078;locked=null;
  for(const t of targets){if(!t.alive){t.marker.hidden=true;continue;}projected.copy(t.pos).project(camera);temp.copy(t.pos).sub(camera.position);camera.getWorldDirection(forward);const visible=temp.dot(forward)>0&&Math.abs(projected.x)<1.1&&Math.abs(projected.y)<1.1;const range=t.pos.distanceTo(weaponOrigin);t.marker.hidden=!visible;if(visible){t.marker.style.left=(projected.x*.5+.5)*innerWidth+'px';t.marker.style.top=(-projected.y*.5+.5)*innerHeight+'px';t.marker.querySelector('span').textContent=Math.round(range)+' m';}
@@ -266,27 +296,36 @@ function chooseTarget(){sightLine();let best=.078;locked=null;
  }
  $('reticle').classList.toggle('locked',!!locked);$('lockLabel').textContent=locked?'MÅL LÅST · '+Math.round(locked.pos.distanceTo(weaponOrigin))+' M':control.settings.aimEnabled?'FRITT VAPENSIKTE':'FAST VAPENSIKTE';
 }
-function updateCamera(dt){const view=control.getViewState(),b=view.blend,portrait=innerHeight>innerWidth;inspectionBlend+=((view.lookDown?1:0)-inspectionBlend)*(1-Math.exp(-dt*6));
+function updateCamera(dt){const view=control.getViewState(),b=view.blend,portrait=innerHeight>innerWidth,rig=config.cockpit;inspectionBlend+=((view.lookDown?1:0)-inspectionBlend)*(1-Math.exp(-dt*6));
  camGoal.set(flight.x-Math.sin(flight.heading)*(portrait?48:40),flight.y+20,flight.z+Math.cos(flight.heading)*(portrait?48:40));lookGoal.set(flight.x+Math.sin(flight.heading)*80,flight.y-25-Math.sin(flight.pitch)*45,flight.z-Math.cos(flight.heading)*80);cameraMatrix.lookAt(camGoal,lookGoal,new THREE.Vector3(0,1,0));externalRotation.setFromRotationMatrix(cameraMatrix);
- cockpitPosition.set(0,1.1,-2+inspectionBlend*.12).applyQuaternion(heli.quaternion).add(heli.position);headRotation.setFromEuler(new THREE.Euler(-(16+inspectionBlend*24)*Math.PI/180,0,0));cockpitRotation.copy(heli.quaternion).multiply(headRotation);cameraPosition.copy(camGoal).lerp(cockpitPosition,b);cameraRotation.copy(externalRotation).slerp(cockpitRotation,b);
+ cockpitPosition.set(rig.cameraX,rig.cameraY,rig.cameraZ+inspectionBlend*rig.inspectForward).applyQuaternion(heli.quaternion).add(heli.position);headRotation.setFromEuler(new THREE.Euler(-(rig.lookDownDeg+inspectionBlend*rig.inspectExtraDeg)*Math.PI/180,0,0));cockpitRotation.copy(heli.quaternion).multiply(headRotation);cameraPosition.copy(camGoal).lerp(cockpitPosition,b);cameraRotation.copy(externalRotation).slerp(cockpitRotation,b);
  if(b>.999){camera.position.copy(cameraPosition);camera.quaternion.copy(cameraRotation);}else{camera.position.lerp(cameraPosition,1-Math.exp(-dt*8));camera.quaternion.slerp(cameraRotation,1-Math.exp(-dt*8));}
- const fov=lerp(52,portrait?96:75,b);if(Math.abs(camera.fov-fov)>.01){camera.fov=fov;camera.updateProjectionMatrix();}camera.updateMatrixWorld();
+ const fov=lerp(52,portrait?rig.fovPortrait:rig.fovLandscape,b);if(Math.abs(camera.fov-fov)>.01){camera.fov=fov;camera.updateProjectionMatrix();}camera.updateMatrixWorld();
  heli.visible=b<.995;const exteriorAlpha=1-THREE.MathUtils.smoothstep(b,0,.68);for(const m of exteriorMaterials){m.opacity=m.userData.baseOpacity*exteriorAlpha;m.transparent=m.opacity<.999;m.depthWrite=exteriorAlpha>.95;}
  cockpit.update(dt,activeControls,flight,view);document.body.classList.toggle('cockpit',b>.5);
 }
 function removeProjectile(p){scene.remove(p.mesh);p.mesh.geometry.dispose();p.mesh.material.dispose();}
-function updateCombat(dt){gunCooldown-=dt;missileCooldown-=dt;if((firing||keys.has(' '))&&gunCooldown<=0){gunCooldown=.095;const from=weaponOrigin.clone();const to=from.clone().addScaledVector(weaponDirection,700);spawnProjectile(from,to,{target:locked});audioPulse(105,.08,.15);}for(const t of targets){if(!t.alive)continue;t.cooldown-=dt;if(mode==='battle'&&t.cooldown<0&&t.pos.distanceTo(heli.position)<650){t.cooldown=3+random()*3;spawnProjectile(t.pos,heli.position.clone().add(new THREE.Vector3(flight.vx,flight.vy,flight.vz).multiplyScalar(.8)),{enemy:true});}}
-for(let i=projectiles.length-1;i>=0;i--){const p=projectiles[i];p.life-=dt;if(p.missile&&p.target?.alive){temp.subVectors(p.target.pos,p.mesh.position).normalize().multiplyScalar(145);p.velocity.lerp(temp,1-Math.exp(-dt*5));}const before=p.mesh.position.clone();p.mesh.position.addScaledVector(p.velocity,dt);let hit=false;const line=new THREE.Line3(before,p.mesh.position);if(p.enemy){const near=line.closestPointToPoint(heli.position,true,new THREE.Vector3());if(near.distanceTo(heli.position)<5.5){armor=Math.max(0,armor-7);burst(heli.position,5);hit=true;flashMessage('TRÄFF · UNDVIK FIENTLIG ELD',1);}}else{for(const t of targets){if(!t.alive)continue;const near=line.closestPointToPoint(t.pos,true,new THREE.Vector3());if(near.distanceTo(t.pos)<t.radius){damage(t,p.missile?105:9);hit=true;break;}}}if(p.mesh.position.y<Math.max(0,heightAt(p.mesh.position.x,p.mesh.position.z))){burst(p.mesh.position,4);hit=true;}if(hit||p.life<=0){removeProjectile(p);projectiles.splice(i,1);}}
+function updateCombat(dt){gunCooldown-=dt;missileCooldown-=dt;hitClock-=dt;const shooting=firing||keys.has(' ')||burstLeft>0;if(shooting&&gunCooldown<=0){gunCooldown=config.weapons.gunInterval;if(burstLeft>0&&!firing&&!keys.has(' '))burstLeft--;const from=weaponOrigin.clone();const to=from.clone().addScaledVector(weaponDirection,700);spawnProjectile(from,to,{target:locked});ljud.play('gun');}for(const t of targets){if(!t.alive)continue;t.cooldown-=dt;if(mode==='battle'&&t.cooldown<0&&t.pos.distanceTo(heli.position)<650){t.cooldown=3+random()*3;spawnProjectile(t.pos,heli.position.clone().add(new THREE.Vector3(flight.vx,flight.vy,flight.vz).multiplyScalar(.8)),{enemy:true});}}
+for(let i=projectiles.length-1;i>=0;i--){const p=projectiles[i];p.life-=dt;if(p.missile&&p.target?.alive){temp.subVectors(p.target.pos,p.mesh.position).normalize().multiplyScalar(145);p.velocity.lerp(temp,1-Math.exp(-dt*5));}const before=p.mesh.position.clone();p.mesh.position.addScaledVector(p.velocity,dt);let hit=false;const line=new THREE.Line3(before,p.mesh.position);if(p.enemy){const near=line.closestPointToPoint(heli.position,true,new THREE.Vector3());if(near.distanceTo(heli.position)<5.5){armor=Math.max(0,armor-7);burst(heli.position,5);hit=true;ljud.play('hit',{distance:6});flashMessage('TRÄFF · UNDVIK FIENTLIG ELD',1);}}else{for(const t of targets){if(!t.alive)continue;const near=line.closestPointToPoint(t.pos,true,new THREE.Vector3());if(near.distanceTo(t.pos)<t.radius){damage(t,p.missile?105:9);hit=true;break;}}}if(p.mesh.position.y<Math.max(0,heightAt(p.mesh.position.x,p.mesh.position.z))){burst(p.mesh.position,4);if(!p.enemy)impactSound(p.mesh.position,'hit');hit=true;}if(hit||p.life<=0){removeProjectile(p);projectiles.splice(i,1);}}
 if(armor<=0)finish(false);}
 function updateEffects(dt){for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.life-=dt;e.mesh.position.addScaledVector(e.velocity,dt);e.velocity.multiplyScalar(Math.exp(-dt*.8));if(e.smoke)e.velocity.y+=dt*5;else e.velocity.y-=dt*12;e.mesh.scale.setScalar(e.size*(e.smoke?1+(e.max-e.life)*1.5:Math.max(.01,e.life/e.max)));if(e.life<=0){scene.remove(e.mesh);effects.splice(i,1);}}}
-const radar=$('radar').getContext('2d');
-function updateHud(){const knots=Math.hypot(flight.vx,flight.vz)*1.94384;$('speed').textContent=Math.round(knots);$('altitude').textContent=Math.round(flight.y);$('vertical').textContent=(flight.vy>=0?'+':'')+flight.vy.toFixed(1);const heading=(flight.heading*180/Math.PI%360+360)%360;$('heading').textContent=['N','NO','O','SO','S','SV','V','NV'][Math.round(heading/45)%8]+'  '+String(Math.round(heading)%360).padStart(3,'0')+'°';$('armorValue').textContent=Math.ceil(armor)+'%';$('armorFill').style.width=armor+'%';$('ammo').textContent=ammo;$('missile').disabled=ammo<=0||missileCooldown>0;$('objective').textContent=mode==='practice'?'Fri flygning · lär känna helikoptern':`Slå ut fientliga mål · ${kills} / 5`;const gyroMode=control.settings.controlMode!=='touch',stale=gyroMode&&gyro.seen&&!gyro.fresh();$('warning').textContent=clock<noticeUntil?notice:stale?'GYROT TYST · TRYCK KALIBRERA':flight.y<Math.max(0,heightAt(flight.x,flight.z))+12?'LÅG HÖJD · HÖJ LYFTET':flight.vy<-4?'SJUNKER · HÖJ LYFTET':'';
-radar.clearRect(0,0,220,220);radar.strokeStyle='#c2e2c03d';radar.lineWidth=1;for(const r of[35,70,103]){radar.beginPath();radar.arc(110,110,r,0,Math.PI*2);radar.stroke();}radar.beginPath();radar.moveTo(110,7);radar.lineTo(110,213);radar.moveTo(7,110);radar.lineTo(213,110);radar.stroke();radar.save();radar.translate(110,110);radar.rotate(-flight.heading);for(const t of targets){if(!t.alive)continue;let x=(t.pos.x-flight.x)*.14,z=(t.pos.z-flight.z)*.14;const len=Math.hypot(x,z);if(len>99){x*=99/len;z*=99/len;}radar.fillStyle='#ff9676';radar.fillRect(x-3,z-3,6,6);}radar.restore();radar.fillStyle='#d4ec99';radar.beginPath();radar.moveTo(110,101);radar.lineTo(104,115);radar.lineTo(116,115);radar.fill();}
+function bezel(c,w){c.clearRect(0,0,w,w);const mid=w/2;const ring=c.createRadialGradient(mid,mid,mid*.62,mid,mid,mid*.98);ring.addColorStop(0,'#1c2622');ring.addColorStop(.45,'#8b968a');ring.addColorStop(.72,'#e4ece0');ring.addColorStop(1,'#2c3832');c.fillStyle=ring;c.beginPath();c.arc(mid,mid,mid-1,0,Math.PI*2);c.fill();const face=c.createRadialGradient(mid*.85,mid*.7,8,mid,mid,mid*.8);face.addColorStop(0,'#24302b');face.addColorStop(1,'#0c1210');c.fillStyle=face;c.beginPath();c.arc(mid,mid,mid*.78,0,Math.PI*2);c.fill();c.strokeStyle='#ffffff18';c.lineWidth=w*.04;c.beginPath();c.arc(mid,mid,mid*.55,Math.PI*1.15,Math.PI*1.7);c.stroke();for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;c.fillStyle='#d5ddd0';c.beginPath();c.arc(mid+Math.cos(a)*mid*.88,mid+Math.sin(a)*mid*.88,w*.018,0,Math.PI*2);c.fill();c.fillStyle='#1a221e';c.beginPath();c.arc(mid+Math.cos(a)*mid*.88,mid+Math.sin(a)*mid*.88,w*.007,0,Math.PI*2);c.fill();}return mid;}
+function roundGauge(canvas,{label,text,value,min,max,ticks=8,needle}){const c=canvas.getContext('2d'),w=canvas.width,mid=bezel(c,w);const a0=Math.PI*.75,a1=Math.PI*2.25,span=a1-a0;c.strokeStyle='#d7e7c8';c.fillStyle='#d7e7c8';c.lineCap='round';c.textAlign='center';c.textBaseline='middle';for(let i=0;i<=ticks;i++){const a=a0+span*i/ticks,major=i%2===0,inner=mid*(major?0.5:0.58),outer=mid*.7;c.lineWidth=major?3:1.5;c.beginPath();c.moveTo(mid+Math.cos(a)*inner,mid+Math.sin(a)*inner);c.lineTo(mid+Math.cos(a)*outer,mid+Math.sin(a)*outer);c.stroke();}const t=clamp((value-min)/(max-min),0,1),ang=a0+span*t;c.save();c.translate(mid,mid);c.rotate(ang);c.fillStyle=needle||'#f0d7a4';c.beginPath();c.moveTo(mid*.52,0);c.lineTo(-mid*.12,mid*.045);c.lineTo(-mid*.16,0);c.lineTo(-mid*.12,-mid*.045);c.fill();c.restore();c.fillStyle='#dfe8d4';c.beginPath();c.arc(mid,mid,mid*.09,0,Math.PI*2);c.fill();c.fillStyle='#9eb396';c.font=`700 ${Math.round(w*.055)}px monospace`;c.fillText(label,mid,mid*1.42);c.fillStyle='#f4f7ee';c.font=`600 ${Math.round(w*.07)}px monospace`;c.fillText(text,mid,mid*1.18);}
+function drawRadarGauge(){const canvas=$('radar'),c=canvas.getContext('2d'),w=canvas.width,mid=bezel(c,w),R=mid*.62;c.strokeStyle='#9dba98';c.lineWidth=1.5;for(const k of[.33,.66,1]){c.beginPath();c.arc(mid,mid,R*k,0,Math.PI*2);c.stroke();}c.save();c.translate(mid,mid);c.rotate(-flight.heading);c.strokeStyle='#6e8f72';c.font=`700 ${Math.round(w*.055)}px monospace`;c.fillStyle='#d5e6c8';c.textAlign='center';c.textBaseline='middle';const letters=['N','O','S','V'];for(let i=0;i<4;i++){const a=i*Math.PI/2-Math.PI/2;c.fillText(letters[i],Math.cos(a)*R*1.05,Math.sin(a)*R*1.05);c.beginPath();c.moveTo(Math.cos(a)*R*.82,Math.sin(a)*R*.82);c.lineTo(Math.cos(a)*R,Math.sin(a)*R);c.stroke();}for(const t of targets){if(!t.alive)continue;let x=(t.pos.x-flight.x)/700*R,z=(t.pos.z-flight.z)/700*R;const len=Math.hypot(x,z);if(len>R*.92){x*=R*.92/len;z*=R*.92/len;}c.fillStyle=t===locked?'#ffd0a4':'#ff8d72';c.fillRect(x-4,z-4,8,8);}c.restore();c.fillStyle='#d4ec99';c.beginPath();c.moveTo(mid,mid-R*.42);c.lineTo(mid-7,mid+8);c.lineTo(mid+7,mid+8);c.fill();const heading=(flight.heading*180/Math.PI%360+360)%360;c.fillStyle='#f4f7ee';c.font=`600 ${Math.round(w*.07)}px monospace`;c.textAlign='center';c.fillText(String(Math.round(heading)%360).padStart(3,'0')+'°',mid,mid+R*.55);c.strokeStyle=armor<35?'#e07060':'#d1eb81';c.lineWidth=w*.035;c.beginPath();c.arc(mid,mid,mid*.84,Math.PI*.15,Math.PI*.15+Math.PI*1.7*(armor/100));c.stroke();c.fillStyle='#9eb396';c.font=`700 ${Math.round(w*.045)}px monospace`;c.fillText('PANSAR '+Math.ceil(armor)+'%',mid,mid+R*.95);}
+function drawGauges(){const knots=Math.hypot(flight.vx,flight.vz)*1.94384;roundGauge($('gaugeSpeed'),{label:'FART',text:Math.round(knots)+' kn',value:knots,min:0,max:160,needle:knots>120?'#e7a0a0':'#f0d7a4'});roundGauge($('gaugeAlt'),{label:'HÖJD',text:Math.round(flight.y)+' m',value:flight.y,min:0,max:400});const vy=flight.vy;roundGauge($('gaugeVsi'),{label:'STIG',text:(vy>=0?'+':'')+vy.toFixed(1),value:vy,min:-12,max:12,needle:vy<-4?'#e7a0a0':'#f0d7a4'});drawRadarGauge();}
+function updateHud(){const knots=Math.hypot(flight.vx,flight.vz)*1.94384;$('ammo').textContent=ammo;$('fire').classList.toggle('empty',ammo<=0);$('objective').textContent=mode==='practice'?'Fri flygning · lär känna helikoptern':`Slå ut fientliga mål · ${kills} / 5`;const gyroMode=control.settings.controlMode!=='touch',stale=gyroMode&&gyro.seen&&!gyro.fresh();const low=flight.y<Math.max(0,heightAt(flight.x,flight.z))+12;const sink=flight.vy<-4;$('warning').textContent=clock<noticeUntil?notice:stale?'GYROT TYST · TRYCK KALIBRERA':low?'LÅG HÖJD · HÖJ LYFTET':sink?'SJUNKER · HÖJ LYFTET':'';drawGauges();$('yawLeft').classList.toggle('held',touch.left||keys.has('q'));$('yawRight').classList.toggle('held',touch.right||keys.has('e'));}
+function layoutMode(){return innerHeight>=innerWidth?config.layout.portrait:config.layout.landscape;}
+function placeBox(el,box){if(!el||!box)return;el.style.left=(box.left*100)+'%';el.style.top=(box.top*100)+'%';el.style.width=(box.width*100)+'%';el.style.height=(box.height*100)+'%';}
+function placeCenter(el,pos,size){if(!el||!pos)return;const s=(size*100)+'vw';el.style.width=s;el.style.height=s;el.style.left=`calc(${pos.cx*100}% - ${s} / 2)`;el.style.top=`calc(${pos.cy*100}% - ${s} / 2)`;}
+function applyLayout(){const box=layoutMode();document.documentElement.style.setProperty('--wind',(box.windshieldEnd*100)+'%');document.documentElement.style.setProperty('--grow',String(config.layout.gaugeHoldScale));document.documentElement.style.setProperty('--g',(box.gaugeSize*100)+'vw');$('windshield').style.height=(box.windshieldEnd*100)+'%';placeBox($('collective'),box.collective);placeBox($('yawLeft'),box.pedalLeft);placeBox($('yawRight'),box.pedalRight);placeBox($('cyclicBlock'),box.cyclic);placeBox($('aimFocus'),box.aimFocus);placeCenter($('fire'),box.fire,box.fire.size);for(const [id,pos] of Object.entries(box.gauges))placeCenter($('gauge-'+id),pos,box.gaugeSize);}
 let frames=0,fps=60,fpsTime=0;function frame(now){requestAnimationFrame(frame);if(document.hidden){last=now;return;}const realDt=Math.max(0,(now-last)/1000),dt=Math.min(realDt,.1);last=now;clock+=dt;frames++;fpsTime+=realDt;if(fpsTime>=1){fps=frames/fpsTime;frames=0;fpsTime=0;}updateInput(dt);const paused=settings.open||result.open;water.material.uniforms.time.value=clock;water.material.uniforms.eye.value.copy(camera.position);
 if(playing){if(!paused){flight.update(dt,activeControls,Math.max(0,heightAt(flight.x,flight.z)));if(flight.groundContact&&flight.impactSpeed>4){armor=Math.max(0,armor-(flight.impactSpeed-4)*8);flight.impactSpeed=0;if(armor<=0)finish(false);}if(Math.hypot(flight.x,flight.z)>1850){flashMessage('YTTRE GRÄNS · VÄND TILLBAKA');flight.vx-=flight.x*.0008*dt;flight.vz-=flight.z*.0008*dt;}}
-heli.position.set(flight.x,flight.y,flight.z);heli.rotation.set(-flight.pitch,-flight.heading,-flight.roll,'YXZ');updateCamera(dt);chooseTarget();if(!paused){updateCombat(dt);updateEffects(dt);}uiTick+=dt;if(uiTick>.08){updateHud();uiTick=0;}
+heli.position.set(flight.x,flight.y,flight.z);heli.rotation.set(-flight.pitch,-flight.heading,-flight.roll,'YXZ');cockpit.setPedals(touch.left||keys.has('q'),touch.right||keys.has('e'));updateCamera(dt);chooseTarget();if(!paused){updateCombat(dt);updateEffects(dt);}updateHud();
 }else{cockpit.root.visible=false;heli.visible=true;heli.position.set(18,66+Math.sin(clock*.6)*.8,310);heli.rotation.set(-.03,.3+Math.sin(clock*.13)*.04,.04);const portrait=innerHeight>innerWidth;camera.position.set(65+Math.sin(clock*.07)*5,81,370);camera.lookAt(portrait?new THREE.Vector3(-22,70,270):new THREE.Vector3(-35,62,275));}
-heli.userData.rotor.rotation.y+=dt*35;heli.userData.tailRotor.rotation.x+=dt*45;sun.position.set(heli.position.x-180,heli.position.y+350,heli.position.z+120);sun.target.position.copy(heli.position);if(rotorOsc&&audioCtx&&soundOn)rotorOsc.frequency.setTargetAtTime(32+collective*10,audioCtx.currentTime,.1);
+const rotorRate=30+collective*12+Math.min(8,Math.hypot(flight.vx,flight.vz));heli.userData.rotor.rotation.y+=dt*rotorRate;heli.userData.tailRotor.rotation.x+=dt*(40+collective*10);sun.position.set(heli.position.x-180,heli.position.y+350,heli.position.z+120);sun.target.position.copy(heli.position);ljud.update(dt,{collective,knots:Math.hypot(flight.vx,flight.vz)*1.94384,playing:playing&&!paused,low:playing&&!paused&&(flight.y<Math.max(0,heightAt(flight.x,flight.z))+12||flight.vy<-4),boundary:playing&&!paused&&Math.hypot(flight.x,flight.z)>1850});
 if(settings.open){const c=control.getCyclic();const aim=control.getAimOffset();$('telemetry').textContent=`Spak  x ${c.x.toFixed(2)}  y ${c.y.toFixed(2)}\nLyft ${control.getCollective().toFixed(2)}  Gir ${control.getYaw().toFixed(2)}\nSikte yaw ${(aim.yaw*180/Math.PI).toFixed(1)}° pitch ${(aim.pitch*180/Math.PI).toFixed(1)}°\nFartlyft ${flight.liftFactor.toFixed(2)} · ${Math.round(Math.hypot(flight.vx,flight.vz)*1.94384)} knop · ${control.getViewState().view}\n${renderer.software?'Enklare grafik · ':''}${Math.round(fps/(renderer.software?2:1))} FPS`;}
 if(!globalThis.__rotorFast&&(!paused||!playing))renderer.render(scene,camera);}
-window.addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});$('loading').hidden=true;updateCollectiveUI();syncModeUI();camLook.set(0,56,280);requestAnimationFrame(frame);
+window.addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();applyLayout();});
+window.addEventListener('pointerdown',()=>ljud.unlock(),{capture:true});
+window.addEventListener('touchend',()=>ljud.unlock(),{capture:true,passive:true});
+$('loading').hidden=true;applyLayout();updateCollectiveUI();syncModeUI();camLook.set(0,56,280);requestAnimationFrame(frame);

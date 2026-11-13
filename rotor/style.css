@@ -16,3 +16,34 @@
 @media(max-height:540px) and (orientation:landscape){#aimFocus{bottom:72px}.pedals{left:calc(50% - 68px)}}
 @media(max-width:600px) and (orientation:portrait){#aimFocus{bottom:108px;font-size:10px}.view-tools{left:20px;bottom:344px;transform:none;flex-direction:column;gap:5px}.view-tools button{font-size:8px;padding:7px 10px;min-height:34px;width:123px}#aimControls{right:20px;bottom:339px;width:126px}#aimPad{height:76px}#aimClutch{font-size:8px}#viewStatus{bottom:313px;font-size:7px}#touchHint{bottom:300px;display:none}.cyclic-block{bottom:65px}.pedals{bottom:27px}#inspectToggle:disabled{opacity:.4}}
 @media(max-height:540px) and (orientation:landscape){.view-tools{bottom:8px;gap:5px}.pedals{left:128px;bottom:25px}.view-tools button{min-height:32px;padding:7px 9px;font-size:8px}#aimControls{right:175px;bottom:125px;width:130px}#aimPad{height:64px}#aimControls .control-label{font-size:7px}#centerAim,#aimClutch{min-height:25px;font-size:8px;padding:5px}#viewStatus{bottom:53px;font-size:7px}#touchHint{display:none}}
+
+#missionHud{pointer-events:none}
+#hud #windshield{position:absolute;left:0;right:0;top:0;height:var(--wind,56%);pointer-events:auto;touch-action:none;background:transparent}
+#hud #warning{top:38%;z-index:2}
+#hud #gauges{position:absolute;inset:0;pointer-events:none}
+#hud .gauge{position:absolute;width:var(--g,68px);height:var(--g,68px);padding:0;border:0;border-radius:50%;background:#0c1210;overflow:hidden;transform-origin:50% 100%;transition:transform .14s ease-out;z-index:4;touch-action:none;pointer-events:auto;box-shadow:0 8px 16px #0007,inset 0 0 0 1px #ffffff22}
+#hud .gauge canvas,#hud #radar{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:50%;background:transparent;right:auto;top:auto}
+#hud .gauge.grown,#hud .gauge.grown:active{transform:scale(var(--grow,3));z-index:9;filter:drop-shadow(0 16px 18px #000a)}
+#hud #collective{position:absolute;background:transparent;border:none;border-radius:0;margin:0;touch-action:none;pointer-events:auto;z-index:5}
+#hud #collective b{position:absolute;top:0;left:4px;font-size:11px;font-weight:600;letter-spacing:.6px;color:#e4f0d4;text-shadow:0 1px 2px #000}
+#hud #collective.dragging{background:linear-gradient(90deg,#d1eb8124,transparent 80%)}
+body:not(.cockpit) #hud #collective{background:#132a2cc0;border:1px solid #b9d8c74d;border-radius:10px}
+#hud #pedals{position:absolute;inset:0;pointer-events:none;text-align:left}
+#hud #pedals button{position:absolute;margin:0;padding:0;border:0;border-radius:12px;background:transparent;font-size:0;touch-action:none;pointer-events:auto;z-index:5}
+#hud #pedals button.held{background:linear-gradient(#0000,#9eb48a55);box-shadow:inset 0 10px 14px #0007}
+#hud #cyclicBlock{position:absolute;pointer-events:none;text-align:center;right:auto;bottom:auto}
+#hud #cyclic{pointer-events:auto;margin:0}
+body.cockpit #hud #cyclic{background:transparent;border-color:transparent;box-shadow:none}
+body.cockpit #hud #stick,body.cockpit #hud .cross-x,body.cockpit #hud .cross-y,body.cockpit #hud .forward{visibility:hidden}
+#hud #fire{position:absolute;border-radius:50%;border:3px solid #c4523a;background:radial-gradient(circle at 40% 35%,#3c4e44,#1a2420 62%,#101614);color:#f3f6ea;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;z-index:6;box-shadow:0 10px 18px #0008,inset 0 0 0 6px #2a1612;touch-action:none;pointer-events:auto;padding:0}
+#hud #fire .fire-mark{font-size:22px;line-height:1}
+#hud #fire small{font-size:10px;letter-spacing:1.6px;font-weight:700}
+#hud #fire b{font-size:10px;font-weight:500;color:#d1eb81}
+#hud #fire.held{background:#d7e7a8;color:#1a2918;border-color:#eef6d2}
+#hud #fire.held b{color:#1a2918}
+#hud #fire.empty b{opacity:.4}
+#hud #aimFocus{z-index:6;transform:none;bottom:auto}
+#hud #cyclic{width:100%;height:100%;margin:0}
+#settings .menu-actions{display:flex;gap:8px;margin:4px 0 8px}
+#settings .menu-actions .outline{flex:1}
+#settings #calibrate,#settings #centerAim{position:static;bottom:auto;right:auto;width:auto;min-height:42px}

@@ -52,7 +52,7 @@
     {"id": "touch", "label": "Bara spakar"}
   ],
   "yawModes": [
-    {"id": "pedals", "label": "Pedalknappar"},
+    {"id": "pedals", "label": "Pedaler"},
     {"id": "orientation", "label": "Vrid telefonen"}
   ],
   "menu": [
@@ -70,16 +70,76 @@
     {"id": "maxAttitudeDeg", "group": "flight", "label": "Nosen följer spaken", "min": 10, "max": 45, "step": 1, "digits": 0, "suffix": "°"}
   ],
   "help": {
-    "gyro-flight": "Luta telefonen så flyger helikoptern. Dra i siktesrutan för att sikta. Spaken till vänster är lyftet.",
-    "gyro-aim": "Dra i den runda spaken för att flyga. Luta telefonen upp, ned och åt sidan för att sikta.",
+    "gyro-flight": "Luta telefonen så flyger helikoptern. Dra i vindrutan för att sikta. Lyftspaken sitter till vänster och pedalerna nere i mitten.",
+    "gyro-aim": "Dra i styrspaken för att flyga. Luta telefonen upp, ned och åt sidan för att sikta.",
     "gyro-both": "Luta telefonen för att flyga. Tryck Styr siktet och luta igen för att sikta. Tryck en gång till så flyger du.",
-    "touch": "Spakarna på skärmen styr allt. Gyrot används inte."
+    "touch": "Spaken, lyftet och pedalerna styr allt. Dra i vindrutan för att sikta. Gyrot används inte."
   },
   "toggles": [
     {"id": "hoverAssist", "group": "flight", "label": "Hovringshjälp", "text": "Bromsar glidning och håller höjden när lyftet står nära hovring."},
     {"id": "autoTorque", "group": "flight", "label": "Pedalkompensation", "text": "Tar bort vridet när du höjer eller sänker lyftet."},
     {"id": "cockpitEnabled", "group": "control", "label": "Cockpit", "text": "Förstaperson. Spak, lyft och pedaler syns och följer det du gör."},
-    {"id": "aimEnabled", "group": "control", "label": "Rörligt sikte", "text": "Siktet kan peka åt ett annat håll än nosen."},
-    {"id": "sound", "group": "audio", "label": "Ljud", "text": "Motor och vapen."}
-  ]
+    {"id": "aimEnabled", "group": "control", "label": "Rörligt sikte", "text": "Siktet kan peka åt ett annat håll än nosen. Dra i vindrutan."},
+    {"id": "sound", "group": "audio", "label": "Ljud", "text": "På från start. Rotor, turbin, vind, vapen och varningar. Stängs av bara om du slår av det här."}
+  ],
+  "weapons": {
+    "gunInterval": 0.09,
+    "gunBurst": 5,
+    "tapMs": 220,
+    "doubleTapMs": 280,
+    "missileCooldown": 1.4
+  },
+  "cockpit": {
+    "cameraX": 0,
+    "cameraY": 1.08,
+    "cameraZ": -1.9,
+    "lookDownDeg": 7,
+    "inspectForward": 0.12,
+    "inspectExtraDeg": 22,
+    "fovPortrait": 88,
+    "fovLandscape": 72,
+    "boreSightDeg": -14,
+    "stick": {"x": 0, "y": -0.5, "z": -3.06, "shaftTop": 0.46, "gripY": 0.58, "gripLength": 0.16},
+    "collective": {"x": -0.8, "y": -0.5, "z": -3.1, "arm": 0.82, "angleMin": -0.85, "angleMax": 0.7},
+    "pedalX": 0.32,
+    "pedalY": -0.6,
+    "pedalZ": -3.42,
+    "pedalPress": 0.62
+  },
+  "layout": {
+    "gaugeHoldScale": 3,
+    "reticleMargin": 10,
+    "portrait": {
+      "windshieldEnd": 0.56,
+      "gaugeSize": 0.172,
+      "collective": {"left": 0, "top": 0.58, "width": 0.14, "height": 0.4},
+      "pedalLeft": {"left": 0.18, "top": 0.78, "width": 0.24, "height": 0.2},
+      "pedalRight": {"left": 0.56, "top": 0.8, "width": 0.16, "height": 0.18},
+      "cyclic": {"left": 0.33, "top": 0.6, "width": 0.34, "height": 0.2},
+      "aimFocus": {"left": 0.18, "top": 0.568, "width": 0.64, "height": 0.042},
+      "fire": {"cx": 0.84, "cy": 0.9, "size": 0.2},
+      "gauges": {
+        "speed": {"cx": 0.3, "cy": 0.69},
+        "altitude": {"cx": 0.64, "cy": 0.755},
+        "vertical": {"cx": 0.86, "cy": 0.755},
+        "radar": {"cx": 0.76, "cy": 0.645}
+      }
+    },
+    "landscape": {
+      "windshieldEnd": 0.58,
+      "gaugeSize": 0.11,
+      "collective": {"left": 0.01, "top": 0.6, "width": 0.1, "height": 0.36},
+      "pedalLeft": {"left": 0.28, "top": 0.78, "width": 0.1, "height": 0.18},
+      "pedalRight": {"left": 0.4, "top": 0.78, "width": 0.1, "height": 0.18},
+      "cyclic": {"left": 0.46, "top": 0.62, "width": 0.16, "height": 0.32},
+      "aimFocus": {"left": 0.34, "top": 0.6, "width": 0.32, "height": 0.08},
+      "fire": {"cx": 0.9, "cy": 0.78, "size": 0.12},
+      "gauges": {
+        "speed": {"cx": 0.16, "cy": 0.78},
+        "altitude": {"cx": 0.58, "cy": 0.8},
+        "vertical": {"cx": 0.7, "cy": 0.8},
+        "radar": {"cx": 0.8, "cy": 0.68}
+      }
+    }
+  }
 }

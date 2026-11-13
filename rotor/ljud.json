@@ -1,0 +1,22 @@
+{
+  "note": "Tom file betyder att ljud.js syntetiserar händelsen. Sätt file till en relativ sökväg, till exempel ljud/kanon.ogg, så spelas den filen i stället. OGG eller MP3. Ingen kod behöver ändras. Volym 0–1. loop true betyder ett ihållande lager.",
+  "storageKey": "rotor-strike-sound",
+  "masterVolume": 0.85,
+  "refDistance": 150,
+  "events": {
+    "rotorSlap": {"file": "", "volume": 0.55, "loop": true},
+    "rotorWash": {"file": "", "volume": 0.34, "loop": true},
+    "rotorThump": {"file": "", "volume": 0.28, "loop": true},
+    "turbine": {"file": "", "volume": 0.16, "loop": true},
+    "wind": {"file": "", "volume": 0.42, "loop": true},
+    "gun": {"file": "", "volume": 0.72, "loop": false},
+    "casing": {"file": "", "volume": 0.38, "loop": false},
+    "rocket": {"file": "", "volume": 0.8, "loop": false},
+    "explosion": {"file": "", "volume": 0.9, "loop": false, "refDistance": 190},
+    "hit": {"file": "", "volume": 0.55, "loop": false, "refDistance": 130},
+    "warnLow": {"file": "", "volume": 0.22, "loop": true},
+    "warnBoundary": {"file": "", "volume": 0.2, "loop": true},
+    "click": {"file": "", "volume": 0.45, "loop": false},
+    "pedal": {"file": "", "volume": 0.4, "loop": false}
+  }
+}

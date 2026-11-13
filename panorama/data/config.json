@@ -2,6 +2,7 @@
   "prick": { "standard": 6, "min": 3, "max": 56 },
   "zoomMax": 12,
   "fovMin": 4,
+  "gang": { "fart": 1.55, "dodzon": 0.1, "kanslighet": 2.4, "svang": 1, "svangFart": 1.15, "grans": 400 },
   "traff": { "kroppsskott": 3, "huvudSkottDodar": true, "huvudRadie": 0.15 },
   "blod": { "pool": 180, "kropp": 16, "huvud": 42, "sar": 40 },
   "terrang": {

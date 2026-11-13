@@ -331,6 +331,7 @@ export function skapaBlick(canvas, val = {}) {
       aktiv = true;
       lasFart(alphaDps, betaDps, gammaDps, (foreFartTid || 0) + dt * 1000);
     },
-    vinklar() { return {...visad}; }
+    vinklar() { return {uppner: visad.uppner, vrida: visad.vrida, sida: visad.sida}; },
+    mus() { return {x: drag.x, y: drag.y}; }
   };
 }

@@ -15,6 +15,11 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
 #starta{width:100%;min-height:72px;border:0;border-radius:20px;background:var(--lime);color:#19221a;font-size:30px;font-weight:800;letter-spacing:.01em}
 #startKort small{display:block;margin-top:12px;color:#b7c4bb;font-size:13px;line-height:1.4}
 #menyKnapp{position:absolute;z-index:8;left:max(12px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));min-height:44px;padding:8px 16px;border-radius:999px;font-size:15px;font-weight:800}
+#sankVapen{position:absolute;z-index:8;right:max(14px,env(safe-area-inset-right));bottom:calc(max(14px,env(safe-area-inset-bottom)) + 96px);min-height:42px;padding:6px 14px;border-radius:999px;font-size:14px;font-weight:800;background:#1c2822e6}
+#sankVapen.pa{background:#c4a15a;color:#1b160c;border-color:transparent}
+#skjut.vilande{opacity:.45}
+#gang{position:absolute;z-index:8;left:50%;top:calc(env(safe-area-inset-top) + 112px);transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:4px;max-width:calc(100vw - 24px)}
+#gang button{min-height:36px;padding:4px 8px;border-radius:12px;font-size:12px;font-weight:750;background:#121816e0}
 #vapenRad{position:absolute;z-index:6;left:50%;top:calc(env(safe-area-inset-top) + 34px);transform:translateX(-50%);display:flex;gap:4px;max-width:calc(100vw - max(10px, env(safe-area-inset-left)) - max(10px, env(safe-area-inset-right)));pointer-events:auto}
 #vapenRad button{min-height:34px;padding:3px 7px 2px;border-radius:11px;background:#121816d4;border-color:#ffffff2e;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;font-size:11px;font-weight:750;white-space:nowrap}
 #vapenRad button small{font-size:10px;font-weight:750;color:var(--lime)}

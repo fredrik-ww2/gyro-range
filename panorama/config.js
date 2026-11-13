@@ -21,6 +21,7 @@ export const FALLBACK = {
     {id: 'springfield', namn: 'Springfield', under: '6×', forstoring: 6, sikte: 'kikare', retikel: 'm1903', ljud: 'springfield'},
     {id: 'enfield', namn: 'Enfield', under: '10×', forstoring: 10, sikte: 'kikare', retikel: 'mil', ljud: 'enfield'}
   ],
+  gang: {fart: 1.55, dodzon: 0.1, kanslighet: 2.4, svang: 1, svangFart: 1.15, grans: 400},
   soldater: {
     zoner: {nara: [15, 35], medel: [55, 120], langt: [150, 320]},
     platser: [
@@ -91,6 +92,19 @@ function normalLista(raw, bas) {
   return ut.length ? ut : bas.map(p => ({...p}));
 }
 
+function normalGang(raw) {
+  const g = raw && typeof raw === 'object' ? raw : {};
+  const bas = FALLBACK.gang;
+  return {
+    fart: tal(g.fart, bas.fart, 0.3, 6),
+    dodzon: tal(g.dodzon, bas.dodzon, 0, 0.6),
+    kanslighet: tal(g.kanslighet, bas.kanslighet, 0.2, 8),
+    svang: tal(g.svang, bas.svang, 0.2, 4),
+    svangFart: tal(g.svangFart, bas.svangFart, 0.2, 4),
+    grans: tal(g.grans, bas.grans, 20, 700)
+  };
+}
+
 function normalZon(raw, bas) {
   if (!Array.isArray(raw) || raw.length < 2) return bas.slice();
   const a = tal(raw[0], bas[0], 1, 400);
@@ -146,6 +160,7 @@ export function normalConfig(raw) {
         d: tal(form.d, basForm.d, 0, 20)
       }
     },
+    gang: normalGang(t.gang),
     vapen: normalVapen(t.vapen),
     soldater: {
       zoner: {

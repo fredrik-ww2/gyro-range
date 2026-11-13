@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {enhetsKvaternion, kvaternionFranVinklar, skarmVinkel, vinklarFranKvaternion} from './blick.js?v=8';
+import {enhetsKvaternion, kvaternionFranVinklar, skarmVinkel, vinklarFranKvaternion} from './blick.js?v=14';
 
 const RAD = Math.PI / 180;
 const GRAD = 180 / Math.PI;

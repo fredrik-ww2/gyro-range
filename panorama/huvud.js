@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import {skapaBlick, sjalvtest, normalStyr, STANDARD_STYR} from './blick.js?v=8';
+import {skapaBlick, sjalvtest, normalStyr, STANDARD_STYR} from './blick.js?v=14';
 import {byggVarld} from './varld.js?v=13';
-import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=13';
+import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=14';
 import {skapaLjud} from './ljud.js?v=13';
 import {skapaKansla, pulsFor, sjalvtest as kanslaTest} from './kansla.js?v=11';
 import {skapaBakgrund} from './bakgrund.js?v=11';
-import {laddaConfig} from './config.js?v=13';
+import {laddaConfig} from './config.js?v=14';
 import {skapaEffekt} from './effekt.js?v=13';
 
 const config = await laddaConfig();
@@ -37,9 +37,24 @@ renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(VANLIG_FOV, 1, 0.25, config.terrang.kameraFar);
+const camera = new THREE.PerspectiveCamera(VANLIG_FOV, 1, 0.08, config.terrang.kameraFar);
 camera.position.set(0, 1.7, 0);
 const effekt = skapaEffekt(scene, config.blod);
+const vapenHand = byggVapen(camera);
+scene.add(camera);
+const UPP_G = new THREE.Vector3(0, 1, 0);
+const GANG_FRAM = new THREE.Vector3();
+const GANG_HOGER = new THREE.Vector3();
+const gangEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+const gangYawQ = new THREE.Quaternion();
+let markFn = () => 0;
+let sankt = false;
+let vapenLyft = 1;
+let neutral = {uppner: 0, vrida: 0, sida: 0};
+let basYaw = 0;
+let extraYaw = 0;
+const gangIntent = {fram: 0, sida: 0, svang: 0};
+let gangSynk = '';
 
 const blick = skapaBlick(canvas);
 const laser = skapaLaser();
@@ -166,6 +181,7 @@ function basFov() {
   return VANLIG_FOV;
 }
 function aktuellFov() {
+  if (sankt) return VANLIG_FOV;
   return effektivFov(basFov(), laser.install);
 }
 function latSikte(mal, dt) {
@@ -208,7 +224,7 @@ function markeraVapen() {
 }
 function visaRetikel() {
   const inst = laser.install;
-  const kik = inst.sikte === 'kikare';
+  const kik = !sankt && inst.sikte === 'kikare';
   const rot = $('kikare');
   if (rot) {
     rot.hidden = !kik;
@@ -217,7 +233,7 @@ function visaRetikel() {
     rot.querySelectorAll('[data-retikel]').forEach(el => { el.hidden = el.dataset.retikel !== ret; });
   }
   const prick = $('siktPrick');
-  if (prick) prick.hidden = !(startad && !kik && !laserPa);
+  if (prick) prick.hidden = !(startad && !sankt && !kik && !laserPa);
 }
 ritaVapenKnappar();
 const storlekInput = $('laserStorlek');
@@ -250,17 +266,160 @@ visualViewport?.addEventListener('resize', passa);
 addEventListener('orientationchange', () => setTimeout(passa, 200));
 
 let senast = performance.now();
+function byggVapen(mal) {
+  const rot = new THREE.Group();
+  rot.name = 'vapen';
+  const tra = new THREE.MeshStandardMaterial({color: 0x4a3828, roughness: 0.78, metalness: 0.02});
+  const stal = new THREE.MeshStandardMaterial({color: 0x2c3134, roughness: 0.38, metalness: 0.62});
+  const kolv = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.09, 0.32), tra);
+  kolv.position.set(0, -0.02, 0.08);
+  const las = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.07, 0.16), stal);
+  las.position.set(0, 0.02, -0.08);
+  const pipa = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.016, 0.52), stal);
+  pipa.position.set(0, 0.045, -0.38);
+  const korn = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.03, 0.008), stal);
+  korn.position.set(0, 0.07, -0.62);
+  rot.add(kolv, las, pipa, korn);
+  rot.scale.setScalar(1.35);
+  rot.traverse(n => { if (n.isMesh) { n.castShadow = false; n.receiveShadow = false; n.raycast = () => {}; } });
+  mal.add(rot);
+  return rot;
+}
+function laggVapen(dt) {
+  const kik = !sankt && laser.install.sikte === 'kikare';
+  const mal = sankt ? 0 : kik ? 0.28 : 1;
+  const a = 1 - Math.exp(-Math.max(dt, 0.001) / 0.16);
+  vapenLyft += (mal - vapenLyft) * a;
+  const t = vapenLyft;
+  const vil = {x: 0.38, y: -0.34, z: -0.9, rx: 0.38, ry: 0.62};
+  const redo = kik
+    ? {x: 0.36, y: -0.38, z: -0.85, rx: 0.5, ry: 0.4}
+    : {x: 0.28, y: -0.18, z: -0.72, rx: 0.1, ry: 0.18};
+  vapenHand.position.set(
+    vil.x + (redo.x - vil.x) * t,
+    vil.y + (redo.y - vil.y) * t,
+    vil.z + (redo.z - vil.z) * t
+  );
+  vapenHand.rotation.set(vil.rx + (redo.rx - vil.rx) * t, vil.ry + (redo.ry - vil.ry) * t, 0);
+}
+function overDod(v, dod) {
+  if (Math.abs(v) <= dod) return 0;
+  return v - Math.sign(v) * dod;
+}
+function lasGang() {
+  let fram = gangIntent.fram;
+  let sida = gangIntent.sida;
+  let svang = gangIntent.svang;
+  if (tangenter.has('w') || tangenter.has('arrowup')) fram += 1;
+  if (tangenter.has('s') || tangenter.has('arrowdown')) fram -= 1;
+  if (tangenter.has('a')) sida -= 1;
+  if (tangenter.has('d')) sida += 1;
+  if (tangenter.has('q') || tangenter.has('arrowleft')) svang -= 1;
+  if (tangenter.has('e') || tangenter.has('arrowright')) svang += 1;
+  return {
+    fram: Math.max(-1, Math.min(1, fram)),
+    sida: Math.max(-1, Math.min(1, sida)),
+    svang: Math.max(-1, Math.min(1, svang))
+  };
+}
+function ga(dt, musQ) {
+  const g = config.gang;
+  const v = blick.vinklar();
+  const dPitch = v.uppner - neutral.uppner;
+  const dYaw = v.vrida - neutral.vrida;
+  const dRoll = v.sida - neutral.sida;
+  const gyro = blick.harGyro;
+  const ratt = lasGang();
+  const framGyro = (function () {
+    const o = overDod(-dPitch, g.dodzon);
+    if (!o) return 0;
+    return Math.sign(o) * g.fart * Math.min(1, Math.abs(o) * g.kanslighet);
+  })();
+  const sidaGyro = (function () {
+    const o = overDod(dRoll, g.dodzon);
+    if (!o) return 0;
+    return Math.sign(o) * g.fart * Math.min(1, Math.abs(o) * g.kanslighet);
+  })();
+  extraYaw += ratt.svang * g.svangFart * dt;
+  if (gyro) {
+    gangEuler.set(0, basYaw + extraYaw + overDod(dYaw, g.dodzon) * g.svang, 0);
+    camera.quaternion.setFromEuler(gangEuler);
+  } else {
+    gangYawQ.setFromAxisAngle(UPP_G, extraYaw);
+    camera.quaternion.copy(gangYawQ).multiply(musQ);
+  }
+  const framFart = framGyro + ratt.fram * g.fart;
+  const sidaFart = sidaGyro + ratt.sida * g.fart;
+  camera.getWorldDirection(GANG_FRAM);
+  GANG_FRAM.y = 0;
+  if (GANG_FRAM.lengthSq() < 1e-8) GANG_FRAM.set(0, 0, -1);
+  GANG_FRAM.normalize();
+  GANG_HOGER.crossVectors(GANG_FRAM, UPP_G).normalize();
+  camera.position.x += (GANG_FRAM.x * framFart + GANG_HOGER.x * sidaFart) * dt;
+  camera.position.z += (GANG_FRAM.z * framFart + GANG_HOGER.z * sidaFart) * dt;
+  const gr = g.grans;
+  camera.position.x = Math.max(-gr, Math.min(gr, camera.position.x));
+  camera.position.z = Math.max(-gr, Math.min(gr, camera.position.z));
+}
+function visaGang() {
+  const visa = !!(sankt && startad && !blick.harGyro);
+  const ny = (sankt ? '1' : '0') + (visa ? '1' : '0') + (startad ? '1' : '0');
+  if (ny === gangSynk) return;
+  gangSynk = ny;
+  const knapp = $('sankVapen');
+  if (knapp) {
+    knapp.hidden = !startad;
+    knapp.textContent = sankt ? 'Höj vapen' : 'Sänk vapen';
+    knapp.classList.toggle('pa', sankt);
+    knapp.setAttribute('aria-pressed', sankt ? 'true' : 'false');
+  }
+  const pad = $('gang');
+  if (pad) pad.hidden = !visa;
+  $('skjut')?.classList.toggle('vilande', sankt);
+}
+function sankVapen(pa) {
+  const nasta = !!pa;
+  if (nasta === sankt) return sankt;
+  if (nasta) {
+    blick.uppdatera(0.016);
+    const v = blick.vinklar();
+    neutral = {uppner: v.uppner, vrida: v.vrida, sida: v.sida};
+    basYaw = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ').y;
+    extraYaw = 0;
+    hallTill = 0;
+  } else {
+    blick.taEmot(camera.quaternion);
+    if (laserPa && blick.harGyro) laser.behall(camera.quaternion);
+    sikteInit = false;
+  }
+  sankt = nasta;
+  gangSynk = '';
+  sattFov();
+  visaLaserUtseende();
+  visaGang();
+  return sankt;
+}
+const tangenter = new Set();
+addEventListener('keydown', e => {
+  if (!sankt) return;
+  tangenter.add(String(e.key || '').toLowerCase());
+});
+addEventListener('keyup', e => tangenter.delete(String(e.key || '').toLowerCase()));
 function steg(dt, nu) {
   const d = Math.min(0.05, Math.max(0, dt || 0));
   const tid = Number.isFinite(nu) ? nu : performance.now();
   const vanlig = blick.uppdatera(d);
-  const mal = laserPa && blick.harGyro ? laser.uppdatera(d) : vanlig;
-  if (tid < hallTill) camera.quaternion.copy(hallQ);
+  const mal = !sankt && laserPa && blick.harGyro ? laser.uppdatera(d) : vanlig;
+  if (sankt) ga(d, vanlig);
+  else if (tid < hallTill) camera.quaternion.copy(hallQ);
   else latSikte(mal, d);
+  camera.position.y = markFn(camera.position.x, camera.position.z) + 1.7;
+  laggVapen(d);
   soldatApi.uppdatera(d);
   effekt.tick(d);
   ritaLaser(tid);
   svalna(d);
+  visaGang();
   renderer.render(scene, camera);
   bilder++;
   if (window.__pano) window.__pano.ritningar = renderer.info.render.calls;
@@ -296,8 +455,8 @@ function visaLaserUtseende() {
   const rot = document.documentElement.style;
   rot.setProperty('--laser', inst.farg);
   rot.setProperty('--prick', inst.prick + 'px');
-  $('laserPrick').hidden = !laserPa;
-  $('laserLinje').hidden = !(laserPa && inst.strale);
+  $('laserPrick').hidden = sankt || !laserPa;
+  $('laserLinje').hidden = sankt || !(laserPa && inst.strale);
   visaRetikel();
   markeraVapen();
   laserKnapp.classList.toggle('pa', laserPa);
@@ -600,6 +759,23 @@ $('skjut').addEventListener('click', () => {
   ljud.oppna();
   avfyra();
 });
+$('sankVapen').addEventListener('click', () => sankVapen(!sankt));
+const GANG_KNAPP = {fram: 'fram', bak: 'fram', vanster: 'sida', hoger: 'sida', svangV: 'svang', svangH: 'svang'};
+const GANG_TECKEN = {fram: 1, bak: -1, vanster: -1, hoger: 1, svangV: -1, svangH: 1};
+let gangNere = '';
+function gangKnapp(id, ner) {
+  const nyckel = GANG_KNAPP[id];
+  if (!nyckel) return;
+  gangIntent[nyckel] = ner ? GANG_TECKEN[id] : 0;
+}
+$('gang').addEventListener('pointerdown', e => {
+  const b = e.target.closest('[data-gang]');
+  if (!b) return;
+  gangNere = b.dataset.gang;
+  gangKnapp(gangNere, true);
+});
+addEventListener('pointerup', () => { if (gangNere) { gangKnapp(gangNere, false); gangNere = ''; } });
+addEventListener('pointercancel', () => { if (gangNere) { gangKnapp(gangNere, false); gangNere = ''; } });
 
 function synkaLjud() {
   ljud.satt(laser.install.ljud, laser.install.volym);
@@ -720,6 +896,7 @@ function siktaHuvud(index) {
   return siktaMotPunkt(soldatApi.sikteHuvud ? soldatApi.sikteHuvud(index) : null);
 }
 function avfyra() {
+  if (sankt) return false;
   const nu = performance.now();
   if (nu - skottTid < 280) return false;
   skottTid = nu;
@@ -773,6 +950,7 @@ start.addEventListener('click', async () => {
   $('skjut').hidden = false;
   $('menyKnapp').hidden = false;
   $('vapenRad').hidden = false;
+  $('sankVapen').hidden = false;
   $('meny').hidden = true;
   startad = true;
   visaRetikel();
@@ -866,6 +1044,7 @@ try {
   soldatApi = varld.soldater;
   miljoGrupp = varld.miljo;
   sparadDimma = scene.fog;
+  markFn = varld.markHojd;
   camera.far = config.terrang.kameraFar;
   camera.updateProjectionMatrix();
   window.__fel = [];
@@ -902,7 +1081,19 @@ addEventListener('unhandledrejection', e => window.__fel.push(String(e.reason &&
     get kikare() { return laser.install.sikte === 'kikare'; },
     get vapen() { return laser.install.vapen; },
     get retikel() { return vapenNu().retikel; },
-    get bilder() { return bilder; }
+    get bilder() { return bilder; },
+    sank: sankVapen,
+    styr(del) {
+      if (del && typeof del === 'object') {
+        if ('fram' in del) gangIntent.fram = Math.max(-1, Math.min(1, +del.fram || 0));
+        if ('sida' in del) gangIntent.sida = Math.max(-1, Math.min(1, +del.sida || 0));
+        if ('svang' in del) gangIntent.svang = Math.max(-1, Math.min(1, +del.svang || 0));
+      }
+      return {fram: gangIntent.fram, sida: gangIntent.sida, svang: gangIntent.svang};
+    },
+    get sankt() { return sankt; },
+    get vapenLyft() { return vapenLyft; },
+    get position() { return {x: camera.position.x, y: camera.position.y, z: camera.position.z}; }
   };
   window.__redo = teckenfel.length === 0;
   start.disabled = false;

@@ -13,7 +13,7 @@
 <body>
 <video id="kamerabild" hidden playsinline muted autoplay></video>
 <canvas id="vy" aria-label="Normandie 1944, se dig om med telefonen"></canvas>
-<div id="version">Panorama 06</div>
+<div id="version">Panorama 07</div>
 <section id="startKort">
 <span class="ogonbryn">NORMANDIE 1944</span>
 <h1>Se dig om</h1>
@@ -27,7 +27,16 @@
 <p id="kameraToast" hidden></p>
 <p id="laserHint" hidden>Vrid telefonen. Pricken visar vart du pekar. Skjut skjuter dit.</p>
 <button id="menyKnapp" type="button" hidden aria-expanded="false" aria-controls="meny">Meny</button>
+<button id="sankVapen" type="button" hidden aria-pressed="false">Sänk vapen</button>
 <div id="vapenRad" hidden></div>
+<div id="gang" hidden>
+<button type="button" data-gang="fram">Fram</button>
+<button type="button" data-gang="bak">Bak</button>
+<button type="button" data-gang="vanster">Vänster</button>
+<button type="button" data-gang="hoger">Höger</button>
+<button type="button" data-gang="svangV">Sväng v</button>
+<button type="button" data-gang="svangH">Sväng h</button>
+</div>
 <button id="skjut" type="button" hidden>Skjut</button>
 <section id="meny" hidden>
 <div class="panelTopp"><b>Meny</b><button id="menyStang" type="button">Stäng</button></div>
@@ -184,7 +193,7 @@
 <div id="traffBlixt"></div>
 <div id="laserLinje" hidden></div>
 <div id="laserPrick" hidden></div>
-<script type="module" src="./huvud.js?v=13"></script>
+<script type="module" src="./huvud.js?v=14"></script>
 <script>
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});

@@ -1,12 +1,12 @@
-// Flygprov 07: cockpitknapp, skottljud som tystnar, plus styrningen från Flygprov 06.
+// Flygprov 08: meny, horisonten byter vy, gasljud. Styrning och skottljud från tidigare prov.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { ringRadie } from '../flyg/ballistik.js';
 import { FlightModel } from '../flyg/flight-model.js';
 import { arOmslag, eulerStyrning, fysikVinkel } from '../flyg/orientering.js';
-import { layoutFor, layoutKrockar } from '../flyg/layout.js';
+import { layoutFor, layoutKrockar, rectsOverlappar } from '../flyg/layout.js';
 import { ljudBehov, tomOmgang, traffPaSpelare, traffPost, FLYG_VERSION, vyEtikett } from '../flyg/omgang.js';
-import { skapaKanal } from '../flyg/ljud.js';
+import { skapaKanal, gasSlag, mekanikKurva } from '../flyg/ljud.js';
 import { FlightInput } from '../flyg/flight-controls.js';
 
 const rot = new URL('../', import.meta.url);
@@ -34,9 +34,11 @@ function styr(vinkel = 0) {
   return { inst, gyro, tid(n) { t = n; }, skicka(p) { emit('deviceorientation', p); } };
 }
 
-k('version i sidan', html.includes('Flygprov 07') && html.includes('id="versionEtikett"'));
-k('versionens namn', FLYG_VERSION === 'Flygprov 07');
-k('cockpitknapp i sidan', html.includes('id="sight"') && html.includes('class="vyknapp"') && html.includes('>Cockpit</button>'));
+k('version i sidan', html.includes('Flygprov 08') && html.includes('id="versionEtikett"'));
+k('versionens namn', FLYG_VERSION === 'Flygprov 08');
+k('ingen cockpitknapp', !html.includes('id="sight"') && !html.includes('class="vyknapp"') && !html.includes('>Cockpit</button>'));
+k('horisonten byter vy', html.includes('id="jaktHorisont"') && html.includes('id="panelHorisont"'));
+k('meny i sidan', html.includes('id="settingsButton"') && html.includes('> Meny</button>') && html.includes('id="status"') && html.includes('id="metrics"') && html.includes('id="flightHud"') && html.includes('id="back"'));
 k('vyknappens text', vyEtikett(false) === 'Cockpit' && vyEtikett(true) === 'Bakifrån');
 k('zippen ligger kvar', fs.existsSync(new URL('flyg/flyg-v05d.zip', rot)) && fs.existsSync(new URL('flyg/flyg-v05.zip', rot)));
 
@@ -258,7 +260,18 @@ for (const [w, h] of [[844, 390], [932, 430], [667, 375], [390, 844], [430, 932]
   const L = layoutFor(w, h, R, C.cockpit.fov_grader, C.jaktpanel);
   const krock = layoutKrockar(L);
   k('ingen överlapp ' + w + 'x' + h, krock.length === 0);
-  k('stor vyknapp ' + w + 'x' + h, L.vy && L.vy.w >= 160 && L.vy.h >= 60 && L.vy.x > w * 0.4 && L.vy.y < h * 0.45);
+  k('meny i hörnet ' + w + 'x' + h, L.meny && L.meny.w >= 44 && L.meny.h >= 44 && L.meny.x > w * 0.55 && L.meny.y < 24);
+  k('gas högre ' + w + 'x' + h, L.liggande ? L.gas.h >= 112 && L.gas.h <= 126 : L.gas.h >= 134 && L.gas.h <= 142);
+  k('jakt ovanför gas ' + w + 'x' + h, L.liggande || (L.jakt.y + L.jakt.h <= L.gas.y + 0.5 && !rectsOverlappar(L.jakt, L.gas) && !rectsOverlappar(L.jakt, L.center)));
+}
+
+{
+  k('gashack vid steg', gasSlag(0.5, 0.56)?.typ === 'hack' && gasSlag(0.5, 0.56)?.antal >= 1);
+  k('gasstopp i ändarna', gasSlag(0.4, 0)?.typ === 'stopp' && gasSlag(0.4, 1)?.typ === 'stopp');
+  k('gas utan nytt steg är tyst', gasSlag(0.5, 0.52) === null && gasSlag(0, 0) === null && gasSlag(1, 1) === null);
+  let topp = 0;
+  for (const v of mekanikKurva()) topp = Math.max(topp, Math.abs(v));
+  k('mekanik under -1 dBTP', topp < 10 ** (-1 / 20));
 }
 
 if (fel.length) {

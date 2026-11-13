@@ -48,15 +48,15 @@ export function skapaPanel(canvas){
   etikett(ctx,x,y,r,'KURS');
  }
  function rita(s){
-  const w=800,h=400;canvas.width=w;canvas.height=h;
+  const w=PANEL_W,h=PANEL_H;canvas.width=w;canvas.height=h;
   ctx.clearRect(0,0,w,h);
   ctx.fillStyle='#10120e';ctx.fillRect(0,0,w,h);
   ctx.strokeStyle='#3a3d36';ctx.lineWidth=8;ctx.strokeRect(4,4,w-8,h-8);
   ctx.fillStyle='#8a8d82';
   for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(18+i*10,18,2.2,0,Math.PI*2);ctx.arc(w-18-i*10,18,2.2,0,Math.PI*2);ctx.fill();}
   ctx.fillStyle='#171910';ctx.fillRect(155,16,490,368);
-  const r=62,sr=46,top=112,bot=284;
-  const sex=[248,400,552];
+  const r=PANEL_HORISONT.r,sr=46,top=PANEL_HORISONT.y,bot=284;
+  const sex=[248,PANEL_HORISONT.x,552];
   const mph=s.fart*2.23694,hojd=hojdvisare(s.hojd);
   ratt(sex[0],top,r,'FART',10);visare(ctx,sex[0],top,Math.max(0,Math.min(360,mph/500*360)),48,2.4);nav(ctx,sex[0],top);
   horisont(sex[1],top,r,s);nav(ctx,sex[1],top);
@@ -129,6 +129,31 @@ function jaktVisare(ctx,x,y,grader,len,bredd,farg){
 function jaktText(ctx,text,x,y,px,F,font,vikt){
  ctx.fillStyle=F.siffra;ctx.font=(vikt||'700')+' '+px+'px '+font;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x,y);
 }
+export function jaktMatt(w,h,C){
+ C=C||{};
+ const pad=C.marginal_px||8, gap=C.gap_px||6;
+ const gVisa=w>=(C.visa_g_om_bredd_px||360);
+ const gSkala=gVisa?(C.g_skala||0.72):0;
+ const gaps=(gVisa?3:2)*gap;
+ const inner=Math.max(10,w-pad*2);
+ const rMax=Math.max(8,(h-pad*2)/2-1);
+ const r=Math.min(rMax,(inner-gaps)/(2*(3+gSkala)));
+ const rG=gVisa?r*gSkala:0;
+ const total=r*2*3+rG*2+gaps;
+ const x0=pad+(inner-total)/2+r;
+ const steg=r*2+gap;
+ return {r,rG,y:h/2+1,gap,gVisa,fart:x0,horisont:x0+steg,hojd:x0+steg*2,g:gVisa?x0+steg*2+r+gap+rG:0};
+}
+export function jaktHorisont(w,h,C){
+ const m=jaktMatt(w,h,C);
+ return {x:m.horisont,y:m.y,r:m.r};
+}
+const PANEL_W=800,PANEL_H=400;
+const PANEL_HORISONT={x:400,y:112,r:62,bez:74};
+export function panelHorisont(cssW,cssH){
+ const sx=(cssW||0)/PANEL_W, sy=(cssH||0)/PANEL_H;
+ return {x:PANEL_HORISONT.x*sx,y:PANEL_HORISONT.y*sy,rx:PANEL_HORISONT.bez*sx,ry:PANEL_HORISONT.bez*sy};
+}
 function ritaJaktYta(ctx,w,h,s,C){
  const F=C.farger,font=C.font||'ui-monospace,monospace';
  ctx.clearRect(0,0,w,h);
@@ -143,25 +168,14 @@ function ritaJaktYta(ctx,w,h,s,C){
   ctx.beginPath();ctx.arc(px,5.5,nit,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.arc(px,h-5.5,nit,0,Math.PI*2);ctx.fill();
  }
- const pad=C.marginal_px||8, gap=C.gap_px||6;
- const gVisa=w>=(C.visa_g_om_bredd_px||360);
- const gSkala=gVisa?(C.g_skala||0.72):0;
- const slots=3+gSkala, gaps=(gVisa?3:2)*gap;
- const inner=Math.max(10,w-pad*2);
- const rMax=Math.max(8,(h-pad*2)/2-1);
- let r=Math.min(rMax,(inner-gaps)/(2*slots));
- const rG=gVisa?r*gSkala:0;
- const total=r*2*3+rG*2+gaps;
- let x=pad+(inner-total)/2+r;
- const y=h/2+1;
+ const m=jaktMatt(w,h,C);
+ const r=m.r,y=m.y,gVisa=m.gVisa;
  const ansikte=r-Math.max(4,r*0.13);
- ritaFart(ctx,x,y,r,ansikte,s,C,font);
- x+=r*2+gap;
- ritaHorisont(ctx,x,y,r,ansikte,s,C,font);
- x+=r*2+gap;
- ritaHojd(ctx,x,y,r,ansikte,s,C,font);
+ ritaFart(ctx,m.fart,y,r,ansikte,s,C,font);
+ ritaHorisont(ctx,m.horisont,y,r,ansikte,s,C,font);
+ ritaHojd(ctx,m.hojd,y,r,ansikte,s,C,font);
  let gRitar=false;
- if(gVisa){x+=r+gap+rG;ritaG(ctx,x,y,rG,s,C,font);gRitar=true;}
+ if(gVisa){ritaG(ctx,m.g,y,m.rG,s,C,font);gRitar=true;}
  if(s.stall){
   ctx.fillStyle=F.varning;ctx.font='800 '+Math.max(9,Math.min(13,r*0.28))+'px '+font;ctx.textAlign='left';ctx.textBaseline='top';
   ctx.fillText(C.stall_text||'STALL',8,7);

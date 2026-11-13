@@ -122,17 +122,25 @@ export function skapaBrade(canvas, konfig) {
 
   const ekCanvas = trakorn(farger.ek, farger.ekMork, farger.bjorkLjus, 256, 11);
   const ekTex = textur(ekCanvas, renderer, true);
-  const ek = new THREE.MeshStandardMaterial({map: ekTex, roughness: 0.78, metalness: 0.04});
-  const bjorkFarg = new THREE.MeshStandardMaterial({color: farger.bjorkLjus, roughness: 0.72, metalness: 0.02});
+  const ek = new THREE.MeshStandardMaterial({map: ekTex, roughness: 0.78, metalness: 0.04, side: THREE.DoubleSide});
+  const bjorkFarg = new THREE.MeshStandardMaterial({color: farger.bjorkLjus, roughness: 0.72, metalness: 0.02, side: THREE.DoubleSide});
+  const bjorkKropp = new THREE.MeshStandardMaterial({color: farger.bjork, roughness: 0.86, metalness: 0.02, side: THREE.DoubleSide});
   const massing = new THREE.MeshStandardMaterial({color: farger.massing, roughness: 0.38, metalness: 0.72});
   const morkMetall = new THREE.MeshStandardMaterial({color: 0x2c2926, roughness: 0.4, metalness: 0.8});
-  const halMat = new THREE.MeshBasicMaterial({color: farger.hal, side: THREE.BackSide});
-  const halBotten = new THREE.MeshBasicMaterial({color: farger.hal});
+  const fickaMat = new THREE.MeshStandardMaterial({
+    color: farger.ficka || '#3a2416', roughness: 1, metalness: 0, side: THREE.DoubleSide,
+    emissive: 0x1c100a, emissiveIntensity: 0.55,
+  });
+  const fickaBotten = new THREE.MeshStandardMaterial({
+    color: farger.fickaBotten || '#4a3020', roughness: 1, metalness: 0,
+    emissive: 0x2a1810, emissiveIntensity: 0.7,
+  });
   const bordCanvas = trakorn(farger.bord, '#1a120c', '#3a2a1e', 256, 4);
   const bordMat = new THREE.MeshStandardMaterial({map: textur(bordCanvas, renderer, true), roughness: 0.9, metalness: 0.02});
   const bord = new THREE.Mesh(new THREE.PlaneGeometry(br.bord, br.bord), bordMat);
   bord.rotation.x = -Math.PI / 2;
-  bord.position.y = -br.bottenTjock - 0.004;
+  const hojdUnder = (br.plattaTjock ?? 0.008) + (br.underTjock ?? 0.022);
+  bord.position.y = -hojdUnder - 0.003;
   bord.receiveShadow = true;
   scen.add(bord);
 
@@ -170,14 +178,31 @@ export function skapaBrade(canvas, konfig) {
     return m;
   }
 
-  function golv(bana) {
-    const half = br.halvBredd;
+  function laggRamUv(geo) {
+    const pos = geo.attributes.position;
+    const nrm = geo.attributes.normal;
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      const ax = Math.abs(nrm.getX(i));
+      const ay = Math.abs(nrm.getY(i));
+      const az = Math.abs(nrm.getZ(i));
+      if (ay >= ax && ay >= az) uv.setXY(i, x * 3.1 + 0.5, z * 3.1 + 0.5);
+      else if (ax >= az) uv.setXY(i, z * 3.1 + 0.5, y * 5.5 + 0.5);
+      else uv.setXY(i, x * 3.1 + 0.5, y * 5.5 + 0.5);
+    }
+    uv.needsUpdate = true;
+  }
+
+  function golv(bana, halv) {
     const S = 1024;
     const c = trakorn(farger.bjork, farger.bjorkMork, farger.bjorkLjus, S, 27);
     const g = c.getContext('2d');
     const flack = (x, z, radie, farg) => {
-      const [px, py] = varldPx(x, z, half, S);
-      const rr = radie / (2 * half) * S;
+      const [px, py] = varldPx(x, z, halv, S);
+      const rr = radie / (2 * halv) * S;
       g.fillStyle = farg;
       g.beginPath();
       g.arc(px, py, rr, 0, Math.PI * 2);
@@ -186,7 +211,7 @@ export function skapaBrade(canvas, konfig) {
     flack(bana.start.x, bana.start.z, (bana.start.radie || 0.016) * 1.15, 'rgba(90,58,34,0.16)');
     flack(bana.mal.x, bana.mal.z, bana.mal.radie * 0.7, 'rgba(70,110,64,0.4)');
     const ord = (text, x, z) => {
-      const [px, py] = varldPx(x, z, half, S);
+      const [px, py] = varldPx(x, z, halv, S);
       g.save();
       g.translate(px, py);
       g.font = `700 ${Math.round(S * 0.042)}px Palatino, Georgia, serif`;
@@ -201,8 +226,8 @@ export function skapaBrade(canvas, konfig) {
     ord(konfig.texter.startFack || 'START', bana.start.x, bana.start.z);
     ord(konfig.texter.malFack || 'MÅL', bana.mal.x, bana.mal.z);
     for (const h of bana.hal || []) {
-      const [px, py] = varldPx(h.x, h.z, half, S);
-      const rr = h.radie / (2 * half) * S;
+      const [px, py] = varldPx(h.x, h.z, halv, S);
+      const rr = h.radie / (2 * halv) * S;
       g.strokeStyle = 'rgba(40,24,12,0.85)';
       g.lineWidth = Math.max(2, rr * 0.28);
       g.beginPath();
@@ -212,18 +237,19 @@ export function skapaBrade(canvas, konfig) {
     g.globalCompositeOperation = 'destination-out';
     g.fillStyle = '#000';
     for (const h of bana.hal || []) {
-      const [px, py] = varldPx(h.x, h.z, half, S);
+      const [px, py] = varldPx(h.x, h.z, halv, S);
       g.beginPath();
-      g.arc(px, py, (h.radie / (2 * half)) * S, 0, Math.PI * 2);
+      g.arc(px, py, (h.radie / (2 * halv)) * S, 0, Math.PI * 2);
       g.fill();
     }
     const tex = hall(textur(c, renderer, false));
-    const geo = hall(new THREE.PlaneGeometry(half * 2, half * 2));
-    laggUv(geo, half);
+    const geo = hall(new THREE.PlaneGeometry(halv * 2, halv * 2));
+    laggUv(geo, halv);
     const mat = hall(new THREE.MeshStandardMaterial({
-      map: tex, roughness: 0.84, metalness: 0.02, alphaTest: 0.4, color: 0xffffff,
+      map: tex, roughness: 0.84, metalness: 0.02, alphaTest: 0.4, color: 0xffffff, side: THREE.DoubleSide,
     }));
     const yta = new THREE.Mesh(geo, mat);
+    yta.position.y = 0.00045;
     yta.receiveShadow = true;
     lada.add(yta);
   }
@@ -284,39 +310,70 @@ export function skapaBrade(canvas, konfig) {
     for (const res of sophanter) res.dispose?.();
     sophanter.length = 0;
     const half = br.halvBredd;
+    const bett = br.overlappBett ?? 0.0016;
+    const over = br.overlappUnder ?? 0.012;
+    const plattaTjock = br.plattaTjock ?? 0.008;
+    const underTjock = br.underTjock ?? 0.022;
+    const plattaHalv = half + over;
+    const bottenY = -(plattaTjock + underTjock);
+    const toppY = br.sargHojd;
+    const platta = new THREE.Mesh(hall(new THREE.BoxGeometry(plattaHalv * 2, plattaTjock + 0.001, plattaHalv * 2)), bjorkKropp);
+    platta.position.y = -plattaTjock / 2;
+    platta.receiveShadow = true;
+    lada.add(platta);
     const yttre = (half + br.sargBredd) * 2;
-    const botten = new THREE.Mesh(hall(new THREE.BoxGeometry(yttre, 0.004, yttre)), halBotten);
-    botten.position.y = -br.bottenTjock;
-    botten.receiveShadow = true;
-    lada.add(botten);
-    golv(bana);
-    const sargH = br.sargHojd + br.bottenTjock;
-    const sargY = (br.sargHojd - br.bottenTjock) / 2;
-    const framBak = 2 * (half + br.sargBredd);
-    const inskott = 0.0012;
-    const fram = mesh(new THREE.BoxGeometry(framBak, sargH, br.sargBredd), ek, true);
-    fram.position.set(0, sargY, half + br.sargBredd / 2 - inskott);
-    const bak = mesh(new THREE.BoxGeometry(framBak, sargH, br.sargBredd), ek, true);
-    bak.position.set(0, sargY, -(half + br.sargBredd / 2 - inskott));
-    const sidaL = mesh(new THREE.BoxGeometry(br.sargBredd, sargH, half * 2), ek, true);
-    sidaL.position.set(-(half + br.sargBredd / 2 - inskott), sargY, 0);
-    const sidaR = mesh(new THREE.BoxGeometry(br.sargBredd, sargH, half * 2), ek, true);
-    sidaR.position.set(half + br.sargBredd / 2 - inskott, sargY, 0);
+    const under = new THREE.Mesh(hall(new THREE.BoxGeometry(yttre - 0.003, underTjock + 0.0014, yttre - 0.003)), ek);
+    under.position.y = bottenY + underTjock / 2 + 0.0005;
+    under.receiveShadow = true;
+    lada.add(under);
+    const yttreHalv = half + br.sargBredd;
+    const inreHalv = half - bett;
+    const form = new THREE.Shape();
+    form.moveTo(-yttreHalv, -yttreHalv);
+    form.lineTo(yttreHalv, -yttreHalv);
+    form.lineTo(yttreHalv, yttreHalv);
+    form.lineTo(-yttreHalv, yttreHalv);
+    form.lineTo(-yttreHalv, -yttreHalv);
+    const oppning = new THREE.Path();
+    oppning.moveTo(-inreHalv, -inreHalv);
+    oppning.lineTo(-inreHalv, inreHalv);
+    oppning.lineTo(inreHalv, inreHalv);
+    oppning.lineTo(inreHalv, -inreHalv);
+    oppning.lineTo(-inreHalv, -inreHalv);
+    form.holes.push(oppning);
+    const ramGeo = hall(new THREE.ExtrudeGeometry(form, {depth: toppY - bottenY, bevelEnabled: false}));
+    ramGeo.rotateX(Math.PI / 2);
+    ramGeo.translate(0, toppY, 0);
+    laggRamUv(ramGeo);
+    const ram = new THREE.Mesh(ramGeo, ek);
+    ram.castShadow = true;
+    ram.receiveShadow = true;
+    lada.add(ram);
+    golv(bana, plattaHalv);
+    const sjunk = 0.003;
     for (const v of bana.vaggar || []) {
-      const kropp = mesh(new THREE.BoxGeometry(v.b, br.vaggHojd, v.d), ek, true);
-      kropp.position.set(v.x, br.vaggHojd / 2, v.z);
+      const kropp = mesh(new THREE.BoxGeometry(v.b, br.vaggHojd + sjunk, v.d), ek, true);
+      kropp.position.set(v.x, (br.vaggHojd - sjunk) / 2, v.z);
+      kropp.rotation.y = (v.vinkel || 0) * Math.PI / 180;
       const kappa = mesh(new THREE.BoxGeometry(v.b * 0.86, br.kappaHojd, Math.max(0.003, v.d * 0.62)), bjorkFarg, false);
-      kappa.position.set(v.x, br.vaggHojd + br.kappaHojd / 2, v.z);
+      kappa.position.set(v.x, br.vaggHojd + br.kappaHojd / 2 - sjunk * 0.15, v.z);
+      kappa.rotation.y = kropp.rotation.y;
       kappa.castShadow = false;
     }
     const kantMat = hall(new THREE.MeshStandardMaterial({color: farger.ekDjup, roughness: 0.9, metalness: 0.05}));
+    const fickaDjup = br.fickaDjup ?? 0.027;
     for (const h of bana.hal || []) {
-      const brunn = new THREE.Mesh(hall(new THREE.CylinderGeometry(h.radie * 0.98, h.radie * 0.8, br.bottenTjock, 24, 1, true)), halMat);
-      brunn.position.set(h.x, -br.bottenTjock / 2, h.z);
+      const rad = h.radie * 0.992;
+      const brunn = new THREE.Mesh(hall(new THREE.CylinderGeometry(rad, rad * 0.9, fickaDjup, 28, 1, true)), fickaMat);
+      brunn.position.set(h.x, 0.0007 - fickaDjup / 2, h.z);
       lada.add(brunn);
-      const kant = mesh(new THREE.TorusGeometry(h.radie, 0.0017, 6, 28), kantMat, false);
+      const lock = new THREE.Mesh(hall(new THREE.CircleGeometry(rad * 0.9, 24)), fickaBotten);
+      lock.rotation.x = -Math.PI / 2;
+      lock.position.set(h.x, 0.0009 - fickaDjup, h.z);
+      lada.add(lock);
+      const kant = mesh(new THREE.TorusGeometry(h.radie, 0.0015, 6, 28), kantMat, false);
       kant.rotation.x = Math.PI / 2;
-      kant.position.set(h.x, 0.0012, h.z);
+      kant.position.set(h.x, 0.00115, h.z);
     }
     const startRing = mesh(new THREE.TorusGeometry((bana.start.radie || 0.016) * 0.92, 0.0015, 6, 28), massing, false);
     startRing.rotation.x = Math.PI / 2;
@@ -389,7 +446,7 @@ export function skapaBrade(canvas, konfig) {
     if (!kula) return;
     const r = konfig.fysik.kulaRadie;
     kula.position.set(state.x, state.y, state.z);
-    kula.visible = state.lage !== 'paus' || state.y > -r;
+    kula.visible = state.y > -(br.fickaDjup ?? 0.027);
     kula.castShadow = state.y > -0.002;
     if ((state.lage === 'rullar' || state.lage === 'tippar') && dt > 0) {
       kula.rotateX(state.vz / r * dt);
@@ -416,6 +473,67 @@ export function skapaBrade(canvas, konfig) {
     return {ritningar: info.calls, trianglar: info.triangles};
   }
 
+  function provGlipa() {
+    renderer.render(scen, kamera);
+    const gl = renderer.getContext();
+    const w = gl.drawingBufferWidth;
+    const h = gl.drawingBufferHeight;
+    const pix = new Uint8Array(w * h * 4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pix);
+    const bjork = new Uint8Array(w * h);
+    let minX = w;
+    let maxX = 0;
+    let minY = h;
+    let maxY = 0;
+    let bjorkAntal = 0;
+    for (let i = 0; i < w * h; i++) {
+      const r = pix[i * 4];
+      const g = pix[i * 4 + 1];
+      const b = pix[i * 4 + 2];
+      if (r > 168 && g > 142 && b > 108 && r > b + 18) {
+        bjork[i] = 1;
+        bjorkAntal++;
+        const x = i % w;
+        const y = (i / w) | 0;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+    let glipa = 0;
+    if (bjorkAntal) {
+      const y0 = Math.max(0, minY - 3);
+      const y1 = Math.min(h - 1, maxY + 3);
+      const x0 = Math.max(0, minX - 3);
+      const x1 = Math.min(w - 1, maxX + 3);
+      for (let y = y0; y <= y1; y++) {
+        const rad = y * w;
+        for (let x = x0; x <= x1; x++) {
+          const i = rad + x;
+          const r = pix[i * 4];
+          const g = pix[i * 4 + 1];
+          const b = pix[i * 4 + 2];
+          const iKant = x <= minX + 6 || x >= maxX - 6 || y <= minY + 6 || y >= maxY - 6;
+          if (!iKant || r > 26 || g > 20 || b > 18) continue;
+          let nara = false;
+          for (let oy = -2; oy <= 2 && !nara; oy++) {
+            const yy = y + oy;
+            if (yy < 0 || yy >= h) continue;
+            const rad2 = yy * w;
+            for (let ox = -2; ox <= 2; ox++) {
+              const xx = x + ox;
+              if (xx < 0 || xx >= w) continue;
+              if (bjork[rad2 + xx]) { nara = true; break; }
+            }
+          }
+          if (nara) glipa++;
+        }
+      }
+    }
+    return {glipa, bjork: bjorkAntal, bredd: Math.max(0, maxX - minX), hojd: Math.max(0, maxY - minY)};
+  }
+
   passa();
-  return {bygg, passa, luta, boll, hjalp, rita, prestanda};
+  return {bygg, passa, luta, boll, hjalp, rita, prestanda, provGlipa};
 }

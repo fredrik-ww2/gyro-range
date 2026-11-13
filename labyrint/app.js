@@ -1,6 +1,6 @@
 import {lasKonfig} from './konfig.js';
 import {skapaSim} from './fysik.js';
-import {skapaGyro} from './gyro.js';
+import {skapaGyro, mjukLutning} from './gyro.js';
 import {skapaLjud} from './ljud.js';
 import {skapaBrade} from './brade.js';
 
@@ -9,12 +9,6 @@ const RAD = Math.PI / 180;
 
 function klamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
-}
-
-function dod(v, d) {
-  const a = Math.abs(v);
-  if (a <= d) return 0;
-  return Math.sign(v) * (a - d);
 }
 
 function tal(v, en) {
@@ -70,7 +64,8 @@ function fyllText() {
   $('menyRubrik').textContent = texter.meny || 'Meny';
   $('stang').textContent = texter.stang || 'Stäng';
   $('hjalpText').textContent = texter.hjalpText || '';
-  $('banaRubrik').textContent = texter.bana || 'Bana';
+  $('banaRubrik').textContent = texter.bana || 'Nivå';
+  $('kanslaRubrik').textContent = texter.kansla || 'Känsla';
   $('startGyro').textContent = texter.startGyro || 'Starta gyro';
   $('startFinger').textContent = texter.startFinger || 'Finger';
   $('kanslighetNamn').textContent = texter.kanslighet || 'Känslighet';
@@ -91,11 +86,33 @@ function ritaBanor() {
   konfig.banor.forEach((bana, i) => {
     const knapp = document.createElement('button');
     knapp.type = 'button';
-    knapp.textContent = `${bana.nummer} ${bana.namn}`;
+    knapp.textContent = String(bana.nummer);
+    knapp.setAttribute('aria-label', `Nivå ${bana.nummer} ${bana.namn}`);
     knapp.setAttribute('aria-pressed', String(i === banaIndex));
     knapp.addEventListener('click', () => bytBana(i));
     rot.append(knapp);
   });
+  const vald = konfig.banor[banaIndex];
+  $('banaNamn').textContent = `Nivå ${vald.nummer} · ${vald.namn}`;
+}
+
+function ritaKansla() {
+  const rot = $('kansla');
+  rot.replaceChildren();
+  for (const steg of konfig.gyro.kansla || []) {
+    const knapp = document.createElement('button');
+    knapp.type = 'button';
+    knapp.textContent = steg.namn;
+    knapp.setAttribute('aria-pressed', String(Math.abs(install.kanslighet - steg.tal) < 0.03));
+    knapp.addEventListener('click', () => {
+      install.kanslighet = steg.tal;
+      $('kanslighet').value = String(steg.tal);
+      $('kanslighetTal').textContent = tal(install.kanslighet);
+      sparaInstall();
+      ritaKansla();
+    });
+    rot.append(knapp);
+  }
 }
 
 function bytBana(i) {
@@ -120,10 +137,10 @@ function visaMeny(oppna) {
 function aktuellLutning() {
   const ra = gyro.grader();
   if (ra.kalla === 'tvingad') return ra;
-  const m = konfig.gyro.maxGrader;
+  const gyroKurva = {...konfig.gyro, dodzon: install.dodzon};
   return {
-    fram: klamp(dod(ra.fram, install.dodzon) * install.kanslighet, -m, m),
-    sida: klamp(dod(ra.sida, install.dodzon) * install.kanslighet, -m, m),
+    fram: mjukLutning(ra.fram, install.kanslighet, gyroKurva),
+    sida: mjukLutning(ra.sida, install.kanslighet, gyroKurva),
     kalla: ra.kalla,
   };
 }
@@ -191,6 +208,7 @@ function koppla() {
     install.kanslighet = +$('kanslighet').value;
     visaTal();
     sparaInstall();
+    ritaKansla();
   });
   $('dodzon').addEventListener('input', () => {
     install.dodzon = +$('dodzon').value;
@@ -213,6 +231,7 @@ function koppla() {
   $('spel').addEventListener('pointerdown', () => { if (!$('meny').hidden) visaMeny(false); });
   $('igen').addEventListener('click', () => bytBana(banaIndex));
   $('nasta').addEventListener('click', () => bytBana((banaIndex + 1) % konfig.banor.length));
+  addEventListener('pointerdown', () => ljud.starta(), {capture: true, passive: true});
   $('startGyro').addEventListener('click', async () => {
     ljud.starta();
     const svar = await gyro.starta();
@@ -240,6 +259,7 @@ function borja() {
 }
 
 fyllText();
+ritaKansla();
 koppla();
 brade.bygg(konfig.banor[banaIndex]);
 brade.hjalp(install.hjalp);
@@ -288,7 +308,9 @@ window.__labyrint = {
   steg(n, dt) { for (let i = 0; i < n; i++) stegEn(dt); brade.rita(); },
   bana(i) { bytBana(i); },
   banaData() { return konfig.banor[banaIndex]; },
+  antal() { return konfig.banor.length; },
   radie() { return konfig.fysik.kulaRadie; },
+  provGlipa() { return brade.provGlipa(); },
   meny(oppna) { visaMeny(!!oppna); },
   prestanda() { return {fps, laddSek, ...brade.prestanda()}; },
   borja() { borja(); },

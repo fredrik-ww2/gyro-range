@@ -20,13 +20,16 @@
   <div class="meny-topp"><h2 id="menyRubrik">Meny</h2><button id="stang" type="button">Stäng</button></div>
   <p id="hjalpText"></p>
   <p id="lageText" role="status"></p>
-  <h3 id="banaRubrik">Bana</h3>
+  <h3 id="banaRubrik">Nivå</h3>
   <div id="banor" class="banor"></div>
+  <p id="banaNamn"></p>
   <div id="malKnappar" hidden>
     <button id="igen" type="button">Igen</button>
     <button id="nasta" type="button">Nästa bana</button>
   </div>
-  <label class="reglage"><span><span id="kanslighetNamn">Känslighet</span> <output id="kanslighetTal"></output></span><input id="kanslighet" type="range" min="0.4" max="2.2" step="0.05"></label>
+  <h3 id="kanslaRubrik">Känsla</h3>
+  <div id="kansla" class="kansla" role="group"></div>
+  <label class="reglage"><span><span id="kanslighetNamn">Känslighet</span> <output id="kanslighetTal"></output></span><input id="kanslighet" type="range" min="0.45" max="1.8" step="0.05"></label>
   <label class="reglage"><span><span id="dodzonNamn">Dödzon</span> <output id="dodzonTal"></output></span><input id="dodzon" type="range" min="0" max="6" step="0.1"></label>
   <label class="check"><input id="ljud" type="checkbox"> <span id="ljudNamn">Ljud</span></label>
   <label class="check"><input id="hjalp" type="checkbox"> <span id="hjalpNamn">Hjälpbanor</span></label>

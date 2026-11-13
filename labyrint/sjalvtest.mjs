@@ -1,8 +1,8 @@
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import * as THREE from '../js/vendor/three.module.js';
-import {skapaSim} from './fysik.js';
-import {enhetsKvaternion, gravitationSkarm, lutningFranGrav} from './gyro.js';
+import {avstandTillVagg, skapaSim} from './fysik.js';
+import {enhetsKvaternion, gravitationSkarm, lutningFranGrav, mjukLutning} from './gyro.js';
 
 const konfig = JSON.parse(readFileSync(new URL('./konfig.json', import.meta.url), 'utf8'));
 const fel = [];
@@ -100,6 +100,36 @@ mal.placera(bana.mal.x, bana.mal.z);
 for (let i = 0; i < 90 && mal.lage !== 'mal'; i++) mal.steg(1 / 60, {fram: 0, sida: 0});
 krav('målet fångar en stilla kula', mal.lage === 'mal');
 
+const liten = Math.abs(mjukLutning(2.2, 1, konfig.gyro));
+const medel = Math.abs(mjukLutning(8, 1, konfig.gyro));
+krav('två grader är nästan plant', liten < 1.3, liten.toFixed(2));
+krav('åtta grader ger en måttlig lutning', medel > 4.5 && medel < 8, medel.toFixed(2));
+const vilaLut = skapaSim(konfig, konfig.banor[0]);
+vilaLut.placera(0.02, 0.02);
+for (let i = 0; i < 90; i++) vilaLut.steg(1 / 60, {fram: sinGrader(liten), sida: 0});
+krav('kulan vilar vid liten lutning', Math.abs(vilaLut.z - 0.02) < 0.006, vilaLut.z.toFixed(4));
+const rull = skapaSim(konfig, konfig.banor[0]);
+rull.placera(0.02, 0.03);
+for (let i = 0; i < 50; i++) rull.steg(1 / 60, {fram: sinGrader(medel), sida: 0});
+krav('tydligare lutning sätter fart', rull.z < 0.012, rull.z.toFixed(4));
+
+const kantX = konfig.brade.halvBredd - r;
+const motVagg = skapaSim(konfig, konfig.banor[0]);
+motVagg.placera(kantX, 0.02, 0, 0);
+let vilaljud = 0;
+for (let i = 0; i < 70; i++) {
+  motVagg.steg(1 / 60, {fram: 0, sida: sinGrader(8)});
+  vilaljud += motVagg.handelser.filter((h) => h.typ === 'studs').length;
+}
+krav('vila mot sargen är tyst', vilaljud === 0, String(vilaljud));
+
+const tva = {x: 0, z: 0, b: 0.16, d: 0.01, vinkel: 90};
+krav('vriden vägg följer samma rotation som lådan', Math.abs(avstandTillVagg(0.02, 0, tva) - 0.015) < 0.001, avstandTillVagg(0.02, 0, tva).toFixed(4));
+const rak = {x: 0, z: 0, b: 0.16, d: 0.01, vinkel: 0};
+krav('oroterad vägg mäter tjockleken på djupet', Math.abs(avstandTillVagg(0, 0.02, rak) - 0.015) < 0.001);
+
+krav('tio nivåer', konfig.banor.length === 10 && konfig.banor.every((b, i) => b.nummer === i + 1));
+
 function prover(spar, steg) {
   const ut = [];
   for (let i = 0; i < spar.length - 1; i++) {
@@ -116,9 +146,7 @@ function prover(spar, steg) {
 }
 
 function avstandLada(x, z, lada) {
-  const dx = Math.max(Math.abs(x - lada.x) - lada.b / 2, 0);
-  const dz = Math.max(Math.abs(z - lada.z) - lada.d / 2, 0);
-  return Math.hypot(dx, dz);
+  return avstandTillVagg(x, z, lada);
 }
 
 function punktFramfor(spar, x, z, avstand) {
@@ -174,7 +202,7 @@ for (const b of konfig.banor) {
   const maxSin = Math.sin(b.maxLutning * Math.PI / 180);
   let utfall = 'tid';
   let tid = 0;
-  for (let i = 0; i < 60 * 18; i++) {
+  for (let i = 0; i < 60 * 22; i++) {
     const malP = punktFramfor(b.spar, sim.x, sim.z, 0.018);
     const dx = malP.x - sim.x;
     const dz = malP.z - sim.z;

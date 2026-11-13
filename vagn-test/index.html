@@ -7,27 +7,33 @@
 <meta name="theme-color" content="#1a221c">
 <link rel="icon" href="data:,">
 <title>Vagntest</title>
-<link rel="stylesheet" href="./stil.css?v=3">
+<link rel="stylesheet" href="./stil.css?v=4">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
 <canvas id="vy" aria-label="Skyttesikte från en Sherman. Luta telefonen för att köra."></canvas>
+<div id="optik" hidden aria-hidden="true">
+<div class="ram"></div>
+<div class="vignett"></div>
+<div id="optikNitar"></div>
+</div>
 <div id="blixt" aria-hidden="true"></div>
+<div id="varning" aria-hidden="true"></div>
 <div id="sikte" hidden>
-<div class="kors korsV"></div>
+<div class="stolpe"></div>
 <div class="kors korsH vanster"></div>
 <div class="kors korsH hoger"></div>
-<div class="kors prick"></div>
+<div class="spets"></div>
 </div>
 <p id="besked" hidden></p>
 <p id="flygtid" hidden></p>
-<div id="version">Vagntest 03</div>
+<div id="version">Vagntest 04</div>
 <section id="startKort">
 <span class="ogonbryn">NORMANDIE · SKYTTESIKTE</span>
 <h1>Håll telefonen på sidan</h1>
-<p id="startText">Som en ratt. Växelspaken hackar mellan back, neutral och fyra växlar. Gasen klickar i grova steg och stannar där du släpper. Luta för att svänga, vrid för tornet, tippa ovansidan för eldröret.</p>
+<p id="startText">Som en ratt. Växel och gas sitter i ett kort hörn nere till vänster, med fart, varv och eldrör på tre mätare. Luta för att svänga, vrid för tornet, tippa ovansidan för eldröret.</p>
 <button id="starta" type="button" disabled>Laddar…</button>
-<small>På en dator: A och D svänger, pilarna siktar, dra i växeln och gasen.</small>
+<small>På en dator: A och D svänger, pilarna siktar, dra i växeln och gasen. Meny uppe till höger.</small>
 </section>
 <p id="hint" hidden>Ingen rörelsesensor. A och D svänger, pilarna siktar.</p>
 <div id="spakar" hidden>
@@ -50,8 +56,10 @@
 </div>
 <small id="gasText">0%</small>
 </div>
+<div id="instrument"></div>
 </div>
-<div id="topp" hidden>
+<button id="menyKnapp" type="button" hidden aria-expanded="false" aria-controls="meny">☰ Meny</button>
+<div id="meny" hidden>
 <button id="noll" type="button">Nollställ</button>
 <button id="installKnapp" type="button" aria-expanded="false" aria-controls="installningar">Inställningar</button>
 </div>
@@ -93,7 +101,7 @@
 <label class="check"><input id="ljudPa" type="checkbox" checked> Mekanikljud</label>
 <button id="standard" type="button">Standard</button>
 </section>
-<script type="module" src="./spel.js?v=3"></script>
+<script type="module" src="./spel.js?v=4"></script>
 <script>
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});

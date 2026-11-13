@@ -1,10 +1,14 @@
 import * as THREE from 'three';
-import {skapaBlick, sjalvtest, normalStyr, STANDARD_STYR} from './blick.js?v=8';
-import {byggVarld} from './varld.js?v=11';
-import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=11';
-import {skapaLjud} from './ljud.js?v=11';
+import {skapaBlick, sjalvtest, normalStyr, STANDARD_STYR} from './blick.js?v=15';
+import {byggVarld} from './varld.js?v=16';
+import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=15';
+import {skapaLjud} from './ljud.js?v=16';
 import {skapaKansla, pulsFor, sjalvtest as kanslaTest} from './kansla.js?v=11';
 import {skapaBakgrund} from './bakgrund.js?v=11';
+import {laddaConfig} from './config.js?v=16';
+import {skapaEffekt} from './effekt.js?v=13';
+
+const config = await laddaConfig();
 
 const NYCKEL = 'panorama_styr_v1';
 const LASER_NYCKEL = 'panorama_laser_v1';
@@ -33,21 +37,68 @@ renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(VANLIG_FOV, 1, 0.12, 420);
+const camera = new THREE.PerspectiveCamera(VANLIG_FOV, 1, 0.08, config.terrang.kameraFar);
 camera.position.set(0, 1.7, 0);
+const effekt = skapaEffekt(scene, config.blod);
+const vapenHand = byggVapen(camera);
+scene.add(camera);
+const UPP_G = new THREE.Vector3(0, 1, 0);
+const GANG_FRAM = new THREE.Vector3();
+const GANG_HOGER = new THREE.Vector3();
+const gangEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+const gangYawQ = new THREE.Quaternion();
+let markFn = () => 0;
+let sankt = false;
+let vapenLyft = 1;
+let neutral = {uppner: 0, vrida: 0, sida: 0};
+let basYaw = 0;
+let extraYaw = 0;
+const gangIntent = {fram: 0, sida: 0, svang: 0};
+let skakPa = config.skak.pa !== false;
+let skakNiva = config.skak.nivaer[config.skak.niva] ? config.skak.niva : 'medel';
+let skakEnergi = 0;
+let skakTopp = 0;
+let skakVila = 0;
+let skakIVila = false;
+let skakKraftig = false;
+const skakFore = {x: 0, z: 0, vx: 0, vz: 0, acc: 0, yaw: 0, omega: 0, har: false};
+const skakEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+let gangSynk = '';
 
 const blick = skapaBlick(canvas);
 const laser = skapaLaser();
 let sparad = STANDARD_STYR;
 try { sparad = normalStyr(JSON.parse(localStorage.getItem(NYCKEL) || 'null') || STANDARD_STYR); } catch { sparad = STANDARD_STYR; }
 blick.satt(sparad);
-let laserSparad = STANDARD_LASER;
-try { laserSparad = normalLaser(JSON.parse(localStorage.getItem(LASER_NYCKEL) || 'null') || STANDARD_LASER); } catch { laserSparad = STANDARD_LASER; }
+function narmasteVapen(zoom) {
+  let best = 'kar98k';
+  let d = Infinity;
+  for (const v of config.vapen) {
+    if (v.sikte !== 'kikare') continue;
+    const dd = Math.abs(v.forstoring - Number(zoom));
+    if (dd < d) { d = dd; best = v.id; }
+  }
+  return best;
+}
+function koplaVapen(install) {
+  const kand = config.vapen.some(v => v.id === install.vapen) ? install.vapen : (install.sikte === 'kikare' ? narmasteVapen(install.zoom) : 'vanligt');
+  const v = config.vapen.find(x => x.id === kand) || config.vapen[0];
+  return normalLaser({...install, vapen: v.id, sikte: v.sikte, zoom: v.forstoring});
+}
+let laserSparad = normalLaser({...STANDARD_LASER, prick: config.prick.standard, vapen: 'vanligt', sikte: 'prick', zoom: 1});
+try {
+  const raw = JSON.parse(localStorage.getItem(LASER_NYCKEL) || 'null');
+  if (raw) {
+    laserSparad = normalLaser(raw);
+    if (!raw.vapen) laserSparad.vapen = raw.sikte === 'kikare' ? '' : 'vanligt';
+  }
+} catch { /* sparad laser saknas */ }
+laserSparad = koplaVapen(laserSparad);
 laser.satt(laserSparad);
 const ljud = skapaLjud();
+ljud.sattKaraktar((config.vapen.find(v => v.id === laser.install.vapen) || config.vapen[0]).ljud);
 const kansla = skapaKansla();
 const bakgrund = skapaBakgrund($('kamerabild'));
-const UPP = new THREE.Vector3(0, 1, 0);
 const hallQ = new THREE.Quaternion();
 let soldatApi = {uppdatera() { return []; }, traffa() { return null; }, siktePunkt() { return null; }, status() { return []; }, resFallna() { return 0; }, fyllPa() { return {nytt: null, resta: 0}; }, get antal() { return 0; }};
 let miljoGrupp = null;
@@ -64,10 +115,11 @@ let visRyck = 0;
 let skottTid = 0;
 let skottAntal = 0;
 let traffAntal = 0;
+let startad = false;
+let bilder = 0;
 const MITT = new THREE.Vector2(0, 0);
 const raycaster = new THREE.Raycaster();
-const puffar = [];
-let puffTex = null;
+raycaster.far = config.terrang.raycast;
 
 function spara() {
   try { localStorage.setItem(NYCKEL, JSON.stringify(blick.styr)); } catch { /* privat läge */ }
@@ -138,6 +190,7 @@ function basFov() {
   return VANLIG_FOV;
 }
 function aktuellFov() {
+  if (sankt) return VANLIG_FOV;
   return effektivFov(basFov(), laser.install);
 }
 function latSikte(mal, dt) {
@@ -157,8 +210,45 @@ function latSikte(mal, dt) {
   camera.quaternion.slerp(mal, Math.min(1, a));
 }
 function sattFov() {
-  camera.fov = Math.min(100, Math.max(8, aktuellFov()));
+  camera.fov = Math.min(100, Math.max(config.fovMin, aktuellFov()));
   camera.updateProjectionMatrix();
+}
+function vapenNu() {
+  return config.vapen.find(v => v.id === laser.install.vapen) || config.vapen[0];
+}
+function ritaVapenKnappar() {
+  const html = config.vapen.map(v => `<button type="button" data-vapen="${v.id}" aria-pressed="false"><b>${v.namn}</b><small>${v.under}</small></button>`).join('');
+  const rad = $('vapenRad');
+  const meny = $('vapenVal');
+  if (rad) rad.innerHTML = html;
+  if (meny) meny.innerHTML = html;
+}
+function markeraVapen() {
+  const id = laser.install.vapen;
+  document.querySelectorAll('[data-vapen]').forEach(knapp => {
+    const pa = knapp.dataset.vapen === id;
+    knapp.classList.toggle('pa', pa);
+    knapp.setAttribute('aria-pressed', pa ? 'true' : 'false');
+  });
+}
+function visaRetikel() {
+  const inst = laser.install;
+  const kik = !sankt && inst.sikte === 'kikare';
+  const rot = $('kikare');
+  if (rot) {
+    rot.hidden = !kik;
+    rot.classList.toggle('doljMitt', laserPa);
+    const ret = vapenNu().retikel;
+    rot.querySelectorAll('[data-retikel]').forEach(el => { el.hidden = el.dataset.retikel !== ret; });
+  }
+  const prick = $('siktPrick');
+  if (prick) prick.hidden = !(startad && !sankt && !kik && !laserPa);
+}
+ritaVapenKnappar();
+const storlekInput = $('laserStorlek');
+if (storlekInput) {
+  storlekInput.min = String(config.prick.min);
+  storlekInput.max = String(config.prick.max);
 }
 function lyft() {
   const el = $('skjut');
@@ -185,21 +275,172 @@ visualViewport?.addEventListener('resize', passa);
 addEventListener('orientationchange', () => setTimeout(passa, 200));
 
 let senast = performance.now();
+function byggVapen(mal) {
+  const rot = new THREE.Group();
+  rot.name = 'vapen';
+  const tra = new THREE.MeshStandardMaterial({color: 0x4a3828, roughness: 0.78, metalness: 0.02});
+  const stal = new THREE.MeshStandardMaterial({color: 0x2c3134, roughness: 0.38, metalness: 0.62});
+  const kolv = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.09, 0.32), tra);
+  kolv.position.set(0, -0.02, 0.08);
+  const las = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.07, 0.16), stal);
+  las.position.set(0, 0.02, -0.08);
+  const pipa = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.016, 0.52), stal);
+  pipa.position.set(0, 0.045, -0.38);
+  const korn = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.03, 0.008), stal);
+  korn.position.set(0, 0.07, -0.62);
+  rot.add(kolv, las, pipa, korn);
+  rot.scale.setScalar(1.35);
+  rot.traverse(n => { if (n.isMesh) { n.castShadow = false; n.receiveShadow = false; n.raycast = () => {}; } });
+  mal.add(rot);
+  return rot;
+}
+function laggVapen(dt) {
+  const kik = !sankt && laser.install.sikte === 'kikare';
+  const mal = sankt ? 0 : kik ? 0.28 : 1;
+  const a = 1 - Math.exp(-Math.max(dt, 0.001) / 0.16);
+  vapenLyft += (mal - vapenLyft) * a;
+  const t = vapenLyft;
+  const vil = {x: 0.38, y: -0.34, z: -0.9, rx: 0.38, ry: 0.62};
+  const redo = kik
+    ? {x: 0.36, y: -0.38, z: -0.85, rx: 0.5, ry: 0.4}
+    : {x: 0.28, y: -0.18, z: -0.72, rx: 0.1, ry: 0.18};
+  vapenHand.position.set(
+    vil.x + (redo.x - vil.x) * t,
+    vil.y + (redo.y - vil.y) * t,
+    vil.z + (redo.z - vil.z) * t
+  );
+  vapenHand.rotation.set(vil.rx + (redo.rx - vil.rx) * t, vil.ry + (redo.ry - vil.ry) * t, 0);
+}
+function overDod(v, dod) {
+  if (Math.abs(v) <= dod) return 0;
+  return v - Math.sign(v) * dod;
+}
+function lasGang() {
+  let fram = gangIntent.fram;
+  let sida = gangIntent.sida;
+  let svang = gangIntent.svang;
+  if (tangenter.has('w') || tangenter.has('arrowup')) fram += 1;
+  if (tangenter.has('s') || tangenter.has('arrowdown')) fram -= 1;
+  if (tangenter.has('a')) sida -= 1;
+  if (tangenter.has('d')) sida += 1;
+  if (tangenter.has('q') || tangenter.has('arrowleft')) svang -= 1;
+  if (tangenter.has('e') || tangenter.has('arrowright')) svang += 1;
+  return {
+    fram: Math.max(-1, Math.min(1, fram)),
+    sida: Math.max(-1, Math.min(1, sida)),
+    svang: Math.max(-1, Math.min(1, svang))
+  };
+}
+function ga(dt, musQ) {
+  const g = config.gang;
+  const v = blick.vinklar();
+  const dPitch = v.uppner - neutral.uppner;
+  const dYaw = v.vrida - neutral.vrida;
+  const dRoll = v.sida - neutral.sida;
+  const gyro = blick.harGyro;
+  const ratt = lasGang();
+  const framGyro = (function () {
+    const o = overDod(-dPitch, g.dodzon);
+    if (!o) return 0;
+    return Math.sign(o) * g.fart * Math.min(1, Math.abs(o) * g.kanslighet);
+  })();
+  const sidaGyro = (function () {
+    const o = overDod(dRoll, g.dodzon);
+    if (!o) return 0;
+    return Math.sign(o) * g.fart * Math.min(1, Math.abs(o) * g.kanslighet);
+  })();
+  extraYaw += ratt.svang * g.svangFart * dt;
+  if (gyro) {
+    gangEuler.set(0, basYaw + extraYaw + overDod(dYaw, g.dodzon) * g.svang, 0);
+    camera.quaternion.setFromEuler(gangEuler);
+  } else {
+    gangYawQ.setFromAxisAngle(UPP_G, extraYaw);
+    camera.quaternion.copy(gangYawQ).multiply(musQ);
+  }
+  const framFart = framGyro + ratt.fram * g.fart;
+  const sidaFart = sidaGyro + ratt.sida * g.fart;
+  camera.getWorldDirection(GANG_FRAM);
+  GANG_FRAM.y = 0;
+  if (GANG_FRAM.lengthSq() < 1e-8) GANG_FRAM.set(0, 0, -1);
+  GANG_FRAM.normalize();
+  GANG_HOGER.crossVectors(GANG_FRAM, UPP_G).normalize();
+  camera.position.x += (GANG_FRAM.x * framFart + GANG_HOGER.x * sidaFart) * dt;
+  camera.position.z += (GANG_FRAM.z * framFart + GANG_HOGER.z * sidaFart) * dt;
+  const gr = g.grans;
+  camera.position.x = Math.max(-gr, Math.min(gr, camera.position.x));
+  camera.position.z = Math.max(-gr, Math.min(gr, camera.position.z));
+}
+function visaGang() {
+  const visa = !!(sankt && startad && !blick.harGyro);
+  const ny = (sankt ? '1' : '0') + (visa ? '1' : '0') + (startad ? '1' : '0');
+  if (ny === gangSynk) return;
+  gangSynk = ny;
+  const knapp = $('sankVapen');
+  if (knapp) {
+    knapp.hidden = !startad;
+    knapp.textContent = sankt ? 'Höj vapen' : 'Sänk vapen';
+    knapp.classList.toggle('pa', sankt);
+    knapp.setAttribute('aria-pressed', sankt ? 'true' : 'false');
+  }
+  const pad = $('gang');
+  if (pad) pad.hidden = !visa;
+  $('skjut')?.classList.toggle('vilande', sankt);
+}
+function sankVapen(pa) {
+  const nasta = !!pa;
+  if (nasta === sankt) return sankt;
+  if (nasta) {
+    blick.uppdatera(0.016);
+    const v = blick.vinklar();
+    neutral = {uppner: v.uppner, vrida: v.vrida, sida: v.sida};
+    basYaw = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ').y;
+    extraYaw = 0;
+    hallTill = 0;
+  } else {
+    blick.taEmot(camera.quaternion);
+    if (laserPa && blick.harGyro) laser.behall(camera.quaternion);
+    sikteInit = false;
+  }
+  sankt = nasta;
+  gangSynk = '';
+  sattFov();
+  visaLaserUtseende();
+  visaGang();
+  return sankt;
+}
+const tangenter = new Set();
+addEventListener('keydown', e => {
+  if (!sankt) return;
+  tangenter.add(String(e.key || '').toLowerCase());
+});
+addEventListener('keyup', e => tangenter.delete(String(e.key || '').toLowerCase()));
+function steg(dt, nu) {
+  const d = Math.min(0.05, Math.max(0, dt || 0));
+  const tid = Number.isFinite(nu) ? nu : performance.now();
+  const vanlig = blick.uppdatera(d);
+  const mal = !sankt && laserPa && blick.harGyro ? laser.uppdatera(d) : vanlig;
+  if (sankt) ga(d, vanlig);
+  else if (tid < hallTill) camera.quaternion.copy(hallQ);
+  else latSikte(mal, d);
+  camera.position.y = markFn(camera.position.x, camera.position.z) + 1.7;
+  laggVapen(d);
+  soldatApi.uppdatera(d);
+  effekt.tick(d);
+  mataSkak(d);
+  ritaLaser(tid);
+  svalna(d);
+  visaGang();
+  renderer.render(scene, camera);
+  bilder++;
+  if (window.__pano) window.__pano.ritningar = renderer.info.render.calls;
+}
 function loop(nu) {
   requestAnimationFrame(loop);
+  if (window.__frys) return;
   const dt = Math.min(0.05, Math.max(0, (nu - senast) / 1000));
   senast = nu;
   if (document.hidden) return;
-  const vanlig = blick.uppdatera(dt);
-  const mal = laserPa && blick.harGyro ? laser.uppdatera(dt) : vanlig;
-  if (nu < hallTill) camera.quaternion.copy(hallQ);
-  else latSikte(mal, dt);
-  for (const punkt of soldatApi.uppdatera(dt)) laggPuff(punkt, UPP);
-  ritaLaser(nu);
-  tickPuff(dt);
-  svalna(dt);
-  renderer.render(scene, camera);
-  if (window.__pano) window.__pano.ritningar = renderer.info.render.calls;
+  steg(dt, nu);
 }
 requestAnimationFrame(loop);
 
@@ -224,9 +465,10 @@ function visaLaserUtseende() {
   const rot = document.documentElement.style;
   rot.setProperty('--laser', inst.farg);
   rot.setProperty('--prick', inst.prick + 'px');
-  $('laserPrick').hidden = !laserPa;
-  $('kikare').hidden = inst.sikte !== 'kikare';
-  $('laserLinje').hidden = !(laserPa && inst.strale);
+  $('laserPrick').hidden = sankt || !laserPa;
+  $('laserLinje').hidden = sankt || !(laserPa && inst.strale);
+  visaRetikel();
+  markeraVapen();
   laserKnapp.classList.toggle('pa', laserPa);
   laserKnapp.setAttribute('aria-pressed', laserPa ? 'true' : 'false');
   laserKnapp.textContent = laserPa ? 'Laserpekare på' : 'Laserpekare';
@@ -321,17 +563,8 @@ function fyllLaser() {
   $('laserDodVis').textContent = inst.dodzon < 0.05 ? 'av' : kom(inst.dodzon) + '°';
   $('laserStorlek').value = String(inst.prick);
   $('laserStorlekVis').textContent = inst.prick + ' px';
-  document.querySelectorAll('#zoomVal button').forEach(knapp => {
-    const pa = inst.sikte === 'kikare' && Math.abs(Number(knapp.dataset.zoom) - inst.zoom) < 0.2;
-    knapp.classList.toggle('pa', pa);
-    knapp.setAttribute('aria-pressed', pa ? 'true' : 'false');
-  });
+  markeraVapen();
   visaZoomText();
-  document.querySelectorAll('#sikteVal button').forEach(knapp => {
-    const pa = knapp.dataset.sikte === inst.sikte;
-    knapp.classList.toggle('pa', pa);
-    knapp.setAttribute('aria-pressed', pa ? 'true' : 'false');
-  });
   $('ljudVol').value = String(inst.volym);
   $('ljudVolVis').textContent = Math.round(inst.volym * 100) + ' %';
   const ljudPa = $('ljudPa');
@@ -361,11 +594,25 @@ function fyllLaser() {
   visaHorisont();
 }
 function andraLaser(del) {
-  laser.satt(normalLaser({...laser.install, ...del, pa: laserPa}));
+  const nasta = normalLaser({...laser.install, ...del, pa: laserPa});
+  if (del.vapen) {
+    const v = config.vapen.find(x => x.id === del.vapen);
+    if (v) {
+      nasta.vapen = v.id;
+      nasta.sikte = v.sikte;
+      nasta.zoom = v.forstoring;
+    }
+  }
+  laser.satt(nasta);
+  ljud.sattKaraktar(vapenNu().ljud);
   sparaLaser();
   fyllLaser();
   visaLaserUtseende();
   sattFov();
+}
+function valjVapen(id) {
+  sikteInit = false;
+  andraLaser({vapen: id});
 }
 function andraAxel(id, del) {
   const axlar = {};
@@ -373,22 +620,78 @@ function andraAxel(id, del) {
   axlar[id] = {...axlar[id], ...del};
   andraLaser({axlar});
 }
+function mataSkak(dt) {
+  const cfg = config.skak;
+  if (!(dt > 0.001)) return;
+  skakEuler.setFromQuaternion(camera.quaternion, 'YXZ');
+  const yaw = skakEuler.y;
+  const x = camera.position.x;
+  const z = camera.position.z;
+  if (!skakFore.har) {
+    skakFore.x = x; skakFore.z = z; skakFore.yaw = yaw; skakFore.har = true;
+    return;
+  }
+  const blend = 1 - Math.exp(-dt / 0.08);
+  const rvx = (x - skakFore.x) / dt;
+  const rvz = (z - skakFore.z) / dt;
+  const vx = skakFore.vx + (rvx - skakFore.vx) * blend;
+  const vz = skakFore.vz + (rvz - skakFore.vz) * blend;
+  const acc = Math.hypot((vx - skakFore.vx) / dt, (vz - skakFore.vz) / dt);
+  const jerk = Math.abs(acc - skakFore.acc) / dt;
+  let dy = yaw - skakFore.yaw;
+  if (dy > Math.PI) dy -= Math.PI * 2;
+  if (dy < -Math.PI) dy += Math.PI * 2;
+  const omega = dy / dt;
+  const alfa = (omega - skakFore.omega) / dt;
+  const fart = Math.hypot(rvx, rvz);
+  skakFore.x = x; skakFore.z = z; skakFore.vx = vx; skakFore.vz = vz;
+  skakFore.acc = acc; skakFore.yaw = yaw; skakFore.omega = omega;
+  if (!skakPa) {
+    skakEnergi = 0; skakTopp = 0; skakVila = 0; skakIVila = false; skakKraftig = false;
+    return;
+  }
+  const gain = cfg.nivaer[skakNiva] || 1;
+  const driv = jerk * cfg.jerk + acc * cfg.acc + Math.abs(omega) * cfg.vrid + Math.abs(alfa) * cfg.vrid * 0.55;
+  const mal = Math.min(1, driv * gain);
+  if (fart >= cfg.springFart) skakKraftig = true;
+  const still = fart < cfg.stillaFart && Math.abs(omega) < cfg.stillaVrid;
+  if (mal > skakEnergi) skakEnergi += (mal - skakEnergi) * (1 - Math.exp(-dt / 0.05));
+  if (!still) {
+    skakIVila = false;
+    skakVila = 0;
+    if (mal <= skakEnergi) skakEnergi = Math.max(mal, skakEnergi * Math.exp(-dt / 0.9));
+    skakTopp = skakEnergi;
+  } else {
+    if (!skakIVila) { skakIVila = true; skakVila = 0; skakTopp = Math.max(skakTopp, skakEnergi, mal); }
+    skakVila += dt;
+    const tid = skakKraftig ? cfg.springVila : cfg.gangVila;
+    const u = Math.min(1, skakVila / tid);
+    skakEnergi = skakTopp * (1 - u) * (1 - u);
+    if (u >= 1) { skakEnergi = 0; skakTopp = 0; skakKraftig = false; skakIVila = false; }
+  }
+}
 function ritaLaser(nu) {
   const prick = $('laserPrick');
   const linje = $('laserLinje');
-  if (!laserPa) {
-    if (prick.style.transform) prick.style.transform = '';
-    if (linje.style.transform) linje.style.transform = '';
-    return;
+  const sikt = $('siktPrick');
+  const kik = $('kikare');
+  const zoomNu = !sankt && laser.install.sikte === 'kikare' ? Math.max(1, laser.install.zoom) : 1;
+  const px = ((laserPa && !sankt) ? laser.skakPx() / zoomNu : 0) + (skakPa ? skakEnergi * config.skak.maxPx : 0);
+  const x = Math.sin(nu * 0.045) * px + Math.sin(nu * 0.019) * px * 0.35;
+  const y = Math.cos(nu * 0.037) * px * 0.72;
+  if (sikt) {
+    sikt.style.transform = px < 0.35
+      ? 'translate(-50%, -50%)'
+      : `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px))`;
   }
-  const zoomNu = laser.install.sikte === 'kikare' ? Math.max(1, laser.install.zoom) : 1;
-  const px = laser.skakPx() / zoomNu;
-  if (px < 0.4) {
+  if (kik) kik.style.transform = px < 0.35 ? '' : `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px)`;
+  if (!laserPa || sankt) {
+    if (prick && prick.style.transform) prick.style.transform = '';
+    if (linje && linje.style.transform) linje.style.transform = '';
+  } else if (px < 0.35) {
     prick.style.transform = '';
     linje.style.transform = '';
   } else {
-    const x = Math.sin(nu * 0.045) * px;
-    const y = Math.cos(nu * 0.037) * px * 0.7;
     prick.style.transform = `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px))`;
     linje.style.transform = `translateX(calc(-50% + ${x.toFixed(2)}px))`;
   }
@@ -397,12 +700,8 @@ function ritaLaser(nu) {
   for (const id of AXLAR) matareEl[id].style.width = Math.round(m[id] * 100) + '%';
 }
 function visaLaserHint() {
-  if (sedd(HINT_NYCKEL)) return;
+  if ($('laserHint')) $('laserHint').hidden = true;
   markera(HINT_NYCKEL);
-  const el = $('laserHint');
-  el.hidden = false;
-  clearTimeout(hintTimer);
-  hintTimer = setTimeout(() => { el.hidden = true; }, 8000);
 }
 function sattLaser(pa) {
   if (pa === laserPa) return;
@@ -492,23 +791,20 @@ $('laserRoll').addEventListener('click', () => andraLaser({lasRoll: !laser.insta
 $('laserStrale').addEventListener('click', () => andraLaser({strale: !laser.install.strale}));
 $('laserNoll').addEventListener('click', nollstallAllt);
 $('laserStandard').addEventListener('click', () => {
-  laser.satt(normalLaser({...STANDARD_LASER, pa: laserPa}));
+  laser.satt(normalLaser({...STANDARD_LASER, pa: laserPa, prick: config.prick.standard}));
+  ljud.sattKaraktar('vanligt');
   sparaLaser();
   fyllLaser();
   visaLaserUtseende();
   sattFov();
 });
-$('sikteVal').addEventListener('click', e => {
-  const knapp = e.target.closest('[data-sikte]');
+function paVapenKlick(e) {
+  const knapp = e.target.closest('[data-vapen]');
   if (!knapp) return;
-  andraLaser({sikte: knapp.dataset.sikte});
-});
-$('zoomVal').addEventListener('click', e => {
-  const knapp = e.target.closest('[data-zoom]');
-  if (!knapp) return;
-  sikteInit = false;
-  andraLaser({sikte: 'kikare', zoom: Number(knapp.dataset.zoom)});
-});
+  valjVapen(knapp.dataset.vapen);
+}
+$('vapenRad')?.addEventListener('click', paVapenKlick);
+$('vapenVal')?.addEventListener('click', paVapenKlick);
 $('ljudPa').addEventListener('click', () => {
   ljud.oppna();
   andraLaser({ljud: !laser.install.ljud});
@@ -525,6 +821,63 @@ $('skjut').addEventListener('click', () => {
   ljud.oppna();
   avfyra();
 });
+$('sankVapen').addEventListener('click', () => sankVapen(!sankt));
+function visaSkak() {
+  const knapp = $('skakPa');
+  if (knapp) {
+    knapp.classList.toggle('pa', skakPa);
+    knapp.setAttribute('aria-pressed', skakPa ? 'true' : 'false');
+    knapp.textContent = skakPa ? 'Rörelseskak på' : 'Rörelseskak';
+  }
+  document.querySelectorAll('#skakNiva button').forEach(b => {
+    const pa = b.dataset.skak === skakNiva;
+    b.classList.toggle('pa', pa);
+    b.setAttribute('aria-pressed', pa ? 'true' : 'false');
+  });
+  const text = $('skakText');
+  if (text) text.textContent = 'Långsam gång lägger sig efter ' + String(config.skak.gangVila).replace('.', ',') + ' s stilla. Häftig rörelse tar ' + String(config.skak.springVila).replace('.', ',') + ' s.';
+  const test = $('testKnapp');
+  const meny = $('testMeny');
+  if (test && meny) {
+    const oppen = !meny.hidden;
+    test.classList.toggle('pa', oppen);
+    test.setAttribute('aria-expanded', oppen ? 'true' : 'false');
+  }
+}
+function visaTest(pa) {
+  const meny = $('testMeny');
+  if (meny) meny.hidden = !pa;
+  visaSkak();
+}
+visaSkak();
+$('testKnapp').addEventListener('click', () => visaTest($('testMeny').hidden));
+$('skakPa').addEventListener('click', () => {
+  skakPa = !skakPa;
+  if (!skakPa) { skakEnergi = 0; skakTopp = 0; skakKraftig = false; skakIVila = false; }
+  visaSkak();
+});
+$('skakNiva').addEventListener('click', e => {
+  const b = e.target.closest('[data-skak]');
+  if (!b || !config.skak.nivaer[b.dataset.skak]) return;
+  skakNiva = b.dataset.skak;
+  visaSkak();
+});
+const GANG_KNAPP = {fram: 'fram', bak: 'fram', vanster: 'sida', hoger: 'sida', svangV: 'svang', svangH: 'svang'};
+const GANG_TECKEN = {fram: 1, bak: -1, vanster: -1, hoger: 1, svangV: -1, svangH: 1};
+let gangNere = '';
+function gangKnapp(id, ner) {
+  const nyckel = GANG_KNAPP[id];
+  if (!nyckel) return;
+  gangIntent[nyckel] = ner ? GANG_TECKEN[id] : 0;
+}
+$('gang').addEventListener('pointerdown', e => {
+  const b = e.target.closest('[data-gang]');
+  if (!b) return;
+  gangNere = b.dataset.gang;
+  gangKnapp(gangNere, true);
+});
+addEventListener('pointerup', () => { if (gangNere) { gangKnapp(gangNere, false); gangNere = ''; } });
+addEventListener('pointercancel', () => { if (gangNere) { gangKnapp(gangNere, false); gangNere = ''; } });
 
 function synkaLjud() {
   ljud.satt(laser.install.ljud, laser.install.volym);
@@ -532,12 +885,9 @@ function synkaLjud() {
 function visaZoomText() {
   const el = $('zoomText');
   if (!el) return;
-  const inst = laser.install;
-  const bas = basFov();
+  const v = vapenNu();
   const grader = Math.round(aktuellFov());
-  el.textContent = inst.sikte === 'kikare'
-    ? 'Zoom ' + kom(inst.zoom) + '×. Synfält ' + grader + '°.'
-    : 'Kikarsiktet är av. Synfält ' + Math.round(bas) + '°.';
+  el.textContent = v.namn + ' · ' + v.under + '. Synfält ' + grader + '°. Träffar i kroppen fäller efter ' + config.traff.kroppsskott + ' skott. Ett skott i huvudet fäller direkt.';
 }
 function visaTraff() {
   const el = $('traffVis');
@@ -604,65 +954,27 @@ addEventListener('devicemotion', e => {
   taNiva({linjar, omega}, tid);
 }, {passive: true});
 
-function puffTextur() {
-  if (puffTex) return puffTex;
-  const c = document.createElement('canvas');
-  c.width = c.height = 64;
-  const g = c.getContext('2d');
-  const r = g.createRadialGradient(32, 32, 2, 32, 32, 30);
-  r.addColorStop(0, 'rgba(255,246,220,.95)');
-  r.addColorStop(0.22, 'rgba(232,196,140,.75)');
-  r.addColorStop(0.55, 'rgba(140,116,86,.3)');
-  r.addColorStop(1, 'rgba(90,74,52,0)');
-  g.fillStyle = r;
-  g.fillRect(0, 0, 64, 64);
-  puffTex = new THREE.CanvasTexture(c);
-  puffTex.colorSpace = THREE.SRGBColorSpace;
-  return puffTex;
-}
-function arHimmel(obj) {
-  for (let n = obj; n; n = n.parent) if (n.userData && n.userData.himlen) return true;
+function arSack(obj) {
+  for (let n = obj; n; n = n.parent) if (n.userData && n.userData.sack) return true;
   return false;
 }
-function laggPuff(punkt, normal) {
-  const mat = new THREE.SpriteMaterial({map: puffTextur(), transparent: true, depthWrite: false, color: 0xe6d2b4});
-  const s = new THREE.Sprite(mat);
-  s.raycast = () => {};
-  s.position.copy(punkt);
-  if (normal) s.position.addScaledVector(normal, 0.07);
-  s.scale.setScalar(0.08);
-  s.userData = {t: 0, liv: 0.45};
-  scene.add(s);
-  puffar.push(s);
-  while (puffar.length > 14) {
-    const gammal = puffar.shift();
-    scene.remove(gammal);
-    gammal.material.dispose();
+function hoppaOver(obj) {
+  for (let n = obj; n; n = n.parent) {
+    if (n.name === 'soldat') return true;
+    const u = n.userData;
+    if (!u) continue;
+    if (u.himlen || u.soldat || u.zon || u.ingenTraff || u.sar || u.soldatKropp) return true;
   }
-}
-function tickPuff(dt) {
-  for (let i = puffar.length - 1; i >= 0; i--) {
-    const s = puffar[i];
-    s.userData.t += dt;
-    const u = s.userData.t / s.userData.liv;
-    if (u >= 1) {
-      scene.remove(s);
-      s.material.dispose();
-      puffar.splice(i, 1);
-      continue;
-    }
-    s.scale.setScalar(0.08 + u * 0.62);
-    s.material.opacity = 1 - u * u;
-    s.position.y += dt * 0.28;
-  }
+  return false;
 }
 function hittaTraff() {
   try {
+    raycaster.far = config.terrang.raycast;
     raycaster.setFromCamera(MITT, camera);
     const lista = raycaster.intersectObjects(scene.children, true);
     for (const h of lista) {
-      if (!(h.distance > 0.4) || h.distance > 220) continue;
-      if (arHimmel(h.object)) continue;
+      if (!(h.distance > 0.4) || h.distance > config.terrang.raycast) continue;
+      if (hoppaOver(h.object)) continue;
       return h;
     }
   } catch { /* en modell kan sakna träffyta */ }
@@ -674,17 +986,23 @@ function blixt() {
   void el.offsetWidth;
   el.classList.add('pa');
 }
-function siktaMot(index) {
-  const punkt = soldatApi.siktePunkt(index);
+function siktaMotPunkt(punkt, hall) {
   if (!punkt) return false;
   camera.lookAt(punkt);
   camera.updateMatrixWorld(true);
   hallQ.copy(camera.quaternion);
-  hallTill = performance.now() + 1600;
+  hallTill = performance.now() + (hall == null ? 1600 : hall);
   sikteInit = false;
   return true;
 }
+function siktaMot(index) {
+  return siktaMotPunkt(soldatApi.siktePunkt(index));
+}
+function siktaHuvud(index) {
+  return siktaMotPunkt(soldatApi.sikteHuvud ? soldatApi.sikteHuvud(index) : null);
+}
 function avfyra() {
+  if (sankt) return false;
   const nu = performance.now();
   if (nu - skottTid < 280) return false;
   skottTid = nu;
@@ -697,25 +1015,34 @@ function avfyra() {
   $('skjut').classList.add('eld');
   setTimeout(() => $('skjut').classList.remove('eld'), 140);
   camera.updateMatrixWorld(true);
+  const markTraff = hittaTraff();
+  const fri = markTraff ? Math.max(0.5, markTraff.distance - 0.05) : config.terrang.raycast;
+  raycaster.far = Math.min(config.terrang.raycast, fri);
   raycaster.setFromCamera(MITT, camera);
   const soldat = soldatApi.traffa(raycaster);
   if (soldat) {
     traffAntal++;
-    laggPuff(soldat.punkt, soldat.normal || UPP);
     ljud.traff(soldat.avstand);
     visaTraff();
-    return true;
+    return soldat;
   }
   const traff = hittaTraff();
   if (traff) {
-    let normal = null;
-    if (traff.face) normal = traff.face.normal.clone().transformDirection(traff.object.matrixWorld).normalize();
-    laggPuff(traff.point, normal);
+    effekt.damm(traff.point);
+    if (arSack(traff.object)) {
+      ljud.duns(traff.distance);
+      return {traff: false, sack: true, avstand: traff.distance, punkt: {x: traff.point.x, y: traff.point.y, z: traff.point.z}};
+    }
   }
-  return true;
+  return {traff: false, sack: false};
 }
 function skjutMot(index) {
   if (!siktaMot(index)) return false;
+  skottTid = 0;
+  return avfyra();
+}
+function skjutHuvud(index) {
+  if (!siktaHuvud(index)) return false;
   skottTid = 0;
   return avfyra();
 }
@@ -730,15 +1057,24 @@ start.addEventListener('click', async () => {
   start.disabled = true;
   markera(GUIDE_NYCKEL);
   try { await blick.start(); }
-  catch (e) { hint.textContent = 'Sensorerna kunde inte starta. Dra med fingret.'; }
+  catch (e) { if ($('sensorText')) $('sensorText').textContent = 'Sensorerna kunde inte starta. Dra i vyn för att titta. Texten ligger i Menyn.'; }
   $('startKort').hidden = true;
   $('skjut').hidden = false;
   $('menyKnapp').hidden = false;
+  $('vapenRad').hidden = false;
+  $('sankVapen').hidden = false;
+  $('testKnapp').hidden = false;
   $('meny').hidden = true;
+  startad = true;
+  visaRetikel();
   if (laser.install.pa) sattLaser(true);
   else lyft();
   requestAnimationFrame(lyft);
-  setTimeout(() => { if (!blick.harGyro) hint.hidden = false; }, 1200);
+  if ($('hint')) $('hint').hidden = true;
+  if ($('laserHint')) $('laserHint').hidden = true;
+  if ($('kameraToast')) $('kameraToast').hidden = true;
+  if ($('testMeny')) $('testMeny').hidden = true;
+  if ($('meny')) $('meny').hidden = true;
 });
 
 function visaFlik(id) {
@@ -789,11 +1125,7 @@ async function valjBakgrund(lage) {
   const notis = $('kameraMeddelande');
   notis.hidden = !text;
   notis.textContent = text;
-  const toast = $('kameraToast');
-  toast.hidden = !text;
-  toast.textContent = text;
-  clearTimeout(toastTimer);
-  if (text) toastTimer = setTimeout(() => { toast.hidden = true; }, 7000);
+  if ($('kameraToast')) $('kameraToast').hidden = true;
   return res;
 }
 function valjFilter(namn) {
@@ -821,16 +1153,36 @@ visaFlik('miljo');
 visaBakgrundKnappar();
 
 try {
-  const varld = await byggVarld(scene, renderer);
+  const varld = await byggVarld(scene, renderer, config, effekt);
   soldatApi = varld.soldater;
   miljoGrupp = varld.miljo;
   sparadDimma = scene.fog;
+  markFn = varld.markHojd;
+  camera.far = config.terrang.kameraFar;
+  camera.updateProjectionMatrix();
+  window.__fel = [];
+addEventListener('error', e => window.__fel.push(String(e.message || e.error || 'fel')));
+addEventListener('unhandledrejection', e => window.__fel.push(String(e.reason && e.reason.message || e.reason || 'avbrott')));
   window.__pano = {
     kamera: camera, blick, laser, rapport: varld.rapport, teckenfel, renderer, scene,
     hackAntal: varld.hackAntal, matchFov: matchaFonsterFov, ljud, mataRorelse, skjut: avfyra,
-    soldater: varld.soldater, siktaMot, skjutMot, visaMeny, visaFlik,
-    sattKikare(pa) { sikteInit = false; andraLaser({sikte: pa ? 'kikare' : 'prick'}); },
-    sattZoom(z) { sikteInit = false; andraLaser({sikte: 'kikare', zoom: Number(z)}); },
+    soldater: varld.soldater, siktaMot, siktaHuvud, skjutMot, skjutHuvud, visaMeny, visaFlik, steg,
+    titta(x, y, z) {
+      camera.lookAt(x, y, z);
+      camera.updateMatrixWorld(true);
+      hallQ.copy(camera.quaternion);
+      hallTill = performance.now() + 3000;
+      renderer.render(scene, camera);
+    },
+    markHojd: varld.markHojd, effekt, config, valjVapen, varn: varld.varn,
+    sattKikare(pa) { valjVapen(pa ? 'kar98k' : 'vanligt'); },
+    sattZoom(z) {
+      const mal = Number(z);
+      const v = config.vapen.find(x => x.sikte === 'kikare' && Math.abs(x.forstoring - mal) < 0.2) || config.vapen.find(x => Math.abs(x.forstoring - mal) < 0.2);
+      if (v) valjVapen(v.id);
+      else { sikteInit = false; andraLaser({sikte: 'kikare', zoom: mal}); }
+    },
+    sattLaser,
     sattBakgrund: valjBakgrund,
     sattFilter: valjFilter,
     get laserPa() { return laserPa; },
@@ -839,7 +1191,32 @@ try {
     get traffar() { return traffAntal; },
     get fov() { return camera.fov; },
     get zoom() { return laser.install.zoom; },
-    get kikare() { return laser.install.sikte === 'kikare'; }
+    get kikare() { return laser.install.sikte === 'kikare'; },
+    get vapen() { return laser.install.vapen; },
+    get retikel() { return vapenNu().retikel; },
+    get bilder() { return bilder; },
+    sank: sankVapen,
+    styr(del) {
+      if (del && typeof del === 'object') {
+        if ('fram' in del) gangIntent.fram = Math.max(-1, Math.min(1, +del.fram || 0));
+        if ('sida' in del) gangIntent.sida = Math.max(-1, Math.min(1, +del.sida || 0));
+        if ('svang' in del) gangIntent.svang = Math.max(-1, Math.min(1, +del.svang || 0));
+      }
+      return {fram: gangIntent.fram, sida: gangIntent.sida, svang: gangIntent.svang};
+    },
+    get sankt() { return sankt; },
+    get vapenLyft() { return vapenLyft; },
+    get position() { return {x: camera.position.x, y: camera.position.y, z: camera.position.z}; },
+    visaTest,
+    skak: {
+      get pa() { return skakPa; },
+      get niva() { return skakNiva; },
+      get amp() { return skakEnergi; },
+      get px() { return skakPa ? skakEnergi * config.skak.maxPx : 0; },
+      get kraftig() { return skakKraftig; },
+      sattPa(v) { skakPa = !!v; if (!skakPa) { skakEnergi = 0; skakTopp = 0; } visaSkak(); },
+      sattNiva(id) { if (config.skak.nivaer[id]) skakNiva = id; visaSkak(); }
+    }
   };
   window.__redo = teckenfel.length === 0;
   start.disabled = false;

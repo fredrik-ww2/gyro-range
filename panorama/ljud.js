@@ -118,12 +118,25 @@ export function skapaLjud() {
     if (master) master.gain.value = pa ? volym : 0;
   }
 
+  const KAR = {
+    vanligt: {hp: 900, kropp: 1800, kroppSlut: 420, hammare: 310, snart: 2400, bas: 190, basSlut: 42, mekanik: [[0.3, 2100, 0.022, 0.2], [0.46, 1280, 0.034, 0.16]]},
+    kar98k: {hp: 720, kropp: 1280, kroppSlut: 280, hammare: 240, snart: 1900, bas: 140, basSlut: 36, mekanik: [[0.42, 1600, 0.028, 0.18], [0.62, 980, 0.04, 0.15]]},
+    springfield: {hp: 1100, kropp: 2300, kroppSlut: 560, hammare: 390, snart: 2800, bas: 220, basSlut: 58, mekanik: [[0.22, 2400, 0.018, 0.16], [0.36, 1500, 0.026, 0.13]]},
+    enfield: {hp: 640, kropp: 980, kroppSlut: 240, hammare: 200, snart: 1600, bas: 110, basSlut: 32, mekanik: [[0.36, 1400, 0.03, 0.2], [0.56, 860, 0.046, 0.16]]}
+  };
+  let karaktar = 'vanligt';
+
+  function sattKaraktar(id) {
+    if (KAR[id]) karaktar = id;
+  }
+
   function skott() {
     if (!pa) return false;
     try {
       if (!seTill() || !brus || !master) return false;
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
       skottAntal++;
+      const k = KAR[karaktar] || KAR.vanligt;
       const t = ctx.currentTime;
       const bus = ctx.createGain();
       bus.gain.value = 0.9;
@@ -133,7 +146,7 @@ export function skapaLjud() {
       knall.buffer = brus;
       const hp = ctx.createBiquadFilter();
       hp.type = 'highpass';
-      hp.frequency.value = 900;
+      hp.frequency.value = k.hp;
       const hg = ctx.createGain();
       kurva(hg, t, 1.35, 0.09);
       knall.connect(hp); hp.connect(hg); hg.connect(bus);
@@ -143,18 +156,18 @@ export function skapaLjud() {
       kropp.buffer = brus;
       const bp = ctx.createBiquadFilter();
       bp.type = 'bandpass';
-      bp.frequency.setValueAtTime(1800, t);
-      bp.frequency.exponentialRampToValueAtTime(420, t + 0.12);
+      bp.frequency.setValueAtTime(k.kropp, t);
+      bp.frequency.exponentialRampToValueAtTime(k.kroppSlut, t + 0.12);
       bp.Q.value = 0.7;
       const bg = ctx.createGain();
-      kurva(bg, t, 1.05, 0.24);
+      kurva(bg, t, 1.05, karaktar === 'enfield' ? 0.3 : 0.24);
       kropp.connect(bp); bp.connect(bg); bg.connect(bus);
-      kropp.start(t); kropp.stop(t + 0.26);
+      kropp.start(t); kropp.stop(t + 0.32);
 
       const hammare = ctx.createOscillator();
       hammare.type = 'square';
-      hammare.frequency.setValueAtTime(310, t);
-      hammare.frequency.exponentialRampToValueAtTime(90, t + 0.012);
+      hammare.frequency.setValueAtTime(k.hammare, t);
+      hammare.frequency.exponentialRampToValueAtTime(Math.max(70, k.hammare * 0.29), t + 0.012);
       const hg2 = ctx.createGain();
       kurva(hg2, t, 0.22, 0.018);
       hammare.connect(hg2); hg2.connect(bus);
@@ -162,8 +175,8 @@ export function skapaLjud() {
 
       const snart = ctx.createOscillator();
       snart.type = 'triangle';
-      snart.frequency.setValueAtTime(2400, t);
-      snart.frequency.exponentialRampToValueAtTime(520, t + 0.05);
+      snart.frequency.setValueAtTime(k.snart, t);
+      snart.frequency.exponentialRampToValueAtTime(Math.max(280, k.snart * 0.22), t + 0.05);
       const sg = ctx.createGain();
       kurva(sg, t, 0.22, 0.055);
       snart.connect(sg); sg.connect(bus);
@@ -171,16 +184,16 @@ export function skapaLjud() {
 
       const bas = ctx.createOscillator();
       bas.type = 'sine';
-      bas.frequency.setValueAtTime(190, t);
-      bas.frequency.exponentialRampToValueAtTime(42, t + 0.16);
+      bas.frequency.setValueAtTime(k.bas, t);
+      bas.frequency.exponentialRampToValueAtTime(k.basSlut, t + 0.16);
       const dg = ctx.createGain();
-      kurva(dg, t, 0.72, 0.2);
+      kurva(dg, t, karaktar === 'enfield' ? 0.86 : 0.72, karaktar === 'kar98k' ? 0.24 : 0.2);
       bas.connect(dg); dg.connect(bus);
-      bas.start(t); bas.stop(t + 0.22);
+      bas.start(t); bas.stop(t + 0.26);
 
       const skottNoder = [knall, hp, hg, kropp, bp, bg, hammare, hg2, snart, sg, bas, dg, bus];
       const mekanik = [];
-      for (const [forsening, frek, langd, topp] of [[0.3, 2100, 0.022, 0.2], [0.46, 1280, 0.034, 0.16]]) {
+      for (const [forsening, frek, langd, topp] of k.mekanik) {
         const tid = t + forsening;
         const klickBrus = ctx.createBufferSource();
         klickBrus.buffer = brus;
@@ -308,8 +321,34 @@ export function skapaLjud() {
     }
   }
 
+  function duns(avstand) {
+    if (!pa) return false;
+    try {
+      if (!seTill() || !brus || !master) return false;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      const t = ctx.currentTime;
+      const d = Number.isFinite(+avstand) ? Math.max(1, +avstand) : 40;
+      const topp = Math.max(0.12, 0.55 * Math.exp(-d / 90));
+      const src = ctx.createBufferSource();
+      src.buffer = brus;
+      src.playbackRate.value = 0.55;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 420;
+      const g = ctx.createGain();
+      kurva(g, t, topp, 0.12);
+      src.connect(lp); lp.connect(g); g.connect(master);
+      src.start(t); src.stop(t + 0.14);
+      src.onended = () => { for (const n of [src, lp, g]) { try { n.disconnect(); } catch { /* redan borta */ } } };
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   return {
-    oppna, satt, skott, traff, klick,
+    oppna, satt, sattKaraktar, skott, traff, duns, klick,
+    get karaktar() { return karaktar; },
     get pa() { return pa; },
     get volym() { return volym; },
     get skottAntal() { return skottAntal; },

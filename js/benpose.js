@@ -15,17 +15,17 @@ export const POSER = {
   stående: { thigh_l: -6, thigh_r: -6, calf_l: 12, calf_r: 12, foot_l: -6, foot_r: -6, spine_01: 2 },
   hukande: { thigh_l: -65, thigh_r: -65, calf_l: 95, calf_r: 95, foot_l: -55, foot_r: -55, spine_01: 10, spine_02: 5 },
   knastående: { thigh_r: -10, calf_r: 100, foot_r: 40, thigh_l: -80, calf_l: 115, foot_l: -55, spine_01: 8, spine_02: 4 },
-  liggande: { pelvis: 90, foot_l: 40, foot_r: 40 }
+  liggande: { pelvis: 80, thigh_l: 6, thigh_r: 6, calf_l: 10, calf_r: 10, foot_l: 22, foot_r: 22, spine_01: -6, spine_02: -2, neck_01: 22 }
 };
 
 // Handmål i modellens rum ( +X vänster, +Y upp, +Z framåt ), från spine_03.
 // hx/hy/hz är höger hand. dist är avståndet längs pipan till vänster hand.
 // tipp lutar pipan nedåt. Värdena är inom armlängden på den här riggen.
 export const MAL = {
-  sankt: { hx: -0.11, hy: -0.06, hz: 0.2, dist: 0.22, tipp: 0.14 },
-  axel: { hx: -0.07, hy: -0.05, hz: 0.16, dist: 0.22, tipp: 0.06 },
-  liggSankt: { hx: -0.12, hy: 0.07, hz: 0.18, dist: 0.22, tipp: 0.1 },
-  liggAxel: { hx: -0.1, hy: 0.1, hz: 0.2, dist: 0.24, tipp: 0.02 }
+  sankt: { hx: -0.16, hy: -0.22, hz: 0.12, tipp: 0.22, dist: 0.28 },
+  axel: { hx: -0.12, hy: -0.16, hz: 0.1, tipp: 0.03, dist: 0.32 },
+  liggSankt: { hx: -0.14, hy: 0.08, hz: 0.1, tipp: 0.06, dist: 0.28 },
+  liggAxel: { hx: -0.14, hy: 0.1, hz: 0.14, tipp: 0.02, dist: 0.32 }
 };
 
 const STEG = { thigh_l: 14, thigh_r: 14, calf_l: -8, calf_r: -8, foot_l: 5, foot_r: 5 };
@@ -199,7 +199,7 @@ export function skapaBen(root, install = {}) {
     }
     for (const del of fingrar) {
       const grader = del.tumme ? del.led * 0.45 : del.led;
-      const tecken = del.node.name.endsWith('_l') ? -1 : 1;
+      const tecken = 1;
       euler.set(grader * tecken * DEG, 0, 0);
       extraQ.setFromEuler(euler);
       malQ.copy(del.vila).multiply(extraQ);
@@ -220,6 +220,54 @@ export function skapaBen(root, install = {}) {
       return t.node.quaternion.angleTo(t.vila) * 180 / Math.PI;
     },
     senaste() { return senaste; },
+    ram(stallning, axel = 0) {
+      matt();
+      root.updateWorldMatrix(true, true);
+      senaste = rakna(axel, stallning);
+      return senaste;
+    },
+    // Siktmålet måste räknas efter att kroppen sänkts till marken.
+    mal(stallning, axel = 0) {
+      matt();
+      root.updateWorldMatrix(true, true);
+      senaste = rakna(axel, stallning);
+      return senaste;
+    },
+    kropp(stallning, axel = 0, dt = 0.016, fas = 0, hard = false) {
+      matt();
+      const u = mjukhet(dt, hard);
+      const tab = poser[stallning] || poser.stående;
+      const rytm = fas || 0;
+      for (const namn of KROPP) {
+        if (ARM.has(namn)) continue;
+        let grader = tab[namn] || 0;
+        if (rytm && STEG[namn]) grader += Math.sin(rytm + (namn.endsWith('_r') ? Math.PI : 0)) * STEG[namn];
+        gangjarn(namn, grader, u);
+      }
+      root.updateWorldMatrix(true, true);
+      senaste = rakna(axel, stallning);
+      return senaste;
+    },
+    hamta(greppVarld, stodVarld, dt = 0.016, hard = false) {
+      matt();
+      const u = mjukhet(dt, hard);
+      if (!senaste) senaste = rakna(0, 'stående');
+      grepp.copy(greppVarld);
+      stod.copy(stodVarld);
+      const axelH = ben.get('upperarm_r')?.node;
+      const axelV = ben.get('upperarm_l')?.node;
+      if (axelH) { axelH.getWorldPosition(axelPos); inomRack(axelPos, grepp); }
+      if (axelV) { axelV.getWorldPosition(axelPos); inomRack(axelPos, stod); }
+      root.updateWorldMatrix(true, false);
+      vanster.set(1, 0, 0).transformDirection(root.matrixWorld);
+      upp.set(0, 1, 0).transformDirection(root.matrixWorld);
+      poleH.copy(grepp).addScaledVector(vanster, -0.22 * skala).addScaledVector(upp, -0.16 * skala);
+      poleV.copy(stod).addScaledVector(vanster, 0.22 * skala).addScaledVector(upp, -0.12 * skala);
+      senaste = { ...(senaste || {}), grepp: grepp.clone(), stod: stod.clone() };
+      armarMot(senaste, u);
+      root.updateWorldMatrix(true, true);
+      return senaste;
+    },
     // axel 0 = på armen, 1 = i axeln. fas är stegrytm i radianer, 0 står stilla.
     // hard skriver kvaternionerna direkt (efter ett klipp som annars skriver över nästa bild).
     applicera(stallning, axel = 0, dt = 0.016, fas = 0, hard = false) {

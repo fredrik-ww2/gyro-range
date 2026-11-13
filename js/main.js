@@ -110,7 +110,7 @@ async function boot(){
  const recoilEuler=new THREE.Euler(0,0,0,'YXZ'),recoilQ=new THREE.Quaternion(),headEuler=new THREE.Euler(0,0,0,'YXZ'),headQuat=new THREE.Quaternion(),kickEuler=new THREE.Euler(0,0,0,'YXZ'),kickQuat=new THREE.Quaternion(),breathEuler=new THREE.Euler(0,0,0,'YXZ'),breathQuat=new THREE.Quaternion(),sightQuat=new THREE.Quaternion(),styrEuler=new THREE.Euler(0,0,0,'YXZ'),styrQuat=new THREE.Quaternion();
  const occBox=new THREE.Box3(),occPts=Array.from({length:5},()=>new THREE.Vector3());
  let renderTick=performance.now();const renderInterval=1000/cfg.kamera.mal_hz;
- let started=false,selected=0,shots=0,hits=0,cooldown=0,deadFor=0,hitUntil=0,queue=[],last=performance.now(),frames=0,fps=0,measureTime=last,enemyCount=0,burstToken=0,fotoSida=0,stegFas=0;
+ let started=false,selected=0,shots=0,hits=0,cooldown=0,deadFor=0,hitUntil=0,queue=[],last=performance.now(),frames=0,fps=0,measureTime=last,enemyCount=0,burstToken=0,stegFas=0;
  let audio=null,voices=[],audioBuffer=null,audioBus=null,clinkBuffer=null;const fileBuffers={},fileLoading={};let holding=false,nextAuto=0;
  let casingAlive=0,clinks=0,clinkReady=0,clinkVoices=0,aimNdcX=0,aimNdcY=0,breechNdcY=0,muzzleNdcY=0,breechWY=0,muzzleWY=0,muzzleWZ=0;
  function loadWeaponSounds(){for(const w of weapons){if(!w.ljudfil||fileLoading[w.id])continue;fileLoading[w.id]=fetch(new URL('../'+w.ljudfil,import.meta.url)).then(r=>{if(!r.ok)throw Error(r.status);return r.arrayBuffer();}).then(b=>new Promise((ok,no)=>audio.decodeAudioData(b,ok,no))).then(buf=>{fileBuffers[w.id]=buf;}).catch(()=>{fileLoading[w.id]=null;});}}
@@ -143,9 +143,30 @@ async function boot(){
   const albedo=new THREE.CanvasTexture(c);albedo.colorSpace=THREE.SRGBColorSpace;albedo.flipY=false;albedo.magFilter=albedo.minFilter=THREE.NearestFilter;
   return {albedo,metal:tex(metal,THREE.NoColorSpace),rough:tex(rough,THREE.NoColorSpace)};
  }
+ function bakaSkinn(root){
+  root.updateWorldMatrix(true,true);
+  const byten=[];
+  root.traverse(o=>{
+   if(!o.isSkinnedMesh||!o.skeleton)return;
+   o.skeleton.update();
+   const geom=o.geometry.clone();
+   const pos=geom.attributes.position;
+   const v=new THREE.Vector3();
+   for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i);o.applyBoneTransform(i,v);pos.setXYZ(i,v.x,v.y,v.z);}
+   pos.needsUpdate=true;
+   geom.computeVertexNormals();
+   geom.computeBoundingBox();geom.computeBoundingSphere();
+   const plain=new THREE.Mesh(geom,o.material);
+   plain.position.copy(o.position);plain.quaternion.copy(o.quaternion);plain.scale.copy(o.scale);
+   plain.castShadow=true;plain.frustumCulled=false;
+   byten.push({parent:o.parent,plain,old:o});
+  });
+  for(const s of byten){s.parent.add(s.plain);s.old.removeFromParent();}
+ }
  function mountGun(gltf,shift){
   const root=gltf.scene;
-  root.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.frustumCulled=false;const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.map){const maps=palettePBR(m.map);if(maps){m.map=maps.albedo;m.metalnessMap=maps.metal;m.roughnessMap=maps.rough;m.metalness=1;m.roughness=1;}}else{m.metalness=.55;m.roughness=.42;}m.envMapIntensity=1.25;}});
+  bakaSkinn(root);
+  root.traverse(o=>{if(!o.isMesh||!o.visible)return;o.castShadow=true;o.frustumCulled=false;const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.map){const maps=palettePBR(m.map);if(maps){m.map=maps.albedo;m.metalnessMap=maps.metal;m.roughnessMap=maps.rough;m.metalness=1;m.roughness=1;}}else{m.metalness=.55;m.roughness=.42;}m.envMapIntensity=1.25;}});
   root.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(root),center=box.getCenter(new THREE.Vector3());
   root.position.sub(center);root.position.z+=shift;
@@ -235,6 +256,36 @@ async function boot(){
  }
  scene.updateMatrixWorld(true);
  riktaPipa(k98Gun.holder);riktaPipa(mgGun.holder);riktaPipa(karbinGun.holder);
+ function lokalAndar(holder){
+  holder.updateWorldMatrix(true,true);
+  const inv=new THREE.Matrix4().copy(holder.matrixWorld).invert();
+  const pts=[];const v=new THREE.Vector3();
+  holder.traverse(o=>{
+   if(!o.isMesh||!o.geometry?.attributes?.position)return;
+   const pos=o.geometry.attributes.position;const steg=Math.max(1,Math.floor(pos.count/80));
+   for(let i=0;i<pos.count;i+=steg){v.fromBufferAttribute(pos,i);o.localToWorld(v);pts.push(v.applyMatrix4(inv).clone());}
+  });
+  if(pts.length<2)return null;
+  const m=new THREE.Vector3();for(const p of pts)m.add(p);m.multiplyScalar(1/pts.length);
+  let xx=0,yy=0,zz=0,xy=0,xz=0,yz=0;
+  for(const p of pts){const x=p.x-m.x,y=p.y-m.y,z=p.z-m.z;xx+=x*x;yy+=y*y;zz+=z*z;xy+=x*y;xz+=x*z;yz+=y*z;}
+  const ax=new THREE.Vector3(0,0,1);
+  for(let i=0;i<16;i++){const x=xx*ax.x+xy*ax.y+xz*ax.z,y=xy*ax.x+yy*ax.y+yz*ax.z,z=xz*ax.x+yz*ax.y+zz*ax.z;ax.set(x,y,z).normalize();}
+  let a=pts[0],b=pts[0];
+  for(const p of pts){if(p.dot(ax)<a.dot(ax))a=p;if(p.dot(ax)>b.dot(ax))b=p;}
+  return {a:a.clone(),b:b.clone()};
+ }
+ function sparaMynning(holder){
+  const and=lokalAndar(holder);if(!and)return;
+  weaponPivot.updateWorldMatrix(true,true);holder.updateWorldMatrix(true,true);
+  const tillPivot=new THREE.Matrix4().copy(weaponPivot.matrixWorld).invert();
+  const az=holder.localToWorld(and.a.clone()).applyMatrix4(tillPivot).z;
+  const bz=holder.localToWorld(and.b.clone()).applyMatrix4(tillPivot).z;
+  const mun=az<bz?and.a:and.b, kolv=az<bz?and.b:and.a;
+  holder.userData.mynning=mun.clone().sub(kolv).normalize();
+  holder.userData.kolvLokal=kolv;
+  holder.userData.munLokal=mun;
+ }
  sammaLinje(k98Gun.holder,mgGun.holder);sammaLinje(k98Gun.holder,karbinGun.holder);
  const mynningar={},pipGrad={};
  function mataMynning(id,holder){
@@ -244,6 +295,7 @@ async function boot(){
   pipGrad[id]=THREE.MathUtils.radToDeg(dir.angleTo(new THREE.Vector3(0,0,-1)));
  }
  mataMynning('gevar',k98Gun.holder);mataMynning('kulspruta',mgGun.holder);mataMynning('karbin',karbinGun.holder);
+ sparaMynning(k98Gun.holder);sparaMynning(mgGun.holder);sparaMynning(karbinGun.holder);
  {
   const lin=pipPunkter(mgGun.holder);
   const mitt=_pipA.copy(lin.bak).lerp(lin.fram,.42);
@@ -427,33 +479,46 @@ async function boot(){
   }
   headEuler.set(head.pitch,-head.yaw,0,'YXZ');headQuat.setFromEuler(headEuler);
  }
- const _vapenX=new THREE.Vector3(),_vapenY=new THREE.Vector3(),_vapenZ=new THREE.Vector3(),_vapenM=new THREE.Matrix4(),_vapenQ=new THREE.Quaternion();
+ const _vapenY=new THREE.Vector3(),_vapenZ=new THREE.Vector3(),_vapenQ=new THREE.Quaternion();
+ function roteraPivot(delta){
+  aimRig.updateWorldMatrix(true,false);
+  const aimW=new THREE.Quaternion();aimRig.getWorldQuaternion(aimW);
+  const w=new THREE.Quaternion();weaponPivot.getWorldQuaternion(w);
+  w.premultiply(delta);
+  weaponPivot.quaternion.copy(aimW.invert()).multiply(w);
+  weaponPivot.updateWorldMatrix(true,true);
+ }
  function placeraVapenBak(){
   const id=weapons[selected]?.id||'gevar';
-  const grepp=GREPP[id]||GREPP.gevar;
+  const holder=id==='kulspruta'?mgGun.holder:id==='karbin'?karbinGun.holder:k98Gun.holder;
   const mal=benpose.senaste();
-  const hand=jag.getObjectByName('hand_r');
-  if(!hand||!mal){weaponPivot.position.set(.18,1.05,-.25);return;}
-  hand.updateWorldMatrix(true,false);
-  hand.getWorldPosition(tmp);
-  _vapenZ.copy(mal.fram);
-  if(_vapenZ.lengthSq()<1e-8)_vapenZ.set(0,0,-1);
-  _vapenZ.normalize();
-  _vapenY.set(0,1,0);
-  _vapenY.addScaledVector(_vapenZ,-_vapenY.dot(_vapenZ));
-  if(_vapenY.lengthSq()<1e-6){_vapenY.set(0,0,1);_vapenY.addScaledVector(_vapenZ,-_vapenY.dot(_vapenZ));}
-  _vapenY.normalize();
-  _vapenX.crossVectors(_vapenY,_vapenZ).normalize();
-  _vapenY.crossVectors(_vapenZ,_vapenX).normalize();
-  _vapenQ.setFromRotationMatrix(_vapenM.makeBasis(_vapenX,_vapenY,_vapenZ));
-  const up=rekylUpp();
-  if(up>0){recoilEuler.set(-up*.35,0,0,'YXZ');_vapenQ.multiply(recoilQ.setFromEuler(recoilEuler));}
-  aimRig.updateWorldMatrix(true,false);
-  aimRig.getWorldQuaternion(_q);
-  weaponPivot.quaternion.copy(_q.invert()).multiply(_vapenQ);
-  aimRig.worldToLocal(tmp);
-  _fwd.set(grepp.x,grepp.y,grepp.z).applyQuaternion(weaponPivot.quaternion);
-  weaponPivot.position.copy(tmp).sub(_fwd);
+  if(!holder||!mal)return null;
+  holder.visible=true;
+  weaponPivot.updateWorldMatrix(true,true);
+  if(!holder.userData.mynning)sparaMynning(holder);
+  const ons=_vapenZ.copy(mal.fram);
+  if(ons.lengthSq()<1e-8)ons.set(0,0,-1);
+  ons.normalize();
+  const nuDir=holder.userData.mynning.clone().transformDirection(holder.matrixWorld);
+  const lik=nuDir.dot(ons);
+  if(lik<-0.999){
+   const axelFlip=Math.abs(nuDir.y)>0.9?_vapenY.set(1,0,0):_vapenY.set(0,1,0);
+   roteraPivot(_vapenQ.setFromAxisAngle(axelFlip,Math.PI));
+   const nu2=holder.userData.mynning.clone().transformDirection(holder.matrixWorld);
+   if(nu2.dot(ons)<0.995)roteraPivot(_vapenQ.setFromUnitVectors(nu2,ons));
+  }else if(lik<0.995)roteraPivot(_vapenQ.setFromUnitVectors(nuDir,ons));
+  const kolvW=holder.localToWorld(holder.userData.kolvLokal.clone());
+  const flytt=mal.grepp.clone().sub(kolvW);
+  const foralderQ=new THREE.Quaternion();
+  weaponPivot.parent.getWorldQuaternion(foralderQ);
+  flytt.applyQuaternion(foralderQ.invert());
+  weaponPivot.position.add(flytt);
+  weaponPivot.updateWorldMatrix(true,true);
+  const kolv=holder.localToWorld(holder.userData.kolvLokal.clone());
+  const mun=holder.localToWorld(holder.userData.munLokal.clone());
+  const grepp=kolv.clone().lerp(mun,.16);grepp.y+=.02;
+  const stod=kolv.clone().lerp(mun,.34);stod.y+=.015;
+  return {grepp,stod,mun,kolv};
  }
  function applyWeaponTransform(raise){
   const up=rekylUpp();
@@ -962,7 +1027,6 @@ async function boot(){
   sätt(namn){startStallning(namn);},
   vapen(steg){poseSteg=((steg%3)+3)%3;poseFrom=raiseValue();poseTo=VAPEN_MAL[poseSteg];poseT=1;syncPoseUi();if(stallning==='hukande'||stallning==='knastående')startStallning(poseSteg===2?'knastående':'hukande');},
   vy(namn){sattVy(namn);},
-  sida(rad){fotoSida=Number(rad)||0;},
   satt(nyckel,varde){styr.satt(nyckel,varde);},
   kors(id){styr.satt('kikare.variant',id);},
   kö(delar){for(const d of delar)gestKo.push({left:d.ms/1000,tipp:d.tipp,vrid:d.vrid});},
@@ -979,8 +1043,8 @@ async function boot(){
   if(vy==='bakifran'){
    const till=(namn,mal)=>{const hand=jag.getObjectByName(namn);if(!hand)return;hand.getWorldPosition(_muzzle);_pip.copy(_muzzle).sub(player.position).applyQuaternion(_q.copy(player.quaternion).invert());mal[0]=_pip.x;mal[1]=_pip.y;mal[2]=_pip.z;};
    const hr=[0,0,0],hl=[0,0,0];till('hand_r',hr);till('hand_l',hl);handX=hr[0];handY=hr[1];handZ=hr[2];handLX=hl[0];handLY=hl[1];handLZ=hl[2];
-   const hand=jag.getObjectByName('hand_r');const g=GREPP[weapons[selected].id]||GREPP.gevar;
-   if(hand){hand.getWorldPosition(_muzzle);_pip.copy(g).applyQuaternion(weaponPivot.quaternion).add(weaponPivot.position);aimRig.localToWorld(_pip);greppAvstand=_muzzle.distanceTo(_pip);}
+   const hand=jag.getObjectByName('hand_r');const senGrepp=benpose.senaste()?.grepp;
+   if(hand&&senGrepp){hand.getWorldPosition(_muzzle);greppAvstand=_muzzle.distanceTo(senGrepp);}
   }
   return {stallning,eyeY,kanslighet:settings.kastaKanslighet,meter:detektor.visning(),namn:$('stallningNamn').textContent,meterText:$('diveMeter').textContent,kropp:kropp*180/Math.PI,sikt:siktVal,fov:camera.fov,stadga:stadgaNu,forstoring:settings.forstoringNiva,forstoringPa:settings.forstoringPa,z:player.position.z,x:player.position.x,yaw:gyro.vinklar.yaw*180/Math.PI,roll:gyro.vinklar.roll*180/Math.PI,pitch:gyro.vinklar.pitch*180/Math.PI,lookX:_fwd.x,lookY:_fwd.y,lookZ:_fwd.z,munX:_dir.x,munY:_dir.y,munZ:_dir.z,camYaw:camE.y,gunYaw:gunE.y,py:player.quaternion.y,ndcX:ndc.x,ndcY:ndc.y,skott:shots,traffar:hits,pose:poseSteg,fiendeZ:targets[0].root.position.z,info:document.getElementById('gyroInfo')?.innerText||'',align:snapshot.alignDeg,siktar:document.body.dataset.siktar,fps,vy,vapenSynlig:weaponPivot.visible,jagSynlig:jag.visible,camX:camera.position.x,camY:camera.position.y,camZ:camera.position.z,jagNdcX:jagNdc.x,jagNdcY:jagNdc.y,boj:benpose.böj(),hojd:kroppStor.y,langd:Math.max(kroppStor.x,kroppStor.z),skottText:$('skottRubrik')?.textContent||'',version:$('version')?.textContent||'',vapenId:weapons[selected].id,skak:skakAmpNu,stilla:vapenStilla,pip:pipGrad[weapons[selected].id]||0,hal:halLagda,hinder:hinderLista.length,karbin:document.body.dataset.karbin||'nej',sido:sidoAndel(styr.varden.gang),grepp:greppAvstand,handX,handY,handZ,handLX,handLY,handLZ,yta:senasteTraff?.yta||'',menyStandard:gyroMeny.arStandard(),hopp:lager.hoppHojd,pace:lager.kryss.pace,haptikMetod:styrTick.metod};
  },
@@ -1005,8 +1069,21 @@ async function boot(){
  let spak={x:0,y:0,mag:0},platta={x:0,y:0,mag:0};
  function bindSpak(rot,knapp,mal){
   let id=null,x0=0,y0=0;
+  const flytta=(dx,dy)=>{
+   const radie=Math.min(rot.clientWidth,rot.clientHeight)/2;
+   const knopp=Math.min(knapp.offsetWidth||32,knapp.offsetHeight||32)/2;
+   const maxSyn=Math.max(0,radie-knopp-2);
+   const maxSpel=Math.max(maxSyn,radie*.72);
+   const len=Math.hypot(dx,dy);
+   const ux=len>1e-4?dx/len:0,uy=len>1e-4?dy/len:0;
+   const spel=Math.min(maxSpel,len);
+   mal.mag=maxSpel>0?spel/maxSpel:0;
+   mal.x=ux*mal.mag;mal.y=uy*mal.mag;
+   const syn=Math.min(maxSyn,len);
+   knapp.style.transform=`translate(${ux*syn}px,${uy*syn}px)`;
+  };
   rot.addEventListener('pointerdown',e=>{if(!started||(e.button&&e.button!==0))return;id=e.pointerId;const r=rot.getBoundingClientRect();x0=r.left+r.width/2;y0=r.top+r.height/2;try{rot.setPointerCapture(id);}catch{}});
-  rot.addEventListener('pointermove',e=>{if(e.pointerId!==id)return;const max=rot.clientWidth*.36,dx=e.clientX-x0,dy=e.clientY-y0;mal.mag=Math.min(1,Math.hypot(dx,dy)/(max||1));mal.x=dx/(max||1);mal.y=dy/(max||1);knapp.style.transform=`translate(${mal.x*max}px,${mal.y*max}px)`;});
+  rot.addEventListener('pointermove',e=>{if(e.pointerId!==id)return;flytta(e.clientX-x0,e.clientY-y0);});
   const slut=e=>{if(e.pointerId!==id)return;id=null;mal.x=mal.y=mal.mag=0;knapp.style.transform='';};
   rot.addEventListener('pointerup',slut);rot.addEventListener('pointercancel',slut);
  }
@@ -1106,18 +1183,21 @@ async function boot(){
    const gar=stallning==='staende'&&gangFartNu>.4;
    if(gangFartNu>.25&&stallning!=='liggande')stegFas+=dt*(3.2+gangFartNu*1.4);
    jag.position.y=0;
-   if(gar){jagAction.paused=false;jagAction.timeScale=THREE.MathUtils.clamp(gangFartNu/3.1,.55,1.45);jagMixer.update(dt);benpose.armar(axel,dt,stallning);}
-   else{jagAction.paused=true;benpose.applicera(stallning,axel,dt,gangFartNu>.25&&stallning!=='liggande'?stegFas:0);}
+   if(gar){jagAction.paused=false;jagAction.timeScale=THREE.MathUtils.clamp(gangFartNu/3.1,.55,1.45);jagMixer.update(dt);benpose.ram(stallning,axel);}
+   else{jagAction.paused=true;benpose.kropp(stallning,axel,dt,gangFartNu>.25&&stallning!=='liggande'?stegFas:0);}
    jag.updateWorldMatrix(true,true);
-   const markNamn=stallning==='liggande'?['pelvis','foot_l','foot_r','ball_l','ball_r','hand_l','hand_r','Head']:stallning==='knastående'?['foot_l','ball_l','calf_r','foot_r','ball_r']:['foot_l','foot_r','ball_l','ball_r'];
+   const markNamn=stallning==='liggande'?['pelvis','thigh_l','thigh_r','calf_l','calf_r']:stallning==='knastående'?['foot_l','ball_l','calf_r','foot_r','ball_r']:['foot_l','foot_r','ball_l','ball_r'];
    let lagst=Infinity;
    for(const namn of markNamn){const n=jag.getObjectByName(namn);if(!n)continue;n.getWorldPosition(tmp);if(tmp.y<lagst)lagst=tmp.y;}
    if(Number.isFinite(lagst))jag.position.y-=lagst;
    jag.updateWorldMatrix(true,true);
+   benpose.mal(stallning,axel);
+   const fatt=placeraVapenBak();
+   if(fatt)benpose.hamta(fatt.grepp,fatt.stod,dt,gar);
+   jag.updateWorldMatrix(true,true);
    jag.traverse(n=>{if(n.isSkinnedMesh)n.skeleton.update();});
-   placeraVapenBak();
    const dist=stallning==='liggande'?4.2:2.8,hojd=stallning==='liggande'?1.15:stallning==='hukande'||stallning==='knastående'?1.15:1.62;
-   const vinkel=kropp+fotoSida;
+   const vinkel=kropp;
    camera.position.set(player.position.x+Math.sin(vinkel)*dist,hojd+hoppNu,player.position.z+Math.cos(vinkel)*dist);
    _aim.set(player.position.x,stallning==='liggande'?.32:(stallning==='hukande'||stallning==='knastående')?.72:1.05,player.position.z);
    camera.up.set(0,1,0);camera.lookAt(_aim);

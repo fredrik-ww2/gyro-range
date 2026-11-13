@@ -27,6 +27,11 @@ const STANDARD_AXEL = {
   skak: 0
 };
 
+const VAPEN = ['vanligt', 'kar98k', 'springfield', 'enfield'];
+const ZOOM_MAX = 12;
+const PRICK_MIN = 3;
+const PRICK_MAX = 56;
+
 export const STANDARD_LASER = {
   pa: false,
   matcha: true,
@@ -34,11 +39,12 @@ export const STANDARD_LASER = {
   utjamning: 0.15,
   dodzon: 0.3,
   lasRoll: true,
-  prick: 9,
+  prick: 6,
   farg: '#ff1a1a',
   strale: false,
   sikte: 'prick',
-  zoom: 2,
+  vapen: 'vanligt',
+  zoom: 1,
   ljud: true,
   volym: 0.85,
   vibrera: true,
@@ -85,7 +91,8 @@ export function normalLaser(raw) {
     farg,
     strale: raw?.strale === true,
     sikte: raw?.sikte === 'kikare' ? 'kikare' : 'prick',
-    zoom: klamp(Number.isFinite(+raw?.zoom) ? +raw.zoom : bas.zoom, 1, 6),
+    vapen: VAPEN.includes(raw?.vapen) ? raw.vapen : bas.vapen,
+    zoom: klamp(Number.isFinite(+raw?.zoom) ? +raw.zoom : bas.zoom, 1, ZOOM_MAX),
     ljud: raw?.ljud !== false,
     volym: klamp(Number.isFinite(+raw?.volym) ? +raw.volym : bas.volym, 0, 1),
     vibrera: raw?.vibrera !== false,
@@ -101,13 +108,13 @@ function prickVarde(raw, bas) {
   const angiven = Number.isFinite(+raw?.prick) ? Math.round(+raw.prick) : null;
   const gammalStandard = raw?.sikte == null && angiven === 22;
   const vald = gammalStandard ? bas.prick : (angiven == null ? bas.prick : angiven);
-  return klamp(vald, 6, 56);
+  return klamp(vald, PRICK_MIN, PRICK_MAX);
 }
 
 // Kikarsiktet delar basens synfält med zoom. Prickläget lämnar synfältet orört.
 export function effektivFov(bas, install) {
   const b = Number.isFinite(+bas) ? +bas : 68;
-  const z = install?.sikte === 'kikare' ? klamp(Number(install.zoom) || 1, 1, 6) : 1;
+  const z = install?.sikte === 'kikare' ? klamp(Number(install.zoom) || 1, 1, ZOOM_MAX) : 1;
   return klamp(b / z, 4, 100);
 }
 
@@ -774,16 +781,21 @@ export function sjalvtest() {
   krav('skak 0 är tyst', utan.skakTopp === 0);
   krav('ryck skakar siktet', med.skakTopp > 0.5 && med.skakTopp <= 16);
   krav('mätaren rör sig under accelerationen', med.matareTopp > 0.15);
-  krav('liten prick är standard', normalLaser({}).prick === 9);
+  krav('liten prick är standard', normalLaser({}).prick === 6);
+  krav('prick kan vara 3 px', normalLaser({prick: 3}).prick === 3);
+  krav('prick under 3 kläms', normalLaser({prick: 1}).prick === 3);
   krav('prick kan vara 8 px', normalLaser({prick: 8}).prick === 8);
-  krav('gammal standardprick blir liten', normalLaser({prick: 22}).prick === 9);
+  krav('gammal standardprick blir liten', normalLaser({prick: 22}).prick === 6);
   krav('vald prick 22 blir kvar', normalLaser({prick: 22, sikte: 'prick'}).prick === 22);
   krav('sikte är prick eller kikare', normalLaser({sikte: 'kikare'}).sikte === 'kikare' && normalLaser({sikte: 'tub'}).sikte === 'prick');
   krav('kikarsikte zoomar synfältet', effektivFov(40, {sikte: 'kikare', zoom: 2}) === 20);
   krav('prickläge zoomar inte', effektivFov(40, {sikte: 'prick', zoom: 2}) === 40);
   krav('zoom stannar vid 4°', effektivFov(12, {sikte: 'kikare', zoom: 4}) === 4);
   krav('sex gånger zoomar synfältet', effektivFov(66, {sikte: 'kikare', zoom: 6}) === 11);
-  krav('zoom kläms', normalLaser({zoom: 9}).zoom === 6 && normalLaser({zoom: 0.2}).zoom === 1);
+  krav('zoom kläms', normalLaser({zoom: 30}).zoom === 12 && normalLaser({zoom: 0.2}).zoom === 1);
+  krav('tio gånger finns', normalLaser({zoom: 10}).zoom === 10);
+  krav('tio gånger zoomar synfältet', Math.abs(effektivFov(68, {sikte: 'kikare', zoom: 10}) - 6.8) < 0.02);
+  krav('vapen faller tillbaka till vanligt', normalLaser({}).vapen === 'vanligt' && normalLaser({vapen: 'kar98k'}).vapen === 'kar98k');
   krav('förval behåller siktet', appliceraForval({sikte: 'kikare', zoom: 3, prick: 40}, 'fin').sikte === 'kikare' && appliceraForval({sikte: 'kikare', zoom: 3, prick: 40}, 'fin').zoom === 3);
   return fel;
 }

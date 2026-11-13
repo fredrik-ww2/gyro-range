@@ -4,7 +4,8 @@ import {MeshoptDecoder} from '../js/vendor/loaders/meshopt_decoder.module.js';
 import {DRACOLoader} from '../flyg/vendor/loaders/DRACOLoader.js';
 import {KTX2Loader} from '../flyg/vendor/loaders/KTX2Loader.js';
 import {mergeGeometries} from '../js/vendor/utils/BufferGeometryUtils.js';
-import {stallSoldater} from './soldat.js?v=11';
+import {stallSoldater} from './soldat.js?v=13';
+import {medForm} from './mark.js?v=13';
 
 const OGA = 1.7;
 const FILER = {
@@ -183,31 +184,29 @@ function slåIhop(grupp) {
   return grupp;
 }
 
-function skugga(root) {
+function skugga(root, skuggaPa = true) {
   root.traverse(n => {
     if (/^muzzle/i.test(n.name || '')) n.visible = false;
     if (!n.isMesh || !n.visible) return;
-    n.castShadow = true;
+    n.castShadow = skuggaPa;
     n.receiveShadow = true;
   });
 }
 
-function mur(x0, z0, x1, z1, luckaFran, luckaTill) {
+function murOppna(x0, z0, x1, z1, oppen, markHojd) {
   const dx = x1 - x0, dz = z1 - z0;
   const len = Math.hypot(dx, dz);
   const yaw = Math.atan2(-dz, dx);
   const steg = 4;
   const ut = [];
-  let oppningSatt = false;
   for (let d = 0; d + steg <= len + 0.05; d += steg) {
     const mitt = d + steg / 2;
-    const x = x0 + dx * (d / len);
-    const z = z0 + dz * (d / len);
-    if (mitt >= luckaFran && mitt < luckaTill) {
-      if (!oppningSatt) { ut.push({x, z, yaw, typ: 'oppning'}); oppningSatt = true; }
-      continue;
-    }
-    ut.push({x, z, yaw, typ: Math.round(d / steg) % 6 === 3 ? 'trad' : 'rak'});
+    const x = x0 + dx * (mitt / len);
+    const z = z0 + dz * (mitt / len);
+    if (oppen && oppen(x, z)) continue;
+    const n = Math.round(d / steg);
+    const typ = n % 11 === 2 ? 'oppning' : n % 7 === 4 ? 'trad' : 'rak';
+    ut.push({x, z, yaw, typ, y: markHojd(x, z)});
   }
   return ut;
 }
@@ -242,7 +241,7 @@ function grastyg() {
   t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.anisotropy = 4;
-  t.repeat.set(48, 48);
+  t.repeat.set(72, 72);
   return t;
 }
 
@@ -263,13 +262,14 @@ function jordtyg() {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(8, 28);
+  t.repeat.set(6, 40);
   return t;
 }
 
-function ljusOchMark(scene, miljo) {
+function ljusOchMark(scene, miljo, markHojd, terrang) {
   scene.background = null;
-  scene.fog = new THREE.Fog(0xd5dece, 48, 175);
+  const dimFjarr = Math.max(terrang.dimmaFjarr, terrang.dimmaNara + 40);
+  scene.fog = new THREE.Fog(0xd5dece, terrang.dimmaNara, dimFjarr);
   scene.add(new THREE.HemisphereLight(0xcfe0ea, 0x3e4a30, 0.95));
   const sol = new THREE.DirectionalLight(0xfff1d4, 1.85);
   sol.position.set(-36, 52, 24);
@@ -286,7 +286,8 @@ function ljusOchMark(scene, miljo) {
   sol.target.position.set(0, 0, -8);
   scene.add(sol, sol.target);
 
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(340, 24, 14), new THREE.ShaderMaterial({
+  const himmelR = Math.max(420, terrang.kameraFar - 40);
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(himmelR, 24, 14), new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
     uniforms: {
       top: {value: new THREE.Color(0x7eadd8)},
@@ -299,37 +300,48 @@ function ljusOchMark(scene, miljo) {
   sky.userData.himlen = true;
   miljo.add(sky);
 
-  const mark = new THREE.Mesh(new THREE.PlaneGeometry(520, 520), new THREE.MeshStandardMaterial({map: grastyg(), roughness: 0.94, metalness: 0}));
-  mark.rotation.x = -Math.PI / 2;
+  const geo = new THREE.PlaneGeometry(terrang.mark, terrang.mark, terrang.segment, terrang.segment);
+  geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) pos.setY(i, markHojd(pos.getX(i), pos.getZ(i)));
+  geo.computeVertexNormals();
+  const mark = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({map: grastyg(), roughness: 0.94, metalness: 0}));
   mark.receiveShadow = true;
   miljo.add(mark);
-  const vag = (w, h, x, z, yaw) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({map: jordtyg(), roughness: 0.92, metalness: 0}));
-    m.rotation.x = -Math.PI / 2;
-    m.rotation.z = yaw;
-    m.position.set(x, 0.02, z);
+
+  const jord = new THREE.MeshStandardMaterial({map: jordtyg(), roughness: 0.92, metalness: 0, polygonOffset: true, polygonOffsetFactor: -1});
+  const vag = (bredd, langd, langsX) => {
+    const seg = Math.max(8, Math.round(langd / 6));
+    const g = new THREE.PlaneGeometry(langsX ? langd : bredd, langsX ? bredd : langd, langsX ? seg : 1, langsX ? 1 : seg);
+    g.rotateX(-Math.PI / 2);
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) p.setY(i, markHojd(p.getX(i), p.getZ(i)) + 0.045);
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, jord);
     m.receiveShadow = true;
     miljo.add(m);
   };
-  vag(3.4, 210, 0, 0, 0);
-  vag(150, 2.8, 0, 0, Math.PI / 2);
+  vag(3.2, 640, false);
+  vag(3.2, 640, true);
 }
 
-function instans(geom, material, platser) {
+function instans(geom, material, platser, skuggaPa) {
   if (!platser.length) return null;
   const mesh = new THREE.InstancedMesh(geom, material, platser.length);
   const d = new THREE.Object3D();
+  let radie = 30;
   platser.forEach((p, i) => {
     d.position.set(p.x, p.y || 0, p.z);
     d.rotation.set(0, p.yaw || 0, 0);
-    d.scale.set(1, 1, 1);
+    d.scale.setScalar(p.skala || 1);
     d.updateMatrix();
     mesh.setMatrixAt(i, d.matrix);
+    radie = Math.max(radie, Math.hypot(p.x, p.z) + 40);
   });
   mesh.instanceMatrix.needsUpdate = true;
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 200);
+  mesh.castShadow = !!skuggaPa;
+  mesh.receiveShadow = !!skuggaPa;
+  mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(), radie);
   return mesh;
 }
 
@@ -345,11 +357,53 @@ function geometriFran(root, faktor) {
   return {geometry: g, material: mesh.material};
 }
 
-export async function byggVarld(scene, renderer) {
+function bakaStaty(rot, farg) {
+  rot.updateWorldMatrix(true, true);
+  const inv = new THREE.Matrix4().copy(rot.matrixWorld).invert();
+  const geoms = [];
+  const v = new THREE.Vector3();
+  rot.traverse(n => {
+    if (!n.isMesh || n.visible === false) return;
+    const g = n.geometry.clone();
+    const posAttr = g.getAttribute('position');
+    if (!posAttr) return;
+    if (n.isSkinnedMesh && g.getAttribute('skinIndex')) {
+      n.skeleton.update();
+      for (let i = 0; i < posAttr.count; i++) {
+        v.fromBufferAttribute(posAttr, i);
+        n.applyBoneTransform(i, v);
+        posAttr.setXYZ(i, v.x, v.y, v.z);
+      }
+      g.deleteAttribute('skinIndex');
+      g.deleteAttribute('skinWeight');
+    }
+    g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, n.matrixWorld));
+    const flat = g.index ? g.toNonIndexed() : g;
+    for (const k of Object.keys(flat.attributes)) {
+      if (k !== 'position' && k !== 'normal') flat.deleteAttribute(k);
+    }
+    if (!flat.getAttribute('normal')) flat.computeVertexNormals();
+    geoms.push(flat);
+  });
+  if (!geoms.length) return null;
+  let geom = geoms[0];
+  if (geoms.length > 1) {
+    geom = kanMerga(geoms) ? mergeGeometries(geoms, false) : null;
+    if (!geom) return null;
+  }
+  geom.computeBoundingBox();
+  geom.translate(0, -geom.boundingBox.min.y, 0);
+  const material = new THREE.MeshStandardMaterial({color: farg, roughness: 0.9, metalness: 0.04});
+  return {geometry: geom, material};
+}
+
+export async function byggVarld(scene, renderer, config, effekt) {
+  const terrang = config?.terrang || {dimmaNara: 160, dimmaFjarr: 540, kameraFar: 700, raycast: 560, mark: 920, segment: 128, form: {}};
+  const markHojd = medForm(terrang.form);
   const miljo = new THREE.Group();
   miljo.name = 'miljo';
   scene.add(miljo);
-  ljusOchMark(scene, miljo);
+  ljusOchMark(scene, miljo, markHojd, terrang);
   const env = new THREE.Scene();
   env.add(new THREE.Mesh(new THREE.SphereGeometry(8, 10, 6), new THREE.MeshBasicMaterial({color: 0xc5d4c4, side: THREE.BackSide})));
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -380,23 +434,38 @@ export async function byggVarld(scene, renderer) {
     if (Math.abs(s - 1) > 0.02) rot.scale.multiplyScalar(s);
     rot.position.y -= matt(rot).box.min.y;
     if (skriv !== false) rapportRad(namn, fore, matt(rot).size, Math.abs(s - 1) > 0.02 ? s : 1);
-    skugga(rot);
+    skugga(rot, true);
   }
 
+  const oppenNS = x => Math.abs(x) < 16;
+  const oppenOV = (x, z) => Math.abs(z) < 16;
   const hackPlatser = [
-    ...mur(-36, -36, 36, -36, 32, 40),
-    ...mur(-36, 36, 36, 36, 32, 40),
-    ...mur(36, -36, 36, 36, 32, 40),
-    ...mur(-36, 36, -36, -36, 32, 40),
-    ...mur(-16, -78, 28, -78, 18, 26),
-    ...mur(-20, 96, 24, 96, 16, 24)
+    ...murOppna(-48, -42, 48, -42, oppenNS, markHojd),
+    ...murOppna(-48, 42, 48, 42, oppenNS, markHojd),
+    ...murOppna(48, -42, 48, 42, oppenOV, markHojd),
+    ...murOppna(-48, 42, -48, -42, oppenOV, markHojd),
+    ...murOppna(-18, -70, -18, -300, null, markHojd),
+    ...murOppna(18, -70, 18, -300, null, markHojd),
+    ...murOppna(-18, 70, -18, 300, null, markHojd),
+    ...murOppna(18, 70, 18, 300, null, markHojd),
+    ...murOppna(-70, -18, -300, -18, null, markHojd),
+    ...murOppna(-70, 18, -300, 18, null, markHojd),
+    ...murOppna(70, -18, 300, -18, null, markHojd),
+    ...murOppna(70, 18, 300, 18, null, markHojd),
+    ...murOppna(-80, -140, 80, -140, oppenNS, markHojd),
+    ...murOppna(-90, -230, 90, -230, oppenNS, markHojd),
+    ...murOppna(-80, 155, 80, 155, oppenNS, markHojd),
+    ...murOppna(-90, 255, 90, 255, oppenNS, markHojd),
+    ...murOppna(-155, -70, -155, 70, oppenOV, markHojd),
+    ...murOppna(165, -70, 165, 70, oppenOV, markHojd),
+    ...murOppna(-250, -60, -250, 60, oppenOV, markHojd)
   ];
   const hornPlatser = [
-    {x: -36, z: 36, yaw: 0, y: 0.03},
-    {x: 36, z: 36, yaw: -Math.PI / 2, y: 0.03},
-    {x: 36, z: -36, yaw: Math.PI, y: 0.03},
-    {x: -36, z: -36, yaw: Math.PI / 2, y: 0.03}
-  ];
+    {x: -48, z: 42, yaw: 0},
+    {x: 48, z: 42, yaw: -Math.PI / 2},
+    {x: 48, z: -42, yaw: Math.PI},
+    {x: -48, z: -42, yaw: Math.PI / 2}
+  ].map(p => ({...p, y: markHojd(p.x, p.z)}));
   for (const nyckel of ['hack', 'oppning', 'hackTrad', 'horn', 'apple', 'bok', 'ek']) {
     const rot = modell[nyckel].scene;
     rot.position.set(0, 0, 0);
@@ -410,23 +479,31 @@ export async function byggVarld(scene, renderer) {
     rapport.push({namn: nyckel, fore: [+fore.x.toFixed(2), +fore.y.toFixed(2), +fore.z.toFixed(2)], efter: [+(fore.x * s).toFixed(2), +efterH.toFixed(2), +(fore.z * s).toFixed(2)], langd: +efterL.toFixed(2), skala: +s.toFixed(3)});
     rot.userData.del = del;
   }
-  const avTyp = typ => hackPlatser.filter(p => p.typ === typ).map(p => ({...p, y: 0.03}));
-  const hackMesh = instans(modell.hack.scene.userData.del.geometry, modell.hack.scene.userData.del.material, avTyp('rak'));
-  const oppnMesh = instans(modell.oppning.scene.userData.del.geometry, modell.oppning.scene.userData.del.material, avTyp('oppning'));
-  const tradHack = instans(modell.hackTrad.scene.userData.del.geometry, modell.hackTrad.scene.userData.del.material, avTyp('trad'));
-  const hornMesh = instans(modell.horn.scene.userData.del.geometry, modell.horn.scene.userData.del.material, hornPlatser);
-  for (const m of [hackMesh, oppnMesh, tradHack, hornMesh]) if (m) miljo.add(m);
+  const avTyp = typ => hackPlatser.filter(p => p.typ === typ);
+  const laggPar = (nyckel, platser) => {
+    const del = modell[nyckel].scene.userData.del;
+    const nara = platser.filter(p => Math.hypot(p.x, p.z) < 85);
+    const fjarr = platser.filter(p => Math.hypot(p.x, p.z) >= 85);
+    const a = instans(del.geometry, del.material, nara, true);
+    const b = instans(del.geometry, del.material, fjarr, false);
+    if (a) miljo.add(a);
+    if (b) miljo.add(b);
+  };
+  laggPar('hack', avTyp('rak'));
+  laggPar('oppning', avTyp('oppning'));
+  laggPar('hackTrad', avTyp('trad'));
+  const hornMesh = instans(modell.horn.scene.userData.del.geometry, modell.horn.scene.userData.del.material, hornPlatser, true);
+  if (hornMesh) miljo.add(hornMesh);
 
   const trad = [
-    {k: 'ek', x: -24, z: -16}, {k: 'ek', x: 24, z: 22}, {k: 'ek', x: -22, z: 30}, {k: 'ek', x: 48, z: -52}, {k: 'ek', x: -50, z: 40},
-    {k: 'bok', x: -12, z: -48}, {k: 'bok', x: 34, z: -30}, {k: 'bok', x: -46, z: -18}, {k: 'bok', x: 50, z: 36},
-    {k: 'apple', x: 16, z: -30}, {k: 'apple', x: -16, z: 10}, {k: 'apple', x: 9, z: 20}, {k: 'apple', x: -8, z: -28}
-  ];
-  for (const k of ['ek', 'bok', 'apple']) {
-    const del = modell[k].scene.userData.del;
-    const mesh = instans(del.geometry, del.material, trad.filter(t => t.k === k));
-    if (mesh) miljo.add(mesh);
-  }
+    {k: 'ek', x: -28, z: -20}, {k: 'ek', x: 30, z: 26}, {k: 'ek', x: -26, z: 34}, {k: 'ek', x: 34, z: -36},
+    {k: 'bok', x: -22, z: -48}, {k: 'bok', x: 36, z: -28}, {k: 'apple', x: 22, z: -34}, {k: 'apple', x: -20, z: 14},
+    {k: 'ek', x: -26, z: -120}, {k: 'ek', x: 28, z: -188}, {k: 'ek', x: -30, z: 150}, {k: 'ek', x: 24, z: 210},
+    {k: 'bok', x: 32, z: -110}, {k: 'bok', x: -34, z: -200}, {k: 'bok', x: 36, z: 170}, {k: 'bok', x: -28, z: 240},
+    {k: 'apple', x: -24, z: -96}, {k: 'apple', x: 26, z: 108}, {k: 'ek', x: -110, z: -26}, {k: 'ek', x: 140, z: 22},
+    {k: 'bok', x: -180, z: 28}, {k: 'bok', x: 190, z: -30}, {k: 'apple', x: 90, z: -24}, {k: 'ek', x: -70, z: 30}
+  ].map(t => ({...t, y: markHojd(t.x, t.z)}));
+  for (const k of ['ek', 'bok', 'apple']) laggPar(k, trad.filter(t => t.k === k));
 
   function placera(namn, x, z, yaw, pose) {
     const kalla = modell[namn];
@@ -435,7 +512,7 @@ export async function byggVarld(scene, renderer) {
     const wrap = new THREE.Group();
     wrap.add(rot);
     stallGrupp(namn, rot);
-    wrap.position.set(x, 0, z);
+    wrap.position.set(x, markHojd(x, z), z);
     wrap.rotation.y = yaw;
     miljo.add(wrap);
   }
@@ -456,14 +533,24 @@ export async function byggVarld(scene, renderer) {
     if (s !== 1) rot.scale.multiplyScalar(s);
     rot.position.y -= matt(rot).box.min.y;
     rapportRad('sherman', fore, matt(rot).size, s);
-    skugga(rot);
+    skugga(rot, true);
     const wrap = new THREE.Group();
     wrap.add(rot);
-    wrap.position.set(-8, 0, -55);
+    wrap.position.set(-16, markHojd(-16, -58), -58);
     wrap.rotation.y = 2.2;
     miljo.add(wrap);
+    const fjarr = bakaStaty(rot, 0x4a5340);
+    if (fjarr) {
+      const platser = [
+        {x: 24, z: -248, yaw: 0.4},
+        {x: -236, z: 18, yaw: 1.2},
+        {x: 210, z: -22, yaw: -0.6}
+      ].map(p => ({...p, y: markHojd(p.x, p.z)}));
+      const mesh = instans(fjarr.geometry, fjarr.material, platser, false);
+      if (mesh) miljo.add(mesh);
+    }
   }
-  placera('tiger', 11, 66, Math.PI - 0.45);
+  placera('tiger', 26, 74, Math.PI - 0.45);
   {
     const rot = klonaSkinn(modell.pak.scene);
     frysPose(rot, modell.pak.animations, 'commander_observe', 0.5);
@@ -476,21 +563,54 @@ export async function byggVarld(scene, renderer) {
     slåIhop(pak);
     const wrap = new THREE.Group();
     wrap.add(pak);
-    wrap.position.set(38, 0, 0);
+    wrap.position.set(40, markHojd(40, 24), 24);
     wrap.rotation.y = -Math.PI / 2;
     miljo.add(wrap);
     rapportRad('pak', fore, matt(pak).size, s);
   }
-  placera('husA', 20, -52, 0.15);
-  placera('husB', -58, 6, Math.PI / 2);
-  placera('radhus', -16, 78, 0.05);
+  placera('husA', 28, -56, 0.15);
+  placera('husB', -62, 28, Math.PI / 2);
+  placera('radhus', -22, 84, 0.05);
 
-  const soldater = stallSoldater(scene, {usa: modell.usa, tysk: modell.tysk});
+  function fjarrHus(namn, farg, platser) {
+    const rot = klonaSkinn(modell[namn].scene);
+    rot.position.set(0, 0, 0);
+    rot.rotation.set(0, 0, 0);
+    rot.scale.set(1, 1, 1);
+    const fore = matt(rot).size;
+    const s = behov(fore, SKALA[namn]);
+    if (Math.abs(s - 1) > 0.02) rot.scale.multiplyScalar(s);
+    rot.position.y -= matt(rot).box.min.y;
+    const baka = bakaStaty(rot, farg);
+    if (!baka) return;
+    const mesh = instans(baka.geometry, baka.material, platser.map(p => ({...p, y: markHojd(p.x, p.z)})), false);
+    if (mesh) miljo.add(mesh);
+  }
+  fjarrHus('husA', 0x8d8474, [
+    {x: 40, z: -176, yaw: 0.2},
+    {x: -46, z: 186, yaw: 1.1},
+    {x: 36, z: 248, yaw: -0.4}
+  ]);
+  fjarrHus('husB', 0x6f685c, [
+    {x: -168, z: -32, yaw: 0.4},
+    {x: 176, z: 34, yaw: 2.2},
+    {x: -230, z: 36, yaw: 0.8}
+  ]);
+
+  const soldatLista = config?.soldater || {};
+  const soldater = stallSoldater(scene, {usa: modell.usa, tysk: modell.tysk}, {
+    markHojd,
+    effekt,
+    traff: config?.traff,
+    rayMax: terrang.raycast,
+    platser: soldatLista.platser,
+    extra: soldatLista.extra
+  });
   for (const rad of soldater.status()) {
-    rapport.push({namn: rad.sida + '-soldat', fore: [0, 0, 0], efter: [rad.x, 1.78, rad.z], skala: 1});
+    rapport.push({namn: rad.sida + '-soldat', fore: [0, 0, 0], efter: [rad.x, rad.y, rad.z], skala: 1, zon: rad.zon, avstand: rad.avstand});
   }
 
   draco.dispose();
   ktx2.dispose();
-  return {rapport, oga: OGA, hackAntal: hackPlatser.length, miljo, soldater};
+  return {rapport, oga: OGA, hackAntal: hackPlatser.length, miljo, soldater, markHojd};
 }

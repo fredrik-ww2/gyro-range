@@ -1,0 +1,41 @@
+{
+  "prick": { "standard": 6, "min": 3, "max": 56 },
+  "zoomMax": 12,
+  "fovMin": 4,
+  "traff": { "kroppsskott": 3, "huvudSkottDodar": true, "huvudRadie": 0.15 },
+  "blod": { "pool": 180, "kropp": 16, "huvud": 42, "sar": 40 },
+  "terrang": {
+    "dimmaNara": 160,
+    "dimmaFjarr": 540,
+    "kameraFar": 700,
+    "raycast": 560,
+    "mark": 920,
+    "segment": 128,
+    "form": { "flat": 24, "mjuk": 70, "vag": 22, "a": 8.5, "b": 3.6, "c": 10, "d": 4.5 }
+  },
+  "vapen": [
+    { "id": "vanligt", "namn": "Vanligt", "under": "1×", "forstoring": 1, "sikte": "prick", "retikel": "prick", "ljud": "vanligt" },
+    { "id": "kar98k", "namn": "Kar 98k", "under": "4×", "forstoring": 4, "sikte": "kikare", "retikel": "zf39", "ljud": "kar98k" },
+    { "id": "springfield", "namn": "Springfield", "under": "6×", "forstoring": 6, "sikte": "kikare", "retikel": "m1903", "ljud": "springfield" },
+    { "id": "enfield", "namn": "Enfield", "under": "10×", "forstoring": 10, "sikte": "kikare", "retikel": "mil", "ljud": "enfield" }
+  ],
+  "soldater": {
+    "zoner": { "nara": [15, 35], "medel": [55, 120], "langt": [150, 320] },
+    "platser": [
+      { "namn": "usa", "x": -8, "z": -22, "yaw": 0.35, "beteende": "vakt", "zon": "nara" },
+      { "namn": "tysk", "x": 14, "z": -24, "yaw": 2.4, "beteende": "patrull", "zon": "nara" },
+      { "namn": "usa", "x": -16, "z": 20, "yaw": 1.2, "beteende": "kik", "zon": "nara" },
+      { "namn": "tysk", "x": 5, "z": -82, "yaw": 0.15, "beteende": "vakt", "zon": "medel" },
+      { "namn": "usa", "x": -72, "z": 4, "yaw": 1.6, "beteende": "patrull", "zon": "medel" },
+      { "namn": "tysk", "x": 6, "z": 96, "yaw": -2.9, "beteende": "kik", "zon": "medel" },
+      { "namn": "usa", "x": 0, "z": -210, "yaw": 0.05, "beteende": "vakt", "zon": "langt" },
+      { "namn": "tysk", "x": 0, "z": 236, "yaw": 3.1, "beteende": "patrull", "zon": "langt" },
+      { "namn": "usa", "x": -196, "z": 0, "yaw": 1.57, "beteende": "kik", "zon": "langt" }
+    ],
+    "extra": [
+      { "namn": "tysk", "x": 20, "z": 14, "yaw": -0.8, "beteende": "patrull", "zon": "nara" },
+      { "namn": "usa", "x": -4, "z": 78, "yaw": 2.7, "beteende": "vakt", "zon": "medel" },
+      { "namn": "tysk", "x": 8, "z": 268, "yaw": 3.0, "beteende": "kik", "zon": "langt" }
+    ]
+  }
+}

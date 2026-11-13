@@ -1,8 +1,22 @@
 :root { color-scheme: dark; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: #100e0c; overflow: hidden; }
-body { touch-action: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-#vy { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+body {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+#vy {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
 button.menyknapp {
   position: fixed;
   z-index: 6;
@@ -26,6 +40,7 @@ button.menyknapp[aria-expanded="true"] { background: #e3c88e; color: #172724; bo
 #meny {
   position: fixed;
   z-index: 5;
+  touch-action: pan-y;
   top: calc(max(8px, env(safe-area-inset-top)) + 52px);
   right: max(8px, env(safe-area-inset-right));
   width: min(320px, calc(100vw - 16px - env(safe-area-inset-right)));

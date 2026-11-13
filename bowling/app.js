@@ -41,10 +41,21 @@ function hantera(r) {
   if (r.handelse === 'bevapnad') ljud.bevapnad();
   if (r.handelse === 'slapp' && r.kast) {
     fysik.starta(r.kast);
+    ljud.landning(r.kast.fart);
     omstallKlar = false;
     stillaSedan = 0;
   }
   return r;
+}
+
+function ljudAvSteg(res) {
+  if (res?.ranna) ljud.ranna();
+  if (res?.antalTraffade > 0) {
+    const fart = Math.hypot(fysik.ball.vx, fysik.ball.vz) || fysik.kast?.fart || 6;
+    ljud.krasch(res.antalTraffade, fart);
+  }
+  if (fysik.ball.aktiv) ljud.rulla(Math.hypot(fysik.ball.vx, fysik.ball.vz), !fysik.ball.ranna);
+  else ljud.tystRull();
 }
 
 function mataOchSteg(prov) {
@@ -55,6 +66,7 @@ function mataOchSteg(prov) {
 }
 
 function nollNu() {
+  ljud.vack();
   gyro.nollstall();
   const t = performance.now();
   maskin.nollstalld(t);
@@ -69,17 +81,35 @@ function tillat(T) {
   } catch (e) { return Promise.reject(e); }
 }
 
+let tillatelsePagar = false;
+
 async function gestTryck() {
+  // Väck ljudet i samma anrop som gesten, före första await.
+  ljud.vack();
   if (maskin.tillstand === 'NEED_PERMISSION') {
+    if (tillatelsePagar) return;
+    tillatelsePagar = true;
     const orientation = tillat(globalThis.DeviceOrientationEvent);
     const motion = tillat(globalThis.DeviceMotionEvent);
-    ljud.vack();
-    const [a, b] = await Promise.allSettled([orientation, motion]);
-    gyro.aktiv = a.status === 'fulfilled' || b.status === 'fulfilled';
-    maskin.beviljad();
+    try {
+      const [a, b] = await Promise.allSettled([orientation, motion]);
+      const orienteringOk = a.status === 'fulfilled' && a.value === 'granted';
+      const rorelseOk = b.status === 'fulfilled' && b.value === 'granted';
+      const saknas = a.status === 'fulfilled' && a.value === 'unavailable'
+        && b.status === 'fulfilled' && b.value === 'unavailable';
+      if (orienteringOk || rorelseOk || saknas) {
+        gyro.aktiv = true;
+        maskin.beviljad();
+        ljud.start();
+        nollNu();
+      } else gyro.aktiv = false;
+    } finally {
+      tillatelsePagar = false;
+    }
     return;
   }
-  if (maskin.tillstand === 'LOOKING' || maskin.tillstand === 'CALIBRATED_BACKSWING' || maskin.tillstand === 'ARMED_IN_BACKSWING') {
+  const t = maskin.tillstand;
+  if (t === 'LOOKING' || t === 'CALIBRATED_BACKSWING' || t === 'ARMED_IN_BACKSWING' || t === 'RELEASED_WATCHING') {
     nollNu();
   }
 }
@@ -201,13 +231,11 @@ function foljKamera() {
 
 function tick(dt) {
   const res = fysik.steg(dt);
-  if (res.traff.length) ljud.krasch();
-  if (fysik.ball.aktiv) ljud.rulla(Math.hypot(fysik.ball.vx, fysik.ball.vz));
-  else ljud.tystRull();
+  ljudAvSteg(res);
   bana.rita(fysik);
   foljKamera();
   renderer.render(bana.scene, bana.camera);
-  return { traff: res.traff.length, framme: res.framme };
+  return { traff: res.traff.length, antalTraffade: res.antalTraffade, ranna: res.ranna, framme: res.framme };
 }
 
 let forra = performance.now();
@@ -218,10 +246,7 @@ function loop(now) {
     const nytt = gyro.senasteSensor > senKonsum;
     if (nytt) senKonsum = gyro.senasteSensor;
     hantera(maskin.steg(now, gyro.nu, nytt, frammeNu()));
-    const res = fysik.steg(dt);
-    if (res.traff.length) ljud.krasch();
-    if (fysik.ball.aktiv) ljud.rulla(Math.hypot(fysik.ball.vx, fysik.ball.vz));
-    else ljud.tystRull();
+    ljudAvSteg(fysik.steg(dt));
     kanskeOmstall(now);
   }
   bana.rita(fysik);
@@ -249,33 +274,98 @@ $('menyKnapp').addEventListener('click', e => { e.stopPropagation(); visaMeny($(
 $('stang').addEventListener('click', e => { e.stopPropagation(); visaMeny(false); });
 $('noll').addEventListener('click', e => {
   e.stopPropagation();
-  if (maskin.tillstand === 'NEED_PERMISSION') gestTryck().then(() => { if (maskin.tillstand === 'LOOKING') nollNu(); });
+  if (maskin.tillstand === 'NEED_PERMISSION') gestTryck();
   else nollNu();
 });
 
 let pek = null;
-canvas.addEventListener('pointerdown', e => {
-  if (e.target !== canvas) return;
-  pek = { x: e.clientX, y: e.clientY, t: performance.now(), cocked: false };
-});
-canvas.addEventListener('pointermove', e => {
-  if (!pek || gyro.kalla === 'sensor') return;
-  if (e.clientY - pek.y > 80) pek.cocked = true;
-});
-canvas.addEventListener('pointerup', e => {
-  if (!pek) return;
+let saPekare = false;
+
+function spelYta(e) {
+  const mal = e.target;
+  if (!mal || typeof mal.closest !== 'function') return true;
+  return !(mal.closest('#meny') || mal.closest('#menyKnapp'));
+}
+
+function klart(x, y, avbruten) {
+  if (!pek || pek.klar) return;
+  pek.klar = true;
   const start = pek;
   pek = null;
-  const moved = Math.hypot(e.clientX - start.x, e.clientY - start.y);
-  const upp = start.y - e.clientY;
+  const ux = Number.isFinite(x) ? x : start.x;
+  const uy = Number.isFinite(y) ? y : start.y;
+  const anvandX = avbruten && ux === 0 && uy === 0 ? start.x : ux;
+  const anvandY = avbruten && ux === 0 && uy === 0 ? start.y : uy;
+  const moved = Math.hypot(anvandX - start.sx, anvandY - start.sy);
+  const upp = start.sy - anvandY;
   const dt = Math.max(1, performance.now() - start.t);
-  if (start.cocked && upp > 50 && upp / dt > 0.35 && gyro.kalla !== 'sensor') {
-    const roll = Math.max(-70, Math.min(70, (e.clientX - start.x) * 0.2));
+  if (!avbruten && start.cocked && upp > 50 && upp / dt > 0.35 && gyro.kalla !== 'sensor') {
+    const roll = Math.max(-70, Math.min(70, (anvandX - start.sx) * 0.2));
     simulerat(roll < 0 ? -60 : roll > 25 ? -60 : 0);
     return;
   }
-  if (moved < 18) gestTryck();
-});
+  if (moved < 55) gestTryck();
+}
+
+addEventListener('pointerdown', e => {
+  saPekare = true;
+  if (pek && !pek.klar) return;
+  if (!spelYta(e)) return;
+  if (e.cancelable) e.preventDefault();
+  pek = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now(), cocked: false, klar: false, touch: false };
+}, { capture: true, passive: false });
+
+addEventListener('pointermove', e => {
+  if (!pek || pek.klar || pek.touch || e.pointerId !== pek.id) return;
+  pek.x = e.clientX;
+  pek.y = e.clientY;
+  if (gyro.kalla === 'sensor') return;
+  if (e.clientY - pek.sy > 80) pek.cocked = true;
+}, { capture: true });
+
+addEventListener('pointerup', e => {
+  if (!pek || pek.klar || pek.touch || e.pointerId !== pek.id) return;
+  klart(e.clientX, e.clientY, false);
+}, { capture: true });
+
+addEventListener('pointercancel', e => {
+  if (!pek || pek.klar || pek.touch || e.pointerId !== pek.id) return;
+  const x = Number.isFinite(e.clientX) ? e.clientX : pek.x;
+  const y = Number.isFinite(e.clientY) ? e.clientY : pek.y;
+  klart(x, y, true);
+}, { capture: true });
+
+addEventListener('touchstart', e => {
+  if (saPekare || (pek && !pek.klar)) return;
+  if (!spelYta(e)) return;
+  const t = e.changedTouches && e.changedTouches[0];
+  if (!t) return;
+  if (e.cancelable) e.preventDefault();
+  pek = { id: t.identifier, x: t.clientX, y: t.clientY, sx: t.clientX, sy: t.clientY, t: performance.now(), cocked: false, klar: false, touch: true };
+}, { capture: true, passive: false });
+
+addEventListener('touchmove', e => {
+  if (!pek || !pek.touch || pek.klar) return;
+  const t = [...e.changedTouches].find(p => p.identifier === pek.id);
+  if (!t) return;
+  pek.x = t.clientX;
+  pek.y = t.clientY;
+  if (e.cancelable) e.preventDefault();
+  if (gyro.kalla !== 'sensor' && t.clientY - pek.sy > 80) pek.cocked = true;
+}, { capture: true, passive: false });
+
+addEventListener('touchend', e => {
+  if (!pek || !pek.touch || pek.klar) return;
+  const t = [...e.changedTouches].find(p => p.identifier === pek.id);
+  if (!t) return;
+  klart(t.clientX, t.clientY, false);
+}, { capture: true });
+
+addEventListener('touchcancel', e => {
+  if (!pek || !pek.touch || pek.klar) return;
+  const t = [...e.changedTouches].find(p => p.identifier === pek.id);
+  klart(t ? t.clientX : pek.x, t ? t.clientY : pek.y, true);
+}, { capture: true });
 
 addEventListener('keydown', e => {
   if (e.repeat || e.target.closest('input, textarea')) return;

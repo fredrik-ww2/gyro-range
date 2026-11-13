@@ -126,6 +126,34 @@ function banaX(fysik, malZ) {
   k('d efterlyft bytte inte riktning', Math.sign(krok.s.fysik.ball.x - punkt.x) === Math.sign(fore.hook) || Math.abs(krok.s.fysik.ball.x - punkt.x) < 0.02);
 }
 
+{
+  const f = skapaFysik(KONFIG);
+  f.starta({ fart: 8, aimYaw: 0.2, hook: 0, roll: 0 });
+  let ranna = 0;
+  let traff = 0;
+  for (let i = 0; i < 600; i++) {
+    const res = f.steg(1 / 60);
+    if (res.ranna) ranna += 1;
+    traff += res.antalTraffade || 0;
+  }
+  k('ränna en gång', ranna === 1 && f.ball.ranna === true);
+  k('rännan tar inga käglor', traff === 0 && f.poang.senast === 0);
+}
+
+{
+  const f = skapaFysik(KONFIG);
+  f.starta({ fart: 8, aimYaw: 0, hook: 0, roll: 0 });
+  let sum = 0;
+  let ranna = 0;
+  for (let i = 0; i < 900 && !f.poang.raknad; i++) {
+    const res = f.steg(1 / 60);
+    sum += res.antalTraffade || 0;
+    if (res.ranna) ranna += 1;
+  }
+  k('träffar rapporteras', sum > 0 && f.poang.senast > 0 && f.poang.raknad);
+  k('rakt klot lämnar banan', ranna === 0 && f.ball.ranna === false);
+}
+
 if (fel.length) {
   console.error(fel.join('\n'));
   process.exit(1);

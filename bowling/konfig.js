@@ -85,7 +85,8 @@ export const KONFIG = {
     styrning: 9,
     dt_max: 0.033,
     omstallning_ms: 2400,
-    pass_antal: 4
+    pass_antal: 4,
+    efter_spel_s: 1.1
   },
-  ljud: { tak_db: -1, roster: 8 }
+  ljud: { tak_db: -1, roster: 12 }
 };

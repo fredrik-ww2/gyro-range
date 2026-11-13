@@ -1,0 +1,9 @@
+{
+  "name": "rotor-strike",
+  "version": "3.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

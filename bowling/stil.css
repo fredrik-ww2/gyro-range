@@ -1,0 +1,66 @@
+:root { color-scheme: dark; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: #100e0c; overflow: hidden; }
+body { touch-action: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+#vy { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button.menyknapp {
+  position: fixed;
+  z-index: 6;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(8px, env(safe-area-inset-right));
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid #d3dbcf80;
+  background: #1b302bf2;
+  color: #f6f1e4;
+  box-shadow: 0 4px 14px #0006;
+  font: 700 15px/1 -apple-system, BlinkMacSystemFont, sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+button.menyknapp .meny-ikon { font-size: 18px; line-height: 1; }
+button.menyknapp[aria-expanded="true"] { background: #e3c88e; color: #172724; border-color: #e3c88e; }
+#meny {
+  position: fixed;
+  z-index: 5;
+  top: calc(max(8px, env(safe-area-inset-top)) + 52px);
+  right: max(8px, env(safe-area-inset-right));
+  width: min(320px, calc(100vw - 16px - env(safe-area-inset-right)));
+  max-height: calc(100dvh - max(8px, env(safe-area-inset-top)) - 64px);
+  overflow: auto;
+  padding: 10px 12px 12px;
+  border-radius: 14px;
+  background: #14211cf5;
+  color: #f6f1e4;
+  border: 1px solid #d9c89e55;
+  box-shadow: 0 12px 40px #000a;
+}
+#meny h2 { margin: 0; font-size: 16px; }
+.meny-topp { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+#meny button, #meny a {
+  font: 600 14px -apple-system, BlinkMacSystemFont, sans-serif;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid #d3dbcf55;
+  background: #1b302b;
+  color: #f6f1e4;
+  padding: 6px 10px;
+  text-decoration: none;
+}
+#noll, #lankar { display: block; width: 100%; text-align: center; margin: 6px 0; }
+#meny label { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; font-size: 13px; margin: 6px 0; }
+#meny label.rad { grid-template-columns: 1fr auto; min-height: 28px; }
+#meny input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: #e3c88e; height: 28px; }
+#meny output { color: #e3c88e; font-variant-numeric: tabular-nums; }
+#brytare { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+#mat, #poang, #hjalp { font-size: 12px; line-height: 1.35; color: #d9d3c4; margin: 8px 0; }
+#debug {
+  margin: 0 0 8px;
+  font: 11px/1.35 ui-monospace, monospace;
+  white-space: pre-wrap;
+  color: #f3ecda;
+}
+[hidden] { display: none !important; }

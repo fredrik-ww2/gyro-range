@@ -123,6 +123,12 @@ export function applyLayout(doc, L) {
     pedaler.style.left = (L.pedaler.x + L.pedaler.w / 2) + 'px';
     pedaler.style.bottom = (L.h - L.pedaler.y - L.pedaler.h) + 'px';
   }
+  const vanster = doc.getElementById('vanster');
+  if (vanster) {
+    vanster.style.top = (L.headerH + 6) + 'px';
+    vanster.style.left = '8px';
+    vanster.style.width = L.liggande ? 'auto' : '92px';
+  }
   const sight = doc.getElementById('sight');
   if (sight && L.vy) {
     sight.style.top = L.vy.y + 'px';

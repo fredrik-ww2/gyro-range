@@ -1,7 +1,7 @@
 // Mekaniska växellåds- och gashack utan ljudfiler.
 // AudioContext skapas först vid en beröring. Högst 8 röster, och varje nod kopplas loss.
 
-import {LJUD} from './konfig.js?v=2';
+import {LJUD} from './konfig.js?v=3';
 
 export {LJUD};
 
@@ -70,12 +70,14 @@ export function skapaMekanikLjud() {
   let vaxelAntal = 0;
   let hackAntal = 0;
   let stoppAntal = 0;
+  let klickAntal = 0;
+  let laddAntal = 0;
   const aktiva = [];
   const handelser = [];
 
   function brusBuffer() {
     if (brus) return brus;
-    const n = Math.floor(ctx.sampleRate * 0.2);
+    const n = Math.floor(ctx.sampleRate * 0.45);
     brus = ctx.createBuffer(1, n, ctx.sampleRate);
     const d = brus.getChannelData(0);
     let s = 0x6d2b79f5;
@@ -157,7 +159,17 @@ export function skapaMekanikLjud() {
   function notera(typ, n) {
     if (typ === 'vaxel') vaxelAntal += n;
     else if (typ === 'hack') hackAntal += n;
-    else stoppAntal += n;
+    else if (typ === 'stopp') stoppAntal += n;
+    else if (typ === 'klick') klickAntal += n;
+    else if (typ === 'ladd') laddAntal += n;
+    else if (typ === 'granat') {
+      klickAntal += 1;
+      laddAntal += 1;
+      const tid = typeof performance !== 'undefined' ? performance.now() : 0;
+      handelser.push({typ: 'klick', n: 1, t: tid}, {typ: 'ladd', n: 1, t: tid});
+      if (handelser.length > 32) handelser.splice(0, handelser.length - 32);
+      return;
+    }
     handelser.push({typ, n, t: typeof performance !== 'undefined' ? performance.now() : 0});
     if (handelser.length > 32) handelser.shift();
   }
@@ -217,13 +229,14 @@ export function skapaMekanikLjud() {
     o.stop(t + dur + 0.03);
   }
 
-  function brusBit(api, t, dur, frek, q, topp, rate) {
+  function brusBit(api, t, dur, frek, q, topp, rate, frek2) {
     const src = api.nod(api.ctx.createBufferSource());
     src.buffer = brusBuffer();
     src.playbackRate.value = rate || 1;
     const f = api.nod(api.ctx.createBiquadFilter());
     f.type = 'bandpass';
-    f.frequency.value = frek;
+    f.frequency.setValueAtTime(Math.max(40, frek), t);
+    if (frek2 > 0) f.frequency.exponentialRampToValueAtTime(Math.max(40, frek2), t + dur);
     f.Q.value = q;
     const g = api.nod(api.ctx.createGain());
     kurva(g, t, topp, dur);
@@ -286,6 +299,26 @@ export function skapaMekanikLjud() {
     });
   }
 
+  function valjGranat() {
+    const ok = spela('granat', 1, api => {
+      const t = api.ctx.currentTime + 0.004;
+      const ck = LJUD.klick;
+      const ld = LJUD.ladd;
+      ton(api, t, 'triangle', 2680, 920, 0.018, 0.28 * ck);
+      brusBit(api, t, 0.014, 3400, 3.4, 0.12 * ck, 1.7);
+      const ram = t + 0.07;
+      brusBit(api, ram, 0.28, 1500, 0.65, 0.22 * ld, 0.8, 380);
+      ton(api, ram, 'sine', 86, 46, 0.26, 0.14 * ld);
+      const lucka = t + 0.38;
+      ton(api, lucka, 'sine', 76, 30, 0.18, 0.58 * ld);
+      ton(api, lucka, 'triangle', 220, 62, 0.08, 0.24 * ld);
+      klang(api, lucka, 128, 44, 0.06, 0.18 * ld);
+      ton(api, lucka + 0.012, 'sine', 860, 230, 0.04, 0.08 * ld);
+      return 0.62;
+    });
+    return ok;
+  }
+
   function stopp() {
     return spela('stopp', 1, api => {
       const k = LJUD.stopp;
@@ -328,7 +361,7 @@ export function skapaMekanikLjud() {
   }
 
   return {
-    oppna, satt, vaxla, hack, stopp, provTopp, kansla,
+    oppna, satt, vaxla, hack, stopp, valjGranat, provTopp, kansla,
     get pa() { return pa; },
     get upplast() { return upplast; },
     get roster() { return aktiva.length; },
@@ -337,6 +370,8 @@ export function skapaMekanikLjud() {
     get vaxelAntal() { return vaxelAntal; },
     get hackAntal() { return hackAntal; },
     get stoppAntal() { return stoppAntal; },
+    get klickAntal() { return klickAntal; },
+    get laddAntal() { return laddAntal; },
     get handelser() { return handelser.slice(); }
   };
 }
@@ -349,12 +384,12 @@ export function sjalvtest() {
   for (let i = 0; i < kurva.length; i++) topp = Math.max(topp, Math.abs(kurva[i]));
   krav('begränsaren stannar på eller under −1 dBTP', topp <= TAK + 1e-5);
   krav('högst åtta röster', LJUD.maxRoster === 8);
-  krav('ljudnivåerna går att sänka', LJUD.master > 0 && LJUD.master <= 1 && LJUD.vaxel > 0 && LJUD.hack > 0 && LJUD.stopp > LJUD.hack);
+  krav('ljudnivåerna går att sänka', LJUD.master > 0 && LJUD.master <= 1 && LJUD.vaxel > 0 && LJUD.hack > 0 && LJUD.stopp > LJUD.hack && LJUD.klick > 0 && LJUD.ladd > 0);
   const motor = skapaMekanikLjud();
   let kast = false;
   try {
-    const tyst = motor.hack([0]) === false && motor.vaxla(1) === false && motor.stopp() === false;
-    krav('tyst innan första beröring', tyst && motor.roster === 0 && motor.skapade === 0 && motor.hackAntal === 0);
+    const tyst = motor.hack([0]) === false && motor.vaxla(1) === false && motor.stopp() === false && motor.valjGranat() === false;
+    krav('tyst innan första beröring', tyst && motor.roster === 0 && motor.skapade === 0 && motor.hackAntal === 0 && motor.klickAntal === 0 && motor.laddAntal === 0);
   } catch {
     kast = true;
   }

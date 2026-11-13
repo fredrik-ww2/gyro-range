@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import {sjalvtest as gyroTest, skapaRorelse} from './gyro.js?v=2';
-import {sjalvtest as styrTest, STANDARD, normalStyr, ordnaTrosklar, skapaJamning, behandlaAxel, bandMal, skapaVagn, stegaVagn, stegaTorn, stegaEldror} from './styr.js?v=2';
-import {sjalvtest as banTest, banTabell, skapaGranat, stegGranat, delTid, V0} from './ballistik.js?v=2';
-import {byggVarld, stegaMal} from './varld.js?v=2';
-import {sjalvtest as mekTest, MEKANIK, VAXLAR, gasAntal, gasVarde, gasOpt, vaxelOpt, vaxelFranId, draHack, slappHack, drivKommando} from './mekanik.js?v=2';
-import {sjalvtest as ljudTest, skapaMekanikLjud, kansla} from './ljud.js?v=2';
+import {sjalvtest as gyroTest, skapaRorelse} from './gyro.js?v=3';
+import {sjalvtest as styrTest, STANDARD, normalStyr, ordnaTrosklar, skapaJamning, behandlaAxel, bandMal, skapaVagn, stegaVagn, stegaTorn, stegaEldror} from './styr.js?v=3';
+import {sjalvtest as banTest, banTabell, skapaGranat, stegGranat, delTid, V0} from './ballistik.js?v=3';
+import {byggVarld, stegaMal} from './varld.js?v=3';
+import {sjalvtest as mekTest, MEKANIK, VAXLAR, gasAntal, gasVarde, gasOpt, vaxelOpt, vaxelFranId, draHack, slappHack, drivKommando} from './mekanik.js?v=3';
+import {sjalvtest as ljudTest, skapaMekanikLjud, kansla} from './ljud.js?v=3';
 
 const NYCKEL = 'vagn_test_v1';
 const OMLADD = 7;
@@ -28,6 +28,12 @@ let gasIndex = 0;
 let gas = 0;
 let gasStopp = false;
 let vaxelStopp = false;
+const GRANATER = {
+  sprang: {id: 'sprang', namn: 'Spränggranat', kort: 'Spräng'},
+  pansar: {id: 'pansar', namn: 'Pansargranat', kort: 'Pansar'}
+};
+let granatTyp = 'sprang';
+let skottTyp = granatTyp;
 let ladd = 0;
 let igang = false;
 let granat = null;
@@ -441,6 +447,45 @@ function bindSpak(spar, dra, slapp) {
 }
 bindSpak($('vaxelSpar'), draVaxel, slappVaxel);
 bindSpak($('gasSpar'), draGas, slappGas);
+
+function ritaGranat() {
+  const vald = GRANATER[granatTyp];
+  $('granatKort').textContent = vald.kort;
+  $('granatKnapp').setAttribute('aria-label', vald.namn);
+  for (const el of document.querySelectorAll('[data-mini]')) el.hidden = el.dataset.mini !== granatTyp;
+  for (const el of document.querySelectorAll('.granatVal')) {
+    const pa = el.dataset.granat === granatTyp;
+    el.classList.toggle('vald', pa);
+    el.setAttribute('aria-pressed', pa ? 'true' : 'false');
+  }
+}
+function visaGranatMeny(oppna) {
+  $('granatMeny').hidden = !oppna;
+  $('granatKnapp').setAttribute('aria-expanded', oppna ? 'true' : 'false');
+}
+function valjGranatTyp(id) {
+  if (!GRANATER[id]) return;
+  granatTyp = id;
+  ritaGranat();
+  visaGranatMeny(false);
+  ljudMotor.oppna();
+  ljudMotor.valjGranat();
+}
+ritaGranat();
+$('granatKnapp').addEventListener('click', () => {
+  ljudMotor.oppna();
+  visaGranatMeny($('granatMeny').hidden);
+});
+for (const knapp of document.querySelectorAll('.granatVal')) {
+  knapp.addEventListener('click', e => {
+    e.stopPropagation();
+    valjGranatTyp(knapp.dataset.granat);
+  });
+}
+$('granatMeny').addEventListener('click', e => {
+  if (e.target.closest('.granatVal') || e.target.closest('#granatYta')) return;
+  visaGranatMeny(false);
+});
 addEventListener('pointerdown', () => { ljudMotor.oppna(); }, {passive: true});
 
 function lasVinklar() {
@@ -509,7 +554,7 @@ function traffa(punkt, tiger) {
   blixt();
   const avstand = Math.hypot(punkt.x - mun.x, punkt.z - mun.z);
   const tid = granatTid;
-  visaBesked((tiger ? 'Träff' : 'Nedslag') + ' ' + Math.round(avstand) + ' m · ' + tal(tid, 1) + ' s', !!tiger);
+  visaBesked((tiger ? 'Träff' : 'Nedslag') + ' ' + GRANATER[skottTyp].kort + ' ' + Math.round(avstand) + ' m · ' + tal(tid, 1) + ' s', !!tiger);
 }
 let granatTid = 0;
 let senSkott = null;
@@ -522,7 +567,8 @@ function avfyra() {
   const start = mun.clone().addScaledVector(dir, 1.6);
   granat = skapaGranat(start.x, start.y, start.z, dir.x * V0, dir.y * V0, dir.z * V0);
   granatTid = 0;
-  senSkott = {y: +start.y.toFixed(2), dirY: +dir.y.toFixed(4), eld: +vagn.eld.toFixed(4), camY: +mun.y.toFixed(2)};
+  skottTyp = granatTyp;
+  senSkott = {y: +start.y.toFixed(2), dirY: +dir.y.toFixed(4), eld: +vagn.eld.toFixed(4), camY: +mun.y.toFixed(2), typ: skottTyp, typNamn: GRANATER[skottTyp].namn};
   ladd = OMLADD;
   skott += 1;
   spar.visible = true;
@@ -714,7 +760,7 @@ requestAnimationFrame(loop);
 function visaSpel() {
   igang = true;
   $('startKort').hidden = true;
-  for (const id of ['spakar', 'topp', 'karta', 'kartaText', 'eldWrap', 'sikte']) $(id).hidden = false;
+  for (const id of ['spakar', 'topp', 'karta', 'kartaText', 'granatKnapp', 'eldWrap', 'sikte']) $(id).hidden = false;
   if (!rorelse.harGyro) setTimeout(() => { if (!rorelse.harGyro) $('hint').hidden = false; }, 900);
   passa();
 }
@@ -740,6 +786,7 @@ byggVarld(scene, renderer).then(v => {
   start.textContent = 'Starta';
   window.__vagn = {
     vagn, install, tabell, varld: v, camera, scene, renderer, teckenfel,
+    get granatTyp() { return granatTyp; },
     get gas() { return gas; },
     get vaxel() { return VAXLAR[vaxelIndex].id; },
     get vaxelIndex() { return vaxelIndex; },

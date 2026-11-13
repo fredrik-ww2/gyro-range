@@ -1,7 +1,7 @@
 // Finjustera hack, spärrar och ljudnivåer här.
 // Andelar är av avståndet mellan två lägen om inget annat står.
 
-import {BACKGAS} from './styr.js?v=2';
+import {BACKGAS} from './styr.js?v=3';
 
 export const MEKANIK = {
   // Växelspak, R–N–1–2–3–4. Högre bryt = trögare att lämna läget.
@@ -30,7 +30,9 @@ export const LJUD = {
   master: 0.9,
   vaxel: 0.92,
   hack: 0.64,
-  stopp: 0.9
+  stopp: 0.9,
+  klick: 0.7,
+  ladd: 0.88
 };
 
 // Kvot är andel av toppfarten. Back använder samma tak som den gamla backgasen.

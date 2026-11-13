@@ -148,6 +148,34 @@ body[data-karbin=ja][data-pose=framme][data-vy=forsta] #peep{display:block}
 #peep .hylsa{position:absolute;left:50%;top:46%;width:min(72vmin,360px);height:min(72vmin,360px);transform:translate(-50%,-56%);border-radius:50%;box-shadow:0 0 0 120vmax rgba(5,5,4,.8);background:radial-gradient(circle,transparent 54%,rgba(18,18,14,.28) 66%,rgba(8,8,7,.72) 78%,#050505 88%);filter:blur(2.4px)}
 #peep .korn{position:absolute;left:50%;top:46%;width:4px;height:58px;margin-left:-2px;transform:translateY(6px);background:linear-gradient(#3c3e36,#0c0d0b);box-shadow:0 0 0 1px #000}
 #scope,#irons{position:fixed;inset:0;pointer-events:none;display:none;z-index:1;transform:none}
+
+#topbar{min-height:0;padding:0}
+#menuButton{position:absolute;z-index:70;top:calc(env(safe-area-inset-top) + 8px);right:max(8px,env(safe-area-inset-right));left:auto;width:auto;min-width:72px;height:40px;padding:0 14px;font-size:16px;font-weight:750}
+#menu,#settings,#styrPanel{z-index:60}
+#menuBackdrop{z-index:55}
+#menu{top:calc(env(safe-area-inset-top) + 52px);right:max(8px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));left:auto;width:min(340px,calc(100vw - 16px));max-height:none;display:flex;flex-direction:column}
+#menu .menyfast{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:none}
+#menu .menyfast a{grid-column:1 / -1}
+#menu .menyfast a{display:flex;align-items:center;min-height:44px;padding:8px 14px;border-radius:18px;border:1px solid #ffffff36;color:#e0f1a4;font-weight:700;text-decoration:underline;touch-action:manipulation}
+#menyFlikar{flex:none;position:sticky;top:0;background:#16211ef2;z-index:1;padding-top:8px}
+#menyFlikar button{width:auto;flex:1;margin-top:0;min-height:40px}
+#menu [data-flikpanel]{flex:1;min-height:0;overflow:auto;touch-action:pan-y;padding-bottom:12px}
+#menu #weapon,#menu #vyKnapp,#menu #siktVal,#menu #montera,#menu #zoomKnapp,#menu #nyttNoll,#menu #oppnaAxlar{position:static;left:auto;right:auto;top:auto;bottom:auto;transform:none;width:100%;max-width:none;min-height:44px;margin-top:8px}
+.versionrad{margin:14px 0 0;font-size:12px;color:#8ea094}
+#hud{position:absolute;z-index:25;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px;width:auto;margin:0;padding:0 max(8px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));pointer-events:none}
+#hud > *{pointer-events:auto}
+#vansterHud{display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:auto}
+#hud #stallVal{position:static;top:auto;left:auto;flex:1 0 auto;flex-direction:row;justify-content:center;gap:4px;z-index:auto}
+#hud #stallVal button{flex:0 0 auto;min-width:52px;min-height:40px;padding:8px 10px;font-size:14px;white-space:nowrap}
+#hud #spak,#hud #platta{position:relative;left:auto;bottom:auto;transform:none;width:56px;height:56px;flex:0 0 auto}
+#hud #stallKnappar{position:static;right:auto;bottom:auto;flex-direction:row}
+#hud #knappHuka{position:static;right:auto;bottom:auto;min-height:40px;min-width:52px;padding:6px 8px}
+#hud #vapenSteg{position:static;right:auto;bottom:auto;flex:0 0 auto;min-width:76px;min-height:44px;padding:8px 12px;font-size:14px;white-space:nowrap}
+#hud #fireWrap{width:64px;height:64px;transform:none;margin:0;flex:0 0 auto}
+#hud #fire{width:64px;height:64px;font-size:9px}
+#hapticSwitch{position:fixed;left:-140px;top:0;width:44px;height:44px;opacity:0}
+#hud #fire #triggerLever{height:28px}
+#pulsRad{display:none!important}
 body[data-sikte=kikare][data-siktar=ja][data-pose=framme][data-vy=forsta] #scope{display:block}
 body[data-pose=sankt] #aim{visibility:hidden}
 #scope{--cy:42%;--radie:min(34vmin,calc(46dvh - 86px));background:radial-gradient(circle at 50% var(--cy),transparent 0,transparent var(--radie),#1c140c var(--radie),#060606 calc(var(--radie) + 5px),#030303 100%)}

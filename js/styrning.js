@@ -148,3 +148,99 @@ export function byggMeny(rot,styr){
  rot.append(ater,flikar,yta);
  rita();
 }
+
+function falt(rot, namn, kontroll) {
+ const lab = document.createElement('label');
+ lab.className = 'reglage';
+ const rub = document.createElement('span');
+ rub.textContent = namn;
+ lab.append(rub, kontroll);
+ rot.append(lab);
+ return lab;
+}
+
+function val(styr, nyckel, alternativ) {
+ const sel = document.createElement('select');
+ for (const [id, text] of alternativ) {
+  const o = document.createElement('option');
+  o.value = id;
+  o.textContent = text;
+  sel.append(o);
+ }
+ const las = () => { sel.value = styr.hamta(nyckel); };
+ las();
+ sel.onchange = () => styr.satt(nyckel, sel.value);
+ styr.lyssna(las);
+ return sel;
+}
+
+function reglage(styr, nyckel, min, max, steg, text) {
+ const ut = document.createElement('output');
+ const inp = document.createElement('input');
+ inp.type = 'range';
+ inp.min = String(min);
+ inp.max = String(max);
+ inp.step = String(steg);
+ const visa = () => {
+  const n = Number(styr.hamta(nyckel));
+  inp.value = String(n);
+  ut.value = text(n);
+ };
+ visa();
+ inp.oninput = () => { styr.satt(nyckel, Number(inp.value)); visa(); };
+ styr.lyssna(visa);
+ const wrap = document.createElement('span');
+ wrap.style.display = 'block';
+ wrap.append(ut, inp);
+ return wrap;
+}
+
+// De val man rör hela tiden, samlade så de kan ligga under en flik.
+// Samma objekt som laboreramenyn, och det sparas på enheten.
+export function byggSnabb(rot, styr, extra = {}) {
+ if (!rot || !styr) return;
+ rot.replaceChildren();
+ const g = document.createElement('h3');
+ g.textContent = 'Gående';
+ rot.append(g);
+ falt(rot, 'Sätt', val(styr, 'gang.satt', [['lutning', 'Lutning fram/bak'], ['knyck', 'Knyck / steglängd']]));
+ falt(rot, 'Steglängd', reglage(styr, 'gang.steg_m', 0.2, 1.6, 0.05, n => n.toFixed(2) + ' m'));
+ falt(rot, 'Lutning för full gång', reglage(styr, 'gang.max_grad', 8, 45, 1, n => n.toFixed(0) + '°'));
+ falt(rot, 'Känslighet vridning', reglage(styr, 'kropp.kanslighet', 0.4, 8, 0.1, n => n.toFixed(1) + '×'));
+ falt(rot, 'Sidlutning svänger', reglage(styr, 'gang.svang_stark', 0.4, 8, 0.1, n => n.toFixed(1)));
+ const spak = document.createElement('p');
+ spak.textContent = 'Spaken nere till vänster går och springer, både med vapnet sänkt och när plattan används vid sikte.';
+ rot.append(spak);
+
+ const s = document.createElement('h3');
+ s.textContent = 'Vid sikte';
+ rot.append(s);
+ falt(rot, 'Sätt', val(styr, 'sikte.satt', [['tipp_vrid', 'Luta upp/ner, vrid sidled'], ['roll_kropp', 'Sidlutning siktar, vridning svänger'], ['overkropp', 'Överkroppen vrids']]));
+ falt(rot, 'Känslighet', reglage(styr, 'sikte.kanslighet', 0.15, 4, 0.05, n => n.toFixed(2) + '×'));
+ falt(rot, 'Platta', reglage(styr, 'platta.fart_ms', 0.4, 4, 0.1, n => n.toFixed(1) + ' m/s'));
+ const lage = document.createElement('select');
+ lage.id = 'sikteLage';
+ for (const [id, text] of [['foljer', 'Gyro direkt, följer lutningen'], ['rorelse', 'Fartstyrning, som en spak']]) {
+  const o = document.createElement('option');
+  o.value = id;
+  o.textContent = text;
+  lage.append(o);
+ }
+ const lasLage = () => { lage.value = extra.lage?.() || 'foljer'; };
+ lasLage();
+ lage.onchange = () => extra.sattLage?.(lage.value);
+ falt(rot, 'Gyro', lage);
+ if (extra.aterga) falt(rot, 'Återgång till mitten', extra.aterga());
+ if (extra.invertera) rot.append(extra.invertera());
+
+ const st = document.createElement('h3');
+ st.textContent = 'Ställning';
+ rot.append(st);
+ falt(rot, 'Styrning', val(styr, 'stallning.satt', [['gyro', 'Gyro, steg för steg'], ['knyck', 'Knyck framåt till marken'], ['knappar', 'Knappar']]));
+ const ax = document.createElement('button');
+ ax.type = 'button';
+ ax.id = 'oppnaAxlar';
+ ax.textContent = 'Axlar var för sig';
+ ax.onclick = () => extra.axlar?.();
+ rot.append(ax);
+}

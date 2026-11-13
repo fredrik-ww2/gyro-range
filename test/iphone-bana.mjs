@@ -144,12 +144,14 @@ if (!['På armen', 'Båda händer', 'I axeln'].includes(efterAxel.text)) krav.pu
 await sida.evaluate(() => window.gyroGest.vapen(2));
 await sov(200);
 const knappar = [];
-for (const id of ['menuButton', 'nyttNoll', 'siktVal', 'weapon', 'trigger', 'vapenSteg']) knappar.push(await traff(id));
+for (const id of ['menuButton', 'trigger', 'vapenSteg']) knappar.push(await traff(id));
 const meny = await tryck('menuButton');
 await sov(150);
 const menyOppet = await sida.evaluate(() => !document.getElementById('menu').hidden);
 if (!menyOppet) krav.push('meny ' + JSON.stringify(meny));
-for (const id of ['settingsButton', 'center', 'standUp', 'flightButton']) knappar.push(await traff(id));
+for (const id of ['settingsButton', 'center', 'standUp', 'flightButton', 'nyttNoll']) knappar.push(await traff(id));
+await sida.evaluate(() => document.querySelector('#menyFlikar button[data-flik=vapen]').click());
+for (const id of ['siktVal', 'weapon']) knappar.push(await traff(id));
 const install = await tryck('settingsButton');
 await sov(200);
 const labb = await sida.evaluate(() => {
@@ -243,7 +245,7 @@ if (dold.length) krav.push('täcks porträtt ' + JSON.stringify(dold));
 
 await starta(844, 390);
 const landKnappar = [];
-for (const id of ['menuButton', 'nyttNoll', 'siktVal', 'weapon', 'trigger', 'vapenSteg']) landKnappar.push(await traff(id));
+for (const id of ['menuButton', 'trigger', 'vapenSteg']) landKnappar.push(await traff(id));
 const axelLand = await tryck('vapenSteg');
 await sov(150);
 const poseLand = await sida.evaluate(() => window.gyroGest.läge().pose);
@@ -254,7 +256,7 @@ if (doldLand.length) krav.push('täcks landskap ' + JSON.stringify(doldLand));
 await sida.evaluate(() => { window.gyroGest.satt('stallning.satt', 'knappar'); window.gyroGest.vapen(2); });
 await sov(200);
 const knapparLand = [];
-for (const id of ['knappNer', 'knappKna', 'vapenSteg', 'siktVal', 'trigger']) knapparLand.push(await traff(id));
+for (const id of ['knappNer', 'knappKna', 'vapenSteg', 'trigger']) knapparLand.push(await traff(id));
 const doltKnappar = knapparLand.filter((k) => k.traff === false);
 if (doltKnappar.length) krav.push('ställningsknappar landskap ' + JSON.stringify(doltKnappar));
 const fps = await sida.evaluate(() => window.gyroGest.läge().fps);

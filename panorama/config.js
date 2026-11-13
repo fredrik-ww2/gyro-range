@@ -22,6 +22,22 @@ export const FALLBACK = {
     {id: 'enfield', namn: 'Enfield', under: '10×', forstoring: 10, sikte: 'kikare', retikel: 'mil', ljud: 'enfield'}
   ],
   gang: {fart: 1.55, dodzon: 0.1, kanslighet: 2.4, svang: 1, svangFart: 1.15, grans: 400},
+  skak: {
+    pa: true,
+    niva: 'medel',
+    nivaer: {lag: 0.45, medel: 1, hog: 1.8},
+    gangVila: 1.5,
+    springVila: 2.6,
+    springFart: 1.2,
+    springAcc: 4.5,
+    vrid: 0.16,
+    jerk: 0.012,
+    acc: 0.035,
+    maxPx: 18,
+    stillaFart: 0.15,
+    stillaVrid: 0.12,
+    stillaAcc: 1.1
+  },
   soldater: {
     zoner: {nara: [15, 35], medel: [55, 120], langt: [150, 320]},
     platser: [
@@ -105,6 +121,34 @@ function normalGang(raw) {
   };
 }
 
+function normalSkak(raw) {
+  const s = raw && typeof raw === 'object' ? raw : {};
+  const bas = FALLBACK.skak;
+  const nivaerRaw = s.nivaer && typeof s.nivaer === 'object' ? s.nivaer : {};
+  const nivaer = {
+    lag: tal(nivaerRaw.lag, bas.nivaer.lag, 0.05, 4),
+    medel: tal(nivaerRaw.medel, bas.nivaer.medel, 0.05, 4),
+    hog: tal(nivaerRaw.hog, bas.nivaer.hog, 0.05, 4)
+  };
+  const niva = nivaer[s.niva] ? s.niva : bas.niva;
+  return {
+    pa: s.pa !== false,
+    niva,
+    nivaer,
+    gangVila: tal(s.gangVila, bas.gangVila, 0.4, 6),
+    springVila: tal(s.springVila, bas.springVila, 0.8, 8),
+    springFart: tal(s.springFart, bas.springFart, 0.3, 8),
+    springAcc: tal(s.springAcc, bas.springAcc, 0.5, 40),
+    vrid: tal(s.vrid, bas.vrid, 0, 2),
+    jerk: tal(s.jerk, bas.jerk, 0, 1),
+    acc: tal(s.acc, bas.acc, 0, 1),
+    maxPx: tal(s.maxPx, bas.maxPx, 2, 40),
+    stillaFart: tal(s.stillaFart, bas.stillaFart, 0.01, 1),
+    stillaVrid: tal(s.stillaVrid, bas.stillaVrid, 0.01, 2),
+    stillaAcc: tal(s.stillaAcc, bas.stillaAcc, 0.05, 20)
+  };
+}
+
 function normalZon(raw, bas) {
   if (!Array.isArray(raw) || raw.length < 2) return bas.slice();
   const a = tal(raw[0], bas[0], 1, 400);
@@ -161,6 +205,7 @@ export function normalConfig(raw) {
       }
     },
     gang: normalGang(t.gang),
+    skak: normalSkak(t.skak),
     vapen: normalVapen(t.vapen),
     soldater: {
       zoner: {

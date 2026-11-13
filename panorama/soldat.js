@@ -272,16 +272,33 @@ export function stallSoldater(scene, kalla, miljo = {}) {
       bas: {x: plats.x, z: plats.z, yaw: plats.yaw},
       wrap, fallGrupp, hitbox, huvud, visual, mixer,
       spela,
-      fall() {
+      fall(val = {}) {
         if (!this.lever) return false;
         this.lever = false;
         this.fallTid = 0;
         this.damm = false;
         this.ryck = 0;
+        this.steg = 0;
+        this.film = !!val.film;
         this.fallGrupp.rotation.set(0, 0, 0);
+        this.visual.visible = true;
+        this.wrap.visible = true;
+        const rikt = val.riktning;
+        if (rikt && rikt.lengthSq() > 1e-6) {
+          this.knuff = rikt.clone();
+          this.knuff.y = 0;
+          if (this.knuff.lengthSq() > 1e-6) this.knuff.normalize();
+          else this.knuff.set(0, 0, 1);
+          this.knuffKvar = this.film ? 0.42 : 0.18;
+          this.knuffFart = this.film ? 1.35 : 0.35;
+        } else {
+          this.knuff = null;
+          this.knuffKvar = 0;
+        }
         if (actions.death) {
-          if (aktuell && aktuell !== actions.death) aktuell.fadeOut(0.06);
-          actions.death.reset().fadeIn(0.04).play();
+          actions.death.timeScale = this.film ? 2.25 : 1;
+          if (aktuell && aktuell !== actions.death) aktuell.fadeOut(0.05);
+          actions.death.reset().fadeIn(this.film ? 0.02 : 0.05).play();
           aktuell = actions.death;
         } else if (aktuell) aktuell.paused = true;
         return true;
@@ -292,9 +309,15 @@ export function stallSoldater(scene, kalla, miljo = {}) {
         this.damm = false;
         this.kroppTraff = 0;
         this.ryck = 0;
+        this.steg = 0;
+        this.film = false;
+        this.knuff = null;
+        this.knuffKvar = 0;
+        this.visual.visible = true;
+        this.wrap.visible = true;
         this.fallGrupp.rotation.set(0, 0, 0);
         rensaSar(this);
-        for (const a of Object.values(actions)) if (a) a.stop();
+        for (const a of Object.values(actions)) if (a) { a.timeScale = 1; a.stop(); }
         aktuell = null;
         this.wrap.position.set(this.bas.x, markHojd(this.bas.x, this.bas.z), this.bas.z);
         this.wrap.rotation.y = this.bas.yaw;
@@ -342,6 +365,13 @@ export function stallSoldater(scene, kalla, miljo = {}) {
     const k = s.ryck;
     s.fallGrupp.rotation.x = -0.32 * k;
     s.fallGrupp.rotation.z = 0.16 * k * s.ryckTecken;
+    if (s.steg > 0) {
+      const bit = Math.min(s.steg, dt * 0.7);
+      const yaw = s.wrap.rotation.y;
+      s.wrap.position.x += Math.sin(yaw) * bit;
+      s.wrap.position.z += Math.cos(yaw) * bit;
+      s.steg -= bit;
+    }
   }
 
   function uppdatera(dt) {
@@ -354,6 +384,15 @@ export function stallSoldater(scene, kalla, miljo = {}) {
       } else {
         s.fallGrupp.rotation.set(0, 0, 0);
         s.fallTid += dt;
+        if (s.knuff && s.knuffKvar > 0) {
+          const bit = Math.min(dt, s.knuffKvar);
+          const kvar = s.knuffKvar / (s.film ? 0.42 : 0.18);
+          s.wrap.position.x += s.knuff.x * s.knuffFart * bit * kvar;
+          s.wrap.position.z += s.knuff.z * s.knuffFart * bit * kvar;
+          s.knuffKvar -= bit;
+        }
+        s.visual.visible = true;
+        s.wrap.visible = true;
         laggPaMark(s, true);
         if (!s.damm && s.fallTid > 0.45 && effekt) {
           s.damm = true;
@@ -386,8 +425,11 @@ export function stallSoldater(scene, kalla, miljo = {}) {
       const ben = benNamn(s.visual, 'Head');
       sarPa(s, ben, punkt, 'huvud');
       const ut = punkt.clone().addScaledVector(riktning, 0.11);
-      if (effekt) effekt.spray(ut, riktning);
-      s.fall();
+      if (effekt) {
+        effekt.spray(ut, riktning);
+        effekt.spray(punkt, riktning);
+      }
+      s.fall({film: true, riktning});
       return {index: s.index, sida: s.sida, avstand: hit.distance, punkt, normal: riktning, zon: 'huvud', traff: 1, dog: true};
     }
     s.kroppTraff += 1;
@@ -400,6 +442,7 @@ export function stallSoldater(scene, kalla, miljo = {}) {
     else {
       s.ryck = 1;
       s.ryckTecken = riktning.x >= 0 ? -1 : 1;
+      s.steg = (s.steg || 0) + 0.16;
     }
     return {index: s.index, sida: s.sida, avstand: hit.distance, punkt, normal: riktning, zon: 'kropp', traff: s.kroppTraff, dog};
   }
@@ -433,6 +476,8 @@ export function stallSoldater(scene, kalla, miljo = {}) {
       kroppTraff: s.kroppTraff,
       sar: s.sar.filter(m => m.visible).length,
       huvudSar: s.sar.some(m => m.visible && m.userData.typ === 'huvud'),
+      synlig: s.visual.visible !== false && s.wrap.visible !== false && !!s.wrap.parent,
+      film: !!s.film,
       fall: s.lever ? 0 : Math.min(1, s.fallTid / 1.05),
       fallX: +s.fallGrupp.rotation.x.toFixed(3),
       huvudY: huvudY(s),

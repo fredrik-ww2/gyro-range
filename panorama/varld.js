@@ -4,7 +4,7 @@ import {MeshoptDecoder} from '../js/vendor/loaders/meshopt_decoder.module.js';
 import {DRACOLoader} from '../flyg/vendor/loaders/DRACOLoader.js';
 import {KTX2Loader} from '../flyg/vendor/loaders/KTX2Loader.js';
 import {mergeGeometries} from '../js/vendor/utils/BufferGeometryUtils.js';
-import {stallSoldater} from './soldat.js?v=13';
+import {stallSoldater} from './soldat.js?v=15';
 import {medForm} from './mark.js?v=13';
 
 const OGA = 1.7;

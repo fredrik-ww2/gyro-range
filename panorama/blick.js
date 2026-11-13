@@ -332,6 +332,12 @@ export function skapaBlick(canvas, val = {}) {
       lasFart(alphaDps, betaDps, gammaDps, (foreFartTid || 0) + dt * 1000);
     },
     vinklar() { return {uppner: visad.uppner, vrida: visad.vrida, sida: visad.sida}; },
-    mus() { return {x: drag.x, y: drag.y}; }
+    mus() { return {x: drag.x, y: drag.y}; },
+    dra(px, py) {
+      if (harGyro()) return false;
+      drag.x -= (Number(px) || 0) * RAD_PER_PX;
+      drag.y = klamp(drag.y - (Number(py) || 0) * RAD_PER_PX, -1.45, 1.45);
+      return true;
+    }
   };
 }

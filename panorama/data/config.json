@@ -3,6 +3,22 @@
   "zoomMax": 12,
   "fovMin": 4,
   "gang": { "fart": 1.55, "dodzon": 0.1, "kanslighet": 2.4, "svang": 1, "svangFart": 1.15, "grans": 400 },
+  "skak": {
+    "pa": true,
+    "niva": "medel",
+    "nivaer": { "lag": 0.45, "medel": 1, "hog": 1.8 },
+    "gangVila": 1.5,
+    "springVila": 2.6,
+    "springFart": 1.2,
+    "springAcc": 4.5,
+    "vrid": 0.16,
+    "jerk": 0.012,
+    "acc": 0.035,
+    "maxPx": 18,
+    "stillaFart": 0.15,
+    "stillaVrid": 0.12,
+    "stillaAcc": 1.1
+  },
   "traff": { "kroppsskott": 3, "huvudSkottDodar": true, "huvudRadie": 0.15 },
   "blod": { "pool": 180, "kropp": 16, "huvud": 42, "sar": 40 },
   "terrang": {

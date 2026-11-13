@@ -20,7 +20,12 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
 #skjut.vilande{opacity:.45}
 #gang{position:absolute;z-index:8;left:50%;top:calc(env(safe-area-inset-top) + 112px);transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:4px;max-width:calc(100vw - 24px)}
 #gang button{min-height:36px;padding:4px 8px;border-radius:12px;font-size:12px;font-weight:750;background:#121816e0}
-#vapenRad{position:absolute;z-index:6;left:50%;top:calc(env(safe-area-inset-top) + 34px);transform:translateX(-50%);display:flex;gap:4px;max-width:calc(100vw - max(10px, env(safe-area-inset-left)) - max(10px, env(safe-area-inset-right)));pointer-events:auto}
+#vapenRad{position:absolute;z-index:6;left:max(8px,env(safe-area-inset-left));right:max(78px,calc(env(safe-area-inset-right) + 68px));top:calc(env(safe-area-inset-top) + 34px);display:flex;justify-content:center;gap:4px;pointer-events:auto}
+#testKnapp{position:absolute;z-index:8;right:max(10px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top) + 8px);min-height:32px;padding:4px 12px;border-radius:999px;font-size:13px;font-weight:800;background:#121816e6}
+#testKnapp.pa{background:var(--lime);color:#19221a;border-color:transparent}
+#testMeny{position:absolute;z-index:9;right:max(8px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top) + 46px);width:min(230px,calc(100vw - 20px));padding:10px;border:1px solid #ffffff26;background:#16211ef2;backdrop-filter:blur(16px);border-radius:16px}
+#testMeny .val{margin-top:8px}
+#testMeny .val button{min-height:40px;font-size:13px}
 #vapenRad button{min-height:34px;padding:3px 7px 2px;border-radius:11px;background:#121816d4;border-color:#ffffff2e;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;font-size:11px;font-weight:750;white-space:nowrap}
 #vapenRad button small{font-size:10px;font-weight:750;color:var(--lime)}
 #vapenRad button.pa{background:var(--lime);color:#19221a;border-color:transparent}
@@ -108,7 +113,7 @@ h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}
 .fargVal button.pa{box-shadow:0 0 0 3px var(--lime)}
 .fargVal input[type=color]{width:48px;height:44px;padding:0;border:0;background:transparent;cursor:pointer}
 @media (orientation:landscape){
-  #vapenRad{left:max(8px, env(safe-area-inset-left));top:calc(env(safe-area-inset-top) + 34px);transform:none;flex-direction:column;width:96px;max-width:none}
+  #vapenRad{left:max(8px, env(safe-area-inset-left));right:auto;top:calc(env(safe-area-inset-top) + 34px);transform:none;flex-direction:column;width:96px;max-width:none}
   #vapenRad button{min-height:30px;padding:2px 6px;font-size:11px}
   #startKort{top:50%;padding:16px 18px}
   h1{font-size:28px;margin:4px 0}

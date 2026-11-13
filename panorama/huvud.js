@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import {skapaBlick, sjalvtest, normalStyr, STANDARD_STYR} from './blick.js?v=14';
-import {byggVarld} from './varld.js?v=13';
-import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=14';
+import {skapaBlick, sjalvtest, normalStyr, STANDARD_STYR} from './blick.js?v=15';
+import {byggVarld} from './varld.js?v=15';
+import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=15';
 import {skapaLjud} from './ljud.js?v=13';
 import {skapaKansla, pulsFor, sjalvtest as kanslaTest} from './kansla.js?v=11';
 import {skapaBakgrund} from './bakgrund.js?v=11';
-import {laddaConfig} from './config.js?v=14';
+import {laddaConfig} from './config.js?v=15';
 import {skapaEffekt} from './effekt.js?v=13';
 
 const config = await laddaConfig();
@@ -54,6 +54,15 @@ let neutral = {uppner: 0, vrida: 0, sida: 0};
 let basYaw = 0;
 let extraYaw = 0;
 const gangIntent = {fram: 0, sida: 0, svang: 0};
+let skakPa = config.skak.pa !== false;
+let skakNiva = config.skak.nivaer[config.skak.niva] ? config.skak.niva : 'medel';
+let skakEnergi = 0;
+let skakTopp = 0;
+let skakVila = 0;
+let skakIVila = false;
+let skakKraftig = false;
+const skakFore = {x: 0, z: 0, vx: 0, vz: 0, acc: 0, yaw: 0, omega: 0, har: false};
+const skakEuler = new THREE.Euler(0, 0, 0, 'YXZ');
 let gangSynk = '';
 
 const blick = skapaBlick(canvas);
@@ -417,6 +426,7 @@ function steg(dt, nu) {
   laggVapen(d);
   soldatApi.uppdatera(d);
   effekt.tick(d);
+  mataSkak(d);
   ritaLaser(tid);
   svalna(d);
   visaGang();
@@ -610,22 +620,78 @@ function andraAxel(id, del) {
   axlar[id] = {...axlar[id], ...del};
   andraLaser({axlar});
 }
+function mataSkak(dt) {
+  const cfg = config.skak;
+  if (!(dt > 0.001)) return;
+  skakEuler.setFromQuaternion(camera.quaternion, 'YXZ');
+  const yaw = skakEuler.y;
+  const x = camera.position.x;
+  const z = camera.position.z;
+  if (!skakFore.har) {
+    skakFore.x = x; skakFore.z = z; skakFore.yaw = yaw; skakFore.har = true;
+    return;
+  }
+  const blend = 1 - Math.exp(-dt / 0.08);
+  const rvx = (x - skakFore.x) / dt;
+  const rvz = (z - skakFore.z) / dt;
+  const vx = skakFore.vx + (rvx - skakFore.vx) * blend;
+  const vz = skakFore.vz + (rvz - skakFore.vz) * blend;
+  const acc = Math.hypot((vx - skakFore.vx) / dt, (vz - skakFore.vz) / dt);
+  const jerk = Math.abs(acc - skakFore.acc) / dt;
+  let dy = yaw - skakFore.yaw;
+  if (dy > Math.PI) dy -= Math.PI * 2;
+  if (dy < -Math.PI) dy += Math.PI * 2;
+  const omega = dy / dt;
+  const alfa = (omega - skakFore.omega) / dt;
+  const fart = Math.hypot(rvx, rvz);
+  skakFore.x = x; skakFore.z = z; skakFore.vx = vx; skakFore.vz = vz;
+  skakFore.acc = acc; skakFore.yaw = yaw; skakFore.omega = omega;
+  if (!skakPa) {
+    skakEnergi = 0; skakTopp = 0; skakVila = 0; skakIVila = false; skakKraftig = false;
+    return;
+  }
+  const gain = cfg.nivaer[skakNiva] || 1;
+  const driv = jerk * cfg.jerk + acc * cfg.acc + Math.abs(omega) * cfg.vrid + Math.abs(alfa) * cfg.vrid * 0.55;
+  const mal = Math.min(1, driv * gain);
+  if (fart >= cfg.springFart) skakKraftig = true;
+  const still = fart < cfg.stillaFart && Math.abs(omega) < cfg.stillaVrid;
+  if (mal > skakEnergi) skakEnergi += (mal - skakEnergi) * (1 - Math.exp(-dt / 0.05));
+  if (!still) {
+    skakIVila = false;
+    skakVila = 0;
+    if (mal <= skakEnergi) skakEnergi = Math.max(mal, skakEnergi * Math.exp(-dt / 0.9));
+    skakTopp = skakEnergi;
+  } else {
+    if (!skakIVila) { skakIVila = true; skakVila = 0; skakTopp = Math.max(skakTopp, skakEnergi, mal); }
+    skakVila += dt;
+    const tid = skakKraftig ? cfg.springVila : cfg.gangVila;
+    const u = Math.min(1, skakVila / tid);
+    skakEnergi = skakTopp * (1 - u) * (1 - u);
+    if (u >= 1) { skakEnergi = 0; skakTopp = 0; skakKraftig = false; skakIVila = false; }
+  }
+}
 function ritaLaser(nu) {
   const prick = $('laserPrick');
   const linje = $('laserLinje');
-  if (!laserPa) {
-    if (prick.style.transform) prick.style.transform = '';
-    if (linje.style.transform) linje.style.transform = '';
-    return;
+  const sikt = $('siktPrick');
+  const kik = $('kikare');
+  const zoomNu = !sankt && laser.install.sikte === 'kikare' ? Math.max(1, laser.install.zoom) : 1;
+  const px = ((laserPa && !sankt) ? laser.skakPx() / zoomNu : 0) + (skakPa ? skakEnergi * config.skak.maxPx : 0);
+  const x = Math.sin(nu * 0.045) * px + Math.sin(nu * 0.019) * px * 0.35;
+  const y = Math.cos(nu * 0.037) * px * 0.72;
+  if (sikt) {
+    sikt.style.transform = px < 0.35
+      ? 'translate(-50%, -50%)'
+      : `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px))`;
   }
-  const zoomNu = laser.install.sikte === 'kikare' ? Math.max(1, laser.install.zoom) : 1;
-  const px = laser.skakPx() / zoomNu;
-  if (px < 0.4) {
+  if (kik) kik.style.transform = px < 0.35 ? '' : `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px)`;
+  if (!laserPa || sankt) {
+    if (prick && prick.style.transform) prick.style.transform = '';
+    if (linje && linje.style.transform) linje.style.transform = '';
+  } else if (px < 0.35) {
     prick.style.transform = '';
     linje.style.transform = '';
   } else {
-    const x = Math.sin(nu * 0.045) * px;
-    const y = Math.cos(nu * 0.037) * px * 0.7;
     prick.style.transform = `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px))`;
     linje.style.transform = `translateX(calc(-50% + ${x.toFixed(2)}px))`;
   }
@@ -760,6 +826,46 @@ $('skjut').addEventListener('click', () => {
   avfyra();
 });
 $('sankVapen').addEventListener('click', () => sankVapen(!sankt));
+function visaSkak() {
+  const knapp = $('skakPa');
+  if (knapp) {
+    knapp.classList.toggle('pa', skakPa);
+    knapp.setAttribute('aria-pressed', skakPa ? 'true' : 'false');
+    knapp.textContent = skakPa ? 'Rörelseskak på' : 'Rörelseskak';
+  }
+  document.querySelectorAll('#skakNiva button').forEach(b => {
+    const pa = b.dataset.skak === skakNiva;
+    b.classList.toggle('pa', pa);
+    b.setAttribute('aria-pressed', pa ? 'true' : 'false');
+  });
+  const text = $('skakText');
+  if (text) text.textContent = 'Långsam gång lägger sig efter ' + String(config.skak.gangVila).replace('.', ',') + ' s stilla. Häftig rörelse tar ' + String(config.skak.springVila).replace('.', ',') + ' s.';
+  const test = $('testKnapp');
+  const meny = $('testMeny');
+  if (test && meny) {
+    const oppen = !meny.hidden;
+    test.classList.toggle('pa', oppen);
+    test.setAttribute('aria-expanded', oppen ? 'true' : 'false');
+  }
+}
+function visaTest(pa) {
+  const meny = $('testMeny');
+  if (meny) meny.hidden = !pa;
+  visaSkak();
+}
+visaSkak();
+$('testKnapp').addEventListener('click', () => visaTest($('testMeny').hidden));
+$('skakPa').addEventListener('click', () => {
+  skakPa = !skakPa;
+  if (!skakPa) { skakEnergi = 0; skakTopp = 0; skakKraftig = false; skakIVila = false; }
+  visaSkak();
+});
+$('skakNiva').addEventListener('click', e => {
+  const b = e.target.closest('[data-skak]');
+  if (!b || !config.skak.nivaer[b.dataset.skak]) return;
+  skakNiva = b.dataset.skak;
+  visaSkak();
+});
 const GANG_KNAPP = {fram: 'fram', bak: 'fram', vanster: 'sida', hoger: 'sida', svangV: 'svang', svangH: 'svang'};
 const GANG_TECKEN = {fram: 1, bak: -1, vanster: -1, hoger: 1, svangV: -1, svangH: 1};
 let gangNere = '';
@@ -951,6 +1057,7 @@ start.addEventListener('click', async () => {
   $('menyKnapp').hidden = false;
   $('vapenRad').hidden = false;
   $('sankVapen').hidden = false;
+  $('testKnapp').hidden = false;
   $('meny').hidden = true;
   startad = true;
   visaRetikel();
@@ -1093,7 +1200,17 @@ addEventListener('unhandledrejection', e => window.__fel.push(String(e.reason &&
     },
     get sankt() { return sankt; },
     get vapenLyft() { return vapenLyft; },
-    get position() { return {x: camera.position.x, y: camera.position.y, z: camera.position.z}; }
+    get position() { return {x: camera.position.x, y: camera.position.y, z: camera.position.z}; },
+    visaTest,
+    skak: {
+      get pa() { return skakPa; },
+      get niva() { return skakNiva; },
+      get amp() { return skakEnergi; },
+      get px() { return skakPa ? skakEnergi * config.skak.maxPx : 0; },
+      get kraftig() { return skakKraftig; },
+      sattPa(v) { skakPa = !!v; if (!skakPa) { skakEnergi = 0; skakTopp = 0; } visaSkak(); },
+      sattNiva(id) { if (config.skak.nivaer[id]) skakNiva = id; visaSkak(); }
+    }
   };
   window.__redo = teckenfel.length === 0;
   start.disabled = false;

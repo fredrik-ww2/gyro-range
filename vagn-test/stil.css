@@ -64,8 +64,13 @@ h1{margin:6px 0 6px;font-size:30px;font-weight:700;letter-spacing:-.03em}
 #instrument{display:flex;gap:4px;align-items:center;min-width:0;pointer-events:none}
 .matare{width:80px;height:80px;flex:0 1 80px;display:block;filter:drop-shadow(0 2px 2px #000a)}
 #menyKnapp{position:absolute;z-index:6;top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));min-height:36px;padding:6px 12px;font-size:14px;font-weight:750;border-radius:12px;background:#121816d0}
-#meny{position:absolute;z-index:7;top:calc(max(8px,env(safe-area-inset-top)) + 44px);right:max(8px,env(safe-area-inset-right));display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:16px;border:1px solid #ffffff2a;background:#16211ef5;box-shadow:0 12px 32px #000a}
+#kameraIkon{position:absolute;z-index:6;top:max(8px,env(safe-area-inset-top));right:calc(max(8px,env(safe-area-inset-right)) + 108px);width:36px;height:36px;min-height:36px;padding:0;display:grid;place-items:center;border-radius:12px;background:#121816a6}
+#kameraIkon svg{width:18px;height:18px;display:block}
+#meny{position:absolute;z-index:7;top:calc(max(8px,env(safe-area-inset-top)) + 44px);right:max(8px,env(safe-area-inset-right));display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:16px;border:1px solid #ffffff2a;background:#16211ef5;box-shadow:0 12px 32px #000a;max-height:min(70dvh,520px);overflow:auto}
 #meny button{min-height:44px;padding:8px 16px;font-size:16px;font-weight:750;text-align:left}
+#meny summary{min-height:44px;padding:8px 16px;font-size:16px;font-weight:750;cursor:pointer}
+.kalla{margin:0 8px 8px;max-width:230px;color:#c5d0c2;font-size:12px;line-height:1.35}
+#installningar select{display:block;width:100%;margin-top:6px;min-height:40px;font:inherit;color:inherit;background:#101612;border:1px solid #ffffff36;border-radius:10px;padding:4px 8px}
 #karta{position:absolute;z-index:5;right:max(10px,env(safe-area-inset-right));bottom:calc(max(10px,env(safe-area-inset-bottom)) + 118px);width:112px;height:112px;border-radius:16px;border:1px solid #ffffff30;background:#121816cc;pointer-events:none}
 #kartaText{position:absolute;z-index:5;right:max(8px,env(safe-area-inset-right));bottom:calc(max(10px,env(safe-area-inset-bottom)) + 232px);width:120px;text-align:center;font-size:11px;font-weight:700;color:#f4f7ee;text-shadow:0 1px 2px #000;pointer-events:none;white-space:nowrap}
 #granatKnapp{position:absolute;z-index:6;right:calc(max(10px,env(safe-area-inset-right)) + 116px);bottom:max(22px,env(safe-area-inset-bottom));width:76px;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px 8px;border-radius:18px;background:#16211eeb;border:1px solid #ffffff36}

@@ -1,0 +1,34 @@
+{
+  "fil": "heightfield_5m.f32",
+  "beskrivning": "Nedprovat arbetsunderlag för placering (y) i three.js. Inte en ny mätning och inte en ersättning för heightfield_1m.f32 i terrängdatabasen.",
+  "kalla_original": "/workspace/terrain_db/Normandie_1944/terrang/villers_bocage_R50_v1_20261108/heightfield_1m.f32",
+  "kalla_sha256": "834be61d7783ad377b31fe3f768b90e7f2258f10a06b827112971d2c36e96e81",
+  "metod": "Var 5:e nod ur 2001×2001 (1 m), inklusive båda kanterna: index 0,5,…,2000 → 401×401.",
+  "rader": 401,
+  "kolumner": 401,
+  "spacing_m": 5,
+  "radordning": "norr till söder (rad 0 = z = -1000 m)",
+  "kolumnordning": "väster till öster (kolumn 0 = x = -1000 m)",
+  "datatype": "float32 little-endian",
+  "axlar": {
+    "x": "öst: E - 671450",
+    "y": "upp: höjd NGF-IGN69 (meter)",
+    "z": "söder: 5439340 - N"
+  },
+  "origo": {
+    "E": 671450,
+    "N": 5439340,
+    "H": 0
+  },
+  "omfattning_m": {
+    "x_min": -1000,
+    "x_max": 1000,
+    "z_min": -1000,
+    "z_max": 1000
+  },
+  "hojdmin_m": 105.84228515625,
+  "hojdmax_m": 183.93109130859375,
+  "formel_index": "kolumn = (x + 1000) / 5; rad = (z + 1000) / 5; y = bilinjär uppsampling, klampad till kanten",
+  "anvand_inte": "Kjoltrianglarna (skirt 10 m nedåt i GLB) får inte användas för fysik eller y-placering.",
+  "heightfield_1m_finns_i_biblioteket_men_ingår_inte": "16 016 004 byte, för stor för mobilpaketet."
+}

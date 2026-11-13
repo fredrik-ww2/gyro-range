@@ -261,6 +261,51 @@ try {
   krav('hålfall i webbläsaren', spel.hal, String(spel.minY));
   krav('mål i webbläsaren', spel.mal);
 
+  const nasta = await sida.evaluate(() => {
+    const api = window.__labyrint;
+    const paus = api.malPaus();
+    api.borja();
+    api.bana(0);
+    api.sattLutning(0, 0);
+    const mal = api.banaData().mal;
+    api.placera(mal.x, mal.z, 0, 0);
+    for (let i = 0; i < 90 && api.boll().lage !== 'mal'; i++) api.steg(1, 1 / 60);
+    const vann = api.boll().lage === 'mal';
+    const firande = !document.querySelector('#firande').hidden;
+    const rubrik = document.querySelector('#firandeRubrik').textContent;
+    api.steg(Math.ceil(paus * 0.35 * 60), 1 / 60);
+    const underPaus = api.banaData().nummer;
+    api.steg(Math.ceil((paus + 0.25) * 60), 1 / 60);
+    const efter = {
+      nummer: api.banaData().nummer,
+      namn: api.banaData().namn,
+      lage: api.boll().lage,
+      firande: !document.querySelector('#firande').hidden,
+    };
+    api.bana(api.antal() - 1);
+    api.sattLutning(0, 0);
+    const sistaMal = api.banaData().mal;
+    api.placera(sistaMal.x, sistaMal.z, 0, 0);
+    for (let i = 0; i < 90 && api.boll().lage !== 'mal'; i++) api.steg(1, 1 / 60);
+    api.steg(Math.ceil((paus + 0.4) * 60), 1 / 60);
+    const slut = {
+      nummer: api.banaData().nummer,
+      lage: api.boll().lage,
+      firande: !document.querySelector('#firande').hidden,
+      rubrik: document.querySelector('#firandeRubrik').textContent,
+      knapp: !document.querySelector('#firandeOm').hidden,
+    };
+    document.querySelector('#firandeOm').click();
+    const om = {nummer: api.banaData().nummer, lage: api.boll().lage, firande: !document.querySelector('#firande').hidden};
+    api.slappLutning();
+    api.bana(0);
+    return {paus, vann, firande, rubrik, underPaus, efter, slut, om};
+  });
+  krav('målet firas innan banan byts', nasta.vann && nasta.firande && nasta.underPaus === 1 && /Mål/.test(nasta.rubrik), JSON.stringify(nasta));
+  krav('nästa bana laddas efter pausen', nasta.efter.nummer === 2 && nasta.efter.lage === 'rullar' && nasta.efter.firande === false, JSON.stringify(nasta.efter));
+  krav('sista banan väntar med segermarkering', nasta.slut.nummer === 10 && nasta.slut.lage === 'mal' && nasta.slut.firande && nasta.slut.knapp && /Alla nivåer/.test(nasta.slut.rubrik), JSON.stringify(nasta.slut));
+  krav('från början efter sista banan', nasta.om.nummer === 1 && nasta.om.lage === 'rullar' && nasta.om.firande === false, JSON.stringify(nasta.om));
+
   await new Promise((r) => setTimeout(r, 400));
   const prestanda = await sida.evaluate(() => window.__labyrint.prestanda());
   krav('något ritas', prestanda.ritningar > 5, String(prestanda.ritningar));

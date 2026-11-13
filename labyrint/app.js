@@ -1,5 +1,5 @@
 import {lasKonfig} from './konfig.js';
-import {skapaSim} from './fysik.js';
+import {malOvergang, skapaSim} from './fysik.js';
 import {skapaGyro, mjukLutning} from './gyro.js';
 import {skapaLjud} from './ljud.js';
 import {skapaBrade} from './brade.js';
@@ -27,6 +27,7 @@ let banaIndex = klamp(install.bana | 0, 0, konfig.banor.length - 1);
 let sim = skapaSim(konfig, konfig.banor[banaIndex]);
 let igang = false;
 let frys = false;
+let malSedan = null;
 let visLut = {fram: 0, sida: 0};
 let fps = 0;
 let fpsTid = 0;
@@ -77,6 +78,7 @@ function fyllText() {
   $('allaLankar').textContent = texter.allaLankar || 'Alla länkar';
   $('igen').textContent = texter.igen || 'Igen';
   $('nasta').textContent = texter.nasta || 'Nästa bana';
+  $('firandeOm').textContent = texter.borjaOm || 'Från början';
   $('version').textContent = konfig.version || '';
 }
 
@@ -115,7 +117,26 @@ function ritaKansla() {
   }
 }
 
+function doljFirande() {
+  $('firande').hidden = true;
+  $('firandeOm').hidden = true;
+}
+
+function visaMal(sista) {
+  const el = $('firande');
+  if (!el.hidden) return;
+  const nasta = konfig.banor[banaIndex + 1];
+  $('firandeRubrik').textContent = sista ? (texter.allaKlara || 'Alla nivåer klara') : (texter.mal || 'Mål');
+  $('firandeText').textContent = sista
+    ? (texter.allaKlaraText || 'Du klarade hela labyrinten.')
+    : `${texter.nasta || 'Nästa nivå'}: ${nasta.nummer} ${nasta.namn}`;
+  $('firandeOm').hidden = !sista;
+  el.hidden = false;
+}
+
 function bytBana(i) {
+  malSedan = null;
+  doljFirande();
   banaIndex = klamp(i, 0, konfig.banor.length - 1);
   install.bana = banaIndex;
   sparaInstall();
@@ -156,14 +177,27 @@ function jamna(dt, lut) {
   visLut.sida += (lut.sida - visLut.sida) * k;
 }
 
-function hanteraLage() {
+function hanteraLage(dt) {
   const lage = sim.lage;
-  if (lage === 'faller' || lage === 'paus') $('lageText').textContent = texter.hal || 'Hål';
-  else if (lage === 'mal') {
-    $('lageText').textContent = texter.mal || 'Mål';
+  if (lage === 'mal') {
+    if (malSedan == null) malSedan = 0;
+    malSedan += dt;
+    const sista = banaIndex >= konfig.banor.length - 1;
+    const steg = malOvergang(malSedan, banaIndex, konfig.banor.length, konfig.spel.malPaus);
+    $('lageText').textContent = sista ? (texter.allaKlara || 'Alla nivåer klara') : (texter.mal || 'Mål');
     $('menyKnapp').dataset.mal = '1';
     $('malKnappar').hidden = false;
-  } else if ($('lageText').textContent === (texter.hal || 'Hål')) $('lageText').textContent = '';
+    visaMal(sista);
+    if (steg.byt) bytBana(steg.index);
+    return;
+  }
+  malSedan = null;
+  if (lage === 'faller' || lage === 'paus') {
+    doljFirande();
+    $('lageText').textContent = texter.hal || 'Hål';
+  } else if ($('lageText').textContent === (texter.hal || 'Hål') || $('lageText').textContent === (texter.mal || 'Mål') || $('lageText').textContent === (texter.allaKlara || 'Alla nivåer klara')) {
+    $('lageText').textContent = '';
+  }
 }
 
 function stegEn(dt) {
@@ -172,7 +206,7 @@ function stegEn(dt) {
   if (igang) {
     sim.steg(dt, {fram: Math.sin(visLut.fram * RAD), sida: Math.sin(visLut.sida * RAD)});
     ljud.fran(sim.state);
-    hanteraLage();
+    hanteraLage(dt);
   }
   gyro.slack(dt);
   brade.luta(dt, visLut.fram * RAD, visLut.sida * RAD);
@@ -229,6 +263,7 @@ function koppla() {
   $('menyKnapp').addEventListener('click', () => visaMeny($('meny').hidden));
   $('stang').addEventListener('click', () => visaMeny(false));
   $('spel').addEventListener('pointerdown', () => { if (!$('meny').hidden) visaMeny(false); });
+  $('firandeOm').addEventListener('click', () => bytBana(0));
   $('igen').addEventListener('click', () => bytBana(banaIndex));
   $('nasta').addEventListener('click', () => bytBana((banaIndex + 1) % konfig.banor.length));
   addEventListener('pointerdown', () => ljud.starta(), {capture: true, passive: true});
@@ -309,6 +344,7 @@ window.__labyrint = {
   bana(i) { bytBana(i); },
   banaData() { return konfig.banor[banaIndex]; },
   antal() { return konfig.banor.length; },
+  malPaus() { return konfig.spel.malPaus; },
   radie() { return konfig.fysik.kulaRadie; },
   provGlipa() { return brade.provGlipa(); },
   meny(oppna) { visaMeny(!!oppna); },

@@ -314,3 +314,9 @@ export function skapaSim(konfig, bana) {
 
   return {state, steg, placera, aterstall, get x() { return state.x; }, get z() { return state.z; }, get y() { return state.y; }, get vx() { return state.vx; }, get vz() { return state.vz; }, get vy() { return state.vy; }, get fart() { return state.fart; }, get lage() { return state.lage; }, get handelser() { return state.handelser; }, get vunnen() { return state.vunnen; }};
 }
+
+export function malOvergang(tidIMal, index, antal, paus) {
+  const sista = index >= antal - 1;
+  if (sista || !(tidIMal >= paus)) return {index, byt: false, sista};
+  return {index: index + 1, byt: true, sista: false};
+}

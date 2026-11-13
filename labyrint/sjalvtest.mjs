@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import * as THREE from '../js/vendor/three.module.js';
-import {avstandTillVagg, skapaSim} from './fysik.js';
+import {avstandTillVagg, malOvergang, skapaSim} from './fysik.js';
 import {enhetsKvaternion, gravitationSkarm, lutningFranGrav, mjukLutning} from './gyro.js';
 
 const konfig = JSON.parse(readFileSync(new URL('./konfig.json', import.meta.url), 'utf8'));
@@ -99,6 +99,16 @@ const mal = skapaSim(konfig, bana);
 mal.placera(bana.mal.x, bana.mal.z);
 for (let i = 0; i < 90 && mal.lage !== 'mal'; i++) mal.steg(1 / 60, {fram: 0, sida: 0});
 krav('målet fångar en stilla kula', mal.lage === 'mal');
+
+const paus = konfig.spel.malPaus;
+const tidig = malOvergang(0.5, 0, konfig.banor.length, paus);
+krav('målgången syns en stund innan nästa bana', tidig.byt === false && tidig.index === 0 && paus >= 1.2 && paus <= 1.5, String(paus));
+const vidare = malOvergang(paus, 0, konfig.banor.length, paus);
+krav('nästa bana tar vid efter pausen', vidare.byt === true && vidare.index === 1);
+const nia = malOvergang(paus + 0.2, 8, konfig.banor.length, paus);
+krav('nivå 9 går vidare till nivå 10', nia.byt === true && nia.index === 9);
+const slut = malOvergang(paus + 1, konfig.banor.length - 1, konfig.banor.length, paus);
+krav('sista banan byts inte automatiskt', slut.byt === false && slut.sista === true && slut.index === konfig.banor.length - 1);
 
 const liten = Math.abs(mjukLutning(2.2, 1, konfig.gyro));
 const medel = Math.abs(mjukLutning(8, 1, konfig.gyro));

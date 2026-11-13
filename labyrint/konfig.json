@@ -122,6 +122,9 @@
     "rullFart": 0.36,
     "rullTroskel": 0.02
   },
+  "spel": {
+    "malPaus": 1.35
+  },
   "strombrytare": {
     "ljud": true,
     "hjalpbanor": true,
@@ -148,6 +151,9 @@
     "allaLankar": "Alla länkar",
     "hal": "Hål",
     "mal": "Mål",
+    "allaKlara": "Alla nivåer klara",
+    "allaKlaraText": "Du klarade hela labyrinten.",
+    "borjaOm": "Från början",
     "igen": "Igen",
     "nasta": "Nästa nivå",
     "ingenSensor": "Ingen rörelsesensor. Dra i brädet, eller använd piltangenter.",

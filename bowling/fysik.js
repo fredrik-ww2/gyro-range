@@ -44,7 +44,8 @@ function studs(a, b, e) {
   b.x += nx * over * (invB / inv);
   b.z += nz * over * (invB / inv);
   const rel = (a.vx - b.vx) * nx + (a.vz - b.vz) * nz;
-  if (rel <= 0) return over;
+  // Överlapp som redan glider isär är ingen ny träff.
+  if (rel <= 0) return 0;
   const j = (1 + e) * rel / inv;
   a.vx -= j * nx * invA;
   a.vz -= j * nz * invA;
@@ -59,6 +60,7 @@ export function skapaFysik(konfig) {
   const ball = viloklot(konfig);
   let kast = null;
   let poang = { senast: 0, strike: 0, kast: 0, fallen: 0, raknad: false };
+  let efterSpel = 0;
 
   function pin(x, z, k) {
     return {
@@ -91,6 +93,7 @@ export function skapaFysik(konfig) {
   }
 
   function aterstallPin() {
+    efterSpel = 0;
     startPin.forEach((p, i) => {
       pins[i].x = p.x;
       pins[i].z = p.z;
@@ -108,7 +111,48 @@ export function skapaFysik(konfig) {
     kast = null;
   }
 
+  function markeraFall(p) {
+    if (Math.hypot(p.vx, p.vz) > konfig.kagla.fall_fart) {
+      p.fallen = true;
+      p.riktning = Math.atan2(p.vx, p.vz);
+    }
+  }
+
+  function krockaPin(traffSet) {
+    for (let i = 0; i < pins.length; i++) {
+      for (let k = i + 1; k < pins.length; k++) {
+        const j = studs(pins[i], pins[k], konfig.kagla.pin_restitution);
+        if (j > 0) {
+          traffSet.add(pins[i]);
+          traffSet.add(pins[k]);
+        }
+        markeraFall(pins[i]);
+        markeraFall(pins[k]);
+      }
+    }
+  }
+
+  function flyttaPin(h) {
+    for (const p of pins) {
+      p.x += p.vx * h;
+      p.z += p.vz * h;
+      const d = Math.hypot(p.vx, p.vz);
+      const efter = Math.max(0, d - 2.4 * h);
+      const s = d > 1e-4 ? efter / d : 0;
+      p.vx *= s;
+      p.vz *= s;
+      if (p.fallen) p.fall = Math.min(1, p.fall + h * 1.8);
+      const sidokant = konfig.bana.bredd / 2 + konfig.bana.ranna_bredd;
+      p.x = Math.max(-sidokant, Math.min(sidokant, p.x));
+    }
+  }
+
+  function pinLugna() {
+    return pins.every(p => Math.hypot(p.vx, p.vz) < 0.15);
+  }
+
   function starta(nasta) {
+    efterSpel = 0;
     kast = {
       fart: nasta.fart,
       aimYaw: nasta.aimYaw,
@@ -141,11 +185,22 @@ export function skapaFysik(konfig) {
   function steg(dt) {
     const h = Math.min(konfig.fysik.dt_max, Math.max(0, dt));
     const traff = [];
+    const traffSet = new Set();
     if (!ball.aktiv || !kast) {
+      if (efterSpel > 0) {
+        efterSpel = Math.max(0, efterSpel - h);
+        for (let pass = 0; pass < konfig.fysik.pass_antal; pass++) krockaPin(traffSet);
+        flyttaPin(h);
+        if (efterSpel === 0 || pinLugna()) {
+          efterSpel = 0;
+          rakna();
+        }
+        return { traff, antalTraffade: traffSet.size, ranna: false, framme: false };
+      }
       for (const p of pins) {
         if (p.fallen) p.fall = Math.min(1, p.fall + h * 1.6);
       }
-      return { traff, framme: false };
+      return { traff, antalTraffade: 0, ranna: false, framme: false };
     }
 
     const fartNu = Math.hypot(ball.vx, ball.vz);
@@ -170,8 +225,10 @@ export function skapaFysik(konfig) {
     ball.spin = ball.vag / ball.radie;
 
     const kant = konfig.bana.bredd / 2;
-    if (konfig.brytare.ranna && Math.abs(ball.x) > kant - ball.radie * 0.2) {
+    let nyRanna = false;
+    if (!ball.ranna && konfig.brytare.ranna && Math.abs(ball.x) > kant - ball.radie * 0.2) {
       ball.ranna = true;
+      nyRanna = true;
       const tecken = ball.x < 0 ? -1 : 1;
       ball.x = tecken * (kant + konfig.bana.ranna_bredd * 0.42);
       ball.vx = 0;
@@ -182,39 +239,17 @@ export function skapaFysik(konfig) {
       for (let pass = 0; pass < konfig.fysik.pass_antal; pass++) {
         for (const p of pins) {
           const j = studs(ball, p, konfig.kagla.restitution);
-          if (j > 0 && pass === 0) traff.push(p);
-          const sp = Math.hypot(p.vx, p.vz);
-          if (sp > konfig.kagla.fall_fart) {
-            p.fallen = true;
-            p.riktning = Math.atan2(p.vx, p.vz);
+          if (j > 0) {
+            if (pass === 0) traff.push(p);
+            traffSet.add(p);
           }
+          markeraFall(p);
         }
-        for (let i = 0; i < pins.length; i++) {
-          for (let k = i + 1; k < pins.length; k++) {
-            studs(pins[i], pins[k], konfig.kagla.pin_restitution);
-            for (const p of [pins[i], pins[k]]) {
-              if (Math.hypot(p.vx, p.vz) > konfig.kagla.fall_fart) {
-                p.fallen = true;
-                p.riktning = Math.atan2(p.vx, p.vz);
-              }
-            }
-          }
-        }
+        krockaPin(traffSet);
       }
     }
 
-    for (const p of pins) {
-      p.x += p.vx * h;
-      p.z += p.vz * h;
-      const d = Math.hypot(p.vx, p.vz);
-      const efter = Math.max(0, d - 2.4 * h);
-      const s = d > 1e-4 ? efter / d : 0;
-      p.vx *= s;
-      p.vz *= s;
-      if (p.fallen) p.fall = Math.min(1, p.fall + h * 1.8);
-      const sidokant = konfig.bana.bredd / 2 + konfig.bana.ranna_bredd;
-      p.x = Math.max(-sidokant, Math.min(sidokant, p.x));
-    }
+    flyttaPin(h);
 
     const framme = ball.z <= -konfig.bana.langd - 0.15 || (ball.ranna && ball.z <= -konfig.bana.langd);
     const langsam = Math.hypot(ball.vx, ball.vz) < 0.15 && ball.z < -1;
@@ -223,9 +258,9 @@ export function skapaFysik(konfig) {
       ball.stilla = true;
       ball.vx = 0;
       ball.vz = 0;
-      rakna();
+      efterSpel = konfig.fysik.efter_spel_s;
     }
-    return { traff, framme: framme || ball.z <= -konfig.bana.langd + 0.4 };
+    return { traff, antalTraffade: traffSet.size, ranna: nyRanna, framme: framme || ball.z <= -konfig.bana.langd + 0.4 };
   }
 
   return {

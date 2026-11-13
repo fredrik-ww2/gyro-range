@@ -233,7 +233,7 @@ try {
     };
     const over = (a, b) => !!(a && b && a.x < b.x + b.w - 1 && a.x + a.w > b.x + 1 && a.y < b.y + b.h - 1 && a.y + a.h > b.y + 1);
     const jakt = box('#jaktpanel');
-    const namn = { gas: '#gasreglage', system: '#system', pedaler: '#pedaler', fire: '#fire', center: '#center', sight: '#sight' };
+    const namn = { gas: '#gasreglage', system: '#system', pedaler: '#pedaler', fire: '#fire', center: '#center' };
     const krock = [];
     for (const [n, sel] of Object.entries(namn)) if (over(jakt, box(sel))) krock.push(n);
     const botten = jakt ? (innerHeight - (jakt.y + jakt.h)) : -1;
@@ -305,12 +305,13 @@ try {
   if (!(zon.finger.lage === 1 && zon.finger.bank > 0.25)) sidaFel.push('finger ' + JSON.stringify(zon.finger));
 
   await sida.evaluate(() => { window.flygTest.sattLutning(null); window.flygTest.fm.reset(0, 180, 0, 120); window.flygTest.setSight(true); window.flygTest.kor(0.2); });
-  await sida.waitForFunction(() => document.getElementById('sight').textContent === 'Bakifrån' && document.getElementById('jaktpanel').hidden);
+  await sida.waitForFunction(() => window.flygTest.state().sight === true && document.getElementById('jaktpanel').hidden && !document.getElementById('panelHorisont').hidden);
   const cockpit = await sida.evaluate(() => {
     const panel = document.getElementById('panel').getBoundingClientRect();
-    return { text: document.getElementById('sight').textContent, panel: panel.height, dold: document.getElementById('jaktpanel').hidden, ordning: document.getElementById('panel').dataset.ordning };
+    const hor = document.getElementById('panelHorisont').getBoundingClientRect();
+    return { text: document.getElementById('panelHorisont').getAttribute('aria-label'), panel: panel.height, dold: document.getElementById('jaktpanel').hidden, ordning: document.getElementById('panel').dataset.ordning, hor: Math.min(hor.width, hor.height), sight: window.flygTest.state().sight };
   });
-  if (!(cockpit.text === 'Bakifrån' && cockpit.panel > 40 && cockpit.dold && cockpit.ordning === 'fart,horisont,stigning,hojd,kurs,svang')) sidaFel.push('cockpit ' + JSON.stringify(cockpit));
+  if (!(cockpit.sight && cockpit.text === 'Byt till vyn bakifrån' && cockpit.panel > 40 && cockpit.dold && cockpit.ordning === 'fart,horisont,stigning,hojd,kurs,svang' && cockpit.hor >= 44)) sidaFel.push('cockpit ' + JSON.stringify(cockpit));
   await sida.screenshot({ path: join(ART, 'flyg_cockpit_390x844.png') });
 
   await sida.setViewport({ width: 844, height: 390, deviceScaleFactor: 2, isMobile: true, hasTouch: true });

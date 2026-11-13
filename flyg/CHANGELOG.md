@@ -1,5 +1,13 @@
 # Flygprov
 
+## Flygprov 08
+
+Utgångsläget är Flygprov 07.
+
+- **Meny.** Överstycket (version, flygplan, status, telemetri och inställningar) ligger i en panel som öppnas med Meny uppe till höger. Himlen under flygning är fri.
+- **Vybyte.** Cockpit-knappen är borta. Tryck på horisontinstrumentet: HOR i jaktvyn öppnar cockpiten, HORISONT i cockpiten går tillbaka.
+- **Gas.** Reglaget är högre. Hack vid spärrstegen och en tyngre stoppklack vid 0 % och 100 %, med högst åtta röster och topp under −1 dBTP.
+
 ## Flygprov 07
 
 Utgångsläget är Flygprov 06, med samma styrning, nivellering, skada av, omstart och fria sikte.

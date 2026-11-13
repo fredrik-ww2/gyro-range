@@ -1,7 +1,10 @@
-// Sikte, panel, rubrik och reglage ska inte dela yta.
+// Sikte, panel och reglage ska inte dela yta. Toppen är fri: bara menyknappen i hörnet.
 // Ringen räknas som i spelet: vinkel mot synfält, mitt på skärmen när nosen är rak.
 // Jaktvyns tavlor ligger längst ner, ovanför gas och knappar, och får inte gå in i ringen.
 // botten_reserv_px är andningsrum. env(safe-area-inset-bottom) läggs på i applyLayout.
+
+const GAS_STAENDE = 138;
+const GAS_LIGGANDE = 120;
 
 const MARGINAL = 14;
 
@@ -29,11 +32,11 @@ export function layoutFor(w, h, ringRad, fovGrader, panelCfg) {
   const cx = w / 2, cy = h / 2;
   const ring = box(cx - r, cy - r, r * 2, r * 2);
   const liggande = w > h;
-  const tak = ring.y - MARGINAL;
-  const headerH = Math.min(liggande ? 92 : 120, Math.max(68, tak));
-  const header = box(0, 0, w, headerH);
-  const metrics = box(10, headerH - 26, Math.max(40, w - 20), 12);
-  const hud = box(10, headerH - 13, Math.max(40, w - 20), 12);
+  const headerH = 0;
+  const meny = box(w - 104, 8, 96, 44);
+  const header = meny;
+  const metrics = box(0, 0, 0, 0);
+  const hud = box(0, 0, 0, 0);
   const bottenY = ring.y + ring.h + MARGINAL;
 
   let panel, sikteHus, gas, system, pedaler, styr, center;
@@ -41,7 +44,7 @@ export function layoutFor(w, h, ringRad, fovGrader, panelCfg) {
     const vansterKant = ring.x - 10;
     const hogerKant = ring.x + ring.w + 10;
     const gasW = 78;
-    const gasH = Math.min(96, Math.max(70, h - bottenY));
+    const gasH = Math.min(GAS_LIGGANDE, Math.max(88, h - bottenY));
     gas = box(6, h - bottenReserv - gasH, gasW, gasH);
     const sysH = 40;
     system = box(6, gas.y - sysH - 4, Math.min(168, vansterKant - 12), sysH);
@@ -58,7 +61,7 @@ export function layoutFor(w, h, ringRad, fovGrader, panelCfg) {
     const pedalH = 50, sysH = 42;
     pedaler = box(cx - 66, h - bottenReserv - pedalH, 132, pedalH);
     system = box(92, pedaler.y - sysH - 6, Math.max(120, w - 92 - 96), sysH);
-    gas = box(8, h - bottenReserv - Math.min(108, pedaler.h + sysH), 78, Math.min(108, pedaler.h + sysH));
+    gas = box(8, h - bottenReserv - GAS_STAENDE, 78, GAS_STAENDE);
     const centerW = 56, centerH = 54;
     center = box(gas.x + gas.w + 6, pedaler.y + Math.max(0, pedaler.h - centerH), centerW, centerH);
     if (pedaler.x < center.x + center.w + 8) {
@@ -88,21 +91,18 @@ export function layoutFor(w, h, ringRad, fovGrader, panelCfg) {
     const x1 = styr.x - gap;
     jakt = box(x0, y, Math.max(0, x1 - x0), jaktH);
   } else {
-    const takY = Math.min(gas.y, system.y) - gap;
+    const takY = Math.min(gas.y, system.y, center ? center.y : h) - Math.max(gap, 8);
     const onskad = P.hojd_staende_px ?? 118;
     const ledig = takY - (ring.y + ring.h + MARGINAL);
     const jaktH = Math.max(0, Math.min(onskad, Math.max(0, ledig)));
     jakt = box(kant, takY - jaktH, w - kant * 2, jaktH);
   }
-  const vyW = liggande ? 176 : 188;
-  const vyH = liggande ? 64 : 76;
-  const vy = box(w - vyW - 10, headerH + 8, vyW, vyH);
-  const delar = { header, metrics, hud, panel, sikteHus, gas, system, pedaler, styr, vy, jakt, center };
+  const delar = { header, metrics, hud, panel, sikteHus, gas, system, pedaler, styr, jakt, center, meny };
   return { w, h, r, cx, cy, liggande, ring, ...delar, headerH, bottenY, panelH: panel.h, panelBottom: h - panel.y - panel.h, gasH: gas.h, systemBottom: h - system.y - system.h, jaktH: jakt.h };
 }
 
 export function layoutKrockar(L) {
-  const namn = ['header', 'metrics', 'hud', 'panel', 'sikteHus', 'gas', 'system', 'pedaler', 'styr', 'vy', 'jakt'];
+  const namn = ['header', 'metrics', 'hud', 'panel', 'sikteHus', 'gas', 'system', 'pedaler', 'styr', 'jakt', 'meny'];
   return namn.filter((n) => rectsOverlappar(L.ring, L[n]));
 }
 
@@ -120,7 +120,7 @@ export function applyLayout(doc, L) {
   root.style.setProperty('--flyg-system-width', L.system.w + 'px');
   root.dataset.flygLiggande = L.liggande ? '1' : '0';
   const header = doc.querySelector('header');
-  if (header) header.style.maxHeight = L.headerH + 'px';
+  if (header) header.style.maxHeight = L.headerH > 0 ? L.headerH + 'px' : 'none';
   const panel = doc.getElementById('panel');
   if (panel) {
     panel.style.left = L.panel.x + 'px';
@@ -175,14 +175,6 @@ export function applyLayout(doc, L) {
     jakt.style.width = L.jakt.w + 'px';
     jakt.style.height = L.jakt.h + 'px';
     jakt.style.bottom = lyft(L.h - L.jakt.y - L.jakt.h);
-  }
-  const sight = doc.getElementById('sight');
-  if (sight && L.vy) {
-    sight.style.top = L.vy.y + 'px';
-    sight.style.width = L.vy.w + 'px';
-    sight.style.height = L.vy.h + 'px';
-    sight.style.left = 'auto';
-    sight.style.fontSize = (L.liggande ? 20 : 24) + 'px';
   }
   const footer = doc.querySelector('footer');
   if (footer && L.liggande) {

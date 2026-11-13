@@ -1,15 +1,47 @@
 // Headless bilder av cockpitens sikte mot instrument, plus omgång och skada i sidan.
+import { jaktHorisont, panelHorisont } from '../flyg/panel.js';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { extname, join, normalize } from 'node:path';
 
 const puppeteer = createRequire('/tmp/puppeteer-run/package.json')('puppeteer-core');
+const JAKT = JSON.parse(readFileSync(new URL('../flyg/config.json', import.meta.url), 'utf8')).jaktpanel;
 const ROT = '/agent/repos/gyro-range';
 const ART = '/opt/cursor/artifacts';
 const TYPER = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.m4a': 'audio/mp4', '.wasm': 'application/wasm', '.ktx2': 'image/ktx2' };
 mkdirSync(ART, { recursive: true });
+
+function menyRyms() {
+  const meny = document.getElementById('settings');
+  const ram = meny.getBoundingClientRect();
+  const klippt = [];
+  const krock = [];
+  const box = (el) => {
+    const r = el.getBoundingClientRect();
+    return { x: r.x, y: r.y, w: r.width, h: r.height, b: r.bottom, t: r.top };
+  };
+  const over = (a, b) => a.w > 2 && b.w > 2 && a.x < b.x + b.w - 1 && a.x + a.w > b.x + 1 && a.y < b.y + b.h - 1 && a.y + a.h > b.y + 1;
+  for (const el of meny.querySelectorAll('h2, #status, #metrics, #flightHud, #back, #allaLankarMeny, #sensitivity, #rollTroskel, #planMenyFlyg button, #toggles label')) {
+    const r = box(el);
+    const namn = el.id || el.textContent.trim().slice(0, 24);
+    if (r.h < 8 || r.w < 8) klippt.push('liten ' + namn);
+    if (r.t < ram.top - 1 || r.b > ram.bottom + 1 || r.x < ram.left - 1 || r.x + r.w > ram.right + 1) klippt.push('utanfor ' + namn);
+  }
+  const delar = [...meny.querySelectorAll('.meny-del')].map((el) => ({ namn: el.className, ...box(el) }));
+  for (let i = 0; i < delar.length; i++) for (let j = i + 1; j < delar.length; j++) if (over(delar[i], delar[j])) krock.push(delar[i].namn + '×' + delar[j].namn);
+  const sel = document.getElementById('modelSelect').getBoundingClientRect();
+  return {
+    scroll: meny.scrollHeight - meny.clientHeight,
+    client: meny.clientHeight,
+    bottom: ram.bottom,
+    inner: innerHeight,
+    klippt,
+    krock,
+    selectSynlig: sel.height > 2 && sel.width > 2
+  };
+}
 
 const http = await new Promise((res) => {
   const h = createServer(async (q, s) => {
@@ -32,8 +64,11 @@ const storlekar = [[844, 390], [932, 430], [667, 375], [390, 844]];
 try {
   const sida = await webblasare.newPage();
   const konsol = [];
+  const trasiga = [];
   sida.on('pageerror', (e) => konsol.push('page:' + e.message));
   sida.on('console', (m) => { if (m.type() === 'error') konsol.push(m.text()); });
+  sida.on('requestfailed', (r) => trasiga.push(r.url() + ' ' + (r.failure()?.errorText || '')));
+  sida.on('response', (r) => { if (r.status() >= 400) trasiga.push(r.status() + ' ' + r.url()); });
   await sida.setViewport({ width: 844, height: 390, deviceScaleFactor: 1 });
   await sida.goto(`http://127.0.0.1:${port}/flyg/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await sida.waitForFunction(() => document.getElementById('start') && !document.getElementById('start').disabled, { timeout: 60000 });
@@ -73,7 +108,7 @@ try {
   if (spel.hits !== 0 || spel.pedal !== 0 || !spel.synlig) fel.push('Flyg igen lämnade tillstånd ' + JSON.stringify(spel));
   if (spel.igenLyss !== spel.lyss) fel.push('lyssnare ökade');
   if (spel.efterStang !== 'skapa') fel.push('ljud efter pagehide: ' + spel.efterStang);
-  if (spel.version !== 'Flygprov 07') fel.push('version ' + spel.version);
+  if (spel.version !== 'Flygprov 08') fel.push('version ' + spel.version);
 
   const motorKlar = await sida.waitForFunction(() => window.flygTest.motorAntal() === 1, { timeout: 10000 }).then(() => true).catch(() => false);
   if (!motorKlar) fel.push('motorn startade inte');
@@ -111,15 +146,15 @@ try {
     skicka(110);
     const bakom = t.input.read();
     const lyss = t.state().lyssnare;
-    const foreKnapp = document.getElementById('sight').textContent;
-    document.getElementById('sight').click();
+    const foreKnapp = document.getElementById('jaktHorisont').getAttribute('aria-label');
+    document.getElementById('jaktHorisont').click();
     const iCockpit = t.input.read();
     const ram = document.querySelector('#cockpit .vaggar')?.getBoundingClientRect();
     const huv = document.querySelector('#cockpit .huv')?.getBoundingClientRect();
     const panel = document.getElementById('panel').getBoundingClientRect();
     const cockpit = {
       sight: t.state().sight,
-      text: document.getElementById('sight').textContent,
+      text: document.getElementById('panelHorisont').getAttribute('aria-label'),
       dold: document.getElementById('cockpit').hidden,
       sikteDolt: document.getElementById('reticle').hasAttribute('hidden'),
       ram: ram ? ram.width : 0,
@@ -128,26 +163,120 @@ try {
     };
     skicka(130);
     const mer = t.input.read();
-    document.getElementById('sight').click();
+    document.getElementById('panelHorisont').click();
     const tillbaka = t.input.read();
     return {
       bakom, iCockpit, mer, tillbaka, lyss, lyssEfter: t.state().lyssnare,
       aktiv: t.input.active, foreKnapp, cockpit, sightEfter: t.state().sight,
-      textEfter: document.getElementById('sight').textContent
+      textEfter: document.getElementById('jaktHorisont').getAttribute('aria-label')
     };
   });
   const nara = (a, b) => Math.abs(a - b) < 0.02;
-  if (gyro.foreKnapp !== 'Cockpit') fel.push('knapp före ' + gyro.foreKnapp);
+  if (gyro.foreKnapp !== 'Byt till cockpit') fel.push('knapp före ' + gyro.foreKnapp);
   if (!(gyro.bakom.source === 'webb' && gyro.bakom.pitch > 0.05)) fel.push('gyro bakom ' + JSON.stringify(gyro.bakom));
   if (!nara(gyro.iCockpit.pitch, gyro.bakom.pitch) || gyro.iCockpit.source !== 'webb') fel.push('gyro bytte med vyn ' + JSON.stringify(gyro.iCockpit));
-  if (!(gyro.cockpit.sight && gyro.cockpit.text === 'Bakifrån' && gyro.cockpit.dold === false && gyro.cockpit.sikteDolt === false && gyro.cockpit.ram > 100 && gyro.cockpit.huv > 100 && gyro.cockpit.panel > 30)) fel.push('cockpit ' + JSON.stringify(gyro.cockpit));
+  if (!(gyro.cockpit.sight && gyro.cockpit.text === 'Byt till vyn bakifrån' && gyro.cockpit.dold === false && gyro.cockpit.sikteDolt === false && gyro.cockpit.ram > 100 && gyro.cockpit.huv > 100 && gyro.cockpit.panel > 30)) fel.push('cockpit ' + JSON.stringify(gyro.cockpit));
   if (!(gyro.mer.pitch > gyro.iCockpit.pitch + 0.05 && gyro.mer.source === 'webb')) fel.push('gyro i cockpit ' + JSON.stringify(gyro.mer));
-  if (!nara(gyro.tillbaka.pitch, gyro.mer.pitch) || gyro.sightEfter || gyro.textEfter !== 'Cockpit' || !gyro.aktiv || gyro.lyssEfter !== gyro.lyss) fel.push('tillbaka ' + JSON.stringify({ sight: gyro.sightEfter, text: gyro.textEfter, pitch: gyro.tillbaka.pitch, aktiv: gyro.aktiv, lyss: gyro.lyssEfter }));
+  if (!nara(gyro.tillbaka.pitch, gyro.mer.pitch) || gyro.sightEfter || gyro.textEfter !== 'Byt till cockpit' || !gyro.aktiv || gyro.lyssEfter !== gyro.lyss) fel.push('tillbaka ' + JSON.stringify({ sight: gyro.sightEfter, text: gyro.textEfter, pitch: gyro.tillbaka.pitch, aktiv: gyro.aktiv, lyss: gyro.lyssEfter }));
   await sida.screenshot({ path: join(ART, 'flyg_bakifran_844x390.png') });
   await sida.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
   await sida.evaluate(() => window.flygTest.setSight(false));
-  await sida.waitForFunction(() => document.getElementById('sight').getBoundingClientRect().height >= 70);
-  await sida.screenshot({ path: join(ART, 'flyg_bakifran_390x844.png') });
+  await sida.waitForFunction(() => {
+    const el = document.getElementById('jaktHorisont');
+    const r = el.getBoundingClientRect();
+    return !el.hidden && r.width >= 44 && r.height >= 44;
+  });
+  await sida.screenshot({ path: join(ART, 'flyg_staende_meny_stangd_390x844.png') });
+  await sida.click('#settingsButton');
+  await sida.waitForSelector('#settings:not([hidden])');
+  const meny = await sida.evaluate(() => {
+    const inne = (id) => !!document.getElementById(id)?.closest('#settings');
+    const st = window.flygTest.state();
+    return {
+      version: document.getElementById('versionEtikett').textContent,
+      namn: document.getElementById('aircraftName').textContent,
+      status: document.getElementById('status').textContent,
+      metrics: document.getElementById('metrics').textContent,
+      hud: document.getElementById('flightHud').textContent,
+      back: document.getElementById('back').textContent,
+      lank: document.getElementById('allaLankarMeny').textContent,
+      sens: !!document.getElementById('sensitivity'),
+      roll: !!document.getElementById('rollTroskel'),
+      toggles: document.querySelectorAll('#toggles input').length,
+      inne: ['status', 'metrics', 'flightHud', 'aircraftName', 'back', 'settings'].every(inne),
+      fps: st.fps, anrop: st.drawCalls, tris: st.triangles
+    };
+  });
+  if (!meny.inne || !/Flygprov 08/.test(meny.version) || !/Typhoon/.test(meny.namn) || !meny.sens || !meny.roll || meny.toggles < 8) fel.push('meny ' + JSON.stringify(meny));
+  if (meny.back !== 'Skjutbana' || meny.lank !== 'Alla länkar') fel.push('länkar ' + meny.back + ' ' + meny.lank);
+  if (!/FPS/.test(meny.metrics) || !/km\/h/.test(meny.hud)) fel.push('telemetri ' + meny.metrics + ' | ' + meny.hud);
+  console.log('telemetri', meny.fps.toFixed(0) + ' FPS', meny.anrop + ' anrop', Math.round(meny.tris / 1000) + 'k tris');
+  const staendeMeny = await sida.evaluate(menyRyms);
+  if (staendeMeny.scroll > 1 || staendeMeny.bottom > staendeMeny.inner + 1 || staendeMeny.klippt.length || staendeMeny.krock.length || staendeMeny.selectSynlig) fel.push('stående meny ' + JSON.stringify(staendeMeny));
+  console.log('meny 390x844', staendeMeny.client + 'px av ' + staendeMeny.inner + ', scroll ' + staendeMeny.scroll);
+  await sida.screenshot({ path: join(ART, 'flyg_staende_meny_oppen_390x844.png') });
+  await sida.click('#closeSettings');
+  await sida.click('#jaktHorisont');
+  await sida.waitForFunction(() => window.flygTest.state().sight === true && !document.getElementById('panelHorisont').hidden);
+  const cockpitLage = await sida.evaluate(() => {
+    const panel = document.getElementById('panel').getBoundingClientRect();
+    const knapp = document.getElementById('panelHorisont').getBoundingClientRect();
+    return { pw: panel.width, ph: panel.height, px: panel.x, py: panel.y, kx: knapp.x + knapp.width / 2, ky: knapp.y + knapp.height / 2 };
+  });
+  const hor = panelHorisont(cockpitLage.pw, cockpitLage.ph);
+  if (Math.hypot(cockpitLage.kx - (cockpitLage.px + hor.x), cockpitLage.ky - (cockpitLage.py + hor.y)) > 3) fel.push('cockpithorisont ur läge ' + JSON.stringify({ cockpitLage, hor }));
+  await sida.screenshot({ path: join(ART, 'flyg_staende_cockpit_horisont_390x844.png') });
+  await sida.click('#panelHorisont');
+  await sida.waitForFunction(() => window.flygTest.state().sight === false);
+  const gasFore = await sida.evaluate(() => {
+    const el = document.getElementById('gasreglage').getBoundingClientRect();
+    const bana = document.getElementById('gasBana').getBoundingClientRect();
+    const jakt = document.getElementById('jaktpanel').getBoundingClientRect();
+    const center = document.getElementById('center').getBoundingClientRect();
+    const over = (a, b) => a.x < b.x + b.width - 1 && a.x + a.width > b.x + 1 && a.y < b.y + b.height - 1 && a.y + a.height > b.y + 1;
+    return {
+      h: el.height, fore: window.flygTest.gasKlick(), jakt: over(el, jakt), center: over(el, center),
+      x: bana.left + bana.width / 2, y1: bana.top + 6, y2: bana.bottom - 6
+    };
+  });
+  await sida.mouse.move(gasFore.x, gasFore.y1);
+  await sida.mouse.down();
+  await sida.mouse.move(gasFore.x, gasFore.y2, { steps: 10 });
+  await sida.mouse.up();
+  const gas = await sida.evaluate((fore) => ({
+    h: document.getElementById('gasreglage').getBoundingClientRect().height,
+    klick: window.flygTest.gasKlick() - fore.fore,
+    gas: window.flygTest.state().gas,
+    jakt: fore.jakt,
+    center: fore.center,
+    roster: window.flygTest.mekanikAntal()
+  }), gasFore);
+  if (gas.h < 134 || gas.h > 142) fel.push('gas höjd ' + gas.h);
+  if (gas.klick < 1) fel.push('gas utan ljudsteg ' + JSON.stringify(gas));
+  if (gas.jakt || gas.center) fel.push('gas krockar ' + JSON.stringify(gas));
+  await new Promise((r) => setTimeout(r, 400));
+  const kvarRoster = await sida.evaluate(() => window.flygTest.mekanikAntal());
+  if (kvarRoster !== 0) fel.push('gasljud läckte ' + kvarRoster);
+  const topp = await sida.evaluate(() => window.flygTest.mekanikTopp());
+  if (!(topp > 0.02 && topp < 10 ** (-1 / 20))) fel.push('mekanik topp ' + topp);
+  await sida.setViewport({ width: 844, height: 390, deviceScaleFactor: 1 });
+  await sida.evaluate(() => { window.flygTest.setGas(0.85); window.flygTest.setSight(false); });
+  await sida.waitForFunction(() => !document.getElementById('jaktHorisont').hidden);
+  const passning = await sida.evaluate(() => {
+    const jakt = document.getElementById('jaktpanel').getBoundingClientRect();
+    const knapp = document.getElementById('jaktHorisont').getBoundingClientRect();
+    return { jw: jakt.width, jh: jakt.height, jx: jakt.x, jy: jakt.y, kx: knapp.x + knapp.width / 2, ky: knapp.y + knapp.height / 2 };
+  });
+  const vantad = jaktHorisont(passning.jw, passning.jh, JAKT);
+  if (Math.hypot(passning.kx - (passning.jx + vantad.x), passning.ky - (passning.jy + vantad.y)) > 3) fel.push('horisont ur läge ' + JSON.stringify({ passning, vantad }));
+  await sida.screenshot({ path: join(ART, 'flyg_liggande_meny_stangd_844x390.png') });
+  await sida.click('#settingsButton');
+  await sida.waitForSelector('#settings:not([hidden])');
+  const liggMeny = await sida.evaluate(menyRyms);
+  if (liggMeny.scroll > 1 || liggMeny.bottom > liggMeny.inner + 1 || liggMeny.klippt.length || liggMeny.krock.length || liggMeny.selectSynlig) fel.push('liggande meny ' + JSON.stringify(liggMeny));
+  console.log('meny 844x390', liggMeny.client + 'px av ' + liggMeny.inner + ', scroll ' + liggMeny.scroll);
+  await sida.click('#closeSettings');
+  await sida.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
 
   for (const [w, h] of storlekar) {
     await sida.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
@@ -175,28 +304,29 @@ try {
       const namn = {
         panel: '#panel', hud: '#flightHud', metrics: '#metrics', version: '#versionEtikett',
         gas: '#gasreglage', system: '#system', pedaler: '#pedaler', fire: '#fire',
-        center: '#center', sight: '#sight', bomb: '#bombsikte', hus: '#cockpit .sikhuset'
+        center: '#center', bomb: '#bombsikte', hus: '#cockpit .sikhuset', meny: '#settingsButton'
       };
       const krock = [];
       for (const [n, sel] of Object.entries(namn)) if (krockar(ring, box(document.querySelector(sel)))) krock.push(n);
       return { ring, krock, version: document.getElementById('versionEtikett')?.textContent || '' };
     });
-    if (!mat.version.includes('Flygprov 07')) fel.push(w + 'x' + h + ' saknar versionstext');
+    if (!mat.version.includes('Flygprov 08')) fel.push(w + 'x' + h + ' saknar versionstext');
     if (mat.krock.length) fel.push(w + 'x' + h + ' överlappar: ' + mat.krock.join(', ') + ' ring=' + JSON.stringify(mat.ring));
     const knapp = await sida.evaluate(() => {
-      const el = document.getElementById('sight');
+      const cock = [...document.querySelectorAll('button')].filter((b) => b.textContent.includes('Cockpit') && b.getBoundingClientRect().width > 1);
+      const el = document.getElementById('panelHorisont');
       const r = el.getBoundingClientRect();
-      const stil = getComputedStyle(el);
-      return { w: r.width, h: r.height, text: el.textContent, px: parseFloat(stil.fontSize), vikt: stil.fontWeight };
+      return { w: r.width, h: r.height, cock: cock.length, label: el.getAttribute('aria-label'), sight: window.flygTest.state().sight };
     });
-    if (knapp.text !== 'Bakifrån') fel.push(w + 'x' + h + ' etikett ' + knapp.text);
-    if (knapp.w < 160 || knapp.h < 60) fel.push(w + 'x' + h + ' liten knapp ' + JSON.stringify(knapp));
-    if (!(knapp.px >= 18)) fel.push(w + 'x' + h + ' liten text ' + knapp.px);
+    if (knapp.cock) fel.push(w + 'x' + h + ' cockpitknapp syns');
+    if (!knapp.sight || knapp.label !== 'Byt till vyn bakifrån') fel.push(w + 'x' + h + ' horisont ' + JSON.stringify(knapp));
+    if (knapp.w < 44 || knapp.h < 44) fel.push(w + 'x' + h + ' liten horisont ' + JSON.stringify(knapp));
     const fil = join(ART, `flyg_${w}x${h}.png`);
     await sida.screenshot({ path: fil });
     console.log('bild', fil, 'krock', mat.krock.join(',') || 'ingen');
   }
   if (konsol.length) fel.push('konsol: ' + konsol.slice(0, 8).join(' | '));
+  if (trasiga.length) fel.push('trasiga: ' + [...new Set(trasiga)].slice(0, 8).join(' | '));
 } finally {
   await webblasare.close();
   http.close();

@@ -1,9 +1,9 @@
 :root{font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#f3f0df;background:#172724;color-scheme:dark}*{box-sizing:border-box;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}body{margin:0;overflow:hidden;touch-action:none}#spel{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}header,footer{position:fixed;left:0;right:0;padding:16px;z-index:2;pointer-events:none}header{top:0;padding-top:max(16px,env(safe-area-inset-top));background:linear-gradient(#172724e8,#17272400)}footer{bottom:0;padding-bottom:max(16px,env(safe-area-inset-bottom));background:linear-gradient(#17272400,#172724e8)}button,a,input,label{pointer-events:auto}button,a{font:600 14px -apple-system,BlinkMacSystemFont,sans-serif;min-height:46px;border:1px solid #d3dbcf70;border-radius:12px;background:#1b302bec;color:#f3f0df;padding:11px 14px;text-decoration:none;touch-action:none}button:active{background:#657464}button:disabled{opacity:.5}.row{display:flex;align-items:center;gap:9px}h1{font-size:20px;flex:1;margin:8px 0}h2{font-size:25px;margin:12px 0}p{line-height:1.5}#status{font-size:13px;margin:3px 0}#metrics,.eyebrow,#flightHud{font:11px ui-monospace,monospace;letter-spacing:.6px}.eyebrow{color:#e3c88e}#metrics{opacity:.85}.glass{position:fixed;z-index:8;top:50%;left:50%;transform:translate(-50%,-50%);width:min(360px,calc(100% - 32px));max-height:70dvh;overflow:auto;background:#142a27f5;border:1px solid #d9c89e60;border-radius:20px;padding:22px;box-shadow:0 16px 60px #0007}.glass button{margin:4px 0}#start{background:#e3c88e;color:#172724;width:100%}#manual{width:100%}.small{font-size:12px;color:#d2d7cb}#fire{background:#e3c88e;color:#172724;border:0;font-size:15px;min-width:94px;min-height:80px;letter-spacing:1px}#fire.firing{background:#fff0bd}.gas{flex:1;background:#172724d9;border-radius:12px;padding:8px 12px;font-size:11px}input[type=range]{display:block;width:100%;height:32px;accent-color:#e3c88e;touch-action:auto}#gasValue{float:right}#flightHud{margin-top:9px;text-align:center}#toggles label{display:flex;align-items:center;justify-content:space-between;min-height:39px;font-size:14px}#reticle{position:fixed;z-index:1;font:36px monospace;color:#fffbd7;text-shadow:0 1px 5px #000;transform:translate(-50%,-50%);pointer-events:none}#hit{position:fixed;top:44%;left:50%;transform:translate(-50%,-50%);font-size:60px;color:#ffcf69;opacity:0;pointer-events:none}[hidden]{display:none!important}@media(max-width:430px){header,footer{padding-left:12px;padding-right:12px}h1{font-size:17px}header button,header a{font-size:12px;padding:10px}#fire{min-width:88px}.row{gap:6px}}@media(max-height:520px){header{padding-top:8px}.glass{max-height:85dvh}footer{padding-bottom:8px}#fire{min-height:58px}h1{font-size:17px}}
 
-#reticle{width:220px;height:220px;font:inherit;filter:none;text-shadow:none}#reticle svg{width:100%;height:100%}.reticle-light{filter:drop-shadow(0 0 3px #ff8d22)}.pilotButtons{display:grid;gap:6px}.pilotButtons button{min-width:81px;min-height:38px;padding:8px}#sight[aria-pressed=true]{color:#ffbc55;border-color:#ffbc55}select{padding:9px;border:1px solid #bec7b8;border-radius:8px;background:#21352f;color:#fff;font-size:13px}#settings>label{display:grid;gap:6px}#flightHud{letter-spacing:0;font-size:10px}.row h1{font-size:16px}@media(max-width:430px){header h1{max-width:130px;font-size:15px}#reticle{width:185px;height:185px}}
+#reticle{width:220px;height:220px;font:inherit;filter:none;text-shadow:none}#reticle svg{width:100%;height:100%}.reticle-light{filter:drop-shadow(0 0 3px #ff8d22)}.pilotButtons{display:grid;gap:6px}.pilotButtons button{min-width:81px;min-height:38px;padding:8px}#sight[aria-pressed=true]{color:#ffbc55;border-color:#ffbc55}select{padding:9px;border:1px solid #bec7b8;border-radius:8px;background:#21352f;color:#fff;font-size:13px}#settings label{display:grid;gap:6px}#settings #toggles label{display:flex}#flightHud{letter-spacing:0;font-size:10px}.row h1{font-size:16px}@media(max-width:430px){header h1{max-width:130px;font-size:15px}#reticle{width:185px;height:185px}}
 
  /* Flygprov 04: cockpit, gasreglage, sikte */
-#gasreglage{position:fixed;z-index:5;left:8px;bottom:calc(8px + env(safe-area-inset-bottom));transform:none;width:86px;height:118px;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
+#gasreglage{position:fixed;z-index:5;left:8px;bottom:calc(8px + env(safe-area-inset-bottom));transform:none;width:86px;height:138px;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
 #pitchreglage{position:fixed;z-index:5;left:98px;bottom:calc(8px + env(safe-area-inset-bottom));width:58px;height:118px;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
 #gasBana,#pitchBana{pointer-events:auto;touch-action:none;position:relative;flex:1;width:100%;border-radius:10px 10px 8px 8px;background:linear-gradient(180deg,#4a4338,#1c1915 55%,#2c2822);border:2px solid #cbb892;box-shadow:inset 0 0 0 3px #12100e,inset 0 8px 12px #0007;display:flex;justify-content:center;gap:10px;padding:8px 8px 7px 22px}
 #gasBana .skala,#pitchBana .skala{position:absolute;left:4px;top:7px;bottom:7px;width:14px;pointer-events:none}
@@ -11,9 +11,9 @@
 #gasBana .skala i:nth-child(1){top:16px}#gasBana .skala i:nth-child(2){top:34%}#gasBana .skala i:nth-child(3){top:52%}#gasBana .skala i:nth-child(4){top:70%}#gasBana .skala i:nth-child(5){bottom:14px}
 #gasBana .skala b,#pitchBana .skala b{position:absolute;left:-1px;top:0;font:700 6px ui-monospace,monospace;color:#e6d3a4;letter-spacing:0}
 #gasBana .skala b.lag,#pitchBana .skala b.lag{top:auto;bottom:0}
-.spalt{position:relative;width:18px;border-radius:8px;background:linear-gradient(90deg,#0b0a08,#322e28 48%,#0b0a08);box-shadow:inset 0 0 5px #000e,0 0 0 1px #6a5e4a}
-.spak{position:absolute;left:50%;width:7px;height:54%;top:calc((1 - var(--gas,.85)) * 42%);transform:translateX(-50%);pointer-events:none}
-.spak .arm{position:absolute;left:0;right:0;top:11px;bottom:0;border-radius:2px;background:linear-gradient(90deg,#8a7350,#f3e6c8 46%,#6a5438)}
+.spalt{position:relative;width:18px;border-radius:8px;background:linear-gradient(90deg,#0b0a08,#322e28 48%,#0b0a08);box-shadow:inset 0 0 5px #000e,0 0 0 1px #6a5e4a;overflow:hidden}
+.spak{position:absolute;left:50%;width:7px;height:22px;top:calc((1 - var(--gas,.85)) * (100% - 22px));transform:translateX(-50%);pointer-events:none}
+.spak .arm{position:absolute;left:0;right:0;top:12px;height:34px;bottom:auto;border-radius:2px;background:linear-gradient(90deg,#8a7350,#f3e6c8 46%,#6a5438)}
 .spak .knopp,.spak .knopp.mork{position:absolute;left:50%;top:0;width:24px;height:16px;transform:translateX(-50%);border-radius:8px;background:radial-gradient(circle at 32% 28%,#4e4e4e,#161616 48%,#050505);border:1px solid #c4a574;box-shadow:inset 0 1px 0 #ffffff33,0 2px 0 #000c}
 #gasreglage output,#pitchreglage output{font:700 9px ui-monospace,monospace;color:#f3ecda;text-shadow:0 1px 2px #000;letter-spacing:.3px}
 .gas-dold{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
@@ -29,7 +29,7 @@
 #panel{position:absolute;top:auto;left:0;right:0;bottom:calc(168px + env(safe-area-inset-bottom));width:100%;height:auto;aspect-ratio:2/1;max-height:32vh;z-index:2;pointer-events:none;background:transparent}
 footer .row{justify-content:space-between;align-items:flex-end;width:100%}
 #flightHud{position:static;transform:none;width:auto;max-width:100%;margin:2px 0 0;z-index:2;text-align:left;font-size:10px;letter-spacing:0;opacity:.78;color:#e7e2d4;text-shadow:0 1px 2px #000;pointer-events:none}
-@media(max-height:520px){#gasreglage{height:96px;width:92px}#panel{max-height:30vh;bottom:calc(108px + env(safe-area-inset-bottom))}#cockpit .sikhuset{bottom:max(32vh,calc(116px + 50vw + env(safe-area-inset-bottom)))}}
+@media(max-height:520px){#gasreglage{height:120px;width:92px}#panel{max-height:30vh;bottom:calc(108px + env(safe-area-inset-bottom))}#cockpit .sikhuset{bottom:max(32vh,calc(116px + 50vw + env(safe-area-inset-bottom)))}}
 
 /* Flygprov 03: cockpit och reflexsikte */
 #reticle{position:fixed;inset:0;width:100%;height:100%;transform:none;left:0!important;top:0!important;z-index:2;pointer-events:none;mix-blend-mode:screen}
@@ -104,32 +104,97 @@ header{max-height:var(--flyg-header,120px);overflow:hidden}
  header button,header a{min-height:36px;padding:6px 8px}
 }
 
-/* Flygprov 07: stor, tydlig knapp mellan vyn bakifrån och cockpiten. */
-button#sight.vyknapp{
+/* Flygprov 08: meny i hörnet, horisonten byter vy, högre gasreglage. */
+button.menyknapp{
  position:fixed;
- z-index:3;
- right:max(10px,env(safe-area-inset-right));
+ z-index:12;
+ top:max(8px,env(safe-area-inset-top));
+ right:max(8px,env(safe-area-inset-right));
  left:auto;
- min-width:160px;
- min-height:60px;
- padding:8px 14px;
- border:0;
- border-radius:16px;
- background:#e3c88e;
- color:#172724;
- box-shadow:0 6px 18px #0007;
- font:700 22px/1.05 -apple-system,BlinkMacSystemFont,sans-serif;
- letter-spacing:0;
+ min-width:44px;
+ min-height:44px;
+ padding:8px 12px;
+ border-radius:12px;
+ background:#1b302bf2;
+ color:#f6f1e4;
+ border:1px solid #d3dbcf80;
+ box-shadow:0 4px 14px #0006;
+ font:700 15px/1 -apple-system,BlinkMacSystemFont,sans-serif;
  display:flex;
  align-items:center;
  justify-content:center;
- text-align:center;
+ gap:6px;
  pointer-events:auto;
 }
-button#sight.vyknapp[aria-pressed=true]{
- background:#1b302b;
- color:#f6f1e4;
- border:3px solid #e3c88e;
+button.menyknapp .meny-ikon{font-size:18px;line-height:1}
+button.menyknapp[aria-expanded=true]{background:#e3c88e;color:#172724;border-color:#e3c88e}
+#settings.flygmeny{
+ position:fixed;
+ z-index:11;
+ top:calc(max(8px,env(safe-area-inset-top)) + 50px);
+ right:max(8px,env(safe-area-inset-right));
+ left:auto;
+ transform:none;
+ width:min(372px,calc(100vw - 12px - env(safe-area-inset-right)));
+ max-height:calc(100dvh - max(8px,env(safe-area-inset-top)) - 58px);
+ overflow:auto;
+ background:#142a27f7;
+ border:1px solid #d9c89e70;
+ border-radius:14px;
+ padding:8px 10px 8px;
+ box-shadow:0 16px 40px #000a;
+ pointer-events:auto;
+ touch-action:pan-y;
+}
+#settings.flygmeny h2{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#e3c88e;margin:0 0 3px;line-height:1.2}
+#settings.flygmeny .meny-topp{justify-content:space-between;margin:0 0 2px}
+#settings.flygmeny .meny-topp h2{font-size:15px;letter-spacing:0;text-transform:none;color:#f6f1e4;margin:0}
+#settings.flygmeny button,#settings.flygmeny a{min-height:32px;padding:4px 8px;font-size:12px;border-radius:8px}
+#settings.flygmeny .meny-topp button{min-height:30px;padding:4px 10px}
+#settings.flygmeny .meny-del{padding:5px 0 2px;border-top:1px solid #d9c89e33}
+#settings.flygmeny .meny-id{display:flex;align-items:baseline;gap:8px;margin:0 0 4px}
+#settings.flygmeny .meny-id h1{font-size:14px;line-height:1.15;margin:0;flex:1}
+#settings.flygmeny #planInfo,#settings.flygmeny .modell-dold{display:none}
+#planMenyFlyg.planmeny{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0}
+#planMenyFlyg .planval{width:auto;min-height:32px;padding:4px 3px;text-align:center}
+#planMenyFlyg .planval strong{font-size:12px;line-height:1.15}
+#planMenyFlyg .planval span{display:none}
+#settings.flygmeny .tele-block{display:flex;flex-direction:column;gap:1px}
+#settings.flygmeny #status,#settings.flygmeny #metrics,#settings.flygmeny #flightHud{font-size:11px;line-height:1.25;margin:0;white-space:normal;overflow:visible;text-overflow:clip;text-align:left;opacity:1;letter-spacing:0}
+#settings.flygmeny .reglage-rad{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px;min-height:26px;font-size:12px;margin:0}
+#settings.flygmeny .reglage-rad input[type=range]{height:22px;margin:0}
+#settings.flygmeny #toggles{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}
+#settings.flygmeny #toggles label{min-height:24px;font-size:11px;line-height:1.15;gap:4px;padding:0}
+#settings.flygmeny .meny-lankar{display:flex;gap:6px}
+#settings.flygmeny .meny-lankar a{flex:1;min-height:34px;display:inline-flex;align-items:center;justify-content:center}
+@media(max-height:520px){
+ #settings.flygmeny{width:min(640px,calc(100vw - 12px - env(safe-area-inset-right)));top:calc(max(4px,env(safe-area-inset-top)) + 46px);max-height:calc(100dvh - max(4px,env(safe-area-inset-top)) - 52px);padding:6px 8px}
+ #settings.flygmeny .meny-kropp{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.15fr);column-gap:10px;align-items:start}
+ #settings.flygmeny .meny-del.plan{grid-column:1;grid-row:1}
+ #settings.flygmeny .meny-del.tele{grid-column:1;grid-row:2}
+ #settings.flygmeny .meny-del.lankar{grid-column:1;grid-row:3}
+ #settings.flygmeny .meny-del.installningar{grid-column:2;grid-row:1 / span 3}
+}
+button.horisontknapp{
+ position:fixed;
+ z-index:6;
+ padding:0;
+ margin:0;
+ min-width:44px;
+ min-height:44px;
+ border-radius:50%;
+ border:1.5px solid rgba(231,197,106,.42);
+ background:transparent;
+ box-shadow:none;
+ color:transparent;
+ pointer-events:auto;
+ touch-action:manipulation;
+}
+button.horisontknapp:active,button.horisontknapp.tryckt{
+ background:rgba(231,197,106,.2);
+ border-color:#e7c56a;
+ box-shadow:inset 0 0 0 2px rgba(231,197,106,.75),0 0 12px rgba(231,197,106,.4);
+ transform:scale(.97);
 }
 
 /* Flygplan. Jaktvyns tavlor ritas på #jaktpanel. Måtten sätts från layout.js och config. */

@@ -92,3 +92,197 @@ export function skapaPanel(canvas){
  }
  return {rita,hojdvisare};
 }
+
+// Jaktvyns remsa längst ner. Mått och färger kommer från config.jaktpanel.
+// Fart i km/h, höjd i meter, konstgjord horisont och en liten G-mätare när bredden räcker.
+function rund(ctx,x,y,w,h,r){
+ const rr=Math.max(0,Math.min(r,w/2,h/2));
+ ctx.beginPath();
+ ctx.moveTo(x+rr,y);
+ ctx.arcTo(x+w,y,x+w,y+h,rr);
+ ctx.arcTo(x+w,y+h,x,y+h,rr);
+ ctx.arcTo(x,y+h,x,y,rr);
+ ctx.arcTo(x,y,x+w,y,rr);
+ ctx.closePath();
+}
+function jaktTavla(ctx,x,y,r,F){
+ ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=F.sarg;ctx.fill();
+ ctx.beginPath();ctx.arc(x,y,r-Math.max(2.2,r*0.07),0,Math.PI*2);ctx.fillStyle=F.stal;ctx.fill();
+ ctx.beginPath();ctx.arc(x,y,r-Math.max(4,r*0.13),0,Math.PI*2);ctx.fillStyle=F.tavla;ctx.fill();
+ ctx.fillStyle=F.nit;
+ const skruv=Math.max(0.7,r*0.035);
+ for(let i=0;i<4;i++){
+  const a=Math.PI/4+i*Math.PI/2;
+  const rad=r-Math.max(1.4,r*0.045);
+  ctx.beginPath();ctx.arc(x+Math.cos(a)*rad,y+Math.sin(a)*rad,skruv,0,Math.PI*2);ctx.fill();
+ }
+}
+function jaktNav(ctx,x,y,r,F){
+ ctx.beginPath();ctx.arc(x,y,Math.max(1.6,r*0.055),0,Math.PI*2);ctx.fillStyle=F.sarg;ctx.fill();
+ ctx.beginPath();ctx.arc(x,y,Math.max(0.8,r*0.028),0,Math.PI*2);ctx.fillStyle=F.tavla;ctx.fill();
+}
+function jaktVisare(ctx,x,y,grader,len,bredd,farg){
+ ctx.save();ctx.translate(x,y);ctx.rotate((-90+grader)*Math.PI/180);
+ ctx.beginPath();ctx.moveTo(-bredd*0.45,len*0.16);ctx.lineTo(0,len*0.22);ctx.lineTo(bredd*0.45,len*0.16);ctx.lineTo(bredd*0.28,0);ctx.lineTo(0,-len);ctx.lineTo(-bredd*0.28,0);ctx.closePath();
+ ctx.fillStyle=farg;ctx.fill();ctx.restore();
+}
+function jaktText(ctx,text,x,y,px,F,font,vikt){
+ ctx.fillStyle=F.siffra;ctx.font=(vikt||'700')+' '+px+'px '+font;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x,y);
+}
+function ritaJaktYta(ctx,w,h,s,C){
+ const F=C.farger,font=C.font||'ui-monospace,monospace';
+ ctx.clearRect(0,0,w,h);
+ rund(ctx,0.5,0.5,w-1,h-1,C.hornh_px||8);
+ ctx.fillStyle=F.platta;ctx.fill();
+ ctx.lineWidth=2;ctx.strokeStyle=F.sarg;ctx.stroke();
+ ctx.save();rund(ctx,3,3,w-6,h-6,Math.max(2,(C.hornh_px||8)-2));ctx.strokeStyle=F.stal;ctx.lineWidth=1;ctx.stroke();ctx.restore();
+ ctx.fillStyle=F.nit;
+ const nitar=C.nitar||7, nit=C.nit_px||1.5;
+ for(let i=0;i<nitar;i++){
+  const px=(w-16)*((i+0.5)/nitar)+8;
+  ctx.beginPath();ctx.arc(px,5.5,nit,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(px,h-5.5,nit,0,Math.PI*2);ctx.fill();
+ }
+ const pad=C.marginal_px||8, gap=C.gap_px||6;
+ const gVisa=w>=(C.visa_g_om_bredd_px||360);
+ const gSkala=gVisa?(C.g_skala||0.72):0;
+ const slots=3+gSkala, gaps=(gVisa?3:2)*gap;
+ const inner=Math.max(10,w-pad*2);
+ const rMax=Math.max(8,(h-pad*2)/2-1);
+ let r=Math.min(rMax,(inner-gaps)/(2*slots));
+ const rG=gVisa?r*gSkala:0;
+ const total=r*2*3+rG*2+gaps;
+ let x=pad+(inner-total)/2+r;
+ const y=h/2+1;
+ const ansikte=r-Math.max(4,r*0.13);
+ ritaFart(ctx,x,y,r,ansikte,s,C,font);
+ x+=r*2+gap;
+ ritaHorisont(ctx,x,y,r,ansikte,s,C,font);
+ x+=r*2+gap;
+ ritaHojd(ctx,x,y,r,ansikte,s,C,font);
+ let gRitar=false;
+ if(gVisa){x+=r+gap+rG;ritaG(ctx,x,y,rG,s,C,font);gRitar=true;}
+ if(s.stall){
+  ctx.fillStyle=F.varning;ctx.font='800 '+Math.max(9,Math.min(13,r*0.28))+'px '+font;ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText(C.stall_text||'STALL',8,7);
+ }
+ return {radie:r,g:gRitar,kmh:s.fart*3.6,meter:s.hojd};
+}
+function ritaFart(ctx,x,y,r,a,s,C,font){
+ const F=C.farger,max=C.fart_max_kmh||800,boge=C.fart_bage_grader||300;
+ const kmh=Math.max(0,s.fart*3.6);
+ jaktTavla(ctx,x,y,r,F);
+ const start=-boge/2;
+ ctx.strokeStyle=F.siffra;ctx.fillStyle=F.siffra;ctx.lineWidth=Math.max(1,r*0.028);
+ const steg=r>34?(C.fart_steg_kmh||100):(C.fart_steg_kmh||100)*2;
+ const px=Math.max(8,Math.min(13,r*0.27));
+ ctx.font='700 '+px+'px '+font;ctx.textAlign='center';ctx.textBaseline='middle';
+ for(let v=0;v<=max;v+=steg){
+  const t=v/max, ang=(-90+start+t*boge)*Math.PI/180;
+  const lang=v%(steg*2)===0?a*0.16:a*0.09;
+  ctx.beginPath();ctx.moveTo(x+Math.cos(ang)*(a-lang),y+Math.sin(ang)*(a-lang));ctx.lineTo(x+Math.cos(ang)*a,y+Math.sin(ang)*a);ctx.stroke();
+  if(r>30&&v%steg===0&&v<max)ctx.fillText(String(v/100),x+Math.cos(ang)*(a*0.68),y+Math.sin(ang)*(a*0.68));
+ }
+ const rod=C.fart_rod_kmh;
+ if(rod>0&&rod<max){
+  ctx.strokeStyle=F.varning;ctx.lineWidth=Math.max(1.5,r*0.045);
+  const a0=(-90+start+(rod/max)*boge)*Math.PI/180, a1=(-90+start+boge)*Math.PI/180;
+  ctx.beginPath();ctx.arc(x,y,a*0.86,a0,a1);ctx.stroke();
+ }
+ jaktVisare(ctx,x,y,start+Math.min(1,kmh/max)*boge,a*0.78,Math.max(1.4,r*0.045),F.visare);
+ jaktNav(ctx,x,y,r,F);
+ jaktText(ctx,String(Math.round(kmh)),x,y+a*0.28,Math.max(9,r*0.3),F,font,'800');
+ jaktText(ctx,'km/h',x,y+a*0.52,Math.max(7,r*0.18),F,font,'700');
+}
+function ritaHorisont(ctx,x,y,r,a,s,C,font){
+ const F=C.farger;
+ jaktTavla(ctx,x,y,r,F);
+ ctx.save();
+ ctx.beginPath();ctx.arc(x,y,a,0,Math.PI*2);ctx.clip();
+ ctx.translate(x,y);ctx.rotate(-(s.roll||0));
+ const py=Math.max(-a*0.9,Math.min(a*0.9,(s.pitch||0)*(C.pitch_px_per_rad||46)));
+ ctx.translate(0,py);
+ ctx.fillStyle=F.himmel;ctx.fillRect(-r*2,-r*3,r*4,r*3);
+ ctx.fillStyle=F.mark;ctx.fillRect(-r*2,0,r*4,r*3);
+ ctx.strokeStyle=F.siffra;ctx.lineWidth=Math.max(1.4,r*0.035);
+ ctx.beginPath();ctx.moveTo(-r*2,0);ctx.lineTo(r*2,0);ctx.stroke();
+ ctx.lineWidth=1;
+ for(const g of [-20,-10,10,20]){
+  const yy=-g*Math.PI/180*(C.pitch_px_per_rad||46);
+  const w=Math.abs(g)===20?a*0.55:a*0.8;
+  ctx.beginPath();ctx.moveTo(-w/2,yy);ctx.lineTo(w/2,yy);ctx.stroke();
+ }
+ ctx.restore();
+ ctx.strokeStyle=F.symbol||F.visareKort;ctx.lineWidth=Math.max(1.6,r*0.045);ctx.lineCap='round';ctx.lineJoin='round';
+ ctx.beginPath();ctx.moveTo(x-a*0.55,y);ctx.lineTo(x-a*0.18,y);ctx.lineTo(x,y+a*0.12);ctx.lineTo(x+a*0.18,y);ctx.lineTo(x+a*0.55,y);ctx.stroke();
+ ctx.fillStyle=F.symbol||F.visareKort;ctx.beginPath();ctx.arc(x,y,Math.max(1.2,r*0.035),0,Math.PI*2);ctx.fill();
+ jaktText(ctx,'HOR',x,y+a*0.62,Math.max(7,r*0.16),F,font,'700');
+}
+function ritaHojd(ctx,x,y,r,a,s,C,font){
+ const F=C.farger, meter=Math.max(0,s.hojd||0);
+ const varv=C.hojd_varv_m||1000, kort=C.hojd_varv_kort_m||10000;
+ jaktTavla(ctx,x,y,r,F);
+ ctx.fillStyle=F.siffra;ctx.strokeStyle=F.siffra;ctx.lineWidth=Math.max(1,r*0.025);
+ const px=Math.max(8,Math.min(14,r*0.3));
+ ctx.font='700 '+px+'px '+font;ctx.textAlign='center';ctx.textBaseline='middle';
+ for(let i=0;i<10;i++){
+  const ang=(-90+i/10*360)*Math.PI/180;
+  ctx.beginPath();ctx.moveTo(x+Math.cos(ang)*(a*0.82),y+Math.sin(ang)*(a*0.82));ctx.lineTo(x+Math.cos(ang)*a,y+Math.sin(ang)*a);ctx.stroke();
+  ctx.fillText(String(i),x+Math.cos(ang)*(a*0.62),y+Math.sin(ang)*(a*0.62));
+ }
+ const lang=(meter%varv)/varv*360, kortV=(meter%kort)/kort*360;
+ jaktVisare(ctx,x,y,kortV,a*0.48,Math.max(2.2,r*0.07),F.visareKort||F.visare);
+ jaktVisare(ctx,x,y,lang,a*0.78,Math.max(1.2,r*0.035),F.visare);
+ jaktNav(ctx,x,y,r,F);
+ ctx.fillStyle=F.tavla;const bw=Math.min(a*1.15,r*0.95), bh=Math.max(11,r*0.32);
+ ctx.fillRect(x-bw/2,y+a*0.22,bw,bh);
+ ctx.strokeStyle=F.sarg;ctx.lineWidth=1;ctx.strokeRect(x-bw/2,y+a*0.22,bw,bh);
+ jaktText(ctx,String(Math.round(meter)),x,y+a*0.22+bh/2,Math.max(8,r*0.24),F,font,'800');
+}
+function ritaG(ctx,x,y,r,s,C,font){
+ const F=C.farger, a=r-Math.max(3,r*0.14);
+ const min=C.g_min??-2, max=C.g_max??8, g=Number.isFinite(s.nz)?s.nz:1;
+ const boge=C.g_bage_grader||240, start=-boge/2;
+ jaktTavla(ctx,x,y,r,F);
+ const rodFran=C.g_rod_fran??6;
+ if(rodFran<max){
+  const a0=(-90+start+((rodFran-min)/(max-min))*boge)*Math.PI/180;
+  const a1=(-90+start+boge)*Math.PI/180;
+  ctx.strokeStyle=F.varning;ctx.lineWidth=Math.max(1.4,r*0.07);
+  ctx.beginPath();ctx.arc(x,y,a*0.78,a0,a1);ctx.stroke();
+ }
+ ctx.strokeStyle=F.siffra;ctx.fillStyle=F.siffra;ctx.lineWidth=1;
+ const mark=C.g_markeringar||[-2,0,1,4,8];
+ ctx.font='700 '+Math.max(7,r*0.28)+'px '+font;ctx.textAlign='center';ctx.textBaseline='middle';
+ for(const v of mark){
+  if(v<min||v>max)continue;
+  const ang=(-90+start+((v-min)/(max-min))*boge)*Math.PI/180;
+  ctx.beginPath();ctx.moveTo(x+Math.cos(ang)*(a*0.82),y+Math.sin(ang)*(a*0.82));ctx.lineTo(x+Math.cos(ang)*a,y+Math.sin(ang)*a);ctx.stroke();
+ }
+ const t=Math.max(0,Math.min(1,(g-min)/(max-min)));
+ jaktVisare(ctx,x,y,start+t*boge,a*0.72,Math.max(1.2,r*0.06),F.visare);
+ jaktNav(ctx,x,y,r,F);
+ jaktText(ctx,g.toFixed(1),x,y+a*0.18,Math.max(8,r*0.34),F,font,'800');
+ jaktText(ctx,'G',x,y+a*0.5,Math.max(7,r*0.24),F,font,'700');
+}
+export function skapaJaktPanel(canvas,cfg){
+ const ctx=canvas.getContext('2d');
+ const C=cfg;
+ function rita(s){
+  const cssW=canvas.clientWidth||parseFloat(canvas.style.width)||0;
+  const cssH=canvas.clientHeight||parseFloat(canvas.style.height)||0;
+  if(cssW<8||cssH<8)return null;
+  const dpr=Math.min(C.pixel_tak||2,globalThis.devicePixelRatio||1);
+  const W=Math.max(2,Math.round(cssW*dpr)), H=Math.max(2,Math.round(cssH*dpr));
+  if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const ut=ritaJaktYta(ctx,cssW,cssH,s,C);
+  canvas.dataset.fart=ut.kmh.toFixed(0);
+  canvas.dataset.hojd=ut.meter.toFixed(0);
+  canvas.dataset.g=(Number.isFinite(s.nz)?s.nz:1).toFixed(2);
+  canvas.dataset.enhet='km/h,m';
+  canvas.dataset.gSynlig=ut.g?'1':'0';
+  return ut;
+ }
+ return {rita};
+}

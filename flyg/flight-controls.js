@@ -2,7 +2,7 @@
 // Webb: skärmens vinkel vrider nos upp och bank. Små rörelser nära ett
 // vinkelomslag (samma läge, andra siffror) får inte bli fullt roder.
 // Expo skickar vinkelhastighet. Första provet efter centrering är nolläget.
-import { arOmslag, eulerStyrning, nyNoll } from './orientering.js';
+import { arOmslag, eulerStyrning, nyNoll, skarmDelta } from './orientering.js';
 
 const STALE_MS = 450;
 
@@ -22,11 +22,14 @@ export class FlightInput {
     this.nativeAt = 0;
     this.pending = true;
     this.klocka = null;
+    this.rollHast = 0;
+    this.rollHastAt = 0;
     this._antal = 0;
     this._skarmSen = this.skarm();
     const pa = (typ, fn, opt) => { addEventListener(typ, fn, opt); this._antal++; };
     pa('ww2-native-gyro', (e) => this._native(e));
     pa('deviceorientation', (e) => this._webb(e), { passive: true });
+    pa('devicemotion', (e) => this._rorelse(e), { passive: true });
     pa('orientationchange', () => this._skarmByte());
     const orient = globalThis.screen?.orientation;
     if (orient?.addEventListener) { orient.addEventListener('change', () => this._skarmByte()); this._antal++; }
@@ -67,7 +70,22 @@ export class FlightInput {
       this.pose.yaw += clean(d.x * sn + d.y * cs) * dt;
       this.pose.roll -= clean(d.z) * dt;
     }
+    this.rollHast = -d.z;
+    this.rollHastAt = this.nu();
     this.t = d.t;
+  }
+  // Webbens rotationRate är grader/s. Samma skärmbyte som vinklarna, så ett snabbt
+  // vrid i liggande läge inte blir en loop kring fel axel.
+  _rorelse(e) {
+    if (!this.active || this._nativeFarsk()) return;
+    const rr = e.rotationRate;
+    if (!rr) return;
+    const b = Number.isFinite(rr.beta) ? rr.beta : 0;
+    const g = Number.isFinite(rr.gamma) ? rr.gamma : 0;
+    const s = skarmDelta(b, g, this.skarm());
+    if (!Number.isFinite(s.rollDeg)) return;
+    this.rollHast = s.rollDeg * Math.PI / 180;
+    this.rollHastAt = this.nu();
   }
   _webb(e) {
     if (!this.active || this._nativeFarsk()) return;
@@ -119,6 +137,7 @@ export class FlightInput {
       roll: clamp(dead(fin(p.roll) + (this.c.yaw_andel || 0) * fin(p.yaw) + fin(drag.x)) * gain * this.c.bank_forstarkning, this.c.max_roll),
       roder,
       pose: { pitch: fin(p.pitch), roll: fin(p.roll), yaw: fin(p.yaw) },
+      rollHast: (this.nu() - this.rollHastAt) < 250 && Number.isFinite(this.rollHast) ? this.rollHast : null,
       source
     };
   }

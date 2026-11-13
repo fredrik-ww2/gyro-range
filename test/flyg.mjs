@@ -255,7 +255,7 @@ function fejkLjud() {
 
 const R = ringRadie(1.225);
 for (const [w, h] of [[844, 390], [932, 430], [667, 375], [390, 844], [430, 932], [375, 667]]) {
-  const L = layoutFor(w, h, R, C.cockpit.fov_grader);
+  const L = layoutFor(w, h, R, C.cockpit.fov_grader, C.jaktpanel);
   const krock = layoutKrockar(L);
   k('ingen överlapp ' + w + 'x' + h, krock.length === 0);
   k('stor vyknapp ' + w + 'x' + h, L.vy && L.vy.w >= 160 && L.vy.h >= 60 && L.vy.x > w * 0.4 && L.vy.y < h * 0.45);

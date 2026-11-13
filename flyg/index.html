@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#172724">
 <link rel="icon" href="data:,">
 <title>Flygplan · Gyrotest</title>
-<link rel="stylesheet" href="./style.css?v=10">
+<link rel="stylesheet" href="./style.css?v=11">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
@@ -101,26 +101,16 @@
 </section>
 <section id="settings" class="glass" hidden>
 <div class="row"><h2>Flyginställningar</h2><button id="closeSettings">Klar</button></div>
+<label>Känslighet <input id="sensitivity" type="range" min="0.4" max="3" step="0.1" value="1"></label>
+<label>Rolltröskel <output id="rollTal"></output><input id="rollTroskel" type="range" min="30" max="55" step="1" value="38"></label>
 <h2 id="planRubrikFlyg">Flygplan</h2>
 <div id="planMenyFlyg" class="planmeny"></div>
 <p class="small" id="planInfo"></p>
-<label>Känslighet <input id="sensitivity" type="range" min="0.4" max="3" step="0.1" value="1.4"></label>
 <label>Flygplan <select id="modelSelect"></select></label>
 <div id="toggles"></div>
 <p class="small">Ledmarkören visar var nosen ska ligga. Den kan stängas av.</p>
 </section>
-<div id="vanster" hidden>
-<div id="instrument" aria-label="Fart, höjd och G">
-<div class="rad"><span>Fart</span><b id="fartTal">0</b></div>
-<div class="mat"><i id="fartStap"></i><em id="loopMark" hidden></em></div>
-<div class="rad"><span>Höjd</span><b id="hojdTal">0</b></div>
-<div class="rad"><span>G</span><b id="gTal">1.0</b></div>
-<div class="mat"><i id="gStap"></i></div>
-<div id="stallVarning" hidden>STALL</div>
-<p id="fartTips"></p>
-</div>
-<div id="spak" aria-label="Styrspak"><div id="spakKnopp"></div></div>
-</div>
+<canvas id="jaktpanel" hidden aria-label="Fart i km/h, horisont, höjd i meter och G"></canvas>
 <button id="sight" class="vyknapp" type="button" aria-pressed="false" aria-label="Byt till cockpit">Cockpit</button>
 <footer>
 <div class="row">
@@ -135,6 +125,6 @@
 </button>
 </div>
 </footer>
-<script type="module" src="./main.js?v=12"></script>
+<script type="module" src="./main.js?v=13"></script>
 <script src="../lankar/horn.js"></script></body>
 </html>

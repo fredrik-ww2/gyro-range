@@ -521,8 +521,8 @@ async function boot(){
   weaponPivot.updateWorldMatrix(true,true);
   const kolv=holder.localToWorld(holder.userData.kolvLokal.clone());
   const mun=holder.localToWorld(holder.userData.munLokal.clone());
-  const grepp=kolv.clone().lerp(mun,.24);grepp.y+=.01;
-  const stod=kolv.clone().lerp(mun,.58);stod.y+=.006;
+  const grepp=kolv.clone().lerp(mun,.15);grepp.y-=.02;
+  const stod=kolv.clone().lerp(mun,.40);stod.y-=.055;
   return {grepp,stod,mun,kolv};
  }
  function applyWeaponTransform(raise){

@@ -1,4 +1,5 @@
 import { tolka } from './klass.js';
+import { rensaOverlagg } from './rensa.js';
 import { skapaScen, VAGAR } from './scen.js';
 import {
   byggGlb, byggJson, filnamn, formateraStorlek, lasBibliotek, sparaIBibliotek
@@ -105,15 +106,25 @@ function laddaUrl(url, namn) {
 }
 
 function ritaRaster(bild) {
-  const skala = 320 / Math.max(bild.naturalWidth, bild.naturalHeight);
-  const bredd = Math.max(16, Math.round(bild.naturalWidth * skala));
-  const hojd = Math.max(16, Math.round(bild.naturalHeight * skala));
+  const bw = bild.naturalWidth || bild.width;
+  const bh = bild.naturalHeight || bild.height;
+  const full = document.createElement('canvas');
+  full.width = bw;
+  full.height = bh;
+  const penn = full.getContext('2d', { willReadFrequently: true });
+  penn.drawImage(bild, 0, 0, bw, bh);
+  const ursprung = penn.getImageData(0, 0, bw, bh);
+  const rensad = rensaOverlagg(ursprung.data, bw, bh);
+  penn.putImageData(new ImageData(rensad, bw, bh), 0, 0);
+  const skala = 320 / Math.max(bw, bh);
+  const bredd = Math.max(16, Math.round(bw * skala));
+  const hojd = Math.max(16, Math.round(bh * skala));
   const duk = document.createElement('canvas');
   duk.width = bredd;
   duk.height = hojd;
   const rit = duk.getContext('2d', { willReadFrequently: true });
-  rit.drawImage(bild, 0, 0, bredd, hojd);
-  return { width: bredd, height: hojd, data: rit.getImageData(0, 0, bredd, hojd).data, bild };
+  rit.drawImage(full, 0, 0, bredd, hojd);
+  return { width: bredd, height: hojd, data: rit.getImageData(0, 0, bredd, hojd).data, bild: full };
 }
 
 function tolkaOm() {
@@ -155,11 +166,13 @@ function uppdateraStorlek() {
 }
 
 function jpegAv(bild) {
+  const bw = bild.naturalWidth || bild.width;
+  const bh = bild.naturalHeight || bild.height;
   const maxSida = 512;
-  const skala = Math.min(1, maxSida / Math.max(bild.naturalWidth, bild.naturalHeight));
+  const skala = Math.min(1, maxSida / Math.max(bw, bh));
   const duk = document.createElement('canvas');
-  duk.width = Math.max(2, Math.round(bild.naturalWidth * skala));
-  duk.height = Math.max(2, Math.round(bild.naturalHeight * skala));
+  duk.width = Math.max(2, Math.round(bw * skala));
+  duk.height = Math.max(2, Math.round(bh * skala));
   duk.getContext('2d').drawImage(bild, 0, 0, duk.width, duk.height);
   return new Promise((klar) => {
     duk.toBlob((blob) => {

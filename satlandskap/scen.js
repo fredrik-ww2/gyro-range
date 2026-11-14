@@ -81,11 +81,13 @@ export function skapaScen(canvas) {
       pos.setY(i, hojd(t, x, z));
     }
     geo.computeVertexNormals();
+    const bw = bild.naturalWidth || bild.width;
+    const bh = bild.naturalHeight || bild.height;
     const maxSida = 1024;
-    const skala = maxSida / Math.max(bild.naturalWidth, bild.naturalHeight);
+    const skala = maxSida / Math.max(bw, bh);
     const c = document.createElement('canvas');
-    c.width = Math.max(2, Math.round(bild.naturalWidth * Math.min(1, skala)));
-    c.height = Math.max(2, Math.round(bild.naturalHeight * Math.min(1, skala)));
+    c.width = Math.max(2, Math.round(bw * Math.min(1, skala)));
+    c.height = Math.max(2, Math.round(bh * Math.min(1, skala)));
     c.getContext('2d').drawImage(bild, 0, 0, c.width, c.height);
     const map = new THREE.CanvasTexture(c);
     map.colorSpace = THREE.SRGBColorSpace;
@@ -372,7 +374,7 @@ export function skapaScen(canvas) {
       titta(f.x + 6, f.y + 1.7, f.z + 14, f.x, f.y + 2.2, f.z - 16);
     } else {
       const dist = Math.max(t.breddMeter, t.djupMeter);
-      titta(t.breddMeter * 0.22, dist * 0.38, t.djupMeter * 0.42, 0, 0, -t.djupMeter * 0.04);
+      titta(t.breddMeter * 0.08, dist * 0.92, t.djupMeter * 0.72, -t.breddMeter * 0.18, 0, t.djupMeter * 0.06);
     }
   }
 

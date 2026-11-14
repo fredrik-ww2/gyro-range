@@ -7,11 +7,13 @@ import {
 } from './bibliotek.js';
 import { byggBand, byggKurvor, byggOversikt, formSek, formTal } from './kurvor.js';
 import { arSlutOrd, klippSvans, lasVektor, matHz, rundaSampel, vinkelSkillnad } from './motor.js';
+import { monteraRorelse } from './gyrobox-adapter.js';
 
 const $ = (id) => document.getElementById(id);
 const huvud = $('huvud');
 
 let config;
+let gyroLada = null;
 let lager;
 let kategorier = [];
 let inspelningar = [];
@@ -1034,15 +1036,17 @@ function kanskeProv() {
   const t = (performance.now() - rec.start) / 1000;
   const minDt = 1 / (Number(config.malHz) || 50);
   if (rec.senastProv != null && t - rec.senastProv < minDt * 0.85) return;
+  const dtProv = rec.senastProv == null ? 1 / (Number(config.malHz) || 50) : t - rec.senastProv;
   rec.senastProv = t;
   let relativ = null;
   if (senaste.vinkel) {
     if (!nollage) nollage = senaste.vinkel.slice();
     relativ = vinkelSkillnad(senaste.vinkel, nollage);
   }
+  const rotFormad = gyroLada && senaste.rot ? gyroLada.forma(senaste.rot, dtProv) : senaste.rot;
   rec.sampel.push(rundaSampel({
     t,
-    rot: senaste.rot,
+    rot: rotFormad,
     acc: senaste.acc,
     accG: senaste.accG,
     vinkel: relativ,
@@ -1656,6 +1660,10 @@ async function start() {
   const svar = await fetch(new URL('./config.json', import.meta.url));
   if (!svar.ok) throw new Error('config');
   config = await svar.json();
+  gyroLada = monteraRorelse({
+    config,
+    nollstall() { nollage = senaste.vinkel ? senaste.vinkel.slice() : null; }
+  });
   lager = skapaLager();
   await lager.oppna();
   const data = await lager.las();

@@ -8,6 +8,7 @@ import {sjalvtest as ljudTest, skapaMekanikLjud, kansla} from './ljud.js?v=5';
 import {sjalvtest as effektTest, stegFjader, vridMot, nastaSalva, tigerUtslagen, nedslagMotSpelare} from './effekt.js?v=5';
 import {sjalvtest as hojdTest, skrovLutning} from './hojd.js?v=5';
 import {sjalvtest as pansarTest, REGLER, VAGN_LISTA, standardRegler, siktenFor, sikteFor, klassFranLokal, bedomTraff} from './pansar.js?v=5';
+import {monteraVagn} from './gyrobox-adapter.js';
 
 const NYCKEL = 'vagn_test_v1';
 const REGEL_NYCKEL = 'vagn_test_regler_v5';
@@ -23,6 +24,7 @@ const rorelse = skapaRorelse(canvas);
 let install = STANDARD;
 try { install = normalStyr(JSON.parse(localStorage.getItem(NYCKEL) || 'null') || STANDARD); }
 catch { install = STANDARD; }
+const gyroLada = monteraVagn({axlar: install.axlar, nollstall: () => rorelse.nollstall()});
 const jamn = skapaJamning();
 const vagn = skapaVagn();
 const ljudMotor = skapaMekanikLjud();
@@ -1343,7 +1345,7 @@ function stegaGranat(dt) {
 
 function tick(dt) {
   if (!igang || !varld || !(dt > 0)) return;
-  const rav = lasVinklar();
+  const rav = gyroLada.forma(lasVinklar(), dt);
   behandlad = {
     styra: behandlaAxel(rav.roll, install.axlar.styra, dt, jamn, 'styra'),
     torn: behandlaAxel(rav.yaw, install.axlar.torn, dt, jamn, 'torn'),

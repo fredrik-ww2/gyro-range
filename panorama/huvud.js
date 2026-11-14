@@ -15,6 +15,7 @@ import {ndcMedSkak, klampaAndel, sjalvtest as siktTest} from './sikt.js?v=17';
 import {skapaKollision, sjalvtest as kollTest} from './kollision.js?v=17';
 import {skapaSkytt, eldSteg, avstandTillSegment, sjalvtest as eldTest} from './eld.js?v=17';
 import {husSpec, sjalvtest as husTest} from './hus.js?v=17';
+import {monteraPanorama} from './gyrobox-adapter.js?v=1';
 
 const config = await laddaConfig();
 
@@ -78,9 +79,16 @@ let skakPa = config.skak.pa !== false;
 
 const blick = skapaBlick(canvas);
 const laser = skapaLaser();
+let laserPa = false;
 let sparad = STANDARD_STYR;
 try { sparad = normalStyr(JSON.parse(localStorage.getItem(NYCKEL) || 'null') || STANDARD_STYR); } catch { sparad = STANDARD_STYR; }
 blick.satt(sparad);
+monteraPanorama({
+  blick,
+  laser,
+  laserPa: () => laserPa,
+  nollstall() { blick.nollstall(); laser.nollstall(); }
+});
 function narmasteVapen(zoom) {
   let best = 'kar98k';
   let d = Infinity;
@@ -117,7 +125,6 @@ let sparadDimma = null;
 let hallTill = 0;
 let sikteInit = false;
 let toastTimer = 0;
-let laserPa = false;
 let hintTimer = 0;
 let nastaPuls = 0;
 let senasteNiva = {acc: 0, ryck: 0, linjar: 0, vinkelAcc: 0, omega: null};

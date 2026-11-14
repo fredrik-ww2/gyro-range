@@ -1,0 +1,162 @@
+.gyrobox-rot {
+  position: fixed;
+  z-index: 60;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: calc(env(safe-area-inset-left, 0px) + 8px);
+  max-width: min(210px, calc(100vw - 108px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  font: 11px/1.25 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f4f7ee;
+  pointer-events: auto;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.gyrobox-chip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+  padding: 4px 7px 4px 8px;
+  border: 1px solid #ffffff2e;
+  border-radius: 10px;
+  background: #121816c4;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  box-shadow: 0 4px 14px #0005;
+  backdrop-filter: blur(8px);
+  min-height: 28px;
+  cursor: pointer;
+}
+.gyrobox-text {
+  min-width: 0;
+  font-weight: 700;
+  letter-spacing: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.gyrobox-rad {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.gyrobox-meter {
+  --u: 0;
+  position: relative;
+  width: 28px;
+  height: 4px;
+  border-radius: 4px;
+  background: #ffffff22;
+  display: block;
+}
+.gyrobox-thumb {
+  position: absolute;
+  top: -2px;
+  left: calc(50% + var(--u) * 12px);
+  width: 4px;
+  height: 8px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: #e0f1a4;
+  display: block;
+}
+.gyrobox-tal {
+  min-width: 38px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #e0f1a4;
+  font-weight: 700;
+}
+.gyrobox-panel {
+  margin-top: 6px;
+  width: min(300px, calc(100vw - 88px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 200px);
+  overflow: auto;
+  padding: 8px 10px 10px;
+  border-radius: 14px;
+  border: 1px solid #ffffff38;
+  background: #161d1ae6;
+  box-shadow: 0 12px 32px #0008;
+  backdrop-filter: blur(12px);
+  touch-action: pan-y;
+}
+.gyrobox-panel[hidden] { display: none !important; }
+.gyrobox-rub { display: flex; flex-direction: column; gap: 6px; }
+.gyrobox-rub strong { font-size: 13px; }
+.gyrobox-flikar { display: flex; flex-wrap: wrap; gap: 4px; }
+.gyrobox-flik, .gyrobox-val, .gyrobox-kal, .gyrobox-stang, .gyrobox-spara-ny, .gyrobox-lag, .gyrobox-ta-bort {
+  font: inherit;
+  color: inherit;
+  background: #24302b;
+  border: 1px solid #ffffff2a;
+  border-radius: 8px;
+  min-height: 32px;
+  padding: 4px 8px;
+}
+.gyrobox-flik {
+  flex: 1 1 40%;
+  white-space: normal;
+  line-height: 1.2;
+  text-align: center;
+}
+.gyrobox-flik.pa, .gyrobox-val.pa, .gyrobox-lag.pa {
+  background: #e0f1a4;
+  color: #17211a;
+  border-color: transparent;
+  font-weight: 750;
+}
+.gyrobox-mini { margin: 8px 0 2px; color: #c5d4c4; font-size: 11px; }
+.gyrobox-hint { margin: 2px 0 6px; color: #9aab9e; font-size: 11px; }
+.gyrobox-check { display: flex; align-items: center; gap: 8px; min-height: 32px; font-size: 13px; }
+.gyrobox-lage { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 4px 0; }
+.gyrobox-val { width: 100%; }
+.gyrobox-reg { display: block; margin: 6px 0; font-size: 12px; }
+.gyrobox-reg-rad { display: flex; justify-content: space-between; gap: 8px; }
+.gyrobox-reg output { color: #e0f1a4; font-variant-numeric: tabular-nums; }
+.gyrobox-reg input[type="range"] { display: block; width: 100%; margin-top: 2px; accent-color: #e0f1a4; }
+.gyrobox-kal, .gyrobox-stang, .gyrobox-spara-ny { width: 100%; margin-top: 6px; font-weight: 700; }
+.gyrobox-stang { position: sticky; bottom: 0; background: #e0f1a4; color: #17211a; border-color: transparent; z-index: 1; }
+.gyrobox-namn {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0;
+  min-height: 36px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #ffffff3a;
+  background: #0e1412;
+  color: #f4f7ee;
+  font: inherit;
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: auto;
+}
+.gyrobox-lista { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.gyrobox-lista li { display: flex; gap: 4px; }
+.gyrobox-lag { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gyrobox-ta-bort { flex: none; }
+.gyrobox-tom { color: #9aab9e; padding: 4px 0; }
+body:has(.gyrobox-rot) #version {
+  top: calc(env(safe-area-inset-top, 0px) + 48px);
+}
+body:has(#knappGa) #version { display: none; }
+body:has(#knappGa) .gyrobox-rot {
+  max-width: min(156px, calc(100vw - 200px));
+}
+body:has(#startKnappar:not([hidden])) .gyrobox-rot {
+  top: calc(env(safe-area-inset-top, 0px) + 116px);
+}
+body:has(#sparaStang) .gyrobox-rot {
+  top: calc(env(safe-area-inset-top, 0px) + 60px);
+  max-width: min(210px, calc(100vw - 24px));
+}
+body:has(#hStatus) .gyrobox-rot {
+  top: calc(env(safe-area-inset-top, 0px) + 46px);
+  max-width: min(210px, calc(100vw - 24px));
+}

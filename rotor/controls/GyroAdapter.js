@@ -89,6 +89,35 @@ export function quatAngleDeg(a,b){
   return 2*Math.acos(Math.min(1,d))/RAD;
 }
 
+/** iOS sometimes sends beta/gamma with a null alpha until compass data exists. */
+function finiteNumber(value){return typeof value==='number'&&Number.isFinite(value)?value:null;}
+export function readOrientationEvent(e){
+  if(!e)return null;
+  const beta=finiteNumber(e.beta),gamma=finiteNumber(e.gamma);
+  if(beta===null||gamma===null)return null;
+  let alpha=finiteNumber(e.alpha);
+  if(alpha===null){
+    const heading=finiteNumber(e.webkitCompassHeading);
+    alpha=heading===null?0:(360-heading)%360;
+  }
+  return {alpha,beta,gamma};
+}
+
+/** Rotate device-frame gravity into the portrait-upright frame. Screen angle is degrees. */
+export function rotateGravity(g,screenDeg=0){
+  const a=-(screenDeg||0)*RAD,c=Math.cos(a),s=Math.sin(a);
+  return {x:g.x*c-g.y*s,y:g.x*s+g.y*c,z:g.z};
+}
+
+/** Gravity vector → tilt from portrait upright. Pitch + is top tipping away, roll + is right side down. */
+export function gravityToAngles(g){
+  const x=+g.x,y=+g.y,z=+g.z;
+  return {
+    pitch:Math.atan2(-z,-y)/RAD,
+    roll:Math.atan2(-x,Math.hypot(y,z)||1)/RAD
+  };
+}
+
 /** Angles of `sample` relative to `zero`. Each is {alpha,beta,gamma,screen}. */
 export function anglesBetween(zero,sample){
   const origin=deviceQuaternion(zero.alpha,zero.beta,zero.gamma,zero.screen||0);
@@ -111,11 +140,16 @@ export class GyroAdapter {
     this.listening=false;
     this.permission='unknown';
     this.allowed=false;
+    this._orientAlive=false;
+    this._gravityNow=null;
+    this._gravityZero=null;
     this._onDevice=e=>this._handle(e);
+    this._onMotion=e=>this._handleMotion(e);
   }
   listen(target=globalThis){
     if(this.listening||typeof target.addEventListener!=='function')return;
     target.addEventListener('deviceorientation',this._onDevice,{passive:true});
+    target.addEventListener('devicemotion',this._onMotion,{passive:true});
     this.listening=true;
     this._target=target;
   }
@@ -136,8 +170,23 @@ export class GyroAdapter {
     return {orientation:ov,motion:mv,allowed:this.allowed};
   }
   _handle(e){
-    if(![e.alpha,e.beta,e.gamma].every(Number.isFinite))return;
-    this.ingest(e.alpha,e.beta,e.gamma,screenAngle(),this.now());
+    const sample=readOrientationEvent(e);
+    if(!sample)return;
+    this._orientAlive=true;
+    this.ingest(sample.alpha,sample.beta,sample.gamma,screenAngle(),this.now());
+  }
+  _handleMotion(e){
+    const g=e?.accelerationIncludingGravity;
+    if(!g||![g.x,g.y,g.z].every(Number.isFinite))return;
+    if(Math.hypot(g.x,g.y,g.z)<2)return;
+    const ang=gravityToAngles(rotateGravity(g,screenAngle()));
+    this._gravityNow=ang;
+    if(this._orientAlive)return;
+    if(!this._gravityZero)this._gravityZero={pitch:ang.pitch,roll:ang.roll};
+    const pitch=wrapDeg(ang.pitch-this._gravityZero.pitch);
+    const roll=wrapDeg(ang.roll-this._gravityZero.roll);
+    this.lastAngles={pitch,roll,yaw:0};
+    this.lastSampleAt=this.now();this.pending=true;this.seen=true;
   }
   ingest(alpha,beta,gamma,screenDeg=0,timeMs=this.now()){
     const q=deviceQuaternion(alpha,beta,gamma,screenDeg);
@@ -156,7 +205,9 @@ export class GyroAdapter {
     return this.read(timeMs);
   }
   calibrate(timeMs=this.now()){
+    if(this._gravityNow)this._gravityZero={pitch:this._gravityNow.pitch,roll:this._gravityNow.roll};
     if(this.lastQ){this.origin=this.lastQ;this.lastAngles={pitch:0,roll:0,yaw:0};this.lastSampleAt=timeMs;this.pending=true;}
+    else if(this._gravityNow){this.lastAngles={pitch:0,roll:0,yaw:0};this.lastSampleAt=timeMs;this.pending=true;}
     else this.origin=null;
   }
   fresh(now=this.now()){return this.seen&&(now-this.lastSampleAt)/1000<=this.staleSeconds;}

@@ -196,6 +196,94 @@ function erodera(mask, w, h, r) {
   return ut;
 }
 
+/* En vägnamnsskylt ligger på asfalten. Spegling från vänsterkanten
+   drar vägen söderut när den svänger. Lägg i stället vägens ljusa
+   profil längs linjen mellan skyltens båda ändar. */
+function fyllLangsVag(data, ut, c, w, h, x0, y0, x1, y1) {
+  if (x1 - x0 < 70 || y1 - y0 > 90) return false;
+  const span = 16;
+  function topp(x) {
+    let bästY = -1;
+    let bäst = 150;
+    const lo = Math.max(0, y0 - span);
+    const hi = Math.min(h - 1, y1 + span);
+    for (let y = lo; y <= hi; y++) {
+      const i = (y * w + x) * 4;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const L = (r + g + b) / 3;
+      const k = Math.max(r, g, b) - Math.min(r, g, b);
+      if (L > bäst && k < 36) {
+        bäst = L;
+        bästY = y;
+      }
+    }
+    return bäst > 165 ? bästY : -1;
+  }
+  const vx = Math.max(0, x0 - 8);
+  const hx = Math.min(w - 1, x1 + 8);
+  const vänster = topp(vx);
+  const höger = topp(hx);
+  if (vänster < 0 || höger < 0) return false;
+  const profX = Math.max(0, x0 - 8);
+  const profil = [];
+  for (let dy = -span; dy <= span; dy++) {
+    const y = vänster + dy;
+    if (y < 0 || y >= h) profil.push([150, 158, 110]);
+    else {
+      const i = (y * w + profX) * 4;
+      profil.push([data[i], data[i + 1], data[i + 2]]);
+    }
+  }
+  const skylt = new Uint8Array(w * h);
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      const i = (y * w + x) * 4;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const L = (r + g + b) / 3;
+      const vit = Math.min(r, g, b) > 175;
+      const mork = L < 96 && Math.max(r, g, b) - Math.min(r, g, b) < 50;
+      if (vit || mork) skylt[y * w + x] = 1;
+    }
+  }
+  const vid = new Uint8Array(w * h);
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      if (!skylt[y * w + x]) continue;
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          const yy = y + dy;
+          const xx = x + dx;
+          if (yy < y0 || yy > y1 || xx < x0 || xx > x1) continue;
+          vid[yy * w + xx] = 1;
+        }
+      }
+    }
+  }
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      if (!vid[y * w + x]) continue;
+      const t = (x - x0) / Math.max(1, x1 - x0);
+      const cy = vänster + (höger - vänster) * t;
+      let dy = y - cy;
+      if (dy < -span) dy = -span;
+      if (dy > span - 1) dy = span - 1;
+      const d0 = Math.floor(dy);
+      const f = dy - d0;
+      const a = profil[d0 + span];
+      const b = profil[d0 + 1 + span];
+      const i = (y * w + x) * 4;
+      ut[i] = a[0] + (b[0] - a[0]) * f;
+      ut[i + 1] = a[1] + (b[1] - a[1]) * f;
+      ut[i + 2] = a[2] + (b[2] - a[2]) * f;
+    }
+  }
+  return true;
+}
+
 function arSkylt(data, s) {
   const r = data[s];
   const g = data[s + 1];
@@ -216,6 +304,7 @@ function fyllRutor(data, rutor, w, h) {
     const x1 = Math.min(w - 1, c.x + c.w - 1);
     const y1 = Math.min(h - 1, c.y + c.h - 1);
     const uppe = y0 < h * 0.16;
+    if (!uppe && fyllLangsVag(data, ut, c, w, h, x0, y0, x1, y1)) continue;
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
         let sx = x;

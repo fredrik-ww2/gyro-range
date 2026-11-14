@@ -604,7 +604,7 @@ function linjerFranMask(mask, w, h, meterPerPixel, slag) {
       }
       const langdMeter = langd * meterPerPixel;
       if (langdMeter < 7) continue;
-      const breddUppskatt = slag === 'gra' ? 6.5 : klamp((komp.length * meterPerPixel * meterPerPixel) / langdMeter, 3.4, 6);
+      const breddUppskatt = slag === 'gra' ? 5.2 : klamp((komp.length * meterPerPixel * meterPerPixel) / langdMeter, 3.4, 6);
       linjer.push({
         punkter: enkel,
         langdMeter,
@@ -683,6 +683,81 @@ function kopplaLinjer(linjer, maxGap) {
     }
   }
   return kvar;
+}
+
+/* Skelettet följer den utvidgade gråmasken och hamnar på vägens södra
+   kant där asfalten är bara ett par pixlar bred. Dra mittlinjen till
+   den ljusaste grå pixeln i en smal korridor. */
+function centreraPaAsfalt(linje, pix, w, h) {
+  const rå = linje.punkter;
+  if (rå.length < 2) return linje;
+  const täta = [];
+  for (let i = 1; i < rå.length; i++) {
+    const a = rå[i - 1];
+    const b = rå[i];
+    const steg = Math.max(1, Math.hypot(b.x - a.x, b.y - a.y));
+    const n = Math.max(1, Math.round(steg / 3));
+    for (let k = 0; k < n; k++) {
+      täta.push({
+        x: a.x + (b.x - a.x) * (k / n),
+        y: a.y + (b.y - a.y) * (k / n)
+      });
+    }
+  }
+  täta.push({ x: rå[rå.length - 1].x, y: rå[rå.length - 1].y });
+  const just = [];
+  for (let i = 0; i < täta.length; i++) {
+    const p = täta[i];
+    const prev = täta[Math.max(0, i - 1)];
+    const next = täta[Math.min(täta.length - 1, i + 1)];
+    let tx = next.x - prev.x;
+    let ty = next.y - prev.y;
+    const len = Math.hypot(tx, ty) || 1;
+    tx /= len;
+    ty /= len;
+    const nx = -ty;
+    const ny = tx;
+    let bäst = null;
+    let bästL = 0.52;
+    for (let s = -6; s <= 6; s++) {
+      const x = Math.round(p.x + nx * s);
+      const y = Math.round(p.y + ny * s);
+      if (x < 0 || y < 0 || x >= w || y >= h) continue;
+      const j = y * w + x;
+      const kroma = Math.max(pix.r[j], pix.g[j], pix.b[j]) - Math.min(pix.r[j], pix.g[j], pix.b[j]);
+      const L = pix.luma[j];
+      if (kroma < 0.1 && L > bästL && L < 0.9) {
+        bästL = L;
+        bäst = { x, y };
+      }
+    }
+    just.push(bäst || { x: p.x, y: p.y });
+  }
+  const slät = just.map((p, i) => {
+    const a = just[Math.max(0, i - 1)];
+    const b = just[Math.min(just.length - 1, i + 1)];
+    return { x: (a.x + p.x + b.x) / 3, y: (a.y + p.y + b.y) / 3 };
+  });
+  const punkter = forenkla(slät, 1.4);
+  let langd = 0;
+  for (let i = 1; i < punkter.length; i++) {
+    langd += Math.hypot(punkter[i].x - punkter[i - 1].x, punkter[i].y - punkter[i - 1].y);
+  }
+  const meter = langd * (linje.langdMeter / Math.max(1, langdAv(rå)));
+  return {
+    ...linje,
+    punkter,
+    langdMeter: meter > 1 ? meter : linje.langdMeter,
+    breddMeter: Math.min(linje.breddMeter, 5.2)
+  };
+}
+
+function langdAv(punkter) {
+  let langd = 0;
+  for (let i = 1; i < punkter.length; i++) {
+    langd += Math.hypot(punkter[i].x - punkter[i - 1].x, punkter[i].y - punkter[i - 1].y);
+  }
+  return langd;
 }
 
 function avstandTillKant(trad, w, h, meterPerPixel) {
@@ -872,6 +947,156 @@ function legacyPlacera(labels, w, h, installningar, breddM, djupM, avtryck, bygg
   return trad.length;
 }
 
+/* En liten dunge kan bli för ljus i den nedsamplade bilden för att klara
+   den vanliga gränsen, men den är fortfarande mörkare och grövre än åkern
+   runt omkring. Bara kompakta fläckar, inte åfårans streck. */
+function laggTataDungar(trad, sMedel, std, w, h) {
+  const lös = new Uint8Array(w * h);
+  for (let i = 0; i < lös.length; i++) {
+    if (trad[i]) continue;
+    if (sMedel[i] < 0.47 && std[i] > 0.06) lös[i] = 1;
+  }
+  for (const komp of komponenter(lös, w, h)) {
+    if (komp.length < 40 || komp.length > 70) continue;
+    let minX = w;
+    let maxX = 0;
+    let minY = h;
+    let maxY = 0;
+    let summa = 0;
+    let textur = 0;
+    for (const p of komp) {
+      const x = p % w;
+      const y = (p / w) | 0;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      summa += sMedel[p];
+      textur += std[p];
+    }
+    const bw = maxX - minX + 1;
+    const bh = maxY - minY + 1;
+    const smal = Math.min(bw, bh);
+    if (smal < 7 || Math.max(bw, bh) / smal > 2 || minY < h * 0.08) continue;
+    const medel = summa / komp.length;
+    if (medel > 0.43 || textur / komp.length < 0.09) continue;
+    let ring = 0;
+    let ringN = 0;
+    const x0 = Math.max(0, minX - 3);
+    const x1 = Math.min(w - 1, maxX + 3);
+    const y0 = Math.max(0, minY - 3);
+    const y1 = Math.min(h - 1, maxY + 3);
+    const inne = new Uint8Array(w * h);
+    for (const p of komp) inne[p] = 1;
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const p = y * w + x;
+        if (inne[p]) continue;
+        if (x < minX || x > maxX || y < minY || y > maxY) {
+          ring += sMedel[p];
+          ringN++;
+        }
+      }
+    }
+    if (!ringN || ring / ringN - medel < 0.08) continue;
+    for (const p of komp) trad[p] = 1;
+  }
+}
+
+function fyllSmåDungar(tradMask, placerat, pix, dist, w, h, installningar, breddM, djupM, avtryck) {
+  const rnd = slump((avtryck ^ installningar.fro ^ 0x51a) >>> 0);
+  const sedd = new Uint8Array(w * h);
+  for (let i = 0; i < tradMask.length; i++) {
+    if (!tradMask[i] || sedd[i]) continue;
+    const ko = [i];
+    sedd[i] = 1;
+    let minX = w;
+    let maxX = 0;
+    let minY = h;
+    let maxY = 0;
+    for (let k = 0; k < ko.length; k++) {
+      const p = ko[k];
+      const x = p % w;
+      const y = (p / w) | 0;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      const grannar = [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, y > 0 ? p - w : -1, y < h - 1 ? p + w : -1];
+      for (const g of grannar) {
+        if (g >= 0 && tradMask[g] && !sedd[g]) {
+          sedd[g] = 1;
+          ko.push(g);
+        }
+      }
+    }
+    const bw = maxX - minX + 1;
+    const bh = maxY - minY + 1;
+    const smal = Math.min(bw, bh);
+    if (ko.length < 40 || ko.length > 70 || smal < 7 || Math.max(bw, bh) / smal > 2 || minY < h * 0.08) continue;
+    let summa = 0;
+    for (const p of ko) summa += pix.luma[p];
+    if (summa / ko.length > 0.43) continue;
+    const inne = new Uint8Array(w * h);
+    for (const p of ko) inne[p] = 1;
+    const egna = [];
+    for (const t of placerat.trad) {
+      const x = Math.min(w - 1, Math.floor(t.u * w));
+      const y = Math.min(h - 1, Math.floor(t.v * h));
+      if (inne[y * w + x]) egna.push(t);
+    }
+    const mål = Math.min(4, Math.max(3, Math.round(ko.length / 16)));
+    const minAvstand = 2.3;
+    while (egna.length < mål) {
+      let vald = -1;
+      let bäst = -1;
+      for (let f = 0; f < 24; f++) {
+        const p = ko[(rnd() * ko.length) | 0];
+        const u = ((p % w) + 0.5) / w;
+        const v = (((p / w) | 0) + 0.5) / h;
+        const x = (u - 0.5) * breddM;
+        const z = (v - 0.5) * djupM;
+        let nära = false;
+        for (const t of egna) {
+          if ((t.x - x) ** 2 + (t.z - z) ** 2 < minAvstand * minAvstand) {
+            nära = true;
+            break;
+          }
+        }
+        if (nära) continue;
+        const poäng = dist[p] + rnd() * 0.4;
+        if (poäng > bäst) {
+          bäst = poäng;
+          vald = p;
+        }
+      }
+      if (vald < 0) break;
+      const u = ((vald % w) + rnd() * 0.4) / w;
+      const v = (((vald / w) | 0) + rnd() * 0.4) / h;
+      const x = (klamp(u, 0, 0.999) - 0.5) * breddM;
+      const z = (klamp(v, 0, 0.999) - 0.5) * djupM;
+      const i = Math.min(w * h - 1, ((v * h) | 0) * w + ((u * w) | 0));
+      const art = artAv(pix.r[i], pix.g[i], pix.b[i], pix.luma[i], dist[i], rnd);
+      const hojd = hojdForArt(art, rnd);
+      const post = {
+        u: klamp(u, 0, 0.999),
+        v: klamp(v, 0, 0.999),
+        x,
+        z,
+        hojd,
+        radie: Math.min(hojd * 0.22 + 0.4, 3.2),
+        art,
+        rotation: rnd() * Math.PI * 2,
+        skala: 0.78 + rnd() * 0.28,
+        stamp: art === ART_GRAN ? 0.28 : 0.4,
+        farg: [pix.r[i], pix.g[i], pix.b[i]]
+      };
+      placerat.trad.push(post);
+      egna.push(post);
+    }
+  }
+}
+
 function forslagAv(tradAndel, vagMeter, byggnader, avtryck, bildNamn) {
   const namnKand = (bildNamn || '').toLowerCase();
   const kandProv = PROV_AVTRYCK.includes(avtryck) || /markim|harg|prov/.test(namnKand);
@@ -965,11 +1190,16 @@ export function tolka(bild, installningar = STANDARD, meta = {}) {
     const bw = maxX - minX + 1;
     const bh = maxY - minY + 1;
     const smal = Math.min(bw, bh);
-    /* Ett smalt streck är åkant eller åfåra, inte en dunge. */
-    if (smal < 9) {
+    let textur = 0;
+    for (const p of komp) textur += std[p];
+    textur /= komp.length;
+    /* Ett smalt streck med svag textur är åkant eller åfåra (Hargåns skugga).
+       En riktig trädrad kan vara lika smal, men kronorna är ojämnare. */
+    if (smal < 10 && textur < 0.07) {
       for (const p of komp) trad[p] = 0;
     }
   }
+  laggTataDungar(trad, sMedel, std, w, h);
 
   const breddM = klamp(inst.breddMeter, 30, 1200);
   const djupM = breddM * h / w;
@@ -980,6 +1210,7 @@ export function tolka(bild, installningar = STANDARD, meta = {}) {
   linjer = linjer.concat(linjerFranMask(vagarRå.brun, w, h, meterPerPixel, 'brun'));
   linjer = kopplaLinjer(linjer, 36);
   linjer = linjer.filter((linje) => linje.langdMeter >= 28);
+  linjer = linjer.map((linje) => linje.slag === 'gra' ? centreraPaAsfalt(linje, pix, w, h) : linje);
   linjer.sort((a, b) => b.langdMeter - a.langdMeter);
 
   const vagPix = new Uint8Array(n);
@@ -1065,6 +1296,7 @@ export function tolka(bild, installningar = STANDARD, meta = {}) {
 
   const dist = avstandTillKant(trad, w, h, meterPerPixel);
   const placerat = placeraMedFro(trad, pix, dist, w, h, inst, breddM, djupM, avtryck);
+  fyllSmåDungar(trad, placerat, pix, dist, w, h, inst, breddM, djupM, avtryck);
 
   let faltTrad = 0;
   for (const t of placerat.trad) {

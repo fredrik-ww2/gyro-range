@@ -35,7 +35,8 @@ export function wrapDeg(d){return ((d+180)%360+360)%360-180;}
 
 export function screenAngle(scope=globalThis){
   const v=scope.screen?.orientation?.angle??scope.window?.orientation??scope.orientation??0;
-  return Number.isFinite(+v)?+v:0;
+  if(!Number.isFinite(+v))return 0;
+  return ((+v%360)+360)%360;
 }
 
 /** DeviceOrientation euler → unit quaternion in the screen's frame. Degrees in, screen angle in degrees. */

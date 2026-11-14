@@ -244,6 +244,11 @@ let forra = performance.now();
 function loop(now) {
   const dt = Math.min(konfig.fysik.dt_max, Math.max(0, (now - forra) / 1000));
   forra = now;
+  if (document.hidden) {
+    maskin.frysKlocka(now);
+    requestAnimationFrame(loop);
+    return;
+  }
   if (!manuell) {
     const nytt = gyro.senasteSensor > senKonsum;
     if (nytt) senKonsum = gyro.senasteSensor;

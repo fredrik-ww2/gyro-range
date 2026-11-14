@@ -31,6 +31,7 @@
   "max_roll": 1.308996939,
   "respons_s": 0.45,
   "dodzon": 0.025,
+  "dodzon_mjuk": 0.04,
   "dra_rad_px": 0.004,
   "bank_tecken": "Stående iPhone/native: vänster roll z<0 → bank>0, heading ökar → vänster; höger z>0 → bank<0, heading minskar. Native vridning y>0 → vänster, y<0 → höger. Webb gamma<0 → vänster, gamma>0 → höger; alpha ökar → vänster. x>0/beta ökar → stig. Expo x/y/z i rad/s; t i sekunder.",
   "bank_forstarkning": 1.4,

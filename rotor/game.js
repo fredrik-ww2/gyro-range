@@ -5,11 +5,13 @@ import {FlightDynamics} from './controls/FlightDynamics.js';
 import {CockpitView} from './CockpitView.js';
 import {improveWorld} from './WorldVisuals.js';
 import {GyroAdapter} from './controls/GyroAdapter.js';
+import {monteraRotor} from './gyrobox-adapter.js';
 import config from './config.json' with { type: 'json' };
 import ljudManifest from './ljud.json' with { type: 'json' };
 import {Ljud} from './ljud.js';
 const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=THREE.MathUtils.lerp;
 const control=new ControlModule(config.control),flight=new FlightDynamics(config.flight),gyro=new GyroAdapter(config.gyro);
+let gyroLada;
 let activeControls=control;
 export function setControlModule(provider){if(!['getCyclic','getCollective','getYaw'].every(k=>typeof provider?.[k]==='function'))throw new TypeError('Invalid HelicopterControls provider');activeControls=provider;}
 const settings=$('settings'),result=$('result');
@@ -201,6 +203,7 @@ function updateGyroNote(access){
  el.textContent=gyroDenied?'Gyrot är avstängt i Safari. Tillåt Rörelse och orientering under Inställningar, eller välj Bara spakar.':'Gyrot svarar inte. Tryck Kalibrera, eller tillåt rörelse i Safari.';
 }
 async function calibrate(){startAudio();const ask=gyro.requestPermission();let access=null;try{access=await ask;}catch{}gyro.calibrate();control.feedOrientation({pitch:0,roll:0,yaw:0});control.calibrate();updateGyroNote(access);flashMessage('Den här lutningen är nu noll.');}
+gyroLada=monteraRotor({control,kalibrera:()=>calibrate()});
 $('calibrate').onclick=calibrate;
 $('testCalibrate').onclick=()=>{control.feedOrientation(test);calibrate();};
 for(const axis of ['Pitch','Roll','Yaw'])$('test'+axis).oninput=e=>{test[axis.toLowerCase()]=+e.target.value;$('test'+axis+'Out').textContent=e.target.value+'°';};
@@ -244,12 +247,12 @@ function updateInput(dt){
     if(hold.yaw!=null)control.setYaw(hold.yaw);
     if(hold.collective!=null)setCollective(hold.collective);
   }else if(menuTest){
-    control.feedOrientation(test);
+    control.feedOrientation(gyroLada.forma(test,dt));
     if(flightMode==='touch'||flightMode==='gyro-aim')control.setCyclic({x:clamp(test.roll/control.settings.fullScaleDeg,-1,1),y:clamp(test.pitch/control.settings.fullScaleDeg,-1,1)});
   }else if(!settings.open&&!result.open){
     const axes=stickAxes();
     const sample=gyro.take();
-    if(sample)control.feedOrientation(sample);
+    if(sample)control.feedOrientation(gyroLada.forma(sample,dt));
     else if(!gyro.fresh()&&flightMode!=='touch'&&flightMode!=='gyro-aim'&&(axes.x||axes.y||axes.pedal))control.feedOrientation({pitch:axes.y*control.settings.fullScaleDeg,roll:axes.x*control.settings.fullScaleDeg,yaw:axes.pedal*control.settings.yawFullScaleDeg});
     if(flightMode==='touch'||flightMode==='gyro-aim'){
       control.setCyclic({x:axes.x,y:axes.y});

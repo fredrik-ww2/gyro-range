@@ -62,9 +62,9 @@ function toast(text) {
 
 function skarmVinkel() {
   const so = screen.orientation;
-  if (so && Number.isFinite(so.angle)) return so.angle;
-  if (Number.isFinite(window.orientation)) return window.orientation;
-  return 0;
+  const raw = so && Number.isFinite(so.angle) ? so.angle : window.orientation;
+  if (!Number.isFinite(+raw)) return 0;
+  return ((+raw % 360) + 360) % 360;
 }
 
 function enhetInfo() {
@@ -1025,8 +1025,12 @@ function onMotion(e) {
 }
 
 function onOrient(e) {
-  const v = [e.alpha, e.beta, e.gamma].map((x) => (Number.isFinite(x) ? x : null));
-  if (v.some((x) => x != null)) senaste.vinkel = v;
+  let alpha = Number.isFinite(e.alpha) ? e.alpha : null;
+  if (alpha == null && Number.isFinite(+e.webkitCompassHeading)) alpha = (360 - +e.webkitCompassHeading) % 360;
+  const beta = Number.isFinite(e.beta) ? e.beta : null;
+  const gamma = Number.isFinite(e.gamma) ? e.gamma : null;
+  if (beta == null || gamma == null) return;
+  senaste.vinkel = [alpha == null ? 0 : alpha, beta, gamma];
   kanskeProv();
 }
 

@@ -199,7 +199,7 @@ $('fire').onpointerdown=e=>{e.preventDefault();if(!running)return;firing=true;$(
 for(const event of ['pointerup','pointercancel','lostpointercapture'])$('fire').addEventListener(event,stopFire);
 addEventListener('blur',stopFire);
 function doljSpel(){stopFire();gyro.stop();if(audio&&audio.state==='running'){const p=audio.suspend();if(p&&typeof p.catch==='function')p.catch(()=>{});}}
-function visaSpel(){if(!running)return;input.center();if(settings.brytare.gyro&&input.active)gyro.start();void seTillLjud();}
+function visaSpel(){if(!running)return;input.center();if(settings.brytare.gyro&&input.active&&gyro.beviljad)gyro.start();void seTillLjud();}
 if(!globalThis.__flygLiv){globalThis.__flygLiv=true;
  document.addEventListener('visibilitychange',()=>{if(document.hidden)doljSpel();else visaSpel();});
  addEventListener('pagehide',()=>{stopFire();gyro.stop();stangLjud();});

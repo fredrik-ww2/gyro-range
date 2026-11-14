@@ -7,7 +7,9 @@
       "torn": {"dodzon": 3, "kanslighet": 1, "full": 30, "utjamning": 0.16, "invertera": false},
       "eldror": {"dodzon": 3, "kanslighet": 1, "full": 26, "utjamning": 0.16, "invertera": false}
     },
-    "trosklar": {"broms": 6, "ettBand": 15, "backBand": 26}
+    "trosklar": {"broms": 6, "ettBand": 15, "backBand": 26},
+    "tornUpp": 0.32,
+    "eldUpp": 0.18
   },
   "gyro": {
     "glitchEulerGrader": 35,

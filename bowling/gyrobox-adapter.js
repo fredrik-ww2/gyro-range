@@ -28,8 +28,8 @@ export function monteraBowling({ konfig, lage }) {
     },
     aktiv() {
       const namn = lage?.() || '';
-      if (namn === 'SVING' || namn === 'ARM' || namn === 'SLA') return 'sving';
-      if (namn === 'LOOK') return 'sikt';
+      if (namn === 'SWINGING_FORWARD' || namn === 'ARMED_IN_BACKSWING' || namn === 'CALIBRATED_BACKSWING') return 'sving';
+      if (namn === 'LOOKING') return 'sikt';
       return 'krok';
     },
     funktion(id) {

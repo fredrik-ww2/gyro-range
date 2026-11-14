@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {tolkaOrientering} from './riktning.js';
+import {provFranEvent, skarmGrader} from '../shared/sensor.js';
 const rad=THREE.MathUtils.degToRad;
 // Samma orienteringskonvention som DeviceOrientationControls: YXZ, kamerans -Z,
 // -90 grader runt X och skärmens vinkel runt Z. Alla alpha/beta/gamma används.
@@ -14,8 +15,9 @@ export class GyroAim {
   this.vinklar={pitch:0,roll:0,yaw:0};this.up=new THREE.Vector3(0,1,0);this.tvungenVinkel=null;
   addEventListener('deviceorientation',e=>{
    if(this.nativeSource)return;
-   if (![e.alpha,e.beta,e.gamma].every(Number.isFinite)) return;
-   this.lasOrientering(e.alpha,e.beta,e.gamma);
+   const prov=provFranEvent(e);
+   if(!prov)return;
+   this.lasOrientering(prov.alpha,prov.beta,prov.gamma);
   },{passive:true});
   addEventListener('devicemotion',e=>{
    if(this.nativeSource)return;
@@ -41,18 +43,25 @@ export class GyroAim {
   addEventListener('ww2-native-status',e=>{if(window.ReactNativeWebView&&!e.detail?.available)this.values.nativeStatus='saknas/nekades';});
   let pointer=null,last=null;
   canvas.addEventListener('pointerdown',e=>{pointer=e.pointerId;last=[e.clientX,e.clientY];canvas.setPointerCapture(pointer);});
-  canvas.addEventListener('pointermove',e=>{if(e.pointerId!==pointer)return;this.drag.x-=(e.clientX-last[0])*config.dra_rad_px;this.drag.y-=(e.clientY-last[1])*config.dra_rad_px;this.drag.y=THREE.MathUtils.clamp(this.drag.y,-1.4,1.4);last=[e.clientX,e.clientY];});
+  canvas.addEventListener('pointermove',e=>{if(e.pointerId!==pointer)return;const dx=e.clientX-last[0],dy=e.clientY-last[1];if(dx||dy)this.movedAt=performance.now();this.drag.x-=dx*config.dra_rad_px;this.drag.y-=dy*config.dra_rad_px;this.drag.y=THREE.MathUtils.clamp(this.drag.y,-1.4,1.4);last=[e.clientX,e.clientY];});
   const end=()=>{pointer=null;};canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
  }
  stop(){this.active=false;if(window.ReactNativeWebView)window.ReactNativeWebView.postMessage(JSON.stringify({type:'gyro-stop'}));}
  async start(){
-  if(window.ReactNativeWebView){this.active=true;this.center();window.ReactNativeWebView.postMessage(JSON.stringify({type:'gyro-start'}));return {orientation:'granted',motion:'granted'};}
+  if(window.ReactNativeWebView){this.active=true;this.beviljad=true;this.center();window.ReactNativeWebView.postMessage(JSON.stringify({type:'gyro-start'}));return {orientation:'granted',motion:'granted'};}
+  // Redan tillåtet den här sidladdningen: fråga inte igen. iOS kräver en
+  // gest för requestPermission, och fliken som kommer tillbaka har ingen.
+  if(this.beviljad){this.active=true;this.center();return {orientation:'granted',motion:this.rorelseSvar||'granted'};}
   // Båda anropen görs direkt i samma användartryck, före första await.
   const permission=T=>{try{return typeof T?.requestPermission==='function'?T.requestPermission():Promise.resolve(T?'granted':'unavailable');}catch(e){return Promise.reject(e);}};
   const orientation=permission(window.DeviceOrientationEvent);const motion=permission(window.DeviceMotionEvent);
   const [a,b]=await Promise.allSettled([orientation,motion]);
-  this.active=a.status==='fulfilled'&&a.value==='granted';this.center();
-  return {orientation:a.status==='fulfilled'?a.value:'denied',motion:b.status==='fulfilled'?b.value:'denied'};
+  const ov=a.status==='fulfilled'?a.value:'denied';
+  const mv=b.status==='fulfilled'?b.value:'denied';
+  this.active=ov==='granted';
+  if(this.active){this.beviljad=true;this.rorelseSvar=mv;}
+  this.center();
+  return {orientation:ov,motion:mv};
  }
  center(){
   this.nativeTime=null;this.fartRedo=false;this.nollAlpha=this.values.alpha;this.nollBeta=this.values.beta;this.nollGamma=this.values.gamma;this._foreBeta=null;
@@ -61,7 +70,7 @@ export class GyroAim {
  }
  lasOrientering(alpha,beta,gamma){
   Object.assign(this.values,{alpha,beta,gamma});this.lastEvent=performance.now();this.received=true;
-  const angle=screen.orientation?.angle ?? window.orientation ?? 0;
+  const angle=this.skarmVinkel();
   this.euler.set(rad(beta),rad(alpha),-rad(gamma),'YXZ');
   this.raw.setFromEuler(this.euler).multiply(this.fix).multiply(this.screen.setFromAxisAngle(this.axis,-rad(angle)));
   if(this.pendingCenter){this.origin.copy(this.raw).invert();this.pendingCenter=false;}
@@ -83,8 +92,7 @@ export class GyroAim {
  slappSikte(){if(!this.aimHeld)return;this.aimHeld=false;this.snap=true;this.prevRaw.copy(this.raw);}
  skarmVinkel(){
   if(Number.isFinite(this.tvungenVinkel))return this.tvungenVinkel;
-  const v=screen.orientation?.angle??window.orientation??0;
-  return Number.isFinite(+v)?+v:0;
+  return skarmGrader(globalThis);
  }
  mataFart(dt){
   if(this._inj){this.values.pitchNedDps=this._injPitch;this.values.vridHogerDps=this._injTwist;this._inj=false;return Math.max(Math.abs(this._injPitch),this._injTwist);}
@@ -113,6 +121,13 @@ export class GyroAim {
   const s=this.settings;
   const speed=this.mataFart(dt),nowMs=performance.now();
   if(speed>(s.aterga_trosk_dps??5))this.movedAt=nowMs;
+  // Återgång gäller fingerdraget. Telefonens absoluta lutning är siktet och
+  // ska inte jagas tillbaka till noll, det slåss mot greppet.
+  if(s.brytare?.atergang&&nowMs-this.movedAt>(s.aterga_vila_s??1)*1000&&speed<=(s.aterga_trosk_dps??5)){
+   const tau=Math.max(.35,s.aterga_s||3),k=dt>0?1-Math.exp(-dt/tau):0;
+   this.drag.x*=1-k;this.drag.y*=1-k;
+   if(Math.hypot(this.drag.x,this.drag.y)<1e-4)this.drag.x=this.drag.y=0;
+  }
   if(this.aimHeld){this.smooth.copy(this.aimHold);return this.smooth;}
   const jump=this.snap;this.snap=false;
   if(this.active&&this.received){
@@ -128,6 +143,7 @@ export class GyroAim {
     this.vinklar.pitch=v.pitch;this.vinklar.roll=v.roll;this.vinklar.yaw=v.yaw;
    }else{this.vinklar.pitch=this.euler.x;this.vinklar.yaw=this.euler.y;this.vinklar.roll=this.euler.z;}
    if(this.bearbeta)this.bearbeta(dt);
+   if(s.inverteraY){this.vinklar.yaw=-this.vinklar.yaw;this.values.vridHogerDps=-(this.values.vridHogerDps||0);}
    const sp=THREE.MathUtils.clamp(this.vinklar.pitch*s.kanslighet*(s.inverteraX?-1:1),-1.15,1.15);
    const sr=THREE.MathUtils.clamp(this.vinklar.roll*s.kanslighet*(s.inverteraZ?-1:1),-.95,.95);
    this.euler.set(sp,-sr,0,'YXZ');this.target.setFromEuler(this.euler);

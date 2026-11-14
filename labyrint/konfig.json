@@ -81,6 +81,7 @@
     "kanslighetMin": 0.45,
     "kanslighetMax": 1.8,
     "dodzon": 2,
+    "hysteres": 0.4,
     "dodzonMin": 0,
     "dodzonMax": 5,
     "expo": 1.72,

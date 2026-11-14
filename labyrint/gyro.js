@@ -1,4 +1,5 @@
 import * as THREE from '../js/vendor/three.module.js';
+import { provFranEvent, skarmGrader } from '../shared/sensor.js';
 
 const RAD = Math.PI / 180;
 const GRAD = 180 / Math.PI;
@@ -11,8 +12,7 @@ function klamp(v, lo, hi) {
 }
 
 export function skarmVinkel() {
-  const v = globalThis.screen?.orientation?.angle ?? globalThis.window?.orientation ?? 0;
-  return Number.isFinite(+v) ? +v : 0;
+  return skarmGrader(globalThis);
 }
 
 export function enhetsKvaternion(alpha, beta, gamma, skarmGrader, q, euler, skarmQ) {
@@ -28,20 +28,32 @@ export function gravitationSkarm(q, ut, inv) {
   return ut;
 }
 
-export function mjukLutning(grader, kanslighet, gyro) {
+export function mjukLutning(grader, kanslighet, gyro, minne) {
   const d = Math.max(0, gyro.dodzon || 0);
   const maxG = Math.max(0.001, gyro.maxGrader || 1);
   const expo = gyro.expo ?? 1.7;
   const kryp = gyro.kryp ?? 0.06;
   const a = Math.abs(grader) * Math.max(0, kanslighet);
   const s = Math.sign(grader);
-  if (a < 1e-5) return 0;
+  if (a < 1e-5) {
+    if (minne) minne.pa = false;
+    return 0;
+  }
+  const hyst = Math.min(0.8, Math.max(0, gyro.hysteres || 0));
+  const exit = d * (1 - hyst);
+  let inne = d > 0 && a <= d;
+  if (minne && hyst > 0 && d > 0) {
+    if (minne.pa) {
+      if (a <= exit) minne.pa = false;
+    } else if (a > d) minne.pa = true;
+    inne = !minne.pa && a <= d;
+  }
   let norm;
-  if (d > 0 && a <= d) {
+  if (inne) {
     const u = a / d;
     norm = kryp * u * u * u;
   } else {
-    const u = Math.min(1, (a - d) / Math.max(0.001, maxG - d));
+    const u = Math.min(1, Math.max(0, (a - d) / Math.max(0.001, maxG - d)));
     const bas = d > 0 ? kryp : 0;
     norm = bas + (1 - bas) * Math.pow(u, expo);
   }
@@ -141,8 +153,10 @@ export function skapaGyro(canvas, konfig) {
         return Promise.resolve('nekad');
       }
     };
-    const [orientering, rorelse] = await Promise.all([be(DOE), be(DME)]);
-    const ok = orientering === 'granted' || rorelse === 'granted';
+    const orientP = be(DOE);
+    const rorelseP = be(DME);
+    const [orientering, rorelse] = await Promise.all([orientP, rorelseP]);
+    const ok = orientering === 'granted' || orientering === 'saknas';
     gyroPa = ok;
     vantarNoll = ok;
     if (ok && senaste) plattaUt();
@@ -154,8 +168,9 @@ export function skapaGyro(canvas, konfig) {
   };
 
   pa(globalThis, 'deviceorientation', (e) => {
-    if (![e.alpha, e.beta, e.gamma].every(Number.isFinite)) return;
-    las(e.alpha, e.beta, e.gamma);
+    const prov = provFranEvent(e);
+    if (!prov) return;
+    las(prov.alpha, prov.beta, prov.gamma);
   }, {passive: true});
 
   function tangent(e, nere) {

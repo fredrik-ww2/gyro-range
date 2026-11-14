@@ -64,4 +64,5 @@ body.cockpit .vignette{background:radial-gradient(ellipse at 50% 46%,transparent
 #hud #gun,#hud #rocket,#hud .gauge,#hud #collective,#hud #cyclic,#hud #pedals button,#hud #windshield{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #briefing .brand{margin-bottom:18px}
 #gyroNote{margin-top:0;color:#e7c9a4}
+body.playing #missionHud{top:calc(env(safe-area-inset-top, 0px) + 56px);margin-left:0;max-width:min(340px, calc(100% - 16px));white-space:normal}
 @media(max-width:600px) and (orientation:portrait){#missionHud{top:max(8px,env(safe-area-inset-top));width:auto}header{top:0;left:auto;right:0}}

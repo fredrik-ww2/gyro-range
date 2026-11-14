@@ -192,10 +192,15 @@ export function skapaMaskin(konfig) {
     return { tillstand, handelse, kast };
   }
 
+  function frysKlocka(nuMs) {
+    senTid = Number.isFinite(nuMs) ? nuMs : senTid;
+  }
+
   return {
     beviljad,
     nollstalld,
     steg,
+    frysKlocka,
     get tillstand() { return tillstand; },
     get kast() { return kast; },
     get buffert() { return buffert; },

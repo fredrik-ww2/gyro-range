@@ -8,6 +8,7 @@ import {
 } from './logik.js';
 import { skapaHaptik, skakIntervall } from './haptik.js';
 import { monteraGubbe } from './gyrobox-adapter.js';
+import { provFranEvent } from '../shared/sensor.js';
 
 const $ = (id) => document.getElementById(id);
 const DEG = Math.PI / 180;
@@ -256,8 +257,9 @@ function lyssna() {
   if (lyssnar) return;
   lyssnar = true;
   addEventListener('deviceorientation', (e) => {
-    if (![e.alpha, e.beta, e.gamma].every(Number.isFinite)) return;
-    orient = { alpha: e.alpha, beta: e.beta, gamma: e.gamma };
+    const prov = provFranEvent(e);
+    if (!prov) return;
+    orient = prov;
     senasteOrient = performance.now();
     if (!neutral) neutral = { ...orient };
   }, { passive: true });
@@ -660,7 +662,8 @@ byggPanel();
 
 let fore = performance.now();
 function ram(nu) {
-  if (!document.hidden) steg((nu - fore) / 1000);
+  if (document.hidden) foreVinkel = null;
+  else steg((nu - fore) / 1000);
   fore = nu;
   requestAnimationFrame(ram);
 }

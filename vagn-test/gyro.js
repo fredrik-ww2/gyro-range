@@ -1,5 +1,6 @@
 import * as THREE from '../js/vendor/three.module.js';
 import config from './config.json' with { type: 'json' };
+import {provFranEvent, skarmGrader} from '../shared/sensor.js';
 
 // Samma enhetskvaternion som panorama/blick.js: YXZ, kamera längs -Z, -90° runt X,
 // skärmvinkel runt Z. Den relativa kvaternionen läses i ZXY i skärmens ram,
@@ -13,8 +14,7 @@ const Z_AXEL = new THREE.Vector3(0, 0, 1);
 const GYRO = config.gyro || {};
 
 export function skarmVinkel() {
-  const v = globalThis.screen?.orientation?.angle ?? globalThis.window?.orientation ?? 0;
-  return Number.isFinite(+v) ? +v : 0;
+  return skarmGrader(globalThis);
 }
 
 export function enhetsKvaternion(alpha, beta, gamma, skarmGrader, q, euler, skarmQ) {
@@ -168,8 +168,9 @@ export function skapaRorelse(canvas) {
     if (typeof mal?.addEventListener === 'function') mal.addEventListener(typ, fn, opt);
   };
   pa(globalThis, 'deviceorientation', e => {
-    if (![e.alpha, e.beta, e.gamma].every(Number.isFinite)) return;
-    las(e.alpha, e.beta, e.gamma);
+    const prov = provFranEvent(e);
+    if (!prov) return;
+    las(prov.alpha, prov.beta, prov.gamma);
   }, {passive: true});
 
   const pekare = new Map();
@@ -235,7 +236,8 @@ export function skapaRorelse(canvas) {
     const orientering = tillat(globalThis.DeviceOrientationEvent);
     const rorelse = tillat(globalThis.DeviceMotionEvent);
     const [a, b] = await Promise.allSettled([orientering, rorelse]);
-    aktiv = a.status === 'fulfilled' && (a.value === 'granted' || (b.status === 'fulfilled' && b.value === 'granted'));
+    // Bara orientering styr vagnen. Rörelsetillstånd utan den räknas inte som gyro.
+    aktiv = a.status === 'fulfilled' && (a.value === 'granted' || a.value === 'unavailable');
     nollstall();
     return {
       orientation: a.status === 'fulfilled' ? a.value : 'denied',

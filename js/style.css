@@ -141,6 +141,7 @@ body[data-jarn=ja] #irons{display:block!important}
 #styrPanel .bryt input{width:28px;height:28px;margin:0}
 #styrPanel input[type=range]{height:44px;margin-top:6px}
 #styrPanel .reglage{font-size:16px;margin-top:12px}
+#styrPanel .hint,#settings .hint,#menu .hint,.flikyta .hint{margin:4px 0 8px;color:#c9d4c4;font-size:14px;line-height:1.35;font-weight:500}
 #matvarden{position:absolute;z-index:6;left:auto;right:max(8px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top) + 248px);bottom:auto;width:min(230px,calc(100vw - 24px));margin:0;white-space:pre-wrap;font:12px ui-monospace,monospace;line-height:1.35;background:#121816ee;color:#e7efd8;padding:8px 10px;border-radius:10px;pointer-events:none}
 #styrHaptic,#styrHapticLabel{position:fixed;left:-120px;top:0;width:44px;height:44px;margin:0;opacity:0}
 #peep{position:fixed;inset:0;z-index:2;pointer-events:none;display:none}

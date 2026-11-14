@@ -141,9 +141,34 @@ function writeSetting(row,value){
   }else control.configure({[row.id]:value});
   if(row.id==='inputTimeoutSeconds')gyro.staleSeconds=value;
 }
+const STYR_HJALP={
+  sensitivity:'Högre = helikoptern lutar mer för samma lutning.',
+  deadzoneDeg:'Högre = du måste luta mer innan spaken rör sig.',
+  softKneeDeg:'Högre = övergången ut ur dödzonen blir mjukare.',
+  cyclicRate:'Högre = spaken hinner i kapp fortare.',
+  fullScaleDeg:'Högre = du måste luta mer för att nå fullt utslag.',
+  smoothingSeconds:'Högre = styrningen blir mjukare och långsammare.',
+  aimSensitivity:'Högre = siktet rör sig mer för samma rörelse.',
+  aimDeadzoneDeg:'Högre = små rörelser ignoreras i siktet.',
+  aimSmoothingSeconds:'Högre = siktet följer mjukare.',
+  inputTimeoutSeconds:'Högre = spaken väntar längre om gyrot tystnar.',
+  transLiftMax:'Högre = fartlyftet kan lyfta mer.',
+  transLiftStartKnots:'Högre = fartlyftet börjar vid högre fart.',
+  transLiftEndKnots:'Högre = fartlyftet är fullt först vid högre fart.',
+  maxAttitudeDeg:'Högre = nosen får luta mer när du för spaken.'
+};
+const STYR_GRUPP={
+  sensitivity:'Känslighet',deadzoneDeg:'Dödzon',softKneeDeg:'Dödzon',aimDeadzoneDeg:'Dödzon',
+  aimSensitivity:'Känslighet',smoothingSeconds:'Mjukhet',aimSmoothingSeconds:'Mjukhet',cyclicRate:'Mjukhet'
+};
 function buildMenu(){
   const box=$('tuning');
+  const standard={};
+  let senGrupp='';
   for(const row of config.menu){
+    standard[row.id]=readSetting(row);
+    const grupp=STYR_GRUPP[row.id];
+    if(grupp&&grupp!==senGrupp){senGrupp=grupp;const h=document.createElement('h3');h.textContent=grupp;box.append(h);}
     const label=document.createElement('label');label.className='range-setting';
     const span=document.createElement('span');const out=document.createElement('output');
     span.append(document.createTextNode(row.label+' '),out);
@@ -151,7 +176,10 @@ function buildMenu(){
     const paint=()=>{out.textContent=fmt(row,readSetting(row));input.value=readSetting(row);};
     input.oninput=()=>{writeSetting(row,+input.value);paint();syncModeUI();};
     paint();label.append(span,input);box.append(label);
+    if(STYR_HJALP[row.id]){const p=document.createElement('p');p.className='mode-help';p.textContent=STYR_HJALP[row.id];box.append(p);}
   }
+  const ater=$('aterstallStyr');
+  if(ater)ater.onclick=()=>{for(const row of config.menu){writeSetting(row,standard[row.id]);}syncModeUI();for(const input of box.querySelectorAll('input[type=range]')){const row=config.menu.find(r=>r.id===input.id);if(!row)continue;input.value=readSetting(row);input.parentElement.querySelector('output').textContent=fmt(row,readSetting(row));}};
   for(const row of config.toggles){
     const label=document.createElement('label');label.className='setting';
     const span=document.createElement('span');span.append(document.createTextNode(row.label));

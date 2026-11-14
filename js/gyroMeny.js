@@ -396,7 +396,7 @@ export function byggStyrMeny(rot,meny,hooks={}){
   rit.push(()=>{inp.checked=!!las();});
   return lab;
  }
- function slider(namn,min,max,steg,las,skriv,text,enhet){
+ function slider(namn,min,max,steg,las,skriv,text,enhet,hint){
   const lab=document.createElement('label');
   lab.className='reglage';
   const rub=document.createElement('span');
@@ -412,6 +412,12 @@ export function byggStyrMeny(rot,meny,hooks={}){
   inp.oninput=()=>{skriv(runda(inp.value,steg));meny.satt();visa();};
   visa();
   lab.append(rub,ut,inp);
+  if(hint){
+   const p=document.createElement('p');
+   p.className='hint';
+   p.textContent=hint;
+   lab.append(p);
+  }
   rit.push(visa);
   return lab;
  }
@@ -435,13 +441,17 @@ export function byggStyrMeny(rot,meny,hooks={}){
   const barn=[];
   if(medAv)barn.push(brytare('På',()=>inst.pa!==false,v=>{inst.pa=v;},null));
   barn.push(valjLage(inst));
-  barn.push(slider('Känslighet',.5,3,.1,()=>inst.kanslighet,v=>{inst.kanslighet=v;},v=>v.toFixed(1)+'×'));
-  barn.push(slider('Fartförstärkning',0,3,.1,()=>inst.fart,v=>{inst.fart=v;},v=>v<=0?'linjär':v>=2.95?'stark':v.toFixed(1)));
-  barn.push(slider('Utjämning',0,1,.05,()=>inst.utjamning,v=>{inst.utjamning=v;},v=>v<=0?'ingen':v>=.99?'stark':v.toFixed(2)));
+  const lageHint=document.createElement('p');
+  lageHint.className='hint';
+  lageHint.textContent='Följer läget: siktet följer vinkeln. Bara när den rör sig: det stannar när telefonen är stilla.';
+  barn.push(lageHint);
+  barn.push(slider('Känslighet',.5,3,.1,()=>inst.kanslighet,v=>{inst.kanslighet=v;},v=>v.toFixed(1)+'×',null,'Högre = mer rörelse för samma lutning.'));
+  barn.push(slider('Fartförstärkning',0,3,.1,()=>inst.fart,v=>{inst.fart=v;},v=>v<=0?'linjär':v>=2.95?'stark':v.toFixed(1),null,'Högre = en snabb rörelse ger extra mycket.'));
+  barn.push(slider('Utjämning',0,1,.05,()=>inst.utjamning,v=>{inst.utjamning=v;},v=>v<=0?'ingen':v>=.99?'stark':v.toFixed(2),null,'Högre = mjukare och långsammare.'));
   const dod=slider('Dödzon',0,20,.5,()=>inst.dodzon,v=>{inst.dodzon=v;},v=>{
    const enhet=inst.lage==='rorelse'?' °/s':'°';
    return (v>=10?v.toFixed(0):v.toFixed(1))+enhet;
-  });
+  },null,'Högre = små lutningar ignoreras.');
   barn.push(dod);
   const d=grupp(namn,barn);
   d.dataset.axel=lage+'.'+axel;
@@ -449,36 +459,36 @@ export function byggStyrMeny(rot,meny,hooks={}){
  }
  function lageGrupp(id,rubrik){
   return grupp(rubrik,[
-   axelGrupp(id,'yaw','Vrida',false),
-   axelGrupp(id,'pitch','Luta fram/bak',false),
-   axelGrupp(id,'roll','Luta åt sidan',true)
+   axelGrupp(id,'yaw','Vridning',false),
+   axelGrupp(id,'pitch','Lutning',false),
+   axelGrupp(id,'roll','Sidolutning',true)
   ]);
  }
  const rad=document.createElement('div');
  rad.className='rad';
  const standard=document.createElement('button');
- standard.type='button';standard.id='styrStandard';standard.className='primary';standard.textContent='Standard';
+ standard.type='button';standard.id='styrStandard';standard.className='primary';standard.textContent='Återställ standard';
  const noll=document.createElement('button');
  noll.type='button';noll.id='styrNoll';noll.textContent='Nollställ';
  standard.onclick=()=>{meny.aterstall();lager?.noll();rit.forEach(f=>f());};
  noll.onclick=()=>{hooks.noll?.();};
  rad.append(standard,noll);
  const led=document.createElement('p');
- led.textContent='Standard är så banan styrs idag. Ändringar sparas på den här telefonen.';
+ led.textContent='Återställ standard tar tillbaka banans vanliga styrning. Nollställ sätter det här greppet som noll. Ändringar sparas på den här telefonen.';
  const gang=grupp('Gång',[
   brytare('Gå med lutning',()=>meny.varden.gangLutning,v=>{meny.varden.gangLutning=v;if(!v)lager?.kryss.noll();},'styrGang'),
   document.createElement('p'),
   brytare('Knyck nedåt: ligg',()=>meny.varden.gestNer,v=>{meny.varden.gestNer=v;},'styrGestNer'),
-  slider('Tröskel nedåt',200,900,10,()=>meny.varden.gestNerTroskel,v=>{meny.varden.gestNerTroskel=v;},v=>v.toFixed(0)+' °/s'),
+  slider('Tröskel nedåt',200,900,10,()=>meny.varden.gestNerTroskel,v=>{meny.varden.gestNerTroskel=v;},v=>v.toFixed(0)+' °/s',null,'Högre = du måste knycka hårdare för att ligga.'),
   brytare('Knyck uppåt: hoppa',()=>meny.varden.gestUpp,v=>{meny.varden.gestUpp=v;},'styrGestUpp'),
-  slider('Tröskel uppåt',200,900,10,()=>meny.varden.gestUppTroskel,v=>{meny.varden.gestUppTroskel=v;},v=>v.toFixed(0)+' °/s')
+  slider('Tröskel uppåt',200,900,10,()=>meny.varden.gestUppTroskel,v=>{meny.varden.gestUppTroskel=v;},v=>v.toFixed(0)+' °/s',null,'Högre = du måste knycka hårdare för att hoppa.')
  ]);
  gang.querySelector('p').textContent='Luta lite framåt för att gå. Tillbaka till noll håller farten. Luta bakåt bromsar ett steg: spring, gå, stanna. En vanlig lutning utlöser inte knyckarna.';
  const skak=grupp('Skakning',[
   brytare('Skakning vid ojämn rörelse',()=>meny.varden.skak,v=>{meny.varden.skak=v;if(!v)lager?.skak.noll();},'styrSkak'),
-  slider('Skakkänslighet',.2,3,.1,()=>meny.varden.skakKanslighet,v=>{meny.varden.skakKanslighet=v;},v=>v.toFixed(1)+'×'),
-  slider('Max skakning',0,.05,.001,()=>meny.varden.skakMax,v=>{meny.varden.skakMax=v;},v=>(v*GRADER).toFixed(1)+'°'),
-  slider('Max lugningstid',.2,2,.1,()=>meny.varden.skakMaxTid,v=>{meny.varden.skakMaxTid=v;},v=>v.toFixed(1)+' s')
+  slider('Skakkänslighet',.2,3,.1,()=>meny.varden.skakKanslighet,v=>{meny.varden.skakKanslighet=v;},v=>v.toFixed(1)+'×',null,'Högre = mindre ryck får siktet att skaka.'),
+  slider('Max skakning',0,.05,.001,()=>meny.varden.skakMax,v=>{meny.varden.skakMax=v;},v=>(v*GRADER).toFixed(1)+'°',null,'Högre = siktet kan skaka mer.'),
+  slider('Max lugningstid',.2,2,.1,()=>meny.varden.skakMaxTid,v=>{meny.varden.skakMaxTid=v;},v=>v.toFixed(1)+' s',null,'Högre = skakningen ligger kvar längre.')
  ]);
  const metod=hooks.tick?.metod||haptikMetod();
  const hapt=grupp('Haptik',[

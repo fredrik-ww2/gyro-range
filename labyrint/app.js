@@ -241,7 +241,7 @@ function koppla() {
   $('hjalp').checked = install.hjalp;
   ljud.satt(install.ljud);
   const visaTal = () => {
-    $('kanslighetTal').textContent = tal(install.kanslighet);
+    $('kanslighetTal').textContent = tal(install.kanslighet, '×');
     $('dodzonTal').textContent = tal(install.dodzon, '°');
   };
   visaTal();
@@ -267,6 +267,15 @@ function koppla() {
     sparaInstall();
   });
   $('nollstall').addEventListener('click', () => gyro.plattaUt());
+  $('aterstall')?.addEventListener('click', () => {
+    install.kanslighet = konfig.gyro.kanslighet;
+    install.dodzon = konfig.gyro.dodzon;
+    $('kanslighet').value = String(install.kanslighet);
+    $('dodzon').value = String(install.dodzon);
+    visaTal();
+    sparaInstall();
+    ritaKansla();
+  });
   $('menyKnapp').addEventListener('click', () => visaMeny($('meny').hidden));
   $('stang').addEventListener('click', () => visaMeny(false));
   $('spel').addEventListener('pointerdown', () => { if (!$('meny').hidden) visaMeny(false); });

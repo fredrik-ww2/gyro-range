@@ -110,8 +110,34 @@
   border-color: transparent;
   font-weight: 750;
 }
+.gyrobox-rot.oppen {
+  z-index: 80;
+  max-width: min(292px, calc(100vw - 104px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+}
+.gyrobox-rot.oppen .gyrobox-panel {
+  width: min(292px, calc(100vw - 104px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 72px);
+  padding-bottom: 54px;
+}
 .gyrobox-mini { margin: 8px 0 2px; color: #c5d4c4; font-size: 11px; }
-.gyrobox-hint { margin: 2px 0 6px; color: #9aab9e; font-size: 11px; }
+.gyrobox-hint, .gyrobox-gor { margin: 2px 0 6px; color: #c5d4c4; font-size: 13px; line-height: 1.35; }
+.gyrobox-grupp { margin-top: 8px; padding-top: 6px; border-top: 1px solid #ffffff22; }
+.gyrobox-grupp summary, .gyrobox-grupp h3, .gyrobox-grupp h4 { font-size: 15px; font-weight: 750; }
+.gyrobox-grupp h3, .gyrobox-grupp h4 { margin: 8px 0 2px; }
+.gyrobox-grupp h4 { font-size: 13px; color: #e0f1a4; letter-spacing: 0.02em; }
+.gyrobox-figur { color: #e0f1a4; height: 28px; margin: 2px 0 6px; }
+.gyrobox-figur svg { width: 96px; height: 28px; display: block; }
+.gyrobox-namn { font-weight: 700; }
+.gyrobox-mini-vis { display: block; height: 8px; margin: 2px 0 0; border-radius: 4px; background: #ffffff18; position: relative; overflow: hidden; }
+.gyrobox-mini-vis.pil::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: calc(18% + var(--u, 0) * 82%); background: #e0f1a4; border-radius: 4px; }
+.gyrobox-mini-vis.kurva::before { content: ""; position: absolute; left: 8%; right: 8%; top: 1px; height: 6px; border-bottom: 2px solid #e0f1a4; border-radius: 0 0 calc(4px + var(--u, 0) * 16px) calc(4px + var(--u, 0) * 16px); }
+.gyrobox-mini-vis.gap::before, .gyrobox-mini-vis.gap::after { content: ""; position: absolute; top: 0; bottom: 0; width: calc(50% - var(--u, 0) * 18% - 2px); background: #e0f1a4; }
+.gyrobox-mini-vis.gap::before { left: 0; border-radius: 4px 0 0 4px; }
+.gyrobox-mini-vis.gap::after { right: 0; border-radius: 0 4px 4px 0; }
+.gyrobox-mini-vis.mjuk::before { content: ""; position: absolute; left: calc(var(--u, 0) * 70%); top: 0; width: 22%; height: 100%; background: #e0f1a4; border-radius: 4px; opacity: calc(1 - var(--u, 0) * 0.45); }
+.gyrobox-ater { width: 100%; margin-top: 6px; font-weight: 750; background: #24302b; color: #e0f1a4; border: 1px solid #e0f1a466; border-radius: 8px; min-height: 40px; font: inherit; }
+.gyrobox-lager-det { margin-top: 8px; }
+.gyrobox-lager-det summary { font-weight: 700; min-height: 32px; }
 .gyrobox-check { display: flex; align-items: center; gap: 8px; min-height: 32px; font-size: 13px; }
 .gyrobox-lage { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 4px 0; }
 .gyrobox-val { width: 100%; }
@@ -148,6 +174,13 @@ body:has(.gyrobox-rot) #version {
 body:has(#knappGa) #version { display: none; }
 body:has(#knappGa) .gyrobox-rot {
   max-width: min(156px, calc(100vw - 200px));
+}
+body:has(#meny:not([hidden])) .gyrobox-rot,
+body:has(#menu:not([hidden])) .gyrobox-rot,
+body:has(#settings:not([hidden])) .gyrobox-rot,
+body:has(#installningar:not([hidden])) .gyrobox-rot,
+body:has(section#panel:not([hidden])) .gyrobox-rot {
+  visibility: hidden;
 }
 body:has(#startKnappar:not([hidden])) .gyrobox-rot {
   top: calc(env(safe-area-inset-top, 0px) + 116px);

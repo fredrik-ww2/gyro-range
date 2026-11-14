@@ -9,7 +9,7 @@
 #aimFocus[aria-pressed=true]{background:#ccdf9d;color:#142923}
 #settings a{color:var(--acid);font-size:12px}
 #briefing a.text-button{text-decoration:none}
-#tuning{margin-top:8px}
+#tuning{margin-top:8px}#tuning h3{margin:14px 0 4px;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
 #lookDown{margin:8px 0 4px}
 .setting select{max-width:58%}
 #aimFocus:active{transform:translateX(-50%) scale(.97)}

@@ -521,8 +521,8 @@ async function boot(){
   weaponPivot.updateWorldMatrix(true,true);
   const kolv=holder.localToWorld(holder.userData.kolvLokal.clone());
   const mun=holder.localToWorld(holder.userData.munLokal.clone());
-  const grepp=kolv.clone().lerp(mun,.16);grepp.y+=.02;
-  const stod=kolv.clone().lerp(mun,.34);stod.y+=.015;
+  const grepp=kolv.clone().lerp(mun,.24);grepp.y+=.01;
+  const stod=kolv.clone().lerp(mun,.58);stod.y+=.006;
   return {grepp,stod,mun,kolv};
  }
  function applyWeaponTransform(raise){
@@ -831,7 +831,7 @@ async function boot(){
   lage:()=>gyroMeny.varden.sikta.yaw.lage,
   sattLage(id){const lage=id==='rorelse'?'rorelse':'foljer';for(const axel of ['yaw','pitch','roll'])gyroMeny.varden.sikta[axel].lage=lage;gyroMeny.satt();},
   aterga(){const ut=document.createElement('output'),inp=document.createElement('input');inp.type='range';inp.min='0.5';inp.max='6';inp.step='0.1';const visa=()=>{inp.value=String(settings.aterga_s);ut.value=Number(settings.aterga_s).toFixed(1)+' s';};visa();inp.oninput=()=>{settings.aterga_s=Number(inp.value);if($('returnTime'))$('returnTime').value=inp.value;updateReturn();};const span=document.createElement('span');span.style.display='block';span.append(ut,inp);return span;},
-  invertera(){const box=document.createElement('div');box.className='checks';for(const [nyckel,text,id] of [['inverteraX','Invertera pitch','invertX'],['inverteraY','Invertera vridning','invertY'],['inverteraZ','Invertera sidlutning','invertZ']]){const lab=document.createElement('label'),inp=document.createElement('input');inp.type='checkbox';inp.checked=!!settings[nyckel];inp.onchange=()=>{settings[nyckel]=inp.checked;if($(id))$(id).checked=inp.checked;save();};lab.append(inp,document.createTextNode(' '+text));box.append(lab);}return box;},
+  invertera(){const box=document.createElement('div');box.className='checks';for(const [nyckel,text,id] of [['inverteraX','Vänd höjden','invertX'],['inverteraY','Vänd sidled','invertY'],['inverteraZ','Vänd sidolutning','invertZ']]){const lab=document.createElement('label'),inp=document.createElement('input');inp.type='checkbox';inp.checked=!!settings[nyckel];inp.onchange=()=>{settings[nyckel]=inp.checked;if($(id))$(id).checked=inp.checked;save();};lab.append(inp,document.createTextNode(' '+text));box.append(lab);}const p=document.createElement('p');p.className='hint';p.textContent='På = riktningen vänds. Höjd: upp blir ner. Sidled: höger blir vänster.';box.append(p);return box;},
   axlar(){visaStyr(true);}
  });
  function anvendStyr(){settings.kanslighet=styr.varden.sikte.ytterst?styr.varden.sikte.kanslighet*4:styr.varden.sikte.kanslighet;settings.utjamning_s=styr.varden.sikte.ytterst?.012:styr.varden.sikte.utjamning_s;settings.forstoringNiva=styr.varden.kikare.zoom;settings.forstoringPa=siktVal==='kikare';syncPoseUi();syncSikt();}

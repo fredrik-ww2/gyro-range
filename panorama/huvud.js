@@ -176,7 +176,7 @@ function fyllAxel(root, axel) {
 }
 function byggPanel() {
   const mall = document.createElement('template');
-  mall.innerHTML = `<div class="val"><button type="button" data-lage="foljer">Följer läget</button><button type="button" data-lage="rorelse">Bara när den rör sig</button></div><p class="forklaring"></p><label>Känslighet <span></span><input data-nyckel="kanslighet" type="range" min="0.5" max="3" step="0.05"></label><label>Fartförstärkning <span></span><input data-nyckel="fart" type="range" min="0" max="3" step="0.1"></label><label>Utjämning <span></span><input data-nyckel="utjamning" type="range" min="0" max="1" step="0.05"></label>`;
+  mall.innerHTML = `<div class="val"><button type="button" data-lage="foljer">Följer läget</button><button type="button" data-lage="rorelse">Bara när den rör sig</button></div><p class="forklaring"></p><h4>Känslighet</h4><label>Känslighet <span></span><input data-nyckel="kanslighet" type="range" min="0.5" max="3" step="0.05"></label><p class="forklaring">Högre = vyn rör sig mer för samma vridning.</p><label>Fartförstärkning <span></span><input data-nyckel="fart" type="range" min="0" max="3" step="0.1"></label><p class="forklaring">Högre = en snabb rörelse ger extra mycket.</p><label>Mjukhet <span></span><input data-nyckel="utjamning" type="range" min="0" max="1" step="0.05"></label><p class="forklaring">Högre = mjukare och långsammare följning.</p>`;
   for (const axel of AXLAR) {
     const box = document.querySelector(`details[data-axel="${axel}"] .axelInre`);
     box.replaceChildren(mall.content.cloneNode(true));

@@ -112,14 +112,14 @@
 <div class="val"><button id="laserMatcha" type="button" aria-pressed="true">Matcha skärmen</button></div>
 <p class="forklaring">Synfältet ställs så skärmen blir ett fönster, cirka 35 cm från ögonen.</p>
 <label>Synfält <span id="laserFovVis"></span><input id="laserFov" type="range" min="8" max="100" step="1"></label>
-<label>Utjämning <span id="laserUtjVis"></span><input id="laserUtj" type="range" min="0" max="1" step="0.05"></label>
-<p class="forklaring">0 är rått. Högre är mjukare och tar bort brus.</p>
+<label>Mjukhet <span id="laserUtjVis"></span><input id="laserUtj" type="range" min="0" max="1" step="0.05"></label>
+<p class="forklaring">Högre = pricken följer mjukare. 0 är rått.</p>
 <label>Död zon <span id="laserDodVis"></span><input id="laserDod" type="range" min="0" max="3" step="0.1"></label>
-<p class="forklaring">Små skakningar under det här ignoreras.</p>
+<p class="forklaring">Högre = du måste röra telefonen mer innan pricken flyttar sig. Små skakningar under det här ignoreras.</p>
 <button id="laserRoll" type="button" class="omkopplare" aria-pressed="true">Lås sidolutning</button>
 <p class="forklaring">På: horisonten hålls rak. Av: telefonens lutning syns.</p>
 <button id="laserNoll" type="button">Nollställ riktning</button>
-<button id="laserStandard" type="button">Standard</button>
+<button id="laserStandard" type="button">Återställ standard</button>
 </div>
 </section>
 <section id="styrPanel">
@@ -139,7 +139,7 @@
 </details>
 <button id="horisont" type="button" class="pa" aria-pressed="true">Rak horisont</button>
 <button id="noll" type="button">Nollställ riktning</button>
-<button id="standard" type="button">Standard</button>
+<button id="standard" type="button">Återställ standard</button>
 </section>
 </div>
 <div data-panel="ljud" hidden>
@@ -165,9 +165,11 @@
 <label>Gångskak, gå <span id="skakGaVis"></span><input id="skakGa" type="range" min="0" max="1.5" step="0.05"></label>
 <label>Gångskak, springa <span id="skakSpringVis"></span><input id="skakSpring" type="range" min="0.2" max="2.4" step="0.05"></label>
 <p class="forklaring" id="skakText"></p>
+<h4>Dödzon</h4>
 <label>Accelerationsdödzon <span id="accDodVis"></span><input id="accDod" type="range" min="0.4" max="4" step="0.05"></label>
+<p class="forklaring">Högre = mer skak ignoreras innan siktet rör sig.</p>
 <label>Accelerationskurva <span id="accExpVis"></span><input id="accExp" type="range" min="1.2" max="4.2" step="0.05"></label>
-<p class="forklaring">Hög exponent gör försiktig rörelse nästan stilla i siktet. Ett kraftigt ryck slår stort.</p>
+<p class="forklaring">Högre = försiktig rörelse blir nästan stilla. Ett kraftigt ryck slår stort.</p>
 <label>Framåtryck <span id="gestFramVis"></span><input id="gestFram" type="range" min="0.4" max="2.5" step="0.05"></label>
 <label>Kik, upp och ner <span id="gestVertVis"></span><input id="gestVert" type="range" min="0.4" max="2.5" step="0.05"></label>
 <p class="forklaring">Ett ryck framåt stegar ner ett läge. Två tätt inpå går från stå till ligg. På knä höjer och sänker ett drag i höjdled. På dator: Q steg, E dyk, Z upp, C ner.</p>

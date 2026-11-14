@@ -162,8 +162,8 @@ function simulerat(rollGamma) {
 
 const BRYTARE = [
   ['framat_ar_toppen', 'Framåt är toppen'],
-  ['invertera_fram', 'Invertera framåt'],
-  ['invertera_hook', 'Invertera krok'],
+  ['invertera_fram', 'Vänd framåt'],
+  ['invertera_hook', 'Vänd kroken'],
   ['krok', 'Krok'],
   ['ranna', 'Ränna'],
   ['poang', 'Poäng'],
@@ -199,9 +199,9 @@ function visaMeny(oppna) {
 
 function uppdateraMeny() {
   $('kans').value = String(konfig.kanslighet);
-  $('kansTal').textContent = konfig.kanslighet.toFixed(2);
+  $('kansTal').textContent = konfig.kanslighet.toFixed(2).replace('.', ',') + '×';
   $('arm').value = String(konfig.arm.langd);
-  $('armTal').textContent = `${konfig.arm.langd.toFixed(2)} m`;
+  $('armTal').textContent = `${konfig.arm.langd.toFixed(2).replace('.', ',')} m`;
   const info = renderer.info;
   const minne = performance.memory ? `${Math.round(performance.memory.usedJSHeapSize / 1048576)} MB` : '–';
   $('mat').textContent = `${fps} fps · ${info.render.calls} anrop · ${Math.round(info.render.triangles / 1000)}k tris · ladd ${laddTid.toFixed(2)} s · ${minne}`;
@@ -294,8 +294,18 @@ function loop(now) {
 }
 
 byggBrytare();
-$('kans').addEventListener('input', () => { konfig.kanslighet = Number($('kans').value); $('kansTal').textContent = konfig.kanslighet.toFixed(2); });
-$('arm').addEventListener('input', () => { konfig.arm.langd = Number($('arm').value); $('armTal').textContent = `${konfig.arm.langd.toFixed(2)} m`; });
+const standardKans = konfig.kanslighet;
+const standardArm = konfig.arm.langd;
+$('kans').addEventListener('input', () => { konfig.kanslighet = Number($('kans').value); $('kansTal').textContent = konfig.kanslighet.toFixed(2).replace('.', ',') + '×'; });
+$('arm').addEventListener('input', () => { konfig.arm.langd = Number($('arm').value); $('armTal').textContent = `${konfig.arm.langd.toFixed(2).replace('.', ',')} m`; });
+$('aterstall')?.addEventListener('click', () => {
+  konfig.kanslighet = standardKans;
+  konfig.arm.langd = standardArm;
+  $('kans').value = String(standardKans);
+  $('arm').value = String(standardArm);
+  $('kans').dispatchEvent(new Event('input'));
+  $('arm').dispatchEvent(new Event('input'));
+});
 $('menyKnapp').addEventListener('click', e => { e.stopPropagation(); visaMeny($('meny').hidden); });
 $('stang').addEventListener('click', e => { e.stopPropagation(); visaMeny(false); });
 $('noll').addEventListener('click', e => {

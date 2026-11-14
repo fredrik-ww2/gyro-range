@@ -223,24 +223,28 @@ export function monteraGyrobox(spec) {
   panel.id = 'gyrobox-panel-' + spec.spel;
   panel.hidden = true;
   const rub = el('div', 'gyrobox-rub');
-  rub.append(el('strong', null, 'Gyro'));
+  rub.append(el('strong', null, 'Styrning'));
+  rub.append(el('p', 'gyrobox-hint', 'Varje reglage visar vad som gäller nu. Högre betyder mer av det som står under namnet.'));
   const flikar = el('div', 'gyrobox-flikar');
   rub.append(flikar);
   panel.append(rub);
   const kropp = el('div', 'gyrobox-kropp');
   panel.append(kropp);
+  const lagerDet = el('details', 'gyrobox-lager-det');
+  lagerDet.append(el('summary', null, 'Sparade lägen'));
   const lagerBox = el('div', 'gyrobox-lager');
   const namnFalt = el('input', 'gyrobox-namn');
   namnFalt.type = 'text';
   namnFalt.maxLength = 40;
-  namnFalt.placeholder = 'Namn på testläge';
-  namnFalt.setAttribute('aria-label', 'Namn på testläge');
+  namnFalt.placeholder = 'Till exempel Lugn';
+  namnFalt.setAttribute('aria-label', 'Namn på sparat läge');
   namnFalt.autocomplete = 'off';
-  const sparaNy = el('button', 'gyrobox-spara-ny', 'Spara som nytt testläge');
+  const sparaNy = el('button', 'gyrobox-spara-ny', 'Spara det här läget');
   sparaNy.type = 'button';
   const lista = el('ul', 'gyrobox-lista');
-  lagerBox.append(el('p', 'gyrobox-mini', 'Spara som nytt testläge'), namnFalt, sparaNy, lista);
-  panel.append(lagerBox);
+  lagerBox.append(el('p', 'gyrobox-gor', 'Ge läget ett namn om du vill prova och kunna gå tillbaka.'), namnFalt, sparaNy, lista);
+  lagerDet.append(lagerBox);
+  panel.append(lagerDet);
   const stang = el('button', 'gyrobox-stang', 'Stäng och spara');
   stang.type = 'button';
   panel.append(stang);
@@ -278,6 +282,47 @@ export function monteraGyrobox(spec) {
     return a.funktion;
   }
 
+  function slagAv(a) {
+    const s = `${a?.axel || ''}`.toLowerCase();
+    if (/fart|sving/.test(s)) return 'Sving';
+    if (/vrid|gir|yaw|sidled/.test(s)) return 'Vridning';
+    if (/roll|krok|(^| )sida($| )|åt sidan/.test(s)) return 'Sidolutning';
+    return 'Lutning';
+  }
+
+  function titelAv(a) {
+    const bas = slagAv(a);
+    const samma = axlar.filter(x => slagAv(x) === bas);
+    const funk = funktionText(a.id);
+    return samma.length > 1 && funk ? `${bas} · ${funk}` : bas;
+  }
+
+  function meningAv(a) {
+    const slag = slagAv(a);
+    if (slag === 'Vridning') return 'När du vrider telefonen som en dörr följer det här med.';
+    if (slag === 'Sidolutning') return 'När du lutar telefonen åt sidan, som en ratt, följer det här med.';
+    if (slag === 'Sving') return 'När du svingar armen följer klotet med.';
+    return 'När du lutar telefonen framåt eller bakåt följer det här med.';
+  }
+
+  function figur(slag) {
+    const wrap = el('div', 'gyrobox-figur');
+    const telefon = slag === 'Sidolutning'
+      ? '<rect x="8" y="6" width="12" height="18" rx="2" transform="rotate(-16 14 15)" fill="none" stroke="currentColor" stroke-width="1.6"/>'
+      : '<rect x="8" y="4" width="12" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>';
+    const pil = slag === 'Vridning'
+      ? '<path d="M36 18a8 8 0 1 1 8-10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M42 6l6 1-1 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+      : slag === 'Sidolutning'
+        ? '<path d="M34 14h18M46 9l8 5-8 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+        : slag === 'Kalibrering'
+          ? '<circle cx="36" cy="14" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M36 4v6M36 18v6M26 14h6M40 14h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>'
+          : slag === 'Sving'
+            ? '<path d="M28 22c8-16 20-16 28 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>'
+            : '<path d="M40 6v14M35 16l5 6 5-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>';
+    wrap.innerHTML = `<svg viewBox="0 0 72 28" aria-hidden="true">${slag === 'Kalibrering' || slag === 'Sving' ? '' : telefon}${pil}</svg>`;
+    return wrap;
+  }
+
   function ritaChip() {
     const id = aktivId();
     const a = axelInfo(id);
@@ -288,17 +333,18 @@ export function monteraGyrobox(spec) {
       try { vis = spec.las?.(id); } catch { vis = 0; }
     }
     if (!Number.isFinite(vis)) vis = 0;
-    chipText.textContent = `Gyro: ${funktionText(id)} · ${a.axel}`;
+    chipText.textContent = titelAv(a);
     const en = a.enhet || '°';
     const dec = Math.abs(vis) >= 100 ? 0 : 1;
-    chipTal.textContent = `${vis > 0 ? '+' : ''}${sv(vis, dec)}${en === '°' || en === '°/s' ? en : ''}`;
+    const talText = `${vis > 0 ? '+' : ''}${sv(vis, dec)}${en === '°' || en === '°/s' ? en : ''}`;
+    chipTal.textContent = talText;
     const spann = Math.max(1, standard[id].spann || 45);
     const u = clamp(vis / spann, -1, 1);
     meter.style.setProperty('--u', String(u));
-    chip.setAttribute('aria-label', `${chipText.textContent}. ${chipTal.textContent}. Öppna gyroinställningar`);
+    chip.setAttribute('aria-label', `${chipText.textContent}, ${talText}. Öppna styrning`);
   }
 
-  function reglage(nyckel, etikett, inst, std, suffix) {
+  function reglage(nyckel, etikett, hint, inst, std, suffix, slag) {
     const span = {
       kanslighet: [0.2, 3, 0.05],
       kurva: [0.35, 3, 0.05],
@@ -307,7 +353,7 @@ export function monteraGyrobox(spec) {
     }[nyckel];
     const lab = el('label', 'gyrobox-reg');
     const rad = el('span', 'gyrobox-reg-rad');
-    const namn = el('span', null, etikett);
+    const namn = el('span', 'gyrobox-namn', etikett);
     const ut = el('output');
     const input = el('input');
     input.type = 'range';
@@ -316,7 +362,12 @@ export function monteraGyrobox(spec) {
     input.step = String(span[2]);
     input.value = String(inst[nyckel]);
     const dec = nyckel === 'dodzon' ? 1 : 2;
-    const skriv = () => { ut.textContent = `${sv(inst[nyckel], dec)}${suffix}`; };
+    const vis = el('i', 'gyrobox-mini-vis ' + slag);
+    const skriv = () => {
+      ut.textContent = `${sv(inst[nyckel], dec)}${suffix}`;
+      const bredd = Number(input.max) - Number(input.min) || 1;
+      vis.style.setProperty('--u', String(clamp((inst[nyckel] - Number(input.min)) / bredd, 0, 1)));
+    };
     skriv();
     input.addEventListener('input', () => {
       inst[nyckel] = Number(input.value);
@@ -325,67 +376,91 @@ export function monteraGyrobox(spec) {
       ritaChip();
     });
     rad.append(namn, ut);
-    lab.append(rad, input);
+    lab.append(rad, el('span', 'gyrobox-gor', hint), vis, input);
     return lab;
   }
 
-  function ritaPanel() {
-    flikar.replaceChildren();
-    if (axlar.length > 1) {
-      for (const a of axlar) {
-        const b = el('button', 'gyrobox-flik' + (a.id === valdAxel ? ' pa' : ''), a.axel);
-        b.type = 'button';
-        b.setAttribute('aria-pressed', a.id === valdAxel ? 'true' : 'false');
-        b.addEventListener('click', () => { valdAxel = a.id; ritaPanel(); });
-        flikar.append(b);
-      }
+  function aterstall() {
+    for (const a of axlar) {
+      install[a.id] = normaliseraAxel(standard[a.id], standard[a.id]);
+      tillstand[a.id].iVrid = false;
+      tillstand[a.id].integral = 0;
+      tillstand[a.id].jamn = 0;
     }
-    kropp.replaceChildren();
-    const id = install[valdAxel] ? valdAxel : axlar[0].id;
-    valdAxel = id;
+    vald = null;
+    spara();
+    ritaPanel();
+    ritaChip();
+  }
+
+  function ritaAxel(id) {
+    const det = el('details', 'gyrobox-grupp');
+    det.open = axlar.length === 1 || id === (valdAxel || axlar[0].id);
+    const a = axelInfo(id);
     const inst = install[id];
     const std = standard[id];
-    const a = axelInfo(id);
-    kropp.append(el('p', 'gyrobox-mini', `${funktionText(id)} · ${a.axel}`));
-
-    const inv = el('label', 'gyrobox-check');
-    const invBox = el('input');
-    invBox.type = 'checkbox';
-    invBox.checked = !!inst.invertera;
-    inv.append(invBox, el('span', null, 'Invertera'));
-    invBox.addEventListener('change', () => { inst.invertera = invBox.checked; spara(); });
-    kropp.append(inv);
+    det.append(el('summary', null, titelAv(a)));
+    det.append(el('p', 'gyrobox-gor', meningAv(a)));
+    det.append(figur(slagAv(a)));
 
     const lageRad = el('div', 'gyrobox-lage');
-    for (const [kod, text] of [['vrid', 'Fortsätt vrida'], ['noll', 'Återgå till noll']]) {
+    for (const [kod, text] of [['noll', 'Följer med'], ['vrid', 'Snurrar vidare']]) {
       const b = el('button', 'gyrobox-val' + (inst.lage === kod ? ' pa' : ''), text);
       b.type = 'button';
       b.setAttribute('aria-pressed', inst.lage === kod ? 'true' : 'false');
       b.addEventListener('click', () => {
         inst.lage = kod;
         tillstand[id].iVrid = false;
+        valdAxel = id;
         spara();
         ritaPanel();
       });
       lageRad.append(b);
     }
-    kropp.append(lageRad);
-    kropp.append(el('p', 'gyrobox-hint', inst.lage === 'vrid'
-      ? 'Håller du lutningen kvar fortsätter det att vrida.'
-      : 'När telefonen går tillbaka går utslaget tillbaka till noll.'));
+    det.append(lageRad);
+    const ord = slagAv(a).toLowerCase();
+    det.append(el('p', 'gyrobox-gor', inst.lage === 'vrid'
+      ? 'Håller du kvar fortsätter det. Rakt igen = det stannar där det är.'
+      : `Mer ${ord} = större utslag. Rakt igen = tillbaka till noll.`));
 
-    kropp.append(reglage('kanslighet', 'Känslighet', inst, std, '×'));
-    kropp.append(reglage('kurva', 'Acceleration/kurva', inst, std, ''));
-    kropp.append(reglage('dodzon', 'Dödzon', inst, std, '°'));
-    kropp.append(reglage('utjamning', 'Utjämning', inst, std, spec.suffixUtjamning ?? ' s'));
+    det.append(el('h4', null, 'Känslighet'));
+    det.append(reglage('kanslighet', 'Känslighet', 'Högre = mer utslag för samma rörelse.', inst, std, '×', 'pil'));
+    det.append(reglage('kurva', 'Hur det ökar', 'Högre = små rörelser blir svagare och stora slår hårdare.', inst, std, '', 'kurva'));
+    det.append(el('h4', null, 'Dödzon'));
+    det.append(reglage('dodzon', 'Dödzon', 'Högre = du måste luta eller vrida mer innan något händer.', inst, std, '°', 'gap'));
+    det.append(reglage('utjamning', 'Mjukhet', 'Högre = mjukare och långsammare följning.', inst, std, spec.suffixUtjamning ?? ' s', 'mjuk'));
 
-    const kal = el('button', 'gyrobox-kal', 'Kalibrera');
-    kal.type = 'button';
-    kal.addEventListener('click', () => kalibrera());
+    const inv = el('label', 'gyrobox-check');
+    const invBox = el('input');
+    invBox.type = 'checkbox';
+    invBox.checked = !!inst.invertera;
+    inv.append(invBox, el('span', null, 'Vänd riktningen'));
+    invBox.addEventListener('change', () => { inst.invertera = invBox.checked; spara(); });
+    det.append(inv);
+    det.append(el('p', 'gyrobox-gor', 'På = höger blir vänster, och upp blir ner.'));
+    return det;
+  }
+
+  function ritaPanel() {
+    flikar.replaceChildren();
+    kropp.replaceChildren();
+    for (const a of axlar) kropp.append(ritaAxel(a.id));
+
+    const kal = el('section', 'gyrobox-grupp kal');
+    kal.append(el('h3', null, 'Kalibrering'));
+    kal.append(figur('Kalibrering'));
+    kal.append(el('p', 'gyrobox-gor', 'Håll telefonen som du vill att noll ska kännas, och tryck på knappen.'));
+    const kalKnapp = el('button', 'gyrobox-kal', 'Sätt noll här');
+    kalKnapp.type = 'button';
+    kalKnapp.addEventListener('click', () => kalibrera());
+    const ater = el('button', 'gyrobox-ater', 'Återställ standard');
+    ater.type = 'button';
+    ater.addEventListener('click', () => aterstall());
+    kal.append(kalKnapp, el('p', 'gyrobox-gor', 'Standard är så spelet styrs från början.'), ater);
     kropp.append(kal);
 
     lista.replaceChildren();
-    if (!lagen.length) lista.append(el('li', 'gyrobox-tom', 'Inga sparade testlägen'));
+    if (!lagen.length) lista.append(el('li', 'gyrobox-tom', 'Inga sparade lägen ännu'));
     for (const lag of lagen) {
       const li = el('li');
       const valj = el('button', 'gyrobox-lag' + (lag.id === vald ? ' pa' : ''), lag.namn);

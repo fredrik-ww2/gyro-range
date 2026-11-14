@@ -103,8 +103,11 @@
 <summary>Svängtrösklar</summary>
 <p class="led">Grader efter dödzon och känslighet. Först broms, sedan ett band stilla, sedan det bandet backar.</p>
 <label class="reglage">Broms från <span data-vis="broms"></span><input data-troskel="broms" type="range" min="2" max="30" step="1"></label>
+<p class="led">Högre = du måste luta mer innan vagnen bromsar.</p>
 <label class="reglage">Ett band från <span data-vis="ettBand"></span><input data-troskel="ettBand" type="range" min="4" max="45" step="1"></label>
+<p class="led">Högre = mer lutning innan ett band står stilla.</p>
 <label class="reglage">Backande band från <span data-vis="backBand"></span><input data-troskel="backBand" type="range" min="8" max="60" step="1"></label>
+<p class="led">Högre = mer lutning innan ett band backar.</p>
 </details>
 <label class="check"><input id="visaMat" type="checkbox"> Visa mätvärden</label>
 <label class="check"><input id="ljudPa" type="checkbox" checked> Mekanikljud</label>
@@ -112,7 +115,8 @@
 <label class="check"><input id="hePansar" type="checkbox"> Spränggranat mot tunn plåt</label>
 <label class="check"><input id="skadaUtan" type="checkbox"> Skada utan genomslag</label>
 <label class="reglage" id="sikteRad">Sikte<select id="sikteVal"></select></label>
-<button id="standard" type="button">Standard</button>
+<button id="standard" type="button">Återställ standard</button>
+<p class="led">Tar tillbaka den vanliga styrningen för vagn, torn och eldrör.</p>
 </section>
 <script type="module" src="./spel.js?v=20"></script>
 <script>

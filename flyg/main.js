@@ -185,11 +185,16 @@ $('klaff').onclick=()=>{flaps=flaps<0.2?0.45:flaps<0.7?1:0;synkaReglage();$('sta
 function fallBomb(){if(!bomberKvar){$('status').textContent='Inga bomber kvar';return false;}fyllHast(hast,fm);const ok=bomber.fall(aircraft.position,{x:hast.x,y:hast.y,z:hast.z},227);if(!ok)return false;bomberKvar--;synkaReglage();$('status').textContent='Bomb fälld';return true;}
 $('fall').onclick=fallBomb;
 const Zon=C.gyro_zon;
-$('sensitivity').min=Zon.kanslighet_min;$('sensitivity').max=Zon.kanslighet_max;$('sensitivity').step=Zon.kanslighet_steg;$('sensitivity').value=settings.kanslighet;$('sensitivity').oninput=e=>settings.kanslighet=+e.target.value;
+const standardKans=settings.kanslighet, standardRoll=settings.roll_troskel_grader;
+$('sensitivity').min=Zon.kanslighet_min;$('sensitivity').max=Zon.kanslighet_max;$('sensitivity').step=Zon.kanslighet_steg;$('sensitivity').value=settings.kanslighet;
+function visaKans(){const el=$('kansTal');if(el)el.textContent=Number(settings.kanslighet).toFixed(1).replace('.', ',')+'×';}
+$('sensitivity').oninput=e=>{settings.kanslighet=+e.target.value;visaKans();};
+visaKans();
 const rollStyr=$('rollTroskel'),rollTal=$('rollTal');
 rollStyr.min=Zon.troskel_min_grader;rollStyr.max=Zon.troskel_max_grader;rollStyr.step=Zon.troskel_steg_grader;rollStyr.value=settings.roll_troskel_grader;
 function visaTroskel(){rollTal.textContent=Math.round(settings.roll_troskel_grader)+'°';}
 visaTroskel();rollStyr.oninput=e=>{settings.roll_troskel_grader=+e.target.value;visaTroskel();};
+$('aterstallStyr').onclick=()=>{settings.kanslighet=standardKans;settings.roll_troskel_grader=standardRoll;$('sensitivity').value=standardKans;rollStyr.value=standardRoll;visaKans();visaTroskel();};
 const names={gyro:'Gyrostyrning',nivellering:'Automatisk nivellering',krasch:'Krasch vid markkontakt',skjutning:'Vingvapen',mal:'Målballonger',markskydd:'Mjukt markskydd',haptik:'Vibrationer',ljud:'Ljud',skada:'Skada',led:'Ledmarkör'};
 for(const [key,name]of Object.entries(names)){const label=document.createElement('label');label.textContent=name;const box=document.createElement('input');box.type='checkbox';box.checked=!!settings.brytare[key];box.dataset.nyckel=key;box.onchange=()=>{settings.brytare[key]=box.checked;if(key==='gyro'){input.active=box.checked;styrLage=box.checked?'gyro':'finger';center();if(box.checked&&running)gyro.start();else gyro.stop();}if(key==='haptik')haptics.sync();if(key==='ljud'){if(box.checked)void seTillLjud();else{motorKanal.tyst();skottKanal.tyst();mekanik.tyst();}}};label.append(box);$('toggles').append(label);}
 function visaMeny(oppna){$('settings').hidden=!oppna;$('settingsButton').setAttribute('aria-expanded',String(!!oppna));}

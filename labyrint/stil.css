@@ -67,7 +67,8 @@ button.menyknapp[data-mal="1"]::after {
 .reglage output { color: var(--accent); font-weight: 700; }
 .reglage input { width: 100%; accent-color: var(--accent); height: 28px; }
 .check input { width: 22px; height: 22px; accent-color: var(--accent); }
-#nollstall, #allaLankar { display: flex; align-items: center; justify-content: center; width: 100%; margin-top: 10px; text-decoration: none; }
+#nollstall, #aterstall, #allaLankar { display: flex; align-items: center; justify-content: center; width: 100%; margin-top: 10px; text-decoration: none; }
+.led { margin: 2px 0 8px; color: var(--damp); font-size: 13px; line-height: 1.35; }
 #allaLankar { min-height: 44px; border-radius: 12px; background: #24382c; color: #f6f3ea; }
 .mat { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin: 6px 0 0; }
 .mat div { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }

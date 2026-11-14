@@ -69,7 +69,8 @@
     <label class="setting"><span>Kameravy</span><select id="cameraView" aria-label="Kameravy"><option value="cockpit">Cockpit</option><option value="external">Utomhus</option></select></label>
     <button id="lookDown" class="outline" type="button">Se spaken</button>
     <div id="tuning"></div>
-    <p class="mode-help">Reglagen gäller tills du laddar om sidan. Grundvärdena ligger i config.json.</p>
+    <p class="mode-help">Reglagen gäller tills du laddar om sidan, eller tills du tar tillbaka standard.</p>
+    <button id="aterstallStyr" class="outline" type="button">Återställ standard</button>
     <details id="controlTest"><summary>Prova utan telefon</summary><p>Gradtal före dödzon och mjukhet. Stäng menyn när du vill flyga.</p>
       <label class="range-setting"><span>Pitch <output id="testPitchOut">0°</output></span><input id="testPitch" type="range" min="-40" max="40" value="0"></label>
       <label class="range-setting"><span>Roll <output id="testRollOut">0°</output></span><input id="testRoll" type="range" min="-40" max="40" value="0"></label>

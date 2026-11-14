@@ -78,6 +78,68 @@ export const FALT=[
  {flik:'Ställning',nyckel:'stallning.upp_dps',namn:'Knyck uppåt ett steg',min:80,max:520,steg:10,enhet:'°/s'}
 ];
 
+const HJALP={
+ 'gang.satt':'Lutning: luta framåt för att gå. Knyck: en snabb rörelse tar ett steg.',
+ 'gang.knyck_dps':'Högre = du måste knycka hårdare för att ta ett steg.',
+ 'gang.steg_m':'Högre = varje knyck tar ett längre steg.',
+ 'gang.svang_mjuk':'Högre = kroppen svänger mer när du vrider telefonen.',
+ 'gang.svang_dod_grad':'Högre = du måste luta mer åt sidan innan det svänger.',
+ 'gang.svang_full_grad':'Högre = full sväng kräver mer sidolutning.',
+ 'gang.svang_stark':'Högre = sidolutning svänger snabbare.',
+ 'gang.svang_sikte_dod_grad':'Högre = i siktet ignoreras mer sidolutning innan det svänger.',
+ 'gang.sido_andel':'Högre = mer av farten går åt sidan.',
+ 'gang.dodZon_grad':'Högre = du måste luta mer framåt innan du börjar gå.',
+ 'gang.max_grad':'Högre = full gång kräver mer framåtlutning.',
+ 'gang.fart_langsam_ms':'Högre = långsam gång är snabbare.',
+ 'gang.fart_max_ms':'Högre = snabb gång är snabbare.',
+ 'spurt.fart_ms':'Högre = spurten är snabbare.',
+ 'spurt.uthallighet_s':'Högre = du kan spurta längre.',
+ 'spurt.aterhamtning_s':'Högre = det tar längre tid att bli pigg igen.',
+ 'spurt.puls_avklingning_s':'Högre = pulsen lugnar sig långsammare.',
+ 'spurt.puls_skak':'Högre = siktet skakar mer när pulsen är hög.',
+ 'kropp.dodZon_andel':'Högre = små vridningar ignoreras.',
+ 'kropp.kanslighet':'Högre = kroppen vrider sig mer för samma vridning.',
+ 'kropp.vila_grad':'Högre = kroppen väntar längre innan den följer med.',
+ 'kropp.vila_fart':'Högre = långsam vridning vrider inte kroppen.',
+ 'overkropp.vila_grad':'Högre = höften väntar längre innan den följer med.',
+ 'overkropp.max_grad':'Högre = höften kan vridas mer.',
+ 'overkropp.kanslighet':'Högre = höften följer vridningen mer.',
+ 'overkropp.benFoljer_grad':'Högre = benen väntar tills höften vridit mer.',
+ 'overkropp.benFart':'Högre = benen hinner i kapp fortare.',
+ 'sikte.satt':'Välj hur telefonens lutning blir sikte.',
+ 'sikte.kanslighet':'Högre = siktet rör sig mer för samma lutning.',
+ 'sikte.dodZon_grad':'Högre = små rörelser ignoreras i siktet.',
+ 'sikte.utjamning_s':'Högre = siktet följer mjukare och långsammare.',
+ 'sikte.ytterst':'På = siktet blir mycket känsligt. Håll telefonen stilla.',
+ 'platta.fart_ms':'Högre = styrplattan går snabbare när vapnet är uppe.',
+ 'skak.grund':'Högre = siktet darrar mer även när du står still.',
+ 'skak.efter':'Högre = siktet skakar mer efter att du rört dig.',
+ 'skak.nu':'Högre = siktet skakar mer medan det rör sig.',
+ 'skak.avklingning_langsam_s':'Högre = skakningen lägger sig långsammare när du går.',
+ 'skak.avklingning_sprint_s':'Högre = skakningen lägger sig långsammare efter en spurt.',
+ 'skak.jarnForsening_s':'Högre = järnsiktet linjerar sig långsammare.',
+ 'skak.andetag':'Högre = andetagen syns mer i siktet.',
+ 'skak.tremor':'Högre = den fina darrningen syns mer.',
+ 'ksp.skak_staende':'Högre = kulsprutan skakar mer när du står.',
+ 'ksp.skak_kna':'Högre = kulsprutan skakar mer på knä.',
+ 'ksp.skak_monterad':'Högre = kulsprutan skakar mer när den är monterad.',
+ 'ksp.rekyl_monterad':'Högre = mer rekyl när kulsprutan är monterad.',
+ 'avtryckare.drag_px':'Högre = du måste dra längre innan skottet går.',
+ 'avtryckare.kram_s':'Högre = det tar längre tid innan siktet blir stilla.',
+ 'avtryckare.hall_s':'Högre = du kan hålla inne längre utan att dra.',
+ 'avtryckare.snabbt_s':'Högre = ett ryck får ta längre tid och ändå räknas som snabbt.',
+ 'avtryckare.snabb_fart':'Högre = du måste rycka snabbare för att det ska räknas.',
+ 'haptik.kram':'Högre = starkare knack när du börjar krama avtryckaren.',
+ 'haptik.skott':'Högre = starkare knack vid skott.',
+ 'kikare.variant':'Välj hur korset i kikaren ser ut.',
+ 'kikare.zoom':'Högre = kikaren förstorar mer.',
+ 'kikare.kanslighet':'Högre = siktet rör sig mer inne i kikaren.',
+ 'stallning.satt':'Välj hur du går ner i liggande och upp igen.',
+ 'stallning.grans_dps':'Högre = gesten måste vara snabbare.',
+ 'stallning.ner_dps':'Högre = du måste knycka hårdare för att ligga.',
+ 'stallning.upp_dps':'Högre = du måste knycka hårdare för att resa dig ett steg.'
+};
+
 function las(obj,nyckel){return nyckel.split('.').reduce((o,k)=>o?.[k],obj);}
 function skriv(obj,nyckel,varde){const d=nyckel.split('.');let o=obj;for(let i=0;i<d.length-1;i++)o=o[d[i]];o[d.at(-1)]=varde;}
 
@@ -109,6 +171,7 @@ export function byggMeny(rot,styr){
  rot.replaceChildren();
  const ater=document.createElement('button');
  ater.type='button';ater.className='primary';ater.textContent='Återställ standard';
+ const led=document.createElement('p');led.className='hint';led.textContent='Tar tillbaka de vanliga värdena för gång, sikte och ställning.';
  const flikar=document.createElement('div');flikar.className='flikar';
  const yta=document.createElement('div');yta.className='flikyta';
  const namn=[...new Set(FALT.map(f=>f.flik))];
@@ -137,6 +200,7 @@ export function byggMeny(rot,styr){
     inp.oninput=()=>{styr.satt(f.nyckel,Number(inp.value));visa();};
     lab.append(rub,ut,inp);
    }
+   if(HJALP[f.nyckel]){const p=document.createElement('p');p.className='hint';p.textContent=HJALP[f.nyckel];lab.append(p);}
    yta.append(lab);
   }
  }
@@ -147,7 +211,7 @@ export function byggMeny(rot,styr){
  }
  flikar.firstChild.classList.add('vald');
  ater.onclick=()=>{styr.aterstall();rita();};
- rot.append(ater,flikar,yta);
+ rot.append(ater,led,flikar,yta);
  rita();
 }
 
@@ -197,6 +261,13 @@ function reglage(styr, nyckel, min, max, steg, text) {
  return wrap;
 }
 
+function sats(text) {
+ const p = document.createElement('p');
+ p.className = 'hint';
+ p.textContent = text;
+ return p;
+}
+
 // De val man rör hela tiden, samlade så de kan ligga under en flik.
 // Samma objekt som laboreramenyn, och det sparas på enheten.
 export function byggSnabb(rot, styr, extra = {}) {
@@ -206,10 +277,15 @@ export function byggSnabb(rot, styr, extra = {}) {
  g.textContent = 'Gående';
  rot.append(g);
  falt(rot, 'Sätt', val(styr, 'gang.satt', [['lutning', 'Lutning fram/bak'], ['knyck', 'Knyck / steglängd']]));
+ rot.append(sats('Lutning går när du lutar framåt. Knyck tar ett steg när du knycker.'));
  falt(rot, 'Steglängd', reglage(styr, 'gang.steg_m', 0.2, 1.6, 0.05, n => n.toFixed(2) + ' m'));
+ rot.append(sats('Högre = varje knyck tar ett längre steg.'));
  falt(rot, 'Lutning för full gång', reglage(styr, 'gang.max_grad', 8, 45, 1, n => n.toFixed(0) + '°'));
+ rot.append(sats('Högre = full gång kräver mer framåtlutning.'));
  falt(rot, 'Känslighet vridning', reglage(styr, 'kropp.kanslighet', 0.4, 8, 0.1, n => n.toFixed(1) + '×'));
+ rot.append(sats('Högre = kroppen vrider sig mer för samma vridning.'));
  falt(rot, 'Sidlutning svänger', reglage(styr, 'gang.svang_stark', 0.4, 8, 0.1, n => n.toFixed(1)));
+ rot.append(sats('Högre = sidolutning svänger snabbare.'));
  const spak = document.createElement('p');
  spak.textContent = 'Spaken nere till vänster går och springer, både med vapnet sänkt och när plattan används vid sikte.';
  rot.append(spak);
@@ -219,7 +295,9 @@ export function byggSnabb(rot, styr, extra = {}) {
  rot.append(s);
  falt(rot, 'Sätt', val(styr, 'sikte.satt', [['tipp_vrid', 'Luta upp/ner, vrid sidled'], ['roll_kropp', 'Sidlutning siktar, vridning svänger'], ['overkropp', 'Överkroppen vrids']]));
  falt(rot, 'Känslighet', reglage(styr, 'sikte.kanslighet', 0.15, 4, 0.05, n => n.toFixed(2) + '×'));
+ rot.append(sats('Högre = siktet rör sig mer för samma lutning.'));
  falt(rot, 'Platta', reglage(styr, 'platta.fart_ms', 0.4, 4, 0.1, n => n.toFixed(1) + ' m/s'));
+ rot.append(sats('Högre = styrplattan går snabbare när vapnet är uppe.'));
  const lage = document.createElement('select');
  lage.id = 'sikteLage';
  for (const [id, text] of [['foljer', 'Gyro direkt, följer lutningen'], ['rorelse', 'Fartstyrning, som en spak']]) {
@@ -242,7 +320,7 @@ export function byggSnabb(rot, styr, extra = {}) {
  const ax = document.createElement('button');
  ax.type = 'button';
  ax.id = 'oppnaAxlar';
- ax.textContent = 'Axlar var för sig';
+ ax.textContent = 'Fininställning: lutning och vridning';
  ax.onclick = () => extra.axlar?.();
  rot.append(ax);
 }

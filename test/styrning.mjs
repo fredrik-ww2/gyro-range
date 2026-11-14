@@ -223,7 +223,7 @@ const meny = await sida.evaluate(() => {
 });
 if (meny.dold) krav.push('panelen dold');
 if (meny.oppna !== 0) krav.push('grupper öppna ' + meny.oppna);
-for (const namn of ['Gå', 'Sikta', 'Vrida', 'Luta fram/bak', 'Luta åt sidan', 'Gång', 'Skakning', 'Haptik', 'Mätvärden']) {
+for (const namn of ['Gå', 'Sikta', 'Vridning', 'Lutning', 'Sidolutning', 'Gång', 'Skakning', 'Haptik', 'Mätvärden']) {
   if (!meny.rubriker.includes(namn)) krav.push('saknar ' + namn);
 }
 if (meny.min !== '0.5' || meny.max !== '3') krav.push('känslighet ' + meny.min + '-' + meny.max);
@@ -231,7 +231,7 @@ if (!meny.lage.includes('Följer läget') || !meny.lage.includes('Bara när den 
 if (!meny.roll) krav.push('roll saknar av');
 if (!meny.switchAttr) krav.push('ios-switch saknas');
 if (!/navigator\.vibrate|iOS-brytare/.test(meny.metod)) krav.push('metod ' + meny.metod);
-if (meny.standard !== 'Standard' || meny.noll !== 'Nollställ') krav.push('knappar ' + meny.standard + meny.noll);
+if (meny.standard !== 'Återställ standard' || meny.noll !== 'Nollställ') krav.push('knappar ' + meny.standard + meny.noll);
 if (!(meny.knappH >= 48)) krav.push('liten knapp ' + meny.knappH);
 if (!(meny.sliderH >= 36)) krav.push('litet reglage ' + meny.sliderH);
 if (meny.haptik !== true || meny.gang !== false || meny.mat !== false) krav.push('standardbrytare ' + JSON.stringify(meny));

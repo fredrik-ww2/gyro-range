@@ -15,7 +15,8 @@ export const POSER = {
   stående: { thigh_l: -6, thigh_r: -6, calf_l: 12, calf_r: 12, foot_l: -6, foot_r: -6, spine_01: 2 },
   hukande: { thigh_l: -65, thigh_r: -65, calf_l: 95, calf_r: 95, foot_l: -55, foot_r: -55, spine_01: 10, spine_02: 5 },
   knastående: { thigh_r: -10, calf_r: 100, foot_r: 40, thigh_l: -80, calf_l: 115, foot_l: -55, spine_01: 8, spine_02: 4 },
-  liggande: { pelvis: 80, thigh_l: 6, thigh_r: 6, calf_l: 10, calf_r: 10, foot_l: 22, foot_r: 22, spine_01: -6, spine_02: -2, neck_01: 22 }
+  // Höften nära marken, ryggen välvd och nacken bakåt så huvudet tittar framåt, inte ner i marken.
+  liggande: { pelvis: 88, thigh_l: -4, thigh_r: -4, calf_l: 16, calf_r: 16, foot_l: 8, foot_r: 8, spine_01: -18, spine_02: -14, spine_03: -10, neck_01: -36 }
 };
 
 // Handmål i modellens rum ( +X vänster, +Y upp, +Z framåt ), från spine_03.
@@ -23,9 +24,9 @@ export const POSER = {
 // tipp lutar pipan nedåt. Värdena är inom armlängden på den här riggen.
 export const MAL = {
   sankt: { hx: -0.16, hy: -0.22, hz: 0.12, tipp: 0.22, dist: 0.28 },
-  axel: { hx: -0.12, hy: -0.16, hz: 0.1, tipp: 0.03, dist: 0.32 },
-  liggSankt: { hx: -0.14, hy: 0.08, hz: 0.1, tipp: 0.06, dist: 0.28 },
-  liggAxel: { hx: -0.14, hy: 0.1, hz: 0.14, tipp: 0.02, dist: 0.32 }
+  axel: { hx: -0.15, hy: 0.02, hz: 0.04, tipp: 0.02, dist: 0.55 },
+  liggSankt: { hx: -0.14, hy: 0.04, hz: 0.12, tipp: 0.02, dist: 0.5 },
+  liggAxel: { hx: -0.12, hy: 0.05, hz: 0.08, tipp: -0.05, dist: 0.55 }
 };
 
 const STEG = { thigh_l: 14, thigh_r: 14, calf_l: -8, calf_r: -8, foot_l: 5, foot_r: 5 };
@@ -72,6 +73,10 @@ export function skapaBen(root, install = {}) {
   const stod = new THREE.Vector3();
   const poleH = new THREE.Vector3();
   const poleV = new THREE.Vector3();
+  const handX = new THREE.Vector3();
+  const handY = new THREE.Vector3();
+  const handZ = new THREE.Vector3();
+  const basM = new THREE.Matrix4();
   let langdU = 0;
   let langdL = 0;
   let skala = 1;
@@ -108,6 +113,25 @@ export function skapaBen(root, install = {}) {
     extraQ.setFromEuler(euler);
     malQ.copy(del.vila).multiply(extraQ);
     satt(del, malQ, u);
+  }
+
+  function vrid(namn, x, y, z, u) {
+    const del = ben.get(namn);
+    if (!del) return;
+    euler.set((x || 0) * DEG, (y || 0) * DEG, (z || 0) * DEG, 'XYZ');
+    extraQ.setFromEuler(euler);
+    malQ.copy(del.vila).multiply(extraQ);
+    satt(del, malQ, u);
+  }
+
+  // Kind mot kolven: huvudet böjs lätt ner och rullar mot höger axel.
+  function sikteHuvud(stallning, axel, u) {
+    if (!(axel > 0.08)) return;
+    const t = Math.min(1, axel);
+    const ligg = stallning === 'liggande';
+    const bas = (poser[stallning] || {}).neck_01 || 0;
+    vrid('neck_01', bas + (ligg ? 12 : 32) * t, 0, (ligg ? 22 : 32) * t, u);
+    vrid('Head', (ligg ? 6 : 14) * t, 0, (ligg ? 10 : 16) * t, u);
   }
 
   function svang(del, malVarld, u) {
@@ -175,17 +199,57 @@ export function skapaBen(root, install = {}) {
       .addScaledVector(vanster, tab.hx * skala)
       .addScaledVector(upp, tab.hy * skala)
       .addScaledVector(fram, tab.hz * skala);
-    const lut = fram.clone().multiplyScalar(Math.cos(tab.tipp)).addScaledVector(upp, -Math.sin(tab.tipp));
+    const axelBen = ben.get('upperarm_r')?.node;
+    const hals = ben.get('neck_01')?.node;
+    if (axelBen && axel > 0.04) {
+      axelBen.getWorldPosition(axelPos);
+      if (hals) {
+        hals.getWorldPosition(rikt);
+        axelPos.lerp(rikt, stallning === 'liggande' ? 0.38 : 0.5);
+      }
+      const huvud = ben.get('Head')?.node;
+      if (huvud) {
+        huvud.getWorldPosition(rikt);
+        axelPos.y += (rikt.y - axelPos.y) * (stallning === 'liggande' ? 0.22 : 0.42);
+      }
+      axelPos.addScaledVector(fram, (stallning === 'liggande' ? -0.01 : -0.025) * skala);
+      grepp.lerp(axelPos, Math.min(1, axel));
+    }
+    const lut = fram.clone().addScaledVector(vanster, 0.22).addScaledVector(upp, stallning === 'liggande' ? 0.05 : 0.03);
     if (lut.lengthSq() < 1e-8) lut.copy(fram);
     lut.normalize();
     stod.copy(grepp).addScaledVector(lut, tab.dist * skala);
     const axelH = ben.get('upperarm_r')?.node;
     const axelV = ben.get('upperarm_l')?.node;
-    if (axelH) { axelH.getWorldPosition(axelPos); inomRack(axelPos, grepp); }
     if (axelV) { axelV.getWorldPosition(axelPos); inomRack(axelPos, stod); }
-    poleH.copy(grepp).addScaledVector(vanster, -0.26 * skala).addScaledVector(upp, -0.2 * skala);
-    poleV.copy(stod).addScaledVector(vanster, 0.26 * skala).addScaledVector(upp, -0.16 * skala);
-    return { grepp: grepp.clone(), stod: stod.clone(), fram: lut.clone(), upp: upp.clone() };
+    if (axelH && axel > 0.04) {
+      axelH.getWorldPosition(axelPos);
+      poleH.copy(axelPos).addScaledVector(vanster, -0.62 * skala).addScaledVector(fram, -0.06 * skala);
+    } else {
+      poleH.copy(grepp).addScaledVector(vanster, -0.24 * skala).addScaledVector(upp, -0.18 * skala);
+    }
+    if (stallning === 'liggande') poleV.copy(stod).addScaledVector(upp, -0.28 * skala);
+    else poleV.copy(stod).addScaledVector(upp, -0.16 * skala).addScaledVector(fram, 0.08 * skala);
+    return { grepp: grepp.clone(), stod: stod.clone(), fram: lut.clone(), upp: upp.clone(), stallning, axel };
+  }
+
+  function vridHand(namn, fran, till, fingrarUpp, u) {
+    const del = ben.get(namn);
+    if (!del) return;
+    handX.copy(till).sub(fran);
+    if (handX.lengthSq() < 1e-8) return;
+    handX.normalize();
+    handY.copy(fingrarUpp).addScaledVector(handX, -fingrarUpp.dot(handX));
+    if (handY.lengthSq() < 1e-6) handY.set(0, 1, 0).addScaledVector(handX, -handX.y);
+    handY.normalize();
+    handZ.crossVectors(handX, handY).normalize();
+    handY.crossVectors(handZ, handX).normalize();
+    basM.makeBasis(handX, handY, handZ);
+    worldQ.setFromRotationMatrix(basM);
+    del.node.parent.updateWorldMatrix(true, false);
+    del.node.parent.getWorldQuaternion(parentQ);
+    malQ.copy(parentQ).invert().multiply(worldQ);
+    satt(del, malQ, u);
   }
 
   function armarMot(mal, u) {
@@ -193,10 +257,12 @@ export function skapaBen(root, install = {}) {
     ik('upperarm_r', 'lowerarm_r', mal.grepp, poleH, u);
     root.updateWorldMatrix(true, true);
     ik('upperarm_l', 'lowerarm_l', mal.stod, poleV, u);
-    for (const namn of ['hand_r', 'hand_l']) {
-      const del = ben.get(namn);
-      if (del) satt(del, del.vila, u);
-    }
+    handY.set(0, -1, 0);
+    vridHand('hand_r', mal.grepp, mal.stod, handY, u);
+    handY.copy(mal.stod).sub(mal.grepp);
+    if (handY.lengthSq() < 1e-8) handY.set(0, 0, 1);
+    handY.y += handY.length() * 0.35;
+    vridHand('hand_l', mal.grepp, mal.stod, handY, u);
     for (const del of fingrar) {
       const grader = del.tumme ? del.led * 0.45 : del.led;
       const tecken = 1;
@@ -244,6 +310,7 @@ export function skapaBen(root, install = {}) {
         if (rytm && STEG[namn]) grader += Math.sin(rytm + (namn.endsWith('_r') ? Math.PI : 0)) * STEG[namn];
         gangjarn(namn, grader, u);
       }
+      sikteHuvud(stallning, axel, u);
       root.updateWorldMatrix(true, true);
       senaste = rakna(axel, stallning);
       return senaste;
@@ -261,8 +328,14 @@ export function skapaBen(root, install = {}) {
       root.updateWorldMatrix(true, false);
       vanster.set(1, 0, 0).transformDirection(root.matrixWorld);
       upp.set(0, 1, 0).transformDirection(root.matrixWorld);
-      poleH.copy(grepp).addScaledVector(vanster, -0.22 * skala).addScaledVector(upp, -0.16 * skala);
-      poleV.copy(stod).addScaledVector(vanster, 0.22 * skala).addScaledVector(upp, -0.12 * skala);
+      fram.set(0, 0, 1).transformDirection(root.matrixWorld);
+      const ligg = senaste?.stallning === 'liggande' || grepp.y < 0.5;
+      if (axelH) {
+        axelH.getWorldPosition(axelPos);
+        poleH.copy(axelPos).addScaledVector(vanster, -0.85 * skala).addScaledVector(fram, -0.12 * skala).addScaledVector(upp, ligg ? 0.02 * skala : 0.12 * skala);
+      }
+      if (ligg) poleV.copy(stod).addScaledVector(upp, -0.3 * skala);
+      else poleV.copy(stod).addScaledVector(upp, -0.18 * skala).addScaledVector(fram, 0.06 * skala);
       senaste = { ...(senaste || {}), grepp: grepp.clone(), stod: stod.clone() };
       armarMot(senaste, u);
       root.updateWorldMatrix(true, true);
@@ -281,6 +354,7 @@ export function skapaBen(root, install = {}) {
         if (rytm && STEG[namn]) grader += Math.sin(rytm + (namn.endsWith('_r') ? Math.PI : 0)) * STEG[namn];
         gangjarn(namn, grader, u);
       }
+      sikteHuvud(stallning, axel, u);
       root.updateWorldMatrix(true, true);
       senaste = rakna(axel, stallning);
       armarMot(senaste, u);

@@ -164,6 +164,16 @@ function sko(ben) {
   ben.add(s);
 }
 sko(benV); sko(benH);
+const gevarTra = new THREE.MeshLambertMaterial({ color: 0x6a4a28 });
+const gevarStal = new THREE.MeshLambertMaterial({ color: 0x2a2c28 });
+const gevar = new THREE.Group();
+const kolv = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.07, 0.28), gevarTra);
+kolv.position.set(0, -0.02, 0.02);
+const pipa = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.62), gevarStal);
+pipa.position.set(0, 0.01, -0.42);
+gevar.add(kolv, pipa);
+gevar.position.set(0.2, 0.22, -0.02);
+hoft.add(gevar);
 scene.add(gubbe);
 
 let sparad = null;
@@ -370,8 +380,10 @@ function steg(dt) {
   ligg += (malLigg - ligg) * (1 - Math.exp(-dt / 0.12));
   gubbe.position.set(pos.x, y, pos.z);
   gubbe.rotation.y = -heading;
-  hoft.rotation.x = -ligg * 1.25;
-  hoft.position.y = 0.7 - ligg * 0.62;
+  // Kroppen sjunker mot marken. Huvudet lyfts så ansiktet inte går i backen.
+  hoft.rotation.x = -ligg * 0.48;
+  hoft.position.y = 0.7 - ligg * 0.46;
+  huvud.rotation.x = ligg * 0.7;
   const hor = Math.hypot(framFart, sida);
   fas += dt * (2.2 + hor * 2.5) * (1 - ligg);
   if (hor > 0.45 && ligg < 0.5) {
@@ -379,11 +391,16 @@ function steg(dt) {
     if (halv !== stegHalv) { stegHalv = halv; tick(stegLjud); }
   }
   const amp = Math.min(0.95, hor * 0.38) * (1 - ligg);
-  benV.rotation.x = Math.sin(fas) * amp;
-  benH.rotation.x = Math.sin(fas + Math.PI) * amp;
-  armV.rotation.x = Math.sin(fas + Math.PI) * amp * 0.75;
-  armH.rotation.x = Math.sin(fas) * amp * 0.75;
-  torso.rotation.x = hor > 3.2 ? 0.28 : hor * 0.05;
+  const axel = Math.max(lage === 'sikta' ? 1 : 0, ligg);
+  benV.rotation.x = Math.sin(fas) * amp + ligg * 0.2;
+  benH.rotation.x = Math.sin(fas + Math.PI) * amp + ligg * 0.2;
+  armV.rotation.x = Math.sin(fas + Math.PI) * amp * 0.75 * (1 - axel) - axel * 1.25;
+  armV.rotation.z = -axel * 0.35;
+  armH.rotation.x = Math.sin(fas) * amp * 0.75 * (1 - axel) - axel * 1.05;
+  armH.rotation.z = axel * 0.45;
+  gevar.position.set(0.22 - axel * 0.04, 0.18 + axel * 0.16 - ligg * 0.02, -0.04 - axel * 0.06);
+  gevar.rotation.set(-0.35 * (1 - axel) - ligg * 0.08, axel * 0.15, axel * 0.05);
+  torso.rotation.x = (hor > 3.2 ? 0.28 : hor * 0.05) * (1 - ligg);
   if (graf.length === 0 || tid - graf[graf.length - 1].t > 0.05) {
     graf.push({ t: tid, vrid: fart.yaw, fram: fart.fram, sida: fart.roll });
     while (graf.length && tid - graf[0].t > 2) graf.shift();
@@ -489,6 +506,24 @@ function reglage(parent, obj, nyckel, namn, min, max, steg, enhet) {
   visa();
   rad.append(namn, ut);
   lab.append(rad, input);
+  const mening = {
+    kanslighet: 'Högre = mer rörelse för samma lutning.',
+    forstarkning: 'Högre = en snabb rörelse ger extra mycket.',
+    utjamning: 'Högre = mjukare och långsammare.',
+    dodzon: 'Högre = små lutningar ignoreras.',
+    nerDps: 'Högre = du måste knycka hårdare för att ligga.',
+    hoppDps: 'Högre = du måste knycka hårdare för att hoppa.',
+    jamnKanslighet: 'Högre = mindre skillnad räknas som ryckig.',
+    skakKanslighet: 'Högre = mindre ryck får siktet att skaka.',
+    maxSkak: 'Högre = siktet kan skaka mer.',
+    maxLugning: 'Högre = skakningen ligger kvar längre.'
+  }[nyckel];
+  if (mening) {
+    const p = document.createElement('p');
+    p.className = 'hint';
+    p.textContent = mening;
+    lab.append(p);
+  }
   parent.append(lab);
 }
 function byggAxel(parent, block, id, namn, hint, medLage) {

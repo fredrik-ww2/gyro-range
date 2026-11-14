@@ -77,17 +77,28 @@
       <button class="knapp huvud" id="bEld">ELD</button>
     </div>
     <p id="pSikte"></p>
+    <button class="knapp" id="bSikteInstall" type="button" aria-expanded="false" aria-controls="sikteInstall">Inställningar</button>
   </div>
-  <div class="kort">
-    <h2>Inställningar (sparas i JSON)</h2>
+  <div class="kort" id="sikteInstall" hidden>
+    <h2>Inställningar</h2>
+    <p>Brädet ovanför hålls rent. De här värdena sparas i JSON.</p>
+    <h3>Känslighet</h3>
     <label class="rad">Känslighet sida <input type="range" id="rSensY" min="0.2" max="10" step="0.1"><span class="v" id="vSensY"></span></label>
+    <p>Högre = siktet rör sig mer i sidled. Enheten är gånger.</p>
     <label class="rad">Känslighet höjd <input type="range" id="rSensP" min="0.2" max="10" step="0.1"><span class="v" id="vSensP"></span></label>
-    <label class="rad">1€ minCutoff (Hz) <input type="range" id="rMin" min="0.05" max="5" step="0.05"><span class="v" id="vMin"></span></label>
-    <label class="rad">1€ beta <input type="range" id="rBeta" min="0" max="0.5" step="0.005"><span class="v" id="vBeta"></span></label>
-    <label class="rad">Tightening (°/s) <input type="range" id="rTight" min="0" max="6" step="0.1"><span class="v" id="vTight"></span></label>
-    <label class="rad">1€-filter på <input type="checkbox" id="cbEuro"></label>
+    <p>Högre = siktet rör sig mer upp och ner.</p>
+    <h3>Dödzon</h3>
+    <label class="rad">Still-zon <input type="range" id="rTight" min="0" max="6" step="0.1"><span class="v" id="vTight"></span></label>
+    <p>Högre = mer av långsam drift ignoreras. Enheten är grader per sekund.</p>
+    <h3>Mjukhet</h3>
+    <label class="rad">Lugn följning <input type="range" id="rMin" min="0.05" max="5" step="0.05"><span class="v" id="vMin"></span></label>
+    <p>Högre = mer av små rörelser syns när du håller still. Enheten är hertz.</p>
+    <label class="rad">Snabb följning <input type="range" id="rBeta" min="0" max="0.5" step="0.005"><span class="v" id="vBeta"></span></label>
+    <p>Högre = snabba rörelser följs tätare.</p>
+    <label class="rad">Mjukt filter på <input type="checkbox" id="cbEuro"></label>
+    <h3>Kalibrering</h3>
     <label class="rad">Vänd höjd <input type="checkbox" id="cbInv"></label>
-    <p>Grå prick = ofiltrerat, gul = efter 1€. Tecknen (vänster/höger, upp/ner) ska kontrolleras på riktig telefon.</p>
+    <p>På = upp blir ner. Grå prick är ofiltrerad, gul är den mjuka. Kontrollera vänster, höger, upp och ner på telefonen.</p>
   </div>
 </section>
 
@@ -829,6 +840,11 @@ koppla('SensY', ['sensYaw'], 1); koppla('SensP', ['sensPitch'], 1); koppla('Min'
 $('cbEuro').checked = CFG.sikte.useOneEuro; $('cbEuro').addEventListener('change', e => { CFG.sikte.useOneEuro = aim.options.useOneEuro = e.target.checked; });
 $('cbInv').checked = CFG.sikte.invertPitch; $('cbInv').addEventListener('change', e => { CFG.sikte.invertPitch = aim.options.invertPitch = e.target.checked; });
 $('bCentrera').addEventListener('click', () => { aim.recenter(); rec.mark(now(), 'sikte:centrera'); });
+$('bSikteInstall').addEventListener('click', () => {
+  const el = $('sikteInstall');
+  el.hidden = !el.hidden;
+  $('bSikteInstall').setAttribute('aria-expanded', el.hidden ? 'false' : 'true');
+});
 const gyroAv = $('bGyroAv');
 gyroAv.addEventListener('pointerdown', () => { aim.setEnabled(false); gyroAv.classList.add('huvud'); });
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) gyroAv.addEventListener(ev, () => { aim.setEnabled(true); gyroAv.classList.remove('huvud'); });

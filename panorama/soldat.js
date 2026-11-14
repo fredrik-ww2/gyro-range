@@ -252,7 +252,7 @@ export function stallSoldater(scene, kalla, miljo = {}) {
       nasta.reset().fadeIn(mjuk).play();
       aktuell = nasta;
     }
-    const startKlipp = plats.beteende === 'patrull' ? 'walk' : plats.beteende === 'kik' ? 'peka' : 'idle';
+    const startKlipp = plats.beteende === 'patrull' ? 'walk' : (plats.beteende === 'kik' || plats.vapen === 'gevar' || plats.vapen === 'mg42') ? 'peka' : 'idle';
     spela(startKlipp, 0);
     mixer.update(0.2);
 
@@ -322,7 +322,7 @@ export function stallSoldater(scene, kalla, miljo = {}) {
         aktuell = null;
         this.wrap.position.set(this.bas.x, markHojd(this.bas.x, this.bas.z), this.bas.z);
         this.wrap.rotation.y = this.bas.yaw;
-        const nyckel = this.beteende === 'patrull' ? 'walk' : this.beteende === 'kik' ? 'peka' : 'idle';
+        const nyckel = this.beteende === 'patrull' ? 'walk' : (this.beteende === 'kik' || this.vapen === 'gevar' || this.vapen === 'mg42') ? 'peka' : 'idle';
         spela(nyckel, 0.05);
         this.mixer.update(0.08);
         flyttaHuvud(this);

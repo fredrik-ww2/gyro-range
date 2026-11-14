@@ -34,11 +34,19 @@
   </div>
   <h3 id="kanslaRubrik">Känsla</h3>
   <div id="kansla" class="kansla" role="group"></div>
+  <h3>Lutning</h3>
+  <p id="lutningText">Luta telefonen som lådan. Kulan rullar dit lådan lutar.</p>
   <label class="reglage"><span><span id="kanslighetNamn">Känslighet</span> <output id="kanslighetTal"></output></span><input id="kanslighet" type="range" min="0.45" max="1.8" step="0.05"></label>
+  <p class="led">Högre = kulan rullar fortare för samma lutning.</p>
+  <h3>Dödzon</h3>
   <label class="reglage"><span><span id="dodzonNamn">Dödzon</span> <output id="dodzonTal"></output></span><input id="dodzon" type="range" min="0" max="6" step="0.1"></label>
+  <p class="led">Högre = lådan måste luta mer innan kulan rör sig.</p>
   <label class="check"><input id="ljud" type="checkbox"> <span id="ljudNamn">Ljud</span></label>
   <label class="check"><input id="hjalp" type="checkbox"> <span id="hjalpNamn">Hjälpbanor</span></label>
+  <h3>Kalibrering</h3>
+  <p class="led">Håll telefonen plant som du vill att noll ska vara, och platta ut.</p>
   <button id="nollstall" type="button">Nollställ / Platta ut</button>
+  <button id="aterstall" type="button">Återställ standard</button>
   <h3 id="prestandaRubrik">Prestanda</h3>
   <dl class="mat">
     <div><dt>Bilder/s</dt><dd id="fps">–</dd></div>

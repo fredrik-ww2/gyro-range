@@ -582,10 +582,10 @@ const AXEL_TEXT = {
   eldror: ['Eldrör', 'Tippa ovansidan upp så höjs eldröret. Det blir kvar när du rätar upp telefonen.']
 };
 const REGLAGE = [
-  ['dodzon', 'Dödzon', 0, 15, 0.5, v => tal(v, 1) + '°'],
-  ['kanslighet', 'Känslighet', 0.4, 2.5, 0.05, v => tal(v, 2) + '×'],
-  ['full', 'Full effekt vid', 8, 70, 1, v => Math.round(v) + '°'],
-  ['utjamning', 'Utjämning', 0, 1, 0.05, v => v < 0.05 ? 'ingen' : v > 0.75 ? 'stark' : 'medel']
+  ['dodzon', 'Dödzon', 0, 15, 0.5, v => tal(v, 1) + '°', 'Högre = du måste luta mer innan något händer.'],
+  ['kanslighet', 'Känslighet', 0.4, 2.5, 0.05, v => tal(v, 2) + '×', 'Högre = mer utslag för samma lutning.'],
+  ['full', 'Full effekt vid', 8, 70, 1, v => Math.round(v) + '°', 'Högre = du måste luta mer för att nå fullt utslag.'],
+  ['utjamning', 'Mjukhet', 0, 1, 0.05, v => v < 0.05 ? 'ingen' : v > 0.75 ? 'stark' : 'medel', 'Högre = mjukare och långsammare följning.']
 ];
 
 function byggPanel() {
@@ -612,7 +612,10 @@ function byggPanel() {
       input.dataset.axel = id;
       input.dataset.nyckel = nyckel;
       label.append(namn, ' ', span, input);
-      det.append(label);
+      const hjalp = document.createElement('p');
+      hjalp.className = 'led';
+      hjalp.textContent = REGLAGE.find(r => r[0] === nyckel)[6];
+      det.append(label, hjalp);
       input.addEventListener('input', () => {
         install = normalStyr(install);
         install.axlar[id][nyckel] = Number(input.value);
@@ -631,7 +634,11 @@ function byggPanel() {
     box.type = 'checkbox';
     box.dataset.axel = id;
     box.dataset.nyckel = 'invertera';
-    check.append(box, 'Invertera');
+    check.append(box, ' Vänd riktningen');
+    const vand = document.createElement('p');
+    vand.className = 'led';
+    vand.textContent = 'På = höger blir vänster, och upp blir ner.';
+    det.append(vand);
     det.append(check);
     box.addEventListener('change', () => {
       install = normalStyr(install);

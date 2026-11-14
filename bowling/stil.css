@@ -54,6 +54,8 @@ button.menyknapp[aria-expanded="true"] { background: #e3c88e; color: #172724; bo
   box-shadow: 0 12px 40px #000a;
 }
 #meny h2 { margin: 0; font-size: 16px; }
+#meny h3 { margin: 12px 0 2px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: #e7d7a4; }
+#meny .hjalp { margin: 0 0 8px; color: #d9cbb6; font-size: 13px; line-height: 1.35; }
 .meny-topp { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 #meny button, #meny a {
   font: 600 14px -apple-system, BlinkMacSystemFont, sans-serif;

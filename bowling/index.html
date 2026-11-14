@@ -16,9 +16,15 @@
 <button id="menyKnapp" class="menyknapp" type="button" aria-expanded="false" aria-controls="meny"><span class="meny-ikon" aria-hidden="true">☰</span> Meny</button>
 <section id="meny" hidden>
 <div class="meny-topp"><h2>Meny</h2><button id="stang" type="button">Stäng</button></div>
-<button id="noll" type="button">Nollställ</button>
+<h3>Kalibrering</h3>
+<p class="hjalp">Håll telefonen som du vill svinga ifrån, och sätt noll.</p>
+<button id="noll" type="button">Sätt noll här</button>
+<h3>Känslighet</h3>
 <label>Känslighet <output id="kansTal"></output><input id="kans" type="range" min="0.4" max="2" step="0.05"></label>
+<p class="hjalp">Högre = svingen ger mer fart för samma rörelse.</p>
 <label>Armlängd <output id="armTal"></output><input id="arm" type="range" min="0.4" max="0.9" step="0.01"></label>
+<p class="hjalp">Högre = armen räknas som längre, och klotet blir snabbare.</p>
+<button id="aterstall" type="button">Återställ standard</button>
 <div id="brytare"></div>
 <p id="mat"></p>
 <pre id="debug" hidden></pre>

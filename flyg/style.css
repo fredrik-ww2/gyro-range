@@ -165,6 +165,7 @@ button.menyknapp[aria-expanded=true]{background:#e3c88e;color:#172724;border-col
 #settings.flygmeny .reglage-rad input[type=range]{height:22px;margin:0}
 #settings.flygmeny #toggles{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}
 #settings.flygmeny #toggles label{min-height:24px;font-size:11px;line-height:1.15;gap:4px;padding:0}
+#settings.flygmeny #toggles label.bred{grid-column:1 / -1}
 #settings.flygmeny .meny-lankar{display:flex;gap:6px}
 #settings.flygmeny .meny-lankar a{flex:1;min-height:34px;display:inline-flex;align-items:center;justify-content:center}
 @media(max-height:520px){

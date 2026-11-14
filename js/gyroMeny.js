@@ -173,14 +173,18 @@ export function behandlaAxel(axel,absolutRad,fartDps,dt,minne){
  if(axel.lage==='rorelse'){
   if(minne.lage!=='rorelse'){minne.integral=absolutRad;minne.jamnad=absolutRad;minne.lage='rorelse';}
   let w=Number.isFinite(fartDps)?fartDps:0;
-  if(Math.abs(w)<dod)w=0;
+  const aw=Math.abs(w);
+  if(aw<=dod)w=0;
+  else w=Math.sign(w)*(aw-dod);
   w=forstark(w,w,boost)*kans;
   minne.integral+=w*(Math.PI/180)*steg;
   rad=minne.integral;
  }else{
   minne.lage='foljer';
   let grader=absolutRad*GRADER;
-  if(Math.abs(grader)<dod)grader=0;
+  const ag=Math.abs(grader);
+  if(ag<=dod)grader=0;
+  else grader=Math.sign(grader)*(ag-dod);
   rad=forstark(grader*(Math.PI/180)*kans,fartDps,boost);
  }
  const u=axel.utjamning||0;

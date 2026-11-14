@@ -5,6 +5,7 @@ const fel=[];
 const k=(n,v)=>v||fel.push(n);
 const g=STANDARD.gang;
 k('gång dödzon', gangFartFranLutning(2*Math.PI/180,g)===0);
+k('gång utan hopp', gangFartFranLutning((g.dodZon_grad+0.2)*Math.PI/180,g)<0.15);
 k('gång ökar', gangFartFranLutning(20*Math.PI/180,g)>gangFartFranLutning(8*Math.PI/180,g));
 k('vrid dödzon', kroppFartRad(0.02,STANDARD.kropp)===0);
 k('vrid känslig', Math.abs(kroppFartRad(0.4,STANDARD.kropp))>0.5);

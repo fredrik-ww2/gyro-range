@@ -8,7 +8,8 @@ import {
 } from './logik.js';
 import { skapaHaptik, skakIntervall } from './haptik.js';
 import { monteraGubbe } from './gyrobox-adapter.js';
-import { provFranEvent } from '../shared/sensor.js';
+import { provFranEvent, lyssnaSkarm } from '../shared/sensor.js';
+import { arOmslag, nyNollRiktning } from '../js/riktning.js';
 
 const $ = (id) => document.getElementById(id);
 const DEG = Math.PI / 180;
@@ -197,6 +198,8 @@ let senPace = 0;
 let skakKlocka = 0;
 let finger = false;
 let orient = null;
+let foreOrient = null;
+let doldHop = false;
 let neutral = null;
 let rr = { alpha: 0, beta: 0, gamma: 0 };
 let harRR = false;
@@ -214,7 +217,17 @@ function anvandFinger() {
 }
 function vinklarNu() {
   if (anvandFinger()) return { upp: -drag.fram, fram: drag.fram, yaw: drag.yaw, roll: drag.roll };
-  return vinklarFranOrientering(orient.alpha, orient.beta, orient.gamma, neutral || orient, skarmVinkel());
+  const screen = skarmVinkel();
+  if (foreOrient && arOmslag(foreOrient, orient)) {
+    const hall = foreVinkel || { upp: 0, yaw: 0, roll: 0 };
+    neutral = nyNollRiktning(orient, {
+      pitch: (hall.upp || 0) * DEG,
+      yaw: (hall.yaw || 0) * DEG,
+      roll: (hall.roll || 0) * DEG
+    }, screen);
+  }
+  foreOrient = { alpha: orient.alpha, beta: orient.beta, gamma: orient.gamma };
+  return vinklarFranOrientering(orient.alpha, orient.beta, orient.gamma, neutral || orient, screen);
 }
 function farterNu(vink, dt) {
   if (!anvandFinger() && harRR) return fartUrGyro({ alpha: orient.alpha, beta: orient.beta, gamma: orient.gamma, screen: skarmVinkel() }, rr);
@@ -232,6 +245,7 @@ function bearbeta(id, vink, fart, dt) {
 }
 function nollstall() {
   if (orient) neutral = { alpha: orient.alpha, beta: orient.beta, gamma: orient.gamma };
+  foreOrient = orient ? { alpha: orient.alpha, beta: orient.beta, gamma: orient.gamma } : null;
   drag.fram = drag.yaw = drag.roll = 0;
   basHeading = heading;
   foreVinkel = null;
@@ -257,13 +271,16 @@ function lyssna() {
   if (lyssnar) return;
   lyssnar = true;
   addEventListener('deviceorientation', (e) => {
+    if (document.hidden) { doldHop = true; return; }
     const prov = provFranEvent(e);
     if (!prov) return;
     orient = prov;
     senasteOrient = performance.now();
+    if (doldHop) { doldHop = false; neutral = { ...orient }; foreOrient = { ...orient }; foreVinkel = null; }
     if (!neutral) neutral = { ...orient };
   }, { passive: true });
   addEventListener('devicemotion', (e) => {
+    if (document.hidden) return;
     const r = e.rotationRate;
     if (!r) return;
     rr = {
@@ -663,6 +680,7 @@ $('start').addEventListener('click', () => {
   });
 });
 $('finger').addEventListener('click', startaFinger);
+lyssnaSkarm(() => { if (orient && !finger) nollstall(); });
 byggPanel();
 
 let fore = performance.now();

@@ -79,6 +79,7 @@ export function skapaGyro(canvas, konfig) {
   const pek = {fram: 0, sida: 0, id: null, haller: false};
   let senaste = null;
   let noll = {fram: 0, sida: 0};
+  let doldHop = false;
   let gyroPa = false;
   let fick = false;
   let vantarNoll = false;
@@ -168,9 +169,11 @@ export function skapaGyro(canvas, konfig) {
   };
 
   pa(globalThis, 'deviceorientation', (e) => {
+    if (globalThis.document?.hidden) { doldHop = true; return; }
     const prov = provFranEvent(e);
     if (!prov) return;
     las(prov.alpha, prov.beta, prov.gamma);
+    if (doldHop) { doldHop = false; plattaUt(); }
   }, {passive: true});
 
   function tangent(e, nere) {

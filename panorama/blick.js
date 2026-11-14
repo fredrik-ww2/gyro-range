@@ -171,6 +171,8 @@ export function skapaBlick(canvas, val = {}) {
   let snappa = true;
   let senastVinkel = 0;
   let foreFartTid = null;
+  let senastSkarm = null;
+  const foreRaw = new THREE.Quaternion();
   const integrerad = tomVinkel();
   const visad = tomVinkel();
   const drag = {x: 0, y: 0};
@@ -178,13 +180,31 @@ export function skapaBlick(canvas, val = {}) {
   let formaFn = null;
 
   function lasVinkel(alpha, beta, gamma) {
-    enhetsKvaternion(alpha, beta, gamma, skarmVinkel(), raw, euler, skarmQ);
+    if (globalThis.document?.hidden) { foreFartTid = null; return; }
+    const skarm = skarmVinkel();
+    const hade = fickVinkel && !vantarNoll;
+    const foreSkarm = senastSkarm;
+    const sparad = foreRaw.clone();
+    enhetsKvaternion(alpha, beta, gamma, skarm, raw, euler, skarmQ);
     senastVinkel = performance.now();
     fickVinkel = true;
-    if (vantarNoll) nollstall();
+    if (vantarNoll) {
+      nollstall();
+      senastSkarm = skarm;
+      foreRaw.copy(raw);
+      return;
+    }
+    // Skärmbyte ingår i kvaternionen. Behåll vyn, så landskap inte snurrar världen.
+    if (hade && foreSkarm != null && skarm !== foreSkarm) {
+      relativ.multiplyQuaternions(origin, sparad).normalize();
+      origin.copy(relativ).multiply(skarmQ.copy(raw).invert()).normalize();
+    }
+    senastSkarm = skarm;
+    foreRaw.copy(raw);
   }
 
   function lasFart(alphaDps, betaDps, gammaDps, timeStamp) {
+    if (globalThis.document?.hidden) { foreFartTid = null; return; }
     if (![alphaDps, betaDps, gammaDps].every(Number.isFinite)) return;
     const t = Number.isFinite(timeStamp) ? timeStamp : performance.now();
     const dt = foreFartTid == null ? 0 : (t - foreFartTid) / 1000;
@@ -281,7 +301,8 @@ export function skapaBlick(canvas, val = {}) {
     const orientering = tillat(window.DeviceOrientationEvent);
     const rorelse = tillat(window.DeviceMotionEvent);
     const [a, b] = await Promise.allSettled([orientering, rorelse]);
-    aktiv = a.status === 'fulfilled' && (a.value === 'granted' || b.status === 'fulfilled' && b.value === 'granted');
+    const ov = a.status === 'fulfilled' ? a.value : 'denied';
+    aktiv = ov === 'granted' || ov === 'unavailable';
     nollstall();
     return {
       orientation: a.status === 'fulfilled' ? a.value : 'denied',

@@ -171,12 +171,14 @@ export class GyroAdapter {
     return {orientation:ov,motion:mv,allowed:this.allowed};
   }
   _handle(e){
+    if(globalThis.document?.hidden)return;
     const sample=readOrientationEvent(e);
     if(!sample)return;
     this._orientAlive=true;
     this.ingest(sample.alpha,sample.beta,sample.gamma,screenAngle(),this.now());
   }
   _handleMotion(e){
+    if(globalThis.document?.hidden)return;
     const g=e?.accelerationIncludingGravity;
     if(!g||![g.x,g.y,g.z].every(Number.isFinite))return;
     if(Math.hypot(g.x,g.y,g.z)<2)return;
@@ -191,6 +193,14 @@ export class GyroAdapter {
   }
   ingest(alpha,beta,gamma,screenDeg=0,timeMs=this.now()){
     const q=deviceQuaternion(alpha,beta,gamma,screenDeg);
+    if(this._screen!=null&&screenDeg!==this._screen&&this.origin){
+      this._screen=screenDeg;
+      this.origin=q;this.lastQ=q;this.lastAngles={pitch:0,roll:0,yaw:0};
+      if(this._gravityNow)this._gravityZero={...this._gravityNow};
+      this.lastSampleAt=timeMs;this.pending=true;this.seen=true;
+      return this.read(timeMs);
+    }
+    this._screen=screenDeg;
     if(!this.origin||!this.lastQ){
       this.origin=q;this.lastQ=q;this.lastAngles={pitch:0,roll:0,yaw:0};
     }else{

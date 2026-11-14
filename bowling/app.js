@@ -6,12 +6,14 @@ import { skapaFysik } from './fysik.js';
 import { skapaLjud } from './ljud.js';
 import { skapaBana } from './bana.js';
 import { monteraBowling } from './gyrobox-adapter.js';
+import { lyssnaSkarm } from '../shared/sensor.js';
 
 const $ = id => document.getElementById(id);
 const canvas = $('vy');
 const konfig = KONFIG;
 const gyro = skapaGyro(konfig);
-const gyroLada = monteraBowling({ konfig, lage: () => maskin.tillstand });
+const senareNoll = { kor: () => {} };
+const gyroLada = monteraBowling({ konfig, lage: () => maskin.tillstand, kalibrera: () => senareNoll.kor() });
 const maskin = skapaMaskin(konfig);
 const fysik = skapaFysik(konfig);
 const ljud = skapaLjud(konfig);
@@ -67,6 +69,14 @@ function mataOchSteg(prov) {
   return hantera(maskin.steg(tid, f, true, frammeNu()));
 }
 
+function visaGyroStatus(text) {
+  const el = $('gyroStatus');
+  if (!el) return;
+  if (!text) { el.hidden = true; return; }
+  el.textContent = text;
+  el.hidden = false;
+}
+
 function nollNu() {
   ljud.vack();
   gyro.nollstall();
@@ -76,6 +86,11 @@ function nollNu() {
   ljud.klick();
   if (!fysik.ball.aktiv) fysik.vilaKlot();
 }
+senareNoll.kor = nollNu;
+lyssnaSkarm(() => {
+  if (!gyro.fick || maskin.tillstand === 'NEED_PERMISSION') return;
+  nollNu();
+});
 
 function tillat(T) {
   try {
@@ -99,12 +114,16 @@ async function gestTryck() {
       const rorelseOk = b.status === 'fulfilled' && b.value === 'granted';
       const saknas = a.status === 'fulfilled' && a.value === 'unavailable'
         && b.status === 'fulfilled' && b.value === 'unavailable';
-      if (orienteringOk || rorelseOk || saknas) {
+      if (orienteringOk || saknas) {
         gyro.aktiv = true;
         maskin.beviljad();
         ljud.start();
+        visaGyroStatus('');
         nollNu();
-      } else gyro.aktiv = false;
+      } else {
+        gyro.aktiv = false;
+        visaGyroStatus('Gyrot är avstängt. Tillåt Rörelse och orientering i Safari, stäng sidan och tryck igen. Du kan svinga med fingret.');
+      }
     } finally {
       tillatelsePagar = false;
     }

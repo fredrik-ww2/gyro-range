@@ -2,6 +2,7 @@
 // yaw > 0 höger, pitch/upp > 0 är toppen mot dig (blick upp), roll > 0 är högerkant ned.
 // fram > 0 är toppen bort (gång framåt). Fartläget använder rotationRate, inte acceleration.
 import { tolkaOrientering } from '../js/riktning.js';
+import { skarmGrader } from '../shared/sensor.js';
 
 export const VERSION = 'Gubbtest 01';
 export const NYCKEL = 'gubbe-test-01';
@@ -85,10 +86,7 @@ export function sammanfoga(sparad) {
 }
 
 export function skarmVinkel(win = globalThis) {
-  const so = win.screen && win.screen.orientation;
-  if (so && typeof so.angle === 'number') return so.angle;
-  if (typeof win.orientation === 'number') return ((win.orientation % 360) + 360) % 360;
-  return 0;
+  return skarmGrader(win);
 }
 
 export function vinklarFranOrientering(alpha, beta, gamma, noll, screen = 0) {

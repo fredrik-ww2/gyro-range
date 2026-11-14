@@ -386,20 +386,24 @@ export function createRecorder({ maxSamples = 30000 } = {}) {
 export function requestMotionPermission(win = globalThis) {
   const DME = win.DeviceMotionEvent, DOE = win.DeviceOrientationEvent;
   if (!win.isSecureContext) return Promise.resolve('insecure');
-  if (!DME) return Promise.resolve('unsupported');
-  if (typeof DME.requestPermission !== 'function') return Promise.resolve('granted');
+  if (!DME && !DOE) return Promise.resolve('unsupported');
+  const needM = typeof DME?.requestPermission === 'function';
+  const needO = typeof DOE?.requestPermission === 'function';
+  if (!needM && !needO) return Promise.resolve('granted');
   let pm, po;
-  try { pm = DME.requestPermission(); po = (DOE && typeof DOE.requestPermission === 'function') ? DOE.requestPermission() : pm; }
-  catch (e) { return Promise.resolve('error'); }
+  try {
+    pm = needM ? DME.requestPermission() : Promise.resolve('granted');
+    po = needO ? DOE.requestPermission() : Promise.resolve('granted');
+  } catch (e) { return Promise.resolve('error'); }
   return Promise.all([pm, po]).then(([a, b]) => (a === 'granted' && b === 'granted') ? 'granted' : 'denied')
     .catch(err => (err && err.name === 'NotAllowedError') ? 'needs-gesture' : 'error');
 }
 
 export function screenAngleDeg(win = globalThis) {
   const so = win.screen && win.screen.orientation;
-  if (so && typeof so.angle === 'number') return so.angle;
-  if (typeof win.orientation === 'number') return (win.orientation + 360) % 360;
-  return 0;
+  const raw = so && typeof so.angle === 'number' ? so.angle : (typeof win.orientation === 'number' ? win.orientation : 0);
+  if (!Number.isFinite(+raw)) return 0;
+  return ((+raw % 360) + 360) % 360;
 }
 
 // Händelsekälla: kopplar devicemotion/deviceorientation/visibilitychange till callbacks.

@@ -149,7 +149,10 @@ export function skapaRorelse(canvas) {
     const fysisk = senastQ.angleTo(raw);
     const hopp = vinkelHop(v, senastVinkel);
     senastQ.copy(raw);
-    if (dt > 0 && dt < 0.45 && fysisk < glitchFysisk && hopp > glitchEuler && hopp > fysisk * 4) {
+    if (dt >= 0.45 && fysisk < glitchFysisk) {
+      baseraOm(senastVinkel);
+      v = {...senastVinkel};
+    } else if (dt > 0 && dt < 0.45 && fysisk < glitchFysisk && hopp > glitchEuler && hopp > fysisk * 4) {
       baseraOm(senastVinkel);
       v = {...senastVinkel};
     } else if (dt > 0.02 && dt < 1.5 && hopp / dt < drift) {
@@ -168,6 +171,7 @@ export function skapaRorelse(canvas) {
     if (typeof mal?.addEventListener === 'function') mal.addEventListener(typ, fn, opt);
   };
   pa(globalThis, 'deviceorientation', e => {
+    if (globalThis.document?.hidden) return;
     const prov = provFranEvent(e);
     if (!prov) return;
     las(prov.alpha, prov.beta, prov.gamma);

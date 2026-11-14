@@ -4,6 +4,7 @@ import {skapaGyro, mjukLutning} from './gyro.js';
 import {skapaLjud} from './ljud.js';
 import {skapaBrade} from './brade.js';
 import {monteraLabyrint} from './gyrobox-adapter.js';
+import {lyssnaSkarm} from '../shared/sensor.js';
 
 const $ = (id) => document.getElementById(id);
 const RAD = Math.PI / 180;
@@ -291,7 +292,7 @@ function koppla() {
   });
   gyro.setBlockerad(() => !$('meny').hidden);
   addEventListener('resize', () => brade.passa());
-  addEventListener('orientationchange', () => brade.passa());
+  lyssnaSkarm(() => { gyro.plattaUt(); brade.passa(); });
 }
 
 function borja() {

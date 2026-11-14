@@ -11,6 +11,29 @@ export function skarmGrader(scope = globalThis) {
   return ((+v % 360) + 360) % 360;
 }
 
+export function arDold(scope = globalThis) {
+  const doc = scope.document || (scope.window && scope.window.document);
+  return !!doc?.hidden;
+}
+
+// Både orientationchange och screen.orientation. iOS och Android
+// skickar inte alltid samma av dem. Samma normaliserade gradtal
+// (–90 och 270) räknas inte som ett byte.
+export function lyssnaSkarm(fn, scope = globalThis) {
+  const win = scope.window && scope.window !== scope ? scope.window : scope;
+  let sen = skarmGrader(scope);
+  const kolla = () => {
+    const nu = skarmGrader(scope);
+    if (nu === sen) return;
+    sen = nu;
+    try { fn(nu); } catch { /* sidan får nollställa själv */ }
+  };
+  if (typeof win?.addEventListener === 'function') win.addEventListener('orientationchange', kolla);
+  const orient = scope.screen?.orientation;
+  if (typeof orient?.addEventListener === 'function') orient.addEventListener('change', kolla);
+  return { kolla, nu: () => sen };
+}
+
 export function provFranEvent(e) {
   if (!e) return null;
   const beta = +e.beta;

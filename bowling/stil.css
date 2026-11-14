@@ -78,4 +78,20 @@ button.menyknapp[aria-expanded="true"] { background: #e3c88e; color: #172724; bo
   white-space: pre-wrap;
   color: #f3ecda;
 }
+#gyroStatus {
+  position: fixed;
+  z-index: 7;
+  left: 50%;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(92vw, 420px);
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #1b1814ee;
+  color: #f6f1e6;
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: center;
+}
 [hidden] { display: none !important; }

@@ -47,6 +47,20 @@ test('calibration and a quiet sensor do not invent new samples',()=>{
   assert.equal(g.take(),null);
 });
 
+test('turning the screen recalibrates instead of slamming the stick',()=>{
+  let t=1000;
+  const g=new GyroAdapter({now:()=>t});
+  g.ingest(0,90,0,0,t);
+  g.take();
+  g.ingest(0,50,0,0,t+100);
+  assert.ok(g.take().pitch>25);
+  g.ingest(0,50,0,90,t+200);
+  const efter=g.take();
+  near(efter.pitch,0,1e-6);
+  near(efter.roll,0,1e-6);
+  near(efter.yaw,0,1e-6);
+});
+
 test('a representation glitch rebases instead of slamming the stick',()=>{
   const q=deviceQuaternion(10,40,-15,0);
   const held={pitch:12,roll:-8,yaw:4};

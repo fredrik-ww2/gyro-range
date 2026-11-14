@@ -124,11 +124,16 @@ export class FlightInput {
     const knee = this.c.dodzon_mjuk || 0;
     const dead = (x) => {
       const a = Math.abs(x);
-      if (!(z > 0) || a >= z + knee) return a < z ? 0 : x;
+      if (!(z > 0)) return x;
       if (a <= z) return 0;
+      const sign = Math.sign(x);
+      if (!(knee > 0)) return sign * (a - z);
+      if (a >= z + knee) return x;
+      // Mjuk knä: 0 vid dödzonen, samma värde och lutning som råvinkeln när knäet tar slut.
       const u = (a - z) / knee;
-      const s = u * u * (3 - 2 * u);
-      return Math.sign(x) * (z + knee) * s;
+      const h01 = -2 * u * u * u + 3 * u * u;
+      const h11 = u * u * u - u * u;
+      return sign * ((z + knee) * h01 + knee * h11);
     };
     const clamp = (x, m) => Math.max(-m, Math.min(m, x));
     const gain = this.settings.kanslighet;

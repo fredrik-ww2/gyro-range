@@ -1128,8 +1128,13 @@ start.addEventListener('click', async () => {
   ljud.oppna();
   start.disabled = true;
   markera(GUIDE_NYCKEL);
-  try { await blick.start(); }
-  catch (e) { if ($('sensorText')) $('sensorText').textContent = 'Sensorerna kunde inte starta. Dra i vyn för att titta. Texten ligger i Menyn.'; }
+  let sensor = null;
+  try { sensor = await blick.start(); }
+  catch (e) { sensor = { orientation: 'denied' }; }
+  if (sensor && sensor.orientation !== 'granted' && sensor.orientation !== 'unavailable' && $('hint')) {
+    $('hint').hidden = false;
+    $('hint').textContent = 'Gyrot nekades. Dra i vyn för att titta, eller tillåt Rörelse och orientering och ladda om.';
+  }
   $('startKort').hidden = true;
   $('skjut').hidden = false;
   $('menyKnapp').hidden = false;
@@ -1143,7 +1148,7 @@ start.addEventListener('click', async () => {
   if (laser.install.pa) sattLaser(true);
   else lyft();
   requestAnimationFrame(lyft);
-  if ($('hint')) $('hint').hidden = true;
+  if ($('hint') && sensor?.orientation !== 'denied') $('hint').hidden = true;
   if ($('laserHint')) $('laserHint').hidden = true;
   if ($('kameraToast')) $('kameraToast').hidden = true;
   if ($('meny')) $('meny').hidden = true;

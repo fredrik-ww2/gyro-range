@@ -7,6 +7,7 @@ import {
 } from './bibliotek.js';
 import { byggBand, byggKurvor, byggOversikt, formSek, formTal } from './kurvor.js';
 import { arSlutOrd, klippSvans, lasVektor, matHz, rundaSampel, vinkelSkillnad } from './motor.js';
+import { arOmslag } from '../js/riktning.js';
 import { monteraRorelse } from './gyrobox-adapter.js';
 
 const $ = (id) => document.getElementById(id);
@@ -41,6 +42,8 @@ let startar = false;
 let lyssnar = false;
 let senaste = { rot: null, acc: null, accG: null, vinkel: null };
 let nollage = null;
+let foreEuler = null;
+let senastRelativ = null;
 let antalHandelser = 0;
 let rec = null;
 let stoppKlocka = 0;
@@ -1014,6 +1017,7 @@ function lyssna() {
 }
 
 function onMotion(e) {
+  if (document.hidden) return;
   antalHandelser += 1;
   const rot = lasVektor(e.rotationRate, ['alpha', 'beta', 'gamma']);
   const acc = lasVektor(e.acceleration, ['x', 'y', 'z']);
@@ -1025,6 +1029,7 @@ function onMotion(e) {
 }
 
 function onOrient(e) {
+  if (document.hidden) return;
   let alpha = Number.isFinite(e.alpha) ? e.alpha : null;
   if (alpha == null && Number.isFinite(+e.webkitCompassHeading)) alpha = (360 - +e.webkitCompassHeading) % 360;
   const beta = Number.isFinite(e.beta) ? e.beta : null;
@@ -1044,8 +1049,16 @@ function kanskeProv() {
   rec.senastProv = t;
   let relativ = null;
   if (senaste.vinkel) {
+    const nu = { alpha: senaste.vinkel[0], beta: senaste.vinkel[1], gamma: senaste.vinkel[2] };
     if (!nollage) nollage = senaste.vinkel.slice();
-    relativ = vinkelSkillnad(senaste.vinkel, nollage);
+    if (foreEuler && senastRelativ && arOmslag(foreEuler, nu)) {
+      nollage = senaste.vinkel.map((v, i) => v - (senastRelativ[i] || 0));
+      relativ = senastRelativ.slice();
+    } else {
+      relativ = vinkelSkillnad(senaste.vinkel, nollage);
+      senastRelativ = relativ ? relativ.slice() : null;
+    }
+    foreEuler = nu;
   }
   const rotFormad = gyroLada && senaste.rot ? gyroLada.forma(senaste.rot, dtProv) : senaste.rot;
   rec.sampel.push(rundaSampel({
@@ -1166,6 +1179,8 @@ function startaTal() {
 
 function borjaInspelning() {
   nollage = senaste.vinkel ? senaste.vinkel.slice() : null;
+  foreEuler = senaste.vinkel ? { alpha: senaste.vinkel[0], beta: senaste.vinkel[1], gamma: senaste.vinkel[2] } : null;
+  senastRelativ = null;
   rec = { aktiv: true, start: performance.now(), sampel: [], senastProv: null };
   sparadId = null;
   utkast = null;
@@ -1666,7 +1681,11 @@ async function start() {
   config = await svar.json();
   gyroLada = monteraRorelse({
     config,
-    nollstall() { nollage = senaste.vinkel ? senaste.vinkel.slice() : null; }
+    nollstall() {
+      nollage = senaste.vinkel ? senaste.vinkel.slice() : null;
+      foreEuler = senaste.vinkel ? { alpha: senaste.vinkel[0], beta: senaste.vinkel[1], gamma: senaste.vinkel[2] } : null;
+      senastRelativ = null;
+    }
   });
   lager = skapaLager();
   await lager.oppna();

@@ -1062,5 +1062,10 @@ $('sVer').textContent = VERSION;
 // för headless-test
 window.__rorelsetest = { rec, norm, sammanfattning, get motionCount() { return motionCount; }, PLATFORM };
 </script>
+<script type="module">
+import { installeraIosLjud, oppnaKontext } from '../shared/ios-ljud.js';
+let ctx = null;
+installeraIosLjud({ hamta: () => ctx, oppna() { ctx = oppnaKontext(ctx); } });
+</script>
 <script src="../lankar/horn.js"></script></body>
 </html>

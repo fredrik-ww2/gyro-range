@@ -10,8 +10,12 @@ import { skapaHaptik, skakIntervall } from './haptik.js';
 import { monteraGubbe } from './gyrobox-adapter.js';
 import { provFranEvent, lyssnaSkarm } from '../shared/sensor.js';
 import { arOmslag, nyNollRiktning } from '../js/riktning.js';
+import { installeraIosLjud, oppnaKontext, tick } from '../shared/ios-ljud.js';
 
 const $ = (id) => document.getElementById(id);
+let stegLjud = null;
+let stegHalv = 0;
+installeraIosLjud({ hamta: () => stegLjud, oppna() { stegLjud = oppnaKontext(stegLjud); } });
 const DEG = Math.PI / 180;
 const renderer = new THREE.WebGLRenderer({ canvas: $('spel'), antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
@@ -370,6 +374,10 @@ function steg(dt) {
   hoft.position.y = 0.7 - ligg * 0.62;
   const hor = Math.hypot(framFart, sida);
   fas += dt * (2.2 + hor * 2.5) * (1 - ligg);
+  if (hor > 0.45 && ligg < 0.5) {
+    const halv = Math.floor(fas / Math.PI);
+    if (halv !== stegHalv) { stegHalv = halv; tick(stegLjud); }
+  }
   const amp = Math.min(0.95, hor * 0.38) * (1 - ligg);
   benV.rotation.x = Math.sin(fas) * amp;
   benH.rotation.x = Math.sin(fas + Math.PI) * amp;

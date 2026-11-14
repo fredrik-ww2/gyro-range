@@ -14,6 +14,7 @@ import {traffSlag} from './traff.js';
 import {skapaBen} from './benpose.js';
 import {monteraSkjutbana} from './gyrobox-adapter.js';
 import {skapaEffekterV2d} from '../assets/effekter/effekter_v2d.js';
+import {installeraIosLjud, forberedTystLage} from '../shared/ios-ljud.js';
 const $=id=>document.getElementById(id);
 const loadJSON=async p=>{const r=await fetch(new URL('../data/'+p,import.meta.url));if(!r.ok)throw Error(p+': '+r.status);return r.json();};
 const t0=performance.now();
@@ -113,6 +114,7 @@ async function boot(){
  let renderTick=performance.now();const renderInterval=1000/cfg.kamera.mal_hz;
  let started=false,selected=0,shots=0,hits=0,cooldown=0,deadFor=0,hitUntil=0,queue=[],last=performance.now(),frames=0,fps=0,measureTime=last,enemyCount=0,burstToken=0,stegFas=0;
  let audio=null,voices=[],audioBuffer=null,audioBus=null,clinkBuffer=null;const fileBuffers={},fileLoading={};let holding=false,nextAuto=0;
+ installeraIosLjud({hamta:()=>audio,oppna:()=>{void unlockAudio();}});
  let casingAlive=0,clinks=0,clinkReady=0,clinkVoices=0,aimNdcX=0,aimNdcY=0,breechNdcY=0,muzzleNdcY=0,breechWY=0,muzzleWY=0,muzzleWZ=0;
  function loadWeaponSounds(){for(const w of weapons){if(!w.ljudfil||fileLoading[w.id])continue;fileLoading[w.id]=fetch(new URL('../'+w.ljudfil,import.meta.url)).then(r=>{if(!r.ok)throw Error(r.status);return r.arrayBuffer();}).then(b=>new Promise((ok,no)=>audio.decodeAudioData(b,ok,no))).then(buf=>{fileBuffers[w.id]=buf;}).catch(()=>{fileLoading[w.id]=null;});}}
  const muzzleLight=new THREE.PointLight(0xffd690,0,6,2);
@@ -614,8 +616,8 @@ async function boot(){
  }
 
  async function unlockAudio(){
- try{if(navigator.audioSession)navigator.audioSession.type='playback';else if(!window.__tystBrytare){const n=22050,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,n,true);v.setUint32(28,n*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);const a=document.createElement('audio');a.setAttribute('playsinline','');a.setAttribute('x-webkit-airplay','deny');a.loop=true;a.src=URL.createObjectURL(new Blob([b],{type:'audio/wav'}));window.__tystBrytare=a;a.play().catch(()=>{});}else window.__tystBrytare.play().catch(()=>{});}catch{}
-  try{audio??=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();if(!audioBus){audioBus=audio.createDynamicsCompressor();audioBus.threshold.value=-16;audioBus.knee.value=10;audioBus.ratio.value=16;audioBus.attack.value=.001;audioBus.release.value=.08;const master=audio.createGain();master.gain.value=.7;audioBus.connect(master).connect(audio.destination);}if(!audioBuffer){audioBuffer=audio.createBuffer(1,Math.round(audio.sampleRate*.2),audio.sampleRate);const data=audioBuffer.getChannelData(0);let seed=1701;for(let i=0;i<data.length;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;data[i]=(seed/2147483648-1)*Math.exp(-i/(audio.sampleRate*.025));}}if(!clinkBuffer){const n=Math.max(1,Math.round(audio.sampleRate*.03));clinkBuffer=audio.createBuffer(1,n,audio.sampleRate);const data=clinkBuffer.getChannelData(0);let seed=90210;for(let i=0;i<n;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;data[i]=(seed/2147483648-1)*Math.exp(-i/(audio.sampleRate*.004));}}loadWeaponSounds();}catch{ $('status').textContent='Ljud saknas här; spelet fungerar utan ljud.';}
+ forberedTystLage();
+  try{audio??=new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended'||audio.state==='interrupted')await audio.resume();if(!audioBus){audioBus=audio.createDynamicsCompressor();audioBus.threshold.value=-16;audioBus.knee.value=10;audioBus.ratio.value=16;audioBus.attack.value=.001;audioBus.release.value=.08;const master=audio.createGain();master.gain.value=.7;audioBus.connect(master).connect(audio.destination);}if(!audioBuffer){audioBuffer=audio.createBuffer(1,Math.round(audio.sampleRate*.2),audio.sampleRate);const data=audioBuffer.getChannelData(0);let seed=1701;for(let i=0;i<data.length;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;data[i]=(seed/2147483648-1)*Math.exp(-i/(audio.sampleRate*.025));}}if(!clinkBuffer){const n=Math.max(1,Math.round(audio.sampleRate*.03));clinkBuffer=audio.createBuffer(1,n,audio.sampleRate);const data=clinkBuffer.getChannelData(0);let seed=90210;for(let i=0;i<n;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;data[i]=(seed/2147483648-1)*Math.exp(-i/(audio.sampleRate*.004));}}loadWeaponSounds();}catch{ $('status').textContent='Ljud saknas här; spelet fungerar utan ljud.';}
  }
  function shotSound(weapon){
   if(!settings.brytare.ljud||!audioBuffer||audio?.state!=='running')return;
@@ -845,7 +847,7 @@ async function boot(){
  const switchNames={atergang:'Siktet glider tillbaka till mitten',horisont:'Rak horisont (ingen sidolutning)',skada:'Skada',fiender:'Framryckande soldat',ljud:'Ljud',effekter:'Ljus och rök',haptik:'Haptik',acceleration:'Rörelsesväng',occlusion:'Dölj skymda enheter',lod:'Avståndsdetaljer'};
  for(const key of Object.keys(settings.brytare)){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=settings.brytare[key];input.onchange=()=>{settings.brytare[key]=input.checked;haptics.sync();save();};label.append(input,switchNames[key]);$('toggles').append(label);}
  function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}addEventListener('resize',resize);resize();
- document.addEventListener('visibilitychange',()=>{queue=[];holding=false;burstToken++;trigger=null;updateRing(0);endLook();if(document.hidden){audio?.suspend();navigator.vibrate?.(0);}last=performance.now();});
+ document.addEventListener('visibilitychange',()=>{queue=[];holding=false;burstToken++;trigger=null;updateRing(0);endLook();if(document.hidden){audio?.suspend();navigator.vibrate?.(0);}else void unlockAudio();last=performance.now();});
  const snapshot={targetCenters:targets.map(t=>({kind:t.kind,center:t.hitbox.getWorldPosition(new THREE.Vector3()).toArray()})),ready:true,models:8,clip:clip.name,clipTracks:inPlace.tracks.length,clipMatches,modelLoadMs,rawBounds,modelScale:soldierScale,haptics:haptics.mode,shots:0,hits:0};
  window.gyroDiagnostics=snapshot;
  if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(JSON.stringify({type:'bridge-ready',version:1}));haptics.sync();}

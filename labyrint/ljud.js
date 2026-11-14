@@ -1,5 +1,7 @@
 // Egen ljudbuss. Toppen ligger under taket i konfig, och fler än max röster startas inte.
 
+import { forberedTystLage, installeraIosLjud, vakna } from '../shared/ios-ljud.js';
+
 function kurva(db) {
   const tak = Math.pow(10, db / 20);
   const n = 1024;
@@ -101,8 +103,9 @@ export function skapaLjud(konfig) {
   let senStudsVolym = 0;
 
   function starta() {
+    forberedTystLage();
     if (ctx) {
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if (ctx.state === 'suspended' || ctx.state === 'interrupted') vakna(ctx);
       return ctx;
     }
     const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
@@ -153,7 +156,7 @@ export function skapaLjud(konfig) {
       hal: halBuffer(ctx),
       mal: malBuffer(ctx),
     };
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    if (ctx.state === 'suspended' || ctx.state === 'interrupted') vakna(ctx);
     return ctx;
   }
 
@@ -220,5 +223,6 @@ export function skapaLjud(konfig) {
     }
   }
 
+  installeraIosLjud({ hamta: () => ctx, oppna: () => starta() });
   return {starta, fran, satt, get pa() { return pa; }};
 }

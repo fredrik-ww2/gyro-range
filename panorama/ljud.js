@@ -1,29 +1,10 @@
 // Skott, träff och taktilt klick utan ljudfiler. AudioContext skapas först i en användargest.
 
+import { forberedTystLage, installeraIosLjud, vakna } from '../shared/ios-ljud.js';
+
 function klamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
 
-function lasOppTyst() {
-  try {
-    if (navigator.audioSession) navigator.audioSession.type = 'playback';
-    else if (!globalThis.__tystBrytare) {
-      const n = 8000;
-      const b = new ArrayBuffer(44 + n * 2);
-      const v = new DataView(b);
-      const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
-      w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt ');
-      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-      v.setUint32(24, n, true); v.setUint32(28, n * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
-      w(36, 'data'); v.setUint32(40, n * 2, true);
-      const a = document.createElement('audio');
-      a.setAttribute('playsinline', '');
-      a.loop = true;
-      a.volume = 0.001;
-      a.src = URL.createObjectURL(new Blob([b], {type: 'audio/wav'}));
-      globalThis.__tystBrytare = a;
-      a.play().catch(() => {});
-    } else globalThis.__tystBrytare.play().catch(() => {});
-  } catch { /* äldre webbläsare */ }
-}
+function lasOppTyst() { forberedTystLage(); }
 
 function brusBuffer(ctx) {
   const n = Math.floor(ctx.sampleRate * 0.45);
@@ -102,7 +83,7 @@ export function skapaLjud() {
     lasOppTyst();
     try {
       if (!seTill()) return Promise.resolve(false);
-      const klar = ctx.state === 'suspended'
+      const klar = (ctx.state === 'suspended' || ctx.state === 'interrupted')
         ? ctx.resume().then(() => true).catch(() => false)
         : Promise.resolve(true);
       oppnaLovande = klar.then(ok => laddaKlipp().then(() => ok).catch(() => ok));
@@ -216,7 +197,7 @@ export function skapaLjud() {
     try {
       if (!seTill() || !brus || !master) return false;
       if (!kanSkjuta()) return false;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if ((ctx.state === 'suspended' || ctx.state === 'interrupted')) ctx.resume().catch(() => {});
       const plan = PLAN[karaktar] || PLAN.vanligt;
       const harSkott = !!(plan.skott && klipp[plan.skott]);
       const harBult = !!(plan.bult && klipp[plan.bult]);
@@ -333,7 +314,7 @@ export function skapaLjud() {
     if (!pa) return false;
     try {
       if (!seTill() || !brus || !master) return false;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if ((ctx.state === 'suspended' || ctx.state === 'interrupted')) ctx.resume().catch(() => {});
       traffAntal++;
       const t = ctx.currentTime + 0.02;
       const d = Number.isFinite(+avstand) ? Math.max(1, +avstand) : 12;
@@ -397,7 +378,7 @@ export function skapaLjud() {
     if (!pa) return false;
     try {
       if (!seTill() || !brus || !master) return false;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if ((ctx.state === 'suspended' || ctx.state === 'interrupted')) ctx.resume().catch(() => {});
       klickAntal++;
       const t = ctx.currentTime;
       const k = klamp(Number(kraft) || 0.4, 0.15, 1);
@@ -425,7 +406,7 @@ export function skapaLjud() {
     if (!pa) return false;
     try {
       if (!seTill() || !master) return false;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if ((ctx.state === 'suspended' || ctx.state === 'interrupted')) ctx.resume().catch(() => {});
       salvaAntal++;
       if (klipp.mg42_salva) {
         spelaKlipp('mg42_salva', ctx.currentTime, {vol: 1, avstand, rate: 1});
@@ -457,7 +438,7 @@ export function skapaLjud() {
     if (!pa) return false;
     try {
       if (!seTill() || !brus || !master) return false;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if ((ctx.state === 'suspended' || ctx.state === 'interrupted')) ctx.resume().catch(() => {});
       vinerAntal++;
       const t = ctx.currentTime;
       const d = Math.max(1, Number(avstand) || 12);
@@ -494,7 +475,7 @@ export function skapaLjud() {
     if (!pa) return false;
     try {
       if (!seTill() || !brus || !master) return false;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if ((ctx.state === 'suspended' || ctx.state === 'interrupted')) ctx.resume().catch(() => {});
       const t = ctx.currentTime;
       const d = Number.isFinite(+avstand) ? Math.max(1, +avstand) : 40;
       const topp = Math.max(0.12, 0.55 * Math.exp(-d / 90));
@@ -515,6 +496,7 @@ export function skapaLjud() {
     }
   }
 
+  installeraIosLjud({ hamta: () => ctx, oppna: () => oppna() });
   return {
     oppna, satt, sattKaraktar, skott, traff, duns, klick, salva, viner, kanSkjuta, ladda: laddaKlipp,
     get karaktar() { return karaktar; },

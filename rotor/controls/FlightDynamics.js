@@ -18,7 +18,9 @@ export const DEFAULT_FLIGHT={
   verticalDrag:.38,
   torqueGain:.95,
   yawRateGain:1.05,
-  yawDamping:1.8,
+  yawDamping:1.15,
+  tiltYaw:2.5,
+  yawCap:1.65,
   maxHeight:360,
   groundClearance:3,
   autoTorque:true,
@@ -83,7 +85,10 @@ export class FlightDynamics {
     this.vz+=(-Math.cos(this.heading)*forward+Math.sin(this.heading)*side-this.vz*p.horizontalDrag)*dt;
     this.vy+=(lift*verticalFraction-9.81-this.vy*p.verticalDrag)*dt;
     const torque=this.assists.autoTorque?0:(effective-p.hoverCollective)*p.torqueGain;
-    this.yawRate+=(yaw*p.yawRateGain+torque-this.yawRate*p.yawDamping)*dt;
+    // Vänster kant upp ger positiv roll och positiv spak i x, och nosen går åt höger.
+    const tilt=(p.tiltYaw||0)*(c.x*1.4+Math.sin(this.roll)*.4);
+    this.yawRate+=(yaw*p.yawRateGain+tilt+torque-this.yawRate*p.yawDamping)*dt;
+    this.yawRate=clamp(this.yawRate,-(p.yawCap||1.65),p.yawCap||1.65);
     this.heading+=this.yawRate*dt;
     this.x+=this.vx*dt;this.z+=this.vz*dt;this.y+=this.vy*dt;
     this.groundContact=this.y<ground+p.groundClearance;

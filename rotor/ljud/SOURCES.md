@@ -1,6 +1,6 @@
 # Ljudkällor
 
-Alla ljud som följer med spelet syntetiseras i `ljud.js` med Web Audio API. Inga tredjepartsfiler är paketerade. Det håller sidan under storleksgränsen och gör att rotor, turbin och vind kan följa lyft, varvtal och fart.
+Flygljud, vapen, träffar och varningar spelas från inspelade filer i den här mappen. `ljud.json` här styr volym, loop och mp3-reserv. `ljud.js` kan fortfarande syntetisera ett lager om en post i rotens `ljud.json` har tom `file`, men spelet använder inspelningarna så fort de går att avkoda. Källor och licenser står i `KALLOR.md`. Masterfiler och original laddas inte av sidan.
 
 `ljud.json` mappar varje händelse till `file`, `volume` och `loop`.
 

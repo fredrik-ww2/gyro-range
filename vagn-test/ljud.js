@@ -3,6 +3,7 @@
 // Loopar (motor, band, torn, eldrör) är en egen liten grupp som städas när de tystnar.
 
 import {LJUD} from './konfig.js?v=6';
+import { forberedTystLage, installeraIosLjud, vakna } from '../shared/ios-ljud.js';
 
 export {LJUD};
 
@@ -267,11 +268,12 @@ export function skapaMekanikLjud() {
   }
 
   function oppna() {
+    forberedTystLage();
     upplast = true;
     try {
       if (!seTill()) return Promise.resolve(false);
       lasUppMobil();
-      const resume = ctx.state === 'suspended' ? ctx.resume().catch(() => {}) : Promise.resolve();
+      const resume = (ctx.state === 'suspended' || ctx.state === 'interrupted') ? ctx.resume().catch(() => {}) : Promise.resolve();
       return resume.then(() => laddaAlla()).then(() => true).catch(() => true);
     } catch {
       return Promise.resolve(false);
@@ -311,7 +313,7 @@ export function skapaMekanikLjud() {
     let post;
     try {
       if (!seTill() || !master) return false;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if (ctx.state === 'suspended' || ctx.state === 'interrupted') vakna(ctx);
       while (aktiva.length >= LJUD.maxRoster) aktiva[0].slapp();
       const noder = [];
       let slappt = false;
@@ -662,6 +664,7 @@ export function skapaMekanikLjud() {
     });
   }
 
+  installeraIosLjud({ hamta: () => ctx, oppna: () => oppna() });
   return {
     oppna, satt, vaxla, hack, stopp, valjGranat, provTopp, kansla, stega,
     kanon, nedslag, traff, fiendeSkott, forstord, ladda: laddaAlla,

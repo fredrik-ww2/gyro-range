@@ -1,0 +1,56 @@
+{
+  "styr": {
+    "visaMat": false,
+    "ljud": true,
+    "axlar": {
+      "styra": {"dodzon": 2.5, "kanslighet": 1, "full": 36, "utjamning": 0.22, "invertera": false},
+      "torn": {"dodzon": 3, "kanslighet": 1, "full": 30, "utjamning": 0.16, "invertera": false},
+      "eldror": {"dodzon": 3, "kanslighet": 1, "full": 26, "utjamning": 0.16, "invertera": false}
+    },
+    "trosklar": {"broms": 6, "ettBand": 15, "backBand": 26}
+  },
+  "gyro": {
+    "glitchEulerGrader": 35,
+    "glitchFysiskGrader": 18,
+    "driftGraderPerSek": 2.4,
+    "utjamningSek": 0.05,
+    "hysteres": 0.45
+  },
+  "kamera": {
+    "sikteNick": 0.04,
+    "nearSikte": 0.06,
+    "nearBak": 0.22,
+    "far": 7000,
+    "bak": {
+      "fov": 60,
+      "dist": 13,
+      "hojd": 4.1,
+      "sida": 0.15,
+      "lookFram": -0.4,
+      "lookHojd": 1.15,
+      "markMarg": 0.9
+    }
+  },
+  "rekyl": {
+    "pipa": 2.6,
+    "skrov": 0.1,
+    "nick": 0.22
+  },
+  "skugga": {
+    "karta": 1024,
+    "vidd": 24,
+    "near": 1.5,
+    "far": 70,
+    "bias": -0.00025,
+    "normalBias": 0.03
+  },
+  "mark": {
+    "wb": 1.65,
+    "spar": 1.15,
+    "lod": "lod_10m"
+  },
+  "modell": {
+    "spelare": "../form/verkstad/data/enheter/panzer_iv_h/panzer_iv_h_v2b_v2_pbr_lod2.glb",
+    "tiger": "../panorama/modeller/tiger_i_heavy_v2_v2_pbr_lod2.glb"
+  }
+}

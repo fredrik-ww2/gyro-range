@@ -4,7 +4,8 @@ import {MeshoptDecoder} from '../js/vendor/loaders/meshopt_decoder.module.js';
 import {DRACOLoader} from '../flyg/vendor/loaders/DRACOLoader.js';
 import {KTX2Loader} from '../flyg/vendor/loaders/KTX2Loader.js';
 import {mergeGeometries} from '../js/vendor/utils/BufferGeometryUtils.js';
-import {hojdY} from './hojd.js?v=5';
+import {hojdY} from './hojd.js?v=7';
+import config from './config.json' with { type: 'json' };
 
 const BAS = '../panorama/modeller/';
 const TERR = './terrang/';
@@ -15,15 +16,18 @@ function ljusOchMark(scene) {
   const sol = new THREE.DirectionalLight(0xfff1d4, 1.85);
   sol.position.set(-40, 80, 28);
   sol.castShadow = true;
-  sol.shadow.mapSize.set(1024, 1024);
-  sol.shadow.camera.near = 8;
-  sol.shadow.camera.far = 180;
-  sol.shadow.camera.left = -55;
-  sol.shadow.camera.right = 55;
-  sol.shadow.camera.top = 55;
-  sol.shadow.camera.bottom = -55;
-  sol.shadow.bias = -0.0004;
-  sol.shadow.normalBias = 0.06;
+  const sk = config.skugga || {};
+  const vidd = sk.vidd || 24;
+  sol.shadow.mapSize.set(sk.karta || 1024, sk.karta || 1024);
+  sol.shadow.camera.near = sk.near || 1.5;
+  sol.shadow.camera.far = sk.far || 70;
+  sol.shadow.camera.left = -vidd;
+  sol.shadow.camera.right = vidd;
+  sol.shadow.camera.top = vidd;
+  sol.shadow.camera.bottom = -vidd;
+  sol.shadow.bias = sk.bias ?? -0.00025;
+  sol.shadow.normalBias = sk.normalBias ?? 0.03;
+  sol.shadow.radius = 2;
   scene.add(sol, sol.target);
 
   const sky = new THREE.Mesh(new THREE.SphereGeometry(1800, 28, 16), new THREE.ShaderMaterial({
@@ -33,8 +37,8 @@ function ljusOchMark(scene) {
       horisont: {value: new THREE.Color(0xd5dece)},
       botten: {value: new THREE.Color(0xb4c09a)}
     },
-    vertexShader: 'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-    fragmentShader: 'varying vec3 vP;uniform vec3 top,horisont,botten;void main(){float h=normalize(vP).y;vec3 c=mix(botten,horisont,smoothstep(-0.22,0.04,h));c=mix(c,top,smoothstep(0.02,0.5,h));gl_FragColor=vec4(c,1.0);}'
+    vertexShader: 'varying vec3 vDir;void main(){vDir=mat3(modelMatrix)*position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader: 'varying vec3 vDir;uniform vec3 top,horisont,botten;void main(){float h=normalize(vDir).y;vec3 c=mix(botten,horisont,smoothstep(-0.28,0.0,h));c=mix(c,top,smoothstep(0.0,0.16,h));gl_FragColor=vec4(c,1.0);}'
   }));
   sky.name = 'himmel';
   sky.frustumCulled = false;
@@ -45,7 +49,8 @@ function ljusOchMark(scene) {
 function markMaterial(texturer) {
   return new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
-    uniforms: {
+    lights: true,
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.lights, {
       gras: {value: texturer.gras},
       aker: {value: texturer.aker},
       grus: {value: texturer.grus},
@@ -55,9 +60,41 @@ function markMaterial(texturer) {
       topp: {value: new THREE.Color(0xfff1d4)},
       jord: {value: new THREE.Color(0x3a4630)},
       himmel: {value: new THREE.Color(0xc5d6e4)}
-    },
-    vertexShader: 'varying vec3 vW;varying vec3 vN;void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;vN=normalize(mat3(modelMatrix)*normal);gl_Position=projectionMatrix*viewMatrix*w;}',
-    fragmentShader: 'uniform sampler2D gras,aker,grus,lera,skog;uniform vec3 sol,topp,jord,himmel;varying vec3 vW;varying vec3 vN;vec3 lin(vec3 c){return mix(pow(c*0.9478672986+vec3(0.0521327014),vec3(2.4)),c*0.0773993808,vec3(lessThanEqual(c,vec3(0.04045))));}void main(){float sl=clamp(1.0-vN.y,0.0,1.0);vec3 g=lin(texture2D(gras,vW.xz/6.0).rgb);vec3 a=lin(texture2D(aker,vW.xz/9.0).rgb);vec3 r=lin(texture2D(grus,vW.xz/3.5).rgb);vec3 m=lin(texture2D(lera,vW.xz/4.0).rgb);vec3 s=lin(texture2D(skog,vW.xz/5.0).rgb);float n=fract(sin(dot(floor(vW.xz*0.04),vec2(127.1,311.7)))*43758.5453);vec3 c=mix(g,a,smoothstep(0.58,0.84,n)*(1.0-smoothstep(0.2,0.48,sl)));c=mix(c,s,smoothstep(0.3,0.52,n)*smoothstep(0.04,0.22,sl));c=mix(c,m,smoothstep(0.18,0.42,sl));c=mix(c,r,smoothstep(0.45,0.75,sl));float nd=clamp(dot(normalize(vN),sol),0.0,1.0);gl_FragColor=vec4(c*(himmel*0.42+jord*0.28+topp*nd*0.9),1.0);}'
+    }]),
+    vertexShader: [
+      '#include <common>',
+      '#include <shadowmap_pars_vertex>',
+      'varying vec3 vW;varying vec3 vN;',
+      'void main(){',
+      '  vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;vN=normalize(mat3(modelMatrix)*normal);',
+      '  #include <beginnormal_vertex>',
+      '  #include <defaultnormal_vertex>',
+      '  #include <begin_vertex>',
+      '  #include <worldpos_vertex>',
+      '  #include <project_vertex>',
+      '  #include <shadowmap_vertex>',
+      '}'
+    ].join('\n'),
+    fragmentShader: [
+      '#include <common>',
+      '#include <packing>',
+      '#include <lights_pars_begin>',
+      '#include <shadowmap_pars_fragment>',
+      '#include <shadowmask_pars_fragment>',
+      'uniform sampler2D gras,aker,grus,lera,skog;uniform vec3 sol,topp,jord,himmel;varying vec3 vW;varying vec3 vN;',
+      'vec3 lin(vec3 c){return mix(pow(c*0.9478672986+vec3(0.0521327014),vec3(2.4)),c*0.0773993808,vec3(lessThanEqual(c,vec3(0.04045))));}',
+      'void main(){',
+      '  float sl=clamp(1.0-vN.y,0.0,1.0);',
+      '  vec3 g=lin(texture2D(gras,vW.xz/6.0).rgb);vec3 a=lin(texture2D(aker,vW.xz/9.0).rgb);vec3 r=lin(texture2D(grus,vW.xz/3.5).rgb);vec3 m=lin(texture2D(lera,vW.xz/4.0).rgb);vec3 s=lin(texture2D(skog,vW.xz/5.0).rgb);',
+      '  float n=fract(sin(dot(floor(vW.xz*0.04),vec2(127.1,311.7)))*43758.5453);',
+      '  vec3 c=mix(g,a,smoothstep(0.58,0.84,n)*(1.0-smoothstep(0.2,0.48,sl)));',
+      '  c=mix(c,s,smoothstep(0.3,0.52,n)*smoothstep(0.04,0.22,sl));',
+      '  c=mix(c,m,smoothstep(0.18,0.42,sl));c=mix(c,r,smoothstep(0.45,0.75,sl));',
+      '  float nd=clamp(dot(normalize(vN),sol),0.0,1.0);',
+      '  float skugga=getShadowMask();',
+      '  gl_FragColor=vec4(c*(himmel*0.42+jord*0.28+topp*nd*0.9)*mix(0.58,1.0,skugga),1.0);',
+      '}'
+    ].join('\n')
   });
 }
 
@@ -115,8 +152,7 @@ async function laddMark(loader, scene, hojd, material) {
   const filer = [];
   for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
     const id = 'r' + String(r).padStart(2, '0') + '_' + String(c).padStart(2, '0');
-    const detalj = r >= 1 && r <= 6 && c >= 1 && c <= 6;
-    filer.push({id, lod: detalj ? 'lod_10m' : 'lod_50m', detalj});
+    filer.push({id, lod: config.mark?.lod || 'lod_10m', detalj: true});
   }
   let klara = 0;
   const grupp = new THREE.Group();
@@ -131,7 +167,7 @@ async function laddMark(loader, scene, hojd, material) {
     if (antal >= 9) {
       const yta = new THREE.Mesh(geom, material);
       yta.name = fil.id;
-      yta.receiveShadow = false;
+      yta.receiveShadow = true;
       yta.castShadow = false;
       grupp.add(yta);
       klara++;
@@ -283,24 +319,27 @@ function geomFranTri(tris) {
 }
 
 function trianglar(geom, matris) {
-  const src = geom.index ? geom.toNonIndexed() : geom;
-  const pos = src.getAttribute('position');
-  const normal = src.getAttribute('normal');
-  const uv = src.getAttribute('uv');
+  const pos = geom.getAttribute('position');
+  const normal = geom.getAttribute('normal');
+  const uv = geom.getAttribute('uv');
+  const index = geom.getIndex();
   const rot = new THREE.Matrix3().setFromMatrix4(matris);
   const v = new THREE.Vector3();
   const nrm = new THREE.Vector3();
   const ut = [];
-  for (let i = 0; i < pos.count; i += 3) {
+  const count = index ? index.count : pos.count;
+  const vid = i => index ? index.getX(i) : i;
+  for (let i = 0; i < count; i += 3) {
     const tri = {p: [], n: normal ? [] : null, uv: uv ? [] : null};
     for (let k = 0; k < 3; k++) {
-      v.fromBufferAttribute(pos, i + k).applyMatrix4(matris);
+      const ix = vid(i + k);
+      v.fromBufferAttribute(pos, ix).applyMatrix4(matris);
       tri.p.push(v.clone());
       if (normal) {
-        nrm.fromBufferAttribute(normal, i + k).applyMatrix3(rot).normalize();
+        nrm.fromBufferAttribute(normal, ix).applyMatrix3(rot).normalize();
         tri.n.push(nrm.clone());
       }
-      if (uv) tri.uv.push([uv.getX(i + k), uv.getY(i + k)]);
+      if (uv) tri.uv.push([uv.getX(ix), uv.getY(ix)]);
     }
     ut.push(tri);
   }
@@ -433,32 +472,198 @@ function synligBotten(rot) {
   return n ? b : null;
 }
 
+function tonaPansar(mesh) {
+  const lista = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  for (const m of lista) {
+    if (!m) continue;
+    m.side = THREE.DoubleSide;
+    m.aoMap = null;
+    m.lightMap = null;
+    m.metalness = 0.05;
+    m.metalnessMap = null;
+    m.roughness = 0.86;
+    m.roughnessMap = null;
+    m.envMapIntensity = 0.25;
+    if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+  }
+}
+
+function sprucken(mesh) {
+  const pos = mesh.geometry?.getAttribute?.('position');
+  if (!pos || pos.count < 24) return false;
+  mesh.updateWorldMatrix(true, false);
+  const matris = mesh.matrixWorld;
+  const index = mesh.geometry.index;
+  const tri = index ? Math.floor(index.count / 3) : Math.floor(pos.count / 3);
+  const steg = Math.max(1, Math.floor(tri / 700));
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  const vid = i => index ? index.getX(i) : i;
+  let lang = 0;
+  let n = 0;
+  for (let t = 0; t < tri; t += steg) {
+    a.fromBufferAttribute(pos, vid(t * 3)).applyMatrix4(matris);
+    b.fromBufferAttribute(pos, vid(t * 3 + 1)).applyMatrix4(matris);
+    c.fromBufferAttribute(pos, vid(t * 3 + 2)).applyMatrix4(matris);
+    if (Math.max(a.distanceTo(b), b.distanceTo(c), c.distanceTo(a)) > 12) lang++;
+    n++;
+  }
+  return n > 8 && lang / n > 0.2;
+}
+
+function delaLangsPipa(tris) {
+  if (!tris || tris.length < 40) return null;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+  for (const t of tris) for (const p of t.p) {
+    if (p.z < minZ) minZ = p.z;
+    if (p.z > maxZ) maxZ = p.z;
+  }
+  const span = maxZ - minZ;
+  if (span < 0.5) return null;
+  const bins = 16;
+  const bredd = new Array(bins).fill(0);
+  const lo = new Array(bins).fill(Infinity);
+  const hi = new Array(bins).fill(-Infinity);
+  for (const t of tris) {
+    let z = 0;
+    for (const p of t.p) z += p.z;
+    const b = Math.max(0, Math.min(bins - 1, Math.floor(((z / 3) - minZ) / span * (bins - 0.001))));
+    for (const p of t.p) {
+      if (p.x < lo[b]) lo[b] = p.x;
+      if (p.x > hi[b]) hi[b] = p.x;
+    }
+  }
+  for (let i = 0; i < bins; i++) bredd[i] = Number.isFinite(lo[i]) ? hi[i] - lo[i] : 0;
+  const vid = Math.max(...bredd);
+  let mantlet = -1;
+  for (let i = 0; i < bins; i++) if (bredd[i] > vid * 0.42) { mantlet = i; break; }
+  if (mantlet < 2) {
+    const cut2 = minZ + span * 0.46;
+    const eld = [];
+    const kropp = [];
+    for (const t of tris) {
+      const z = (t.p[0].z + t.p[1].z + t.p[2].z) / 3;
+      if (z < cut2) eld.push(t);
+      else kropp.push(t);
+    }
+    if (eld.length < 8 || kropp.length < 8) return null;
+    let x = 0, y = 0, n = 0;
+    for (const t of eld) for (const p of t.p) {
+      if (p.z > cut2 - span * 0.08) { x += p.x; y += p.y; n++; }
+    }
+    return {eld, kropp, trunnion: new THREE.Vector3(n ? x / n : 0, n ? y / n : 0, cut2)};
+  }
+  const cut = minZ + (mantlet / bins) * span;
+  const eld = [];
+  const kropp = [];
+  for (const t of tris) {
+    const z = (t.p[0].z + t.p[1].z + t.p[2].z) / 3;
+    if (z < cut) eld.push(t);
+    else kropp.push(t);
+  }
+  let x = 0, y = 0, n = 0;
+  if (eld.length < 80 || kropp.length < 40) {
+    const cut2 = minZ + span * 0.46;
+    eld.length = 0;
+    kropp.length = 0;
+    for (const t of tris) {
+      const z = (t.p[0].z + t.p[1].z + t.p[2].z) / 3;
+      if (z < cut2) eld.push(t);
+      else kropp.push(t);
+    }
+    if (eld.length < 8 || kropp.length < 8) return null;
+    for (const t of eld) for (const p of t.p) {
+      if (p.z > cut2 - span * 0.08) { x += p.x; y += p.y; n++; }
+    }
+    return {eld, kropp, trunnion: new THREE.Vector3(n ? x / n : 0, n ? y / n : 0, cut2)};
+  }
+  for (const t of eld) for (const p of t.p) {
+    if (p.z > cut - span * 0.07) { x += p.x; y += p.y; n++; }
+  }
+  return {eld, kropp, trunnion: new THREE.Vector3(n ? x / n : 0, n ? y / n : 0, cut)};
+}
+
+function laggDrivband(skrov, box) {
+  const bandMat = new THREE.MeshStandardMaterial({color: 0x2c3128, roughness: 0.92, metalness: 0.08});
+  const hjulMat = new THREE.MeshStandardMaterial({color: 0x3e4636, roughness: 0.8, metalness: 0.18});
+  const langd = Math.max(0.5, box.max.z - box.min.z);
+  const bredd = Math.max(0.5, box.max.x - box.min.x);
+  const botten = box.min.y;
+  const x = bredd * 0.42;
+  const z0 = box.min.z + langd * 0.12;
+  const z1 = box.max.z - langd * 0.1;
+  const rad = Math.min(0.34, langd * 0.055);
+  const spar = botten - 0.02;
+  const mittZ = (z0 + z1) / 2;
+  const span = Math.max(0.4, z1 - z0);
+  for (const sida of [-1, 1]) {
+    const n = 6;
+    for (let i = 0; i < n; i++) {
+      const hjul = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 0.16, 14), hjulMat);
+      hjul.rotation.z = Math.PI / 2;
+      hjul.position.set(sida * x, spar + rad, z0 + span * (i / (n - 1)));
+      hjul.castShadow = true;
+      hjul.receiveShadow = true;
+      skrov.add(hjul);
+    }
+    for (const [z, r, namn] of [[z0 - rad * 0.2, rad * 1.15], [z1 + rad * 0.15, rad * 1.05]]) {
+      const drev = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.2, 12), hjulMat);
+      drev.rotation.z = Math.PI / 2;
+      drev.position.set(sida * x, spar + r * 0.92, z);
+      drev.castShadow = true;
+      drev.name = namn || '';
+      skrov.add(drev);
+    }
+    const nedre = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.1, span + rad * 2.2), bandMat);
+    nedre.position.set(sida * x, spar + 0.05, mittZ);
+    nedre.castShadow = true;
+    nedre.receiveShadow = true;
+    skrov.add(nedre);
+    const ovre = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, span), bandMat);
+    ovre.position.set(sida * x, spar + rad * 2.05, mittZ);
+    ovre.castShadow = true;
+    skrov.add(ovre);
+  }
+}
+
 function byggSherman(gltf) {
   const src = gltf.scene;
+  src.updateMatrixWorld(true);
+  const dolda = [];
+  const meshar = [];
   src.traverse(n => {
     if (!n.isMesh) return;
-    n.scale.set(1, 1, 1);
-    if (n.name === 'Object_34') n.quaternion.identity();
-    if (n.name === 'Object_6' || n.name === 'Object_163' || n.name === 'Object_353' || n.name === 'Object_362') n.visible = false;
+    meshar.push(n);
+    if (n.name === 'Object_6' || n.name === 'Object_4' || n.name === 'Object_362' || n.name === 'Object_353' || n.name === 'Object_163' || sprucken(n)) {
+      n.visible = false;
+      dolda.push(n.name || 'mesh');
+    }
   });
-  src.updateMatrixWorld(true);
-  const fore = new THREE.Box3().setFromObject(src);
-  const foreSize = fore.getSize(new THREE.Vector3());
-  const s = foreSize.y < 2.2 ? 2.7 / foreSize.y : 1;
-  src.scale.multiplyScalar(s);
-  src.updateMatrixWorld(true);
-  const efter = new THREE.Box3().setFromObject(src);
-  src.position.y -= efter.min.y;
-  const mitt = new THREE.Vector3((efter.min.x + efter.max.x) / 2, 0, (efter.min.z + efter.max.z) / 2);
-  src.position.sub(mitt);
-  src.updateMatrixWorld(true);
-
-  const hull = src.getObjectByName('Object_36');
+  const synliga = meshar.filter(n => n.visible);
   const tornMesh = src.getObjectByName('Object_34');
-  if (!hull || !tornMesh) throw new Error('Sherman saknar skrov eller torn');
+  const hull = src.getObjectByName('Object_36');
+  if (!tornMesh || !hull || !tornMesh.visible) throw new Error('Sherman saknar skrov eller torn');
   const hc = new THREE.Box3().setFromObject(hull).getCenter(new THREE.Vector3());
-  const tb = new THREE.Box3().setFromObject(tornMesh);
-  const fram = framAt(tb, hc);
+  const pos = tornMesh.geometry.getAttribute('position');
+  tornMesh.updateWorldMatrix(true, false);
+  const v = new THREE.Vector3();
+  const prov = [];
+  const steg = Math.max(1, Math.floor(pos.count / 2500));
+  for (let i = 0; i < pos.count; i += steg) {
+    v.fromBufferAttribute(pos, i).applyMatrix4(tornMesh.matrixWorld);
+    const dx = v.x - hc.x;
+    const dz = v.z - hc.z;
+    prov.push({d: dx * dx + dz * dz, x: v.x, z: v.z});
+  }
+  prov.sort((a, b) => b.d - a.d);
+  const topp = prov.slice(0, Math.max(8, Math.floor(prov.length * 0.04)));
+  let fx = 0, fz = 0;
+  for (const p of topp) { fx += p.x - hc.x; fz += p.z - hc.z; }
+  const fram = new THREE.Vector3(fx, 0, fz);
+  if (fram.lengthSq() < 1e-4) fram.set(0, 0, 1);
+  fram.normalize();
   const q = new THREE.Quaternion().setFromUnitVectors(fram, new THREE.Vector3(0, 0, -1));
   const rotM = new THREE.Matrix4().makeRotationFromQuaternion(q);
 
@@ -472,37 +677,132 @@ function byggSherman(gltf) {
   skrov.add(torn);
   torn.add(eldror);
 
-  const pivot = tb.getCenter(new THREE.Vector3()).applyMatrix4(rotM);
-  torn.position.copy(pivot);
-  rigg.updateMatrixWorld(true);
-  const tornInv = new THREE.Matrix4().copy(torn.matrixWorld).invert();
-  const extra = [];
-  src.traverse(n => { if (n.isMesh && n.visible && n !== tornMesh) extra.push(n); });
-
-  const flytta = (mesh, parent, parentInv) => {
+  const world = new THREE.Matrix4();
+  const till = mesh => {
     mesh.updateWorldMatrix(true, false);
-    const world = new THREE.Matrix4().multiplyMatrices(rotM, mesh.matrixWorld);
-    const local = new THREE.Matrix4().multiplyMatrices(parentInv, world);
-    local.decompose(mesh.position, mesh.quaternion, mesh.scale);
+    world.multiplyMatrices(rotM, mesh.matrixWorld);
+    const tris = trianglar(mesh.geometry, world);
+    tonaPansar(mesh);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    const lista = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    for (const m of lista) if (m) m.side = THREE.FrontSide;
-    parent.add(mesh);
+    return tris;
   };
-  const id = new THREE.Matrix4();
-  for (const mesh of extra) flytta(mesh, skrov, id);
-  flytta(tornMesh, torn, tornInv);
-  rigg.updateMatrixWorld(true);
-  const front = new THREE.Box3().setFromObject(tornMesh);
-  const minZ = front.min.z - torn.position.z;
-  const sikte = new THREE.Vector3(0.06, 0.08, (Number.isFinite(minZ) ? minZ : -1) - 0.35);
-  const storlek = new THREE.Box3().setFromObject(rigg).getSize(new THREE.Vector3());
-  const spelare = {id: 'sherman', rigg, skrov, torn, eldror, sikte, rapport: {skala: +s.toFixed(3), hojd: +storlek.y.toFixed(2), langd: +Math.max(storlek.x, storlek.z).toFixed(2), sikteZ: +sikte.z.toFixed(2), tornY: +torn.position.y.toFixed(2)}};
-  lyftPipa(spelare);
+  const tornTri = till(tornMesh);
+  let del = delaLangsPipa(tornTri);
+  if (!del && tornTri.length > 60) {
+    let minZ = Infinity, maxZ = -Infinity;
+    for (const t of tornTri) for (const p of t.p) {
+      if (p.z < minZ) minZ = p.z;
+      if (p.z > maxZ) maxZ = p.z;
+    }
+    const cut2 = minZ + (maxZ - minZ) * 0.42;
+    const eld = [], kropp = [];
+    for (const t of tornTri) {
+      const z = (t.p[0].z + t.p[1].z + t.p[2].z) / 3;
+      if (z < cut2) eld.push(t); else kropp.push(t);
+    }
+    if (eld.length > 8 && kropp.length > 8) {
+      let x = 0, y = 0, n = 0;
+      for (const t of eld) for (const p of t.p) if (p.z > cut2 - 0.25) { x += p.x; y += p.y; n++; }
+      del = {eld, kropp, trunnion: new THREE.Vector3(n ? x / n : 0, n ? y / n : 0, cut2)};
+    }
+  }
+  let trunnion = new THREE.Vector3(0, 1.7, -0.4);
+  if (del) {
+    const kropp = new THREE.Mesh(geomFranTri(del.kropp), tornMesh.material);
+    const pip = new THREE.Mesh(geomFranTri(del.eld), tornMesh.material);
+    kropp.castShadow = pip.castShadow = true;
+    kropp.receiveShadow = pip.receiveShadow = true;
+    const box = new THREE.Box3().setFromBufferAttribute(kropp.geometry.getAttribute('position'));
+    const pivot = new THREE.Vector3();
+    box.getCenter(pivot);
+    pivot.y = box.min.y + (box.max.y - box.min.y) * 0.42;
+    const drag = new THREE.Matrix4().makeTranslation(-pivot.x, -pivot.y, -pivot.z);
+    kropp.geometry.applyMatrix4(drag);
+    pip.geometry.applyMatrix4(drag);
+    torn.position.copy(pivot);
+    torn.add(kropp);
+    trunnion = del.trunnion.clone().sub(pivot);
+    const pipa = new THREE.Group();
+    pipa.name = 'pipa';
+    pipa.position.set(-trunnion.x, -trunnion.y, -trunnion.z);
+    pipa.add(pip);
+    eldror.position.copy(trunnion);
+    eldror.add(pipa);
+    const mynning = new THREE.Object3D();
+    mynning.name = 'mynning';
+    const eldBox = new THREE.Box3().setFromBufferAttribute(pip.geometry.getAttribute('position'));
+    mynning.position.set((eldBox.min.x + eldBox.max.x) / 2, (eldBox.min.y + eldBox.max.y) / 2, eldBox.min.z);
+    pipa.add(mynning);
+    tornMesh.visible = false;
+  } else {
+    tornMesh.geometry = geomFranTri(tornTri);
+    tornMesh.position.set(0, 0, 0);
+    tornMesh.quaternion.identity();
+    tornMesh.scale.set(1, 1, 1);
+    torn.add(tornMesh);
+  }
+
+  const tornBox = new THREE.Box3().setFromObject(torn);
+  for (const mesh of synliga) {
+    if (mesh === tornMesh) continue;
+    const tris = till(mesh);
+    const g = geomFranTri(tris);
+    const b = new THREE.Box3().setFromBufferAttribute(g.getAttribute('position'));
+    const c = b.getCenter(new THREE.Vector3());
+    const paTorn = c.y > tornBox.min.y + 0.15 && c.x > tornBox.min.x - 0.3 && c.x < tornBox.max.x + 0.3 && c.z > tornBox.min.z - 0.4 && c.z < tornBox.max.z + 0.5 && b.max.y > 2.1;
+    const mal = new THREE.Mesh(g, mesh.material);
+    mal.name = mesh.name;
+    mal.castShadow = true;
+    mal.receiveShadow = true;
+    if (paTorn) {
+      mal.position.set(-torn.position.x, -torn.position.y, -torn.position.z);
+      torn.add(mal);
+    } else skrov.add(mal);
+  }
+
+  const foreBand = synligBotten(rigg);
+  if (foreBand) laggDrivband(skrov, foreBand);
   const botten = synligBotten(rigg);
-  if (botten && botten.min.y > 0.02) skrov.position.y -= botten.min.y;
-  return spelare;
+  if (botten) {
+    skrov.position.y -= botten.min.y;
+    const cx = (botten.min.x + botten.max.x) / 2;
+    const cz = (botten.min.z + botten.max.z) / 2;
+    skrov.position.x -= cx;
+    skrov.position.z -= cz;
+  }
+  const sikte = new THREE.Vector3(0.18, 0.34, -0.85);
+  const storlek = new THREE.Box3().setFromObject(rigg).getSize(new THREE.Vector3());
+  const pipaN = del ? del.eld.length : 0;
+  return {
+    id: 'sherman', rigg, skrov, torn, eldror, sikte,
+    pipa: eldror.getObjectByName('pipa') || null,
+    mynning: eldror.getObjectByName('mynning') || null,
+    rapport: {
+      skala: 1,
+      hojd: +storlek.y.toFixed(2),
+      langd: +Math.max(storlek.x, storlek.z).toFixed(2),
+      sikteZ: +sikte.z.toFixed(2),
+      tornY: +torn.position.y.toFixed(2),
+      pipa: pipaN,
+      tri: tornTri.length,
+      axel: (() => {
+        const s = {minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity, minZ: Infinity, maxZ: -Infinity};
+        for (const t of tornTri) for (const p of t.p) {
+          if (p.x < s.minX) s.minX = p.x; if (p.x > s.maxX) s.maxX = p.x;
+          if (p.y < s.minY) s.minY = p.y; if (p.y > s.maxY) s.maxY = p.y;
+          if (p.z < s.minZ) s.minZ = p.z; if (p.z > s.maxZ) s.maxZ = p.z;
+        }
+        return {
+          x: +((s.maxX - s.minX).toFixed(2)),
+          y: +((s.maxY - s.minY).toFixed(2)),
+          z: +((s.maxZ - s.minZ).toFixed(2))
+        };
+      })(),
+      dolda,
+      fram: fram.toArray().map(n => +n.toFixed(2))
+    }
+  };
 }
 
 function bakaSkinn(n, v) {
@@ -605,7 +905,18 @@ function byggTigerSpelare(gltf) {
   const pip = laggPipa(eldror, eldMat, eldTri, {langd: 3.2, mitt: new THREE.Vector3(0, 0.1, -1.2)});
   const sikteBox = new THREE.Box3();
   for (const m of hink.torn) sikteBox.union(new THREE.Box3().setFromBufferAttribute(m.geometry.getAttribute('position')));
-  const sikte = new THREE.Vector3(0.15, Math.max(0.2, sikteBox.max.y * 0.42), Math.min(-0.3, sikteBox.min.z * 0.35));
+  const pipBox = new THREE.Box3().setFromObject(pip.pipa);
+  const trunnion = new THREE.Vector3((pipBox.min.x + pipBox.max.x) / 2, (pipBox.min.y + pipBox.max.y) / 2, pipBox.max.z - 0.06);
+  eldror.worldToLocal(trunnion);
+  eldror.position.copy(trunnion);
+  pip.pipa.position.set(-trunnion.x, -trunnion.y, -trunnion.z);
+  rigg.updateMatrixWorld(true);
+  pip.mynning.updateWorldMatrix(true, false);
+  const munVarld = new THREE.Vector3();
+  pip.mynning.getWorldPosition(munVarld);
+  const sikte = eldror.worldToLocal(munVarld);
+  sikte.y += 0.22;
+  sikte.z -= 0.2;
   const hojd = jord.getSize(new THREE.Vector3()).y * skala;
   return {
     id: 'tiger', rigg, skrov, torn, eldror, pipa: pip.pipa, mynning: pip.mynning, sikte,
@@ -744,6 +1055,17 @@ function stallHus(gltf, x, z, yaw, hojd) {
     if (/burning|collapsed|damaged|fire|debris|fx_/i.test(n.name || '')) n.visible = false;
   });
   enLod(g);
+  g.updateMatrixWorld(true);
+  const husDelar = [];
+  g.traverse(n => {
+    if (!n.isMesh || !n.visible) return;
+    const b = new THREE.Box3().setFromObject(n);
+    if (!b.isEmpty()) husDelar.push({n, b});
+  });
+  if (husDelar.length) {
+    const bas = Math.min(...husDelar.map(o => o.b.min.y));
+    for (const o of husDelar) if (o.b.min.y > bas + 8) o.n.visible = false;
+  }
   g.position.set(x, 0, z);
   g.rotation.y = yaw;
   g.updateMatrixWorld(true);
@@ -766,7 +1088,8 @@ export async function byggVarld(scene, renderer) {
   pmrem.dispose();
 
   const draco = new DRACOLoader().setDecoderPath(new URL('../flyg/vendor/libs/draco/', import.meta.url).href).setDecoderConfig({type: 'wasm'}).setWorkerLimit(2);
-  const ktx2 = new KTX2Loader().setTranscoderPath(new URL('../flyg/vendor/libs/basis/', import.meta.url).href).detectSupport(renderer);
+  const ktx2 = new KTX2Loader().setTranscoderPath(new URL('../flyg/vendor/libs/basis/', import.meta.url).href);
+  await ktx2.detectSupport(renderer);
   await MeshoptDecoder.ready;
   const loader = new GLTFLoader().setDRACOLoader(draco).setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
   const glb = async fil => {
@@ -775,7 +1098,15 @@ export async function byggVarld(scene, renderer) {
       gltf.scene.traverse(n => {
         if (!n.material) return;
         const lista = Array.isArray(n.material) ? n.material : [n.material];
-        for (const m of lista) if (m) { m.aoMap = null; m.lightMap = null; }
+        for (const m of lista) if (m) {
+          m.aoMap = null;
+          m.lightMap = null;
+          if ((m.metalness ?? 0) > 0.8) {
+            m.metalness = 0.1;
+            m.roughness = Math.max(m.roughness || 0, 0.84);
+          }
+          m.envMapIntensity = Math.min(m.envMapIntensity ?? 1, 0.4);
+        }
       });
       return gltf;
     }
@@ -790,6 +1121,11 @@ export async function byggVarld(scene, renderer) {
   if (hf.length !== 401 * 401) throw new Error('höjdfält ' + hf.length);
   const hojd = (x, z) => hojdY(x, z, hf);
 
+  const [spelareGlb, tigerGlb] = await Promise.all([
+    glb(config.modell?.spelare || '../form/verkstad/data/enheter/panzer_iv_h/panzer_iv_h_v2b_v2_pbr_lod2.glb'),
+    glb(config.modell?.tiger || (BAS + 'tiger_i_heavy_v2_v2_pbr_lod2.glb'))
+  ]);
+
   const [gras, aker, grus, lera, skog] = await Promise.all([
     textur(new URL(TERR + 'texturer/Grass004_farg.jpg', import.meta.url).href, texLadd),
     textur(new URL(TERR + 'texturer/farm_furrows_farg.jpg', import.meta.url).href, texLadd),
@@ -799,9 +1135,7 @@ export async function byggVarld(scene, renderer) {
   ]);
   const mark = await laddMark(loader, scene, hojd, markMaterial({gras, aker, grus, lera, skog}));
 
-  const [shermanGlb, tigerGlb, hackGlb, ekGlb, granGlb, husGlb, ladaGlb] = await Promise.all([
-    glb(BAS + 'sherman_m4_barking_dogo_lod4.glb'),
-    glb(BAS + 'tiger_i_heavy_v2_v2_pbr_lod2.glb'),
+  const [hackGlb, ekGlb, granGlb, husGlb, ladaGlb] = await Promise.all([
     glb(TERR + 'props/bocage_rak_10m_lod2.glb'),
     glb(TERR + 'props/ek_mellan_lod2.glb'),
     glb(TERR + 'props/gran_mellan_lod2.glb'),
@@ -809,10 +1143,12 @@ export async function byggVarld(scene, renderer) {
     glb(TERR + 'props/lada_bessin_sten_lod2.glb')
   ]);
 
-  const sherman = byggSherman(shermanGlb);
+  const spelare = byggTigerSpelare(spelareGlb);
+  spelare.rigg.name = 'panzer4';
+  spelare.rapport.modell = 'panzer_iv_h';
   const tigerSpelare = byggTigerSpelare(tigerGlb);
   tigerSpelare.rigg.visible = false;
-  scene.add(sherman.rigg, tigerSpelare.rigg);
+  scene.add(spelare.rigg, tigerSpelare.rigg);
 
   const tigerMall = bakaTiger(tigerGlb);
   const box = tigerMall.mesh.geometry.boundingBox.clone();
@@ -899,23 +1235,23 @@ export async function byggVarld(scene, renderer) {
   draco.dispose();
   ktx2.dispose();
   const riggar = {
-    sherman_m4_75: sherman,
-    sherman_m4a3_76w: sherman,
+    sherman_m4_75: spelare,
+    sherman_m4a3_76w: spelare,
     tiger_i: tigerSpelare
   };
   return {
     sol, sky, hojd, hf,
     riggar,
-    rigg: sherman.rigg,
-    skrov: sherman.skrov,
-    torn: sherman.torn,
-    eldror: sherman.eldror,
-    pipa: sherman.pipa,
-    mynning: sherman.mynning,
-    sikte: sherman.sikte,
+    rigg: spelare.rigg,
+    skrov: spelare.skrov,
+    torn: spelare.torn,
+    eldror: spelare.eldror,
+    pipa: spelare.pipa,
+    mynning: spelare.mynning,
+    sikte: spelare.sikte,
     tigrar,
     rapport: {
-      sherman: sherman.rapport,
+      sherman: spelare.rapport,
       tigerSpelare: tigerSpelare.rapport,
       tiger: {skala: +tigerMall.skala.toFixed(3), fram: tigerMall.fram.toArray().map(v => +v.toFixed(2))},
       mark,

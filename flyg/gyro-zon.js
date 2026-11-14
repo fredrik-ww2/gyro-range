@@ -5,7 +5,7 @@
 const DEG = Math.PI / 180;
 
 export function nyZon() {
-  return { lage: 1, rollFore: 0, harFore: false, rollRate: 0, tecken: 1 };
+  return { lage: 1, rollFore: 0, harFore: false, rollRate: 0, tecken: 1, underTid: 0 };
 }
 
 export function nollZon(s) {
@@ -13,6 +13,7 @@ export function nollZon(s) {
   s.rollFore = 0;
   s.harFore = false;
   s.rollRate = 0;
+  s.underTid = 0;
   return s;
 }
 
@@ -38,7 +39,12 @@ export function uppdateraZon(state, pose, dt, Z, opts) {
   if (state.harFore && dtS > 1e-4) der = vink(roll - state.rollFore) / dtS;
   state.rollFore = roll;
   state.harFore = true;
-  const raw = matad == null ? der : (Math.abs(matad) > Math.abs(der) ? matad : der);
+  // En fastnad rotationRate (hög siffra, telefonen rör sig inte) får inte
+  // vinna över lutningens egen ändring. Då släpper inte zon 2.
+  const stilla = tal(Z.stilla_rad_s, 0.5);
+  const derTyst = Math.abs(der) < stilla;
+  const oense = matad != null && Math.sign(matad) !== 0 && Math.sign(der) !== 0 && Math.sign(matad) !== Math.sign(der);
+  const raw = matad == null || derTyst || oense ? der : (Math.abs(matad) > Math.abs(der) ? matad : der);
   const tau = tal(Z.rate_utjamning_s, 0.06);
   const a = dtS <= 0 ? 0 : (tau <= 0 ? 1 : 1 - Math.exp(-dtS / tau));
   state.rollRate += (raw - state.rollRate) * a;
@@ -58,13 +64,21 @@ export function uppdateraZon(state, pose, dt, Z, opts) {
   const utat = teckenRoll !== 0 && Math.sign(state.rollRate) === teckenRoll;
   const motMitten = teckenRoll !== 0 && Math.sign(state.rollRate) === -teckenRoll;
 
+  const tvang = tal(Z.slapp_tvang_grader, 12) * DEG;
+  if (abs < slapp) state.underTid = (state.underTid || 0) + dtS;
+  else state.underTid = 0;
+  const stadigt = state.underTid >= tal(Z.slapp_tid_s, 0.35);
+
   if (state.lage !== 2) {
     if (abs >= enter || (absRate >= snabb && utat)) {
       state.lage = 2;
       state.tecken = teckenRoll || Math.sign(state.rollRate) || state.tecken || 1;
     }
-  } else if (abs < slapp && (absRate < snabbSlapp || motMitten)) {
+  } else if (abs < tvang || (abs < slapp && (absRate < snabbSlapp || motMitten || derTyst || stadigt))) {
+    // Nära plant läge släpper rollen direkt. En still telefon under tröskeln
+    // släpper också, även om rotationRate fortfarande säger att den snurrar.
     state.lage = 1;
+    state.underTid = 0;
   } else if (teckenRoll) {
     state.tecken = teckenRoll;
   }

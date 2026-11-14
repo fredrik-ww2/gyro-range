@@ -25,6 +25,8 @@ export class FlightInput {
     this.klocka = null;
     this.rollHast = 0;
     this.rollHastAt = 0;
+    this._webTid = null;
+    this.bias = { pitch: 0, yaw: 0, roll: 0 };
     this._antal = 0;
     this._skarmSen = this.skarm();
     const pa = (typ, fn, opt) => { addEventListener(typ, fn, opt); this._antal++; };
@@ -46,6 +48,8 @@ export class FlightInput {
     this.pending = true;
     this.pose = { pitch: 0, roll: 0, yaw: 0 };
     this.senaste = null;
+    this.rollHast = 0;
+    this.rollHastAt = 0;
   }
   _nativeFarsk() { return this.native && (this.nu() - this.nativeAt) < STALE_MS; }
   _webbFarsk() { return !!(this.web && (this.nu() - this.webAt) < STALE_MS); }
@@ -64,14 +68,50 @@ export class FlightInput {
     if (this.t !== null) {
       const dt = Math.min(.05, Math.max(0, d.t - this.t));
       const a = this.skarm() * Math.PI / 180, cs = Math.cos(a), sn = Math.sin(a);
-      const clean = (v) => Math.abs(v) < this.c.gyro_brus_rad_s ? 0 : v;
-      this.pose.pitch += clean(d.x * cs - d.y * sn) * dt;
-      this.pose.yaw += clean(d.x * sn + d.y * cs) * dt;
-      this.pose.roll -= clean(d.z) * dt;
-    }
-    this.rollHast = -d.z;
+      const rp = d.x * cs - d.y * sn;
+      const ry = d.x * sn + d.y * cs;
+      const rr = d.z;
+      this._latBias(rp, ry, rr, dt);
+      const brus = this.c.gyro_brus_rad_s;
+      if (dt > 0) {
+        this.pose.pitch += this._ren(rp - this.bias.pitch, brus) * dt;
+        this.pose.yaw += this._ren(ry - this.bias.yaw, brus) * dt;
+        this.pose.roll -= this._ren(rr - this.bias.roll, brus) * dt;
+        this._lackYaw(dt);
+      }
+      // Zonen ska se rörelsen utan det stillastående felet. En hög råfart som
+      // inte finns i lutningen får inte hålla kvar en roll, det sköts i gyro-zon.
+      this.rollHast = -(rr - this.bias.roll);
+    } else this.rollHast = -d.z;
     this.rollHastAt = this.nu();
     this.t = d.t;
+  }
+  // Stillastående fel i gyrot. Bara när den axeln nästan ligger still, så en
+  // riktig vridning inte äts upp. Felet dras av innan vinkeln räknas ihop.
+  _latBias(rp, ry, rr, dt) {
+    const fang = this.c.gyro_bias_fangst_rad_s ?? 0.12;
+    const tau = this.c.gyro_bias_tid_s ?? 1.2;
+    const a = !(dt > 0) || !(tau > 0) ? 0 : 1 - Math.exp(-dt / tau);
+    const lat = (namn, v) => {
+      if (Math.abs(v) <= fang) this.bias[namn] += (v - this.bias[namn]) * a;
+    };
+    lat('pitch', rp);
+    lat('yaw', ry);
+    lat('roll', rr);
+  }
+  _ren(v, brus) {
+    if (!Number.isFinite(v)) return 0;
+    const grans = brus > 0 ? brus : 0;
+    const a = Math.abs(v);
+    if (a <= grans) return 0;
+    return Math.sign(v) * (a - grans);
+  }
+  // Vridning runt lodlinjen har inget "rakt". Utan läckage blir kompassdrift
+  // och ett litet gyrofel ett sidroder som aldrig släpper.
+  _lackYaw(dt) {
+    const tau = this.c.yaw_folj_s ?? 0.7;
+    if (!(tau > 0) || !(dt > 0)) return;
+    this.pose.yaw *= Math.exp(-Math.min(dt, 0.1) / tau);
   }
   // Webbens rotationRate är grader/s. Samma skärmbyte som vinklarna, så ett snabbt
   // vrid i liggande läge inte blir en loop kring fel axel.
@@ -92,6 +132,9 @@ export class FlightInput {
     if (!prov) return;
     const ang = this.skarm();
     if (ang !== this._skarmSen) this._skarmByte();
+    const nuMs = this.nu();
+    const dt = this._webTid == null ? 0 : Math.min(0.1, Math.max(0, (nuMs - this._webTid) / 1000));
+    this._webTid = nuMs;
     if (this.pending || !this.origin) {
       this.origin = { ...prov };
       this.pending = false;
@@ -100,10 +143,21 @@ export class FlightInput {
       this.origin = nyNoll(prov, this.pose, ang);
     } else {
       this.pose = eulerStyrning(prov, this.origin, ang);
+      if (dt > 0) this._foljYaw(dt);
     }
     this.senaste = prov;
     this.web = prov;
     this.webAt = this.nu();
+  }
+  // Samma läckage på webben: nollan följer efter en hållen kurs, så en
+  // kroppsvridning eller kompassdrift inte blir ett fast sidroder.
+  _foljYaw(dt) {
+    const tau = this.c.yaw_folj_s ?? 0.7;
+    if (!(tau > 0) || !(dt > 0) || !this.origin) return;
+    const k = 1 - Math.exp(-Math.min(dt, 0.1) / tau);
+    const kvar = this.pose.yaw * (1 - k);
+    this.origin.alpha += (this.pose.yaw - kvar) * 180 / Math.PI;
+    this.pose.yaw = kvar;
   }
   reset() {
     this.t = null;
@@ -111,6 +165,10 @@ export class FlightInput {
     this.pending = true;
     this.senaste = null;
     this.origin = null;
+    this._webTid = null;
+    this.bias = { pitch: 0, yaw: 0, roll: 0 };
+    this.rollHast = 0;
+    this.rollHastAt = 0;
     if (this.native) this.nativeAt = this.nu();
   }
   center() { this.reset(); this.gyro?.center?.(); }
@@ -122,24 +180,28 @@ export class FlightInput {
     const fin = (v) => Number.isFinite(v) ? v : 0;
     const z = Math.max(this.c.neutral_rad || 0, this.c.dodzon || 0);
     const knee = this.c.dodzon_mjuk || 0;
-    const dead = (x) => {
+    const dead = (x, zz = z) => {
       const a = Math.abs(x);
-      if (!(z > 0)) return x;
-      if (a <= z) return 0;
+      if (!(zz > 0)) return x;
+      if (a <= zz) return 0;
       const sign = Math.sign(x);
-      if (!(knee > 0)) return sign * (a - z);
-      if (a >= z + knee) return x;
+      if (!(knee > 0)) return sign * (a - zz);
+      if (a >= zz + knee) return x;
       // Mjuk knä: 0 vid dödzonen, samma värde och lutning som råvinkeln när knäet tar slut.
-      const u = (a - z) / knee;
+      const u = (a - zz) / knee;
       const h01 = -2 * u * u * u + 3 * u * u;
       const h11 = u * u * u - u * u;
-      return sign * ((z + knee) * h01 + knee * h11);
+      return sign * ((zz + knee) * h01 + knee * h11);
     };
     const clamp = (x, m) => Math.max(-m, Math.min(m, x));
     const gain = this.settings.kanslighet;
     const rv = this.c.roder_vinkel_rad || 0.35;
     const drag = this.gyro?.drag || { x: 0, y: 0 };
-    const roder = sensor ? clamp(dead(fin(p.yaw)) / rv, 1) : 0;
+    // Sidroder följer vridningen, men bara om den är på. Dödzonen är större
+    // än för lutning: en grad kompassbrus ska inte styra.
+    const sidPa = this.settings.brytare?.sidroder !== false && this.c.sidroder_via_vridning !== false;
+    const zRoder = Math.max(z, this.c.roder_dodzon_rad || 0);
+    const roder = sensor && sidPa ? clamp(dead(fin(p.yaw), zRoder) / rv, 1) : 0;
     let source = 'finger';
     if (!this.active) source = 'av';
     else if (freshNative) source = 'native';

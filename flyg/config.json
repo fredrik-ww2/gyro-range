@@ -8,6 +8,7 @@
  },
  "brytare": {
   "gyro": true,
+  "sidroder": true,
   "nivellering": true,
   "skjutning": true,
   "mal": true,
@@ -40,7 +41,11 @@
   "gyro_brus_rad_s": 0.022,
   "yaw_andel": 0.0,
   "roder_vinkel_rad": 0.35,
-  "_roder": "Vrid telefonen runt lodrät axel = sidroder. roder_vinkel_rad är vridningen för fullt utslag. yaw_andel 0 = vridning bankar inte längre."
+  "roder_dodzon_rad": 0.09,
+  "yaw_folj_s": 0.7,
+  "gyro_bias_tid_s": 1.2,
+  "gyro_bias_fangst_rad_s": 0.12,
+  "_roder": "Sidroder följer vridningen runt lodlinjen, men nollan hinner ifatt när telefonen hålls still (yaw_folj_s). roder_dodzon_rad sväljer kompassbrus. roder_vinkel_rad är vridningen för fullt utslag medan du vrider. yaw_folj_s 0 stänger läckaget. gyro_bias_* tar bort ett stillastående fel i Expo. brytare.sidroder stänger av sidrodret från vridning. yaw_andel 0 = vridning bankar inte."
  },
  "flyg": {
   "gas": 0.85,
@@ -594,6 +599,9 @@
     "troskel_steg_grader": 1,
     "snabb_vrid_rad_s": 3,
     "snabb_slapp_rad_s": 0.85,
+    "slapp_tvang_grader": 12,
+    "stilla_rad_s": 0.5,
+    "slapp_tid_s": 0.35,
     "rate_utjamning_s": 0.06,
     "min_tecken_rad": 0.05,
     "samordning": 0.42,

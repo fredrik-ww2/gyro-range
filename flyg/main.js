@@ -26,7 +26,7 @@ import {skapaKanal,skapaMekanik,gasSlag} from './ljud.js?v=14';
 import {monteraFlyg} from './gyrobox-adapter.js';
 import {installeraIosLjud, forberedTystLage} from '../shared/ios-ljud.js';
 const $=id=>document.getElementById(id), began=performance.now();
-const C=await fetch('./config.json?v=10').then(r=>{if(!r.ok)throw Error('Inställningar saknas');return r.json();});
+const C=await fetch('./config.json?v=11').then(r=>{if(!r.ok)throw Error('Inställningar saknas');return r.json();});
 const V=await fetch('./kamera/profil.json').then(r=>r.json());
 const motor=C.motor, RING=ringRadie(1.225);
 const settings={...C.styrning,skottkansla:1.5,hapticStyle:'auto',roll_troskel_grader:C.gyro_zon.roll_troskel_grader,brytare:{...C.brytare,atergang:false,horisont:false}};
@@ -82,7 +82,7 @@ $('modelSelect').onchange=e=>{void valjPlan(e.target.value);};
 class FollowTarget{constructor(camera){this.camera=camera;this.target=new THREE.Vector3();}update(){this.camera.lookAt(this.target);}}
 const cam=await skapaAppleKamera({THREE,OrbitControls:FollowTarget,renderer,varden:V,markHojd:()=>aircraft.position.y+C.kamera.hojd});
 const camera=cam.kamera;const gyro=new GyroAim(canvas,settings,C.styrning);const input=new FlightInput(gyro,C.styrning,settings);
-const gyroLada=monteraFlyg({styrning:C.styrning,zon:C.gyro_zon,kalibrera(){input.center();}});
+const gyroLada=monteraFlyg({styrning:C.styrning,zon:C.gyro_zon,kalibrera(){center();}});
 const atlas=await new KTX2Loader().setTranscoderPath('./vendor/libs/basis/').detectSupport(renderer).loadAsync('./effects/fx_atlas_v2d.ktx2');
 const effects=skapaEffekterV2d(THREE,scene,{atlas,kamera:camera,renderer,kvalitet:'lag',ljus:false,maxPartiklar:128,markHojd:height});
 const bombAntal=(C.bombuppdrag&&C.bombuppdrag.bomber)||2;
@@ -148,7 +148,7 @@ const forward=new THREE.Vector3(),cameraTarget=new THREE.Vector3(),smoothTarget=
 let sikteState={cx:0,cy:0,ring:0,dx:0,dy:0,vinkel:0,avstand:0,synlig:false};
 function fyllHast(target,model){if(model.kvaternion){target.set(model.vx,model.vy,model.vz);return target;}const ch=Math.cos(model.gamma);target.set(-Math.sin(model.psi)*ch*model.V,Math.sin(model.gamma)*model.V,-Math.cos(model.psi)*ch*model.V);return target;}
 function sattKropp(){if(fm.kvaternion){const o=fm.ori;aircraft.quaternion.set(o.x,o.y,o.z,o.w);}else aircraft.rotation.set(pitch,heading,roll,'YXZ');}
-function center(){input.center();nollZon(zonTillstand);zonVantade=false;pitchSpring.x=pitchSpring.v=bankSpring.x=bankSpring.v=0;}
+function center(){input.center();nollZon(zonTillstand);zonVantade=false;pitchSpring.x=pitchSpring.v=bankSpring.x=bankSpring.v=0;roder=0;}
 let crashFx=null,crashInfo=null;
 function aterstallSeger(){const ruta=$('seger');const h=ruta.querySelector('h2');const p=ruta.querySelector('p');if(h)h.textContent='Fw 190 är nere';if(p)p.textContent='Motståndaren är nedskjuten.';}
 function nollstallOmgang(){const t=tomOmgang({spelareHp:C.motstandare.spelare_hp,bomber:bombAntal});
@@ -190,8 +190,8 @@ const rollStyr=$('rollTroskel'),rollTal=$('rollTal');
 rollStyr.min=Zon.troskel_min_grader;rollStyr.max=Zon.troskel_max_grader;rollStyr.step=Zon.troskel_steg_grader;rollStyr.value=settings.roll_troskel_grader;
 function visaTroskel(){rollTal.textContent=Math.round(settings.roll_troskel_grader)+'°';}
 visaTroskel();rollStyr.oninput=e=>{settings.roll_troskel_grader=+e.target.value;visaTroskel();};
-const names={gyro:'Gyrostyrning',nivellering:'Automatisk nivellering',krasch:'Krasch vid markkontakt',skjutning:'Vingvapen',mal:'Målballonger',markskydd:'Mjukt markskydd',haptik:'Vibrationer',ljud:'Ljud',skada:'Skada',led:'Ledmarkör'};
-for(const [key,name]of Object.entries(names)){const label=document.createElement('label');label.textContent=name;const box=document.createElement('input');box.type='checkbox';box.checked=!!settings.brytare[key];box.dataset.nyckel=key;box.onchange=()=>{settings.brytare[key]=box.checked;if(key==='gyro'){input.active=box.checked;styrLage=box.checked?'gyro':'finger';center();if(box.checked&&running)gyro.start();else gyro.stop();}if(key==='haptik')haptics.sync();if(key==='ljud'){if(box.checked)void seTillLjud();else{motorKanal.tyst();skottKanal.tyst();mekanik.tyst();}}};label.append(box);$('toggles').append(label);}
+const names={gyro:'Gyrostyrning',sidroder:'Sidroder via vridning',nivellering:'Automatisk nivellering',krasch:'Krasch vid markkontakt',skjutning:'Vingvapen',mal:'Målballonger',markskydd:'Mjukt markskydd',haptik:'Vibrationer',ljud:'Ljud',skada:'Skada',led:'Ledmarkör'};
+for(const [key,name]of Object.entries(names)){const label=document.createElement('label');if(key==='sidroder')label.className='bred';label.append(document.createTextNode(name));const box=document.createElement('input');box.type='checkbox';box.checked=!!settings.brytare[key];box.dataset.nyckel=key;box.onchange=()=>{settings.brytare[key]=box.checked;if(key==='gyro'){input.active=box.checked;styrLage=box.checked?'gyro':'finger';center();if(box.checked&&running)gyro.start();else gyro.stop();}if(key==='sidroder')roder=0;if(key==='haptik')haptics.sync();if(key==='ljud'){if(box.checked)void seTillLjud();else{motorKanal.tyst();skottKanal.tyst();mekanik.tyst();}}};label.append(box);$('toggles').append(label);}
 function visaMeny(oppna){$('settings').hidden=!oppna;$('settingsButton').setAttribute('aria-expanded',String(!!oppna));}
 $('settingsButton').onclick=()=>visaMeny($('settings').hidden);$('closeSettings').onclick=()=>visaMeny(false);
 function stopFire(){firing=false;$('fire').classList.remove('firing');skottKanal.tyst();}
@@ -201,7 +201,7 @@ $('fire').onpointerdown=e=>{e.preventDefault();if(!running)return;firing=true;$(
 for(const event of ['pointerup','pointercancel','lostpointercapture'])$('fire').addEventListener(event,stopFire);
 addEventListener('blur',stopFire);
 function doljSpel(){stopFire();gyro.stop();if(audio&&audio.state==='running'){const p=audio.suspend();if(p&&typeof p.catch==='function')p.catch(()=>{});}}
-function visaSpel(){if(!running)return;input.center();if(settings.brytare.gyro&&input.active&&gyro.beviljad)gyro.start();void seTillLjud();}
+function visaSpel(){if(!running)return;center();if(settings.brytare.gyro&&input.active&&gyro.beviljad)gyro.start();void seTillLjud();}
 if(!globalThis.__flygLiv){globalThis.__flygLiv=true;
  document.addEventListener('visibilitychange',()=>{if(document.hidden)doljSpel();else visaSpel();});
  addEventListener('pagehide',()=>{stopFire();gyro.stop();if(audio&&(audio.state==='running'||audio.state==='interrupted')){const p=audio.suspend?.();if(p&&typeof p.catch==='function')p.catch(()=>{});}});
@@ -233,7 +233,7 @@ function crash(){fm.crashed=true;stopFire();crashInfo={fart_kmh:Math.round(fm.V*
  visual.visible=false;if(sight)setSight(false);haptics.hit();$('crashEyebrow').textContent='STÖRTAT';$('crashTitle').textContent='Planet störtade';$('crashText').textContent=`Planet störtade i ${crashInfo.fart_kmh} km/h, ${crashInfo.vinkel_grader}° mot marken.`;$('crashPanel').hidden=false;$('status').textContent='Störtade';}
 function nedskjuten(){fm.crashed=true;stopFire();const p=aircraft.position.clone();effects.spela('traff_mark',{pos:p,laddning_g:2200,kaliber_mm:20,underlag:'torr'});crashFx=effects.spela('brand_rok',{pos:p,fas:'brinner',skala:1.3});
  visual.visible=false;if(sight)setSight(false);$('crashEyebrow').textContent='NEDSKJUTEN';$('crashTitle').textContent='Du blev nedskjuten';$('crashText').textContent='Fw 190 träffade dig. Tryck Flyg igen.';$('crashPanel').hidden=false;$('status').textContent='Nedskjuten';}
-function styrText(){if(styrLage==='nekad')return 'Gyro nekades · dra med fingret';if(!settings.brytare.gyro||!input.active||styrLage==='finger')return 'Dra i bilden för att flyga · Centrera rätar upp';if(lastInput?.source==='tyst')return 'Sensorn svarar inte · håll kvar och tryck Centrera';return 'Luta för att flyga · vrid för sidroder · Centrera nollställer';}
+function styrText(){if(styrLage==='nekad')return 'Gyro nekades · dra med fingret';if(!settings.brytare.gyro||!input.active||styrLage==='finger')return 'Dra i bilden för att flyga · Centrera rätar upp';if(lastInput?.source==='tyst')return 'Sensorn svarar inte · håll kvar och tryck Centrera';const vrid=settings.brytare.sidroder!==false?' · vrid för sidroder':'';return 'Luta för att flyga'+vrid+' · Centrera nollställer';}
 function ritaJakt(){if(sight||!running)return null;return jaktPanel.rita({fart:fm.V,hojd:fm.y,vs:fm.vs,roll,pitch,nz:fm.nz,stall:fm.stalled});}
 function skrivHud(){const fwAvst=opp.state.laddad&&opp.group.visible?(()=>{const d=opp.group.position.distanceTo(aircraft.position);return ' · Fw '+(d>=1000?(d/1000).toFixed(1).replace('.',',')+' km':Math.round(d)+' m');})():'';$('flightHud').textContent=`${Math.round(fm.V*3.6)} km/h · ${Math.round(fm.y)} m · ${fm.vs>=0?'+':''}${fm.vs.toFixed(0)} m/s${fwAvst}${fm.stalled?' · STALL':''}${Number.isFinite(fm.nz)?' · '+fm.nz.toFixed(1)+' G':''}`;$('flightHud').classList.toggle('stall',!!fm.stalled);if(time<statusLas)return;const agl=fm.y-height(fm.x,fm.z);const stallText=C.instrument.stall_status;$('status').textContent=fm.stalled?stallText:fm.y>8000?'Tunn luft · taket närmar sig':fm.y>6000?'Tunn luft · stigningen avtar':paMarken?(landInfo?landInfo+' · stäng gasen och bromsa, full gas för ny start':(fm.V>30?'Rullar · dra lätt vid 160 km/h':'På marken · full gas, håll rakt med sidrodret')):agl<60?(gearPos>0.85?(flaps>0.8?'Inflygning · håll under 220 km/h, sjunk mjukt':'Lågflyg · landningsklaff ute ger mjukare landning'):'Lågflyg · hjul ut för att landa'):styrText();}
 function logic(dt){gyro.update(dt);lastInput=input.read();gyroLada.forma(lastInput,dt);if(input.pending&&!zonVantade)nollZon(zonTillstand);zonVantade=!!input.pending;let pitchCmd=lastInput.pitch;if(lutningTvang&&Number.isFinite(lutningTvang.pitch))pitchCmd=lutningTvang.pitch;else if(!settings.brytare.nivellering)pitchCmd=dampCritical(pitchSpring,pitchCmd,dt,C.styrning.kritisk_omega);const lutning=lutningTvang?lutningTvang.roll:(lastInput.pose.roll+(gyro.drag?.x||0));const rollHast=lutningTvang&&Number.isFinite(lutningTvang.rollRate)?lutningTvang.rollRate:lastInput.rollHast;const komm=styrKommando(zonTillstand,{roll:lutning,rollRate:rollHast,pitch:pitchCmd},dt,C.gyro_zon,fm.A,{kanslighet:settings.kanslighet,nivellering:!!settings.brytare.nivellering,troskel:settings.roll_troskel_grader});

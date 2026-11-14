@@ -21,9 +21,9 @@
 #hud #windshield{position:absolute;left:0;right:0;top:0;height:var(--wind,56%);pointer-events:auto;touch-action:none;background:transparent}
 #hud #warning{top:38%;z-index:2}
 #hud #gauges{position:absolute;inset:0;pointer-events:none}
-#hud .gauge{position:absolute;width:var(--g,68px);height:var(--g,68px);padding:0;border:0;border-radius:50%;background:#0c1210;overflow:hidden;transform-origin:50% 100%;transition:transform .14s ease-out;z-index:4;touch-action:none;pointer-events:auto;box-shadow:0 8px 16px #0007,inset 0 0 0 1px #ffffff22}
+#hud .gauge{position:absolute;width:var(--g,68px);height:var(--g,68px);padding:0;border:0;border-radius:50%;background:transparent;overflow:hidden;transform-origin:50% 100%;transition:transform .14s ease-out;z-index:4;touch-action:none;pointer-events:auto;box-shadow:none}
 #hud .gauge canvas,#hud #radar{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:50%;background:transparent;right:auto;top:auto}
-#hud .gauge.grown,#hud .gauge.grown:active{transform:scale(var(--grow,3));z-index:9;filter:drop-shadow(0 16px 18px #000a)}
+#hud .gauge.grown,#hud .gauge.grown:active{transform:scale(var(--grow,3));z-index:9;filter:none;box-shadow:0 16px 22px #0008}
 #hud #collective{position:absolute;background:transparent;border:none;border-radius:0;margin:0;touch-action:none;pointer-events:auto;z-index:5}
 #hud #collective b{position:absolute;top:0;left:4px;font-size:11px;font-weight:600;letter-spacing:.6px;color:#e4f0d4;text-shadow:0 1px 2px #000}
 #hud #collective.dragging{background:linear-gradient(90deg,#d1eb8124,transparent 80%)}
@@ -35,15 +35,33 @@ body:not(.cockpit) #hud #collective{background:#132a2cc0;border:1px solid #b9d8c
 #hud #cyclic{pointer-events:auto;margin:0}
 body.cockpit #hud #cyclic{background:transparent;border-color:transparent;box-shadow:none}
 body.cockpit #hud #stick,body.cockpit #hud .cross-x,body.cockpit #hud .cross-y,body.cockpit #hud .forward{visibility:hidden}
-#hud #fire{position:absolute;border-radius:50%;border:3px solid #c4523a;background:radial-gradient(circle at 40% 35%,#3c4e44,#1a2420 62%,#101614);color:#f3f6ea;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;z-index:6;box-shadow:0 10px 18px #0008,inset 0 0 0 6px #2a1612;touch-action:none;pointer-events:auto;padding:0}
-#hud #fire .fire-mark{font-size:22px;line-height:1}
-#hud #fire small{font-size:10px;letter-spacing:1.6px;font-weight:700}
-#hud #fire b{font-size:10px;font-weight:500;color:#d1eb81}
-#hud #fire.held{background:#d7e7a8;color:#1a2918;border-color:#eef6d2}
-#hud #fire.held b{color:#1a2918}
-#hud #fire.empty b{opacity:.4}
+#hud #rocket{position:absolute;border-radius:50%;border:2px solid #6a4034;background:radial-gradient(circle at 40% 35%,#3a332c,#16120f 70%);color:#f3f0e6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;z-index:6;box-shadow:inset 0 -6px 8px #000a,0 2px 3px #0006;touch-action:none;pointer-events:auto;padding:0}
+#hud #rocket .rocket-mark{font-size:20px;line-height:1;color:#e7c9a4}
+#hud #rocket small{font-size:9px;letter-spacing:1.4px;font-weight:700}
+#hud #rocket b{font-size:11px;font-weight:600;color:#e7d7b0}
+#hud #rocket.held{background:#c4a574;color:#1c140c;border-color:#e6d3ae}
+#hud #rocket.held b{color:#1c140c}
+#hud #rocket.empty{opacity:.55}
+#hud #gun{position:absolute;z-index:7;border-radius:46% 46% 42% 42%;border:0;padding:0;margin:0;background:radial-gradient(circle at 38% 32%,#5c6560,#1a1f1c 68%,#101412);color:#d5dece;box-shadow:inset 0 -4px 6px #000a,0 1px 2px #0008;touch-action:none;pointer-events:auto;display:grid;place-items:center;font-size:16px;line-height:1;transform:translate(-50%,-62%)}
+#hud #gun.held{background:radial-gradient(circle at 40% 32%,#a85848,#3a1c18 72%);color:#fff4ea}
 #hud #aimFocus{z-index:6;transform:none;bottom:auto}
 #hud #cyclic{width:100%;height:100%;margin:0}
 #settings .menu-actions{display:flex;gap:8px;margin:4px 0 8px}
 #settings .menu-actions .outline{flex:1}
 #settings #calibrate,#settings #centerAim{position:static;bottom:auto;right:auto;width:auto;min-height:42px}
+header{left:auto;right:0;top:0;width:auto;padding:0;background:transparent;pointer-events:none;z-index:8}
+#menuBtn{position:fixed;top:max(10px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:8;pointer-events:auto;width:44px;height:44px}
+#missionHud{top:max(10px,env(safe-area-inset-top));z-index:4;text-shadow:0 1px 2px #000c;max-width:calc(100% - 108px);pointer-events:none}
+#missionHud b{text-shadow:0 1px 2px #000c}
+body.playing .vignette{background:linear-gradient(180deg,transparent 72%,#0b161b66)}
+body.cockpit .vignette{background:radial-gradient(ellipse at 50% 46%,transparent 46%,#040c1018 100%)}
+#safeProbe{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+#safeTop{display:block;width:0;height:env(safe-area-inset-top)}
+#safeBottom{display:block;width:0;height:env(safe-area-inset-bottom)}
+#safeLeft{display:block;height:0;width:env(safe-area-inset-left)}
+#safeRight{display:block;height:0;width:env(safe-area-inset-right)}
+#hud #windshield{z-index:1}
+#hud #gun,#hud #rocket,#hud .gauge,#hud #collective,#hud #cyclic,#hud #pedals button,#hud #windshield{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#briefing .brand{margin-bottom:18px}
+#gyroNote{margin-top:0;color:#e7c9a4}
+@media(max-width:600px) and (orientation:portrait){#missionHud{top:max(8px,env(safe-area-inset-top));width:auto}header{top:0;left:auto;right:0}}

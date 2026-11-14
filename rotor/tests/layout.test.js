@@ -11,12 +11,16 @@ test('cockpit layout stays in config and below a tunable windshield', () => {
     for (const key of ['collective', 'pedalLeft', 'pedalRight', 'cyclic', 'aimFocus']) {
       assert.ok(box[key].top + 0.001 >= box.windshieldEnd - 0.02, key);
     }
-    assert.ok(box.fire.cy > box.windshieldEnd);
-    for (const id of ['speed', 'altitude', 'vertical', 'radar']) {
+    assert.ok(box.rocket.cy > box.windshieldEnd);
+    assert.equal(box.gauges.speed, undefined);
+    for (const id of ['altitude', 'vertical', 'radar']) {
       assert.ok(box.gauges[id].cy > box.windshieldEnd, id);
     }
   }
-  assert.equal(config.weapons.gunBurst >= 1, true);
+  assert.equal(config.weapons.doubleTapMs, undefined);
+  assert.ok(config.weapons.gunInterval > 0 && config.weapons.gunInterval < 0.2);
+  assert.equal(config.weapons.rocketAmmo, 12);
+  assert.ok(config.layout.gun.size >= 0.1 && config.layout.gun.size <= 0.22);
   assert.ok(config.cockpit.stick.gripY < 0.9);
   assert.ok(config.cockpit.lookDownDeg < 16);
 });

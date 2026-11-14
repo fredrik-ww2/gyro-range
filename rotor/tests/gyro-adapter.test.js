@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GyroAdapter, anglesBetween, rebaseOrigin, deviceQuaternion, relativeAngles, wrapDeg} from '../controls/GyroAdapter.js';
+import {GyroAdapter, anglesBetween, rebaseOrigin, deviceQuaternion, relativeAngles, wrapDeg, gravityToAngles, readOrientationEvent} from '../controls/GyroAdapter.js';
 
 const near=(a,b,e=1e-2)=>assert.ok(Math.abs(wrapDeg(a-b))<e,`${a} ≈ ${b}`);
 const pose=(alpha,beta,gamma,screen=0)=>({alpha,beta,gamma,screen});
@@ -53,6 +53,37 @@ test('a representation glitch rebases instead of slamming the stick',()=>{
   const origin=rebaseOrigin(q,held);
   const got=relativeAngles(origin,q);
   near(got.pitch,held.pitch,1e-6);near(got.roll,held.roll,1e-6);near(got.yaw,held.yaw,1e-6);
+});
+
+test('portrait gravity: top away is positive pitch and right side down is positive roll',()=>{
+  const upright=gravityToAngles({x:0,y:-9.8,z:0});
+  near(upright.pitch,0,1);near(upright.roll,0,1);
+  const forward=gravityToAngles({x:0,y:-7,z:-7});
+  assert.ok(forward.pitch>30,`pitch ${forward.pitch}`);
+  const right=gravityToAngles({x:-5,y:-8,z:0});
+  assert.ok(right.roll>20,`roll ${right.roll}`);
+});
+
+test('a missing compass alpha still yields beta and gamma',()=>{
+  const sample=readOrientationEvent({alpha:null,beta:90,gamma:0,webkitCompassHeading:20});
+  assert.equal(sample.beta,90);
+  assert.equal(sample.gamma,0);
+  near(sample.alpha,340,1e-6);
+  assert.equal(readOrientationEvent({alpha:0,beta:null,gamma:0}),null);
+});
+
+test('gravity fallback is neutral at the first sample and calibrate zeros a tilt',()=>{
+  let t=1000;
+  const g=new GyroAdapter({now:()=>t});
+  g._handleMotion({accelerationIncludingGravity:{x:0,y:-7,z:-7}});
+  const first=g.take();
+  near(first.pitch,0);near(first.roll,0);
+  g._handleMotion({accelerationIncludingGravity:{x:0,y:-4,z:-8}});
+  const moved=g.take();
+  assert.ok(moved.pitch>10,`pitch ${moved.pitch}`);
+  g.calibrate(t);
+  near(g.take().pitch,0);
+  assert.equal(g._orientAlive,false);
 });
 
 test('permission ask calls requestPermission before awaiting',async ()=>{

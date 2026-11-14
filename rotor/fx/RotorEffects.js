@@ -19,15 +19,15 @@ export class RotorEffects {
   if(!THREE||!scene||!camera||!atlas)throw new Error('THREE, scene, camera and atlas texture required');
   this.T=THREE;this.scene=scene;this.camera=camera;this.audio=audio;this.atlas=atlas;this.bulletTexture=bulletTexture;this.groundQuery=groundQuery;this.maxTraces=limits.tracers??32;this.maxTrails=limits.missileTrails??8;this.trailSpacing=limits.trailSpacing??1.3;this.ownedVoices=new Set();this.core=new EffectsCore({quality,reducedMotion,groundQuery,budget,onSound:e=>{const v=audio?.command(e);if(v)this.ownedVoices.add(v)}});this.bridge=new CollisionBridge({THREE,colliders,groundQuery});this.DecalGeometry=createDecalGeometryClass(THREE);
   this.root=new THREE.Group();this.root.name='Rotor Strike effects';scene.add(this.root);this.dummy=new THREE.Object3D();this.cameraWorld=new THREE.Vector3();this.v=new THREE.Vector3();this.w=new THREE.Vector3();this.normal=new THREE.Vector3();this.right=new THREE.Vector3();this.up=new THREE.Vector3();this.color=new THREE.Color();this.traces=[];this.wrecks=[];this.emitters=new Map();this.trails=new Map();this.metalMarks=new Map();this.disposed=false;
-  const n=this.core.budget.particles;this.alpha=this.makeBatch(n,false);this.glow=this.makeBatch(n,true);this.root.add(this.alpha.mesh,this.glow.mesh);this.makeMarks();
+  const n=this.core.budget.particles;this.alpha=this.makeBatch(n,false,.00032);this.glow=this.makeBatch(n,true,.0007);this.root.add(this.alpha.mesh,this.glow.mesh);this.makeMarks();
   this.debris=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),new THREE.MeshStandardMaterial({color:0x55534c,roughness:.85,metalness:.25}),this.core.budget.debris);this.debris.instanceMatrix.setUsage(THREE.DynamicDrawUsage);this.debris.frustumCulled=false;this.debris.count=0;this.root.add(this.debris);
   this.traceMesh=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial({color:0xffd9a0,transparent:true,opacity:.85,depthWrite:false,blending:THREE.AdditiveBlending}),32);this.traceMesh.count=0;this.traceMesh.frustumCulled=false;this.root.add(this.traceMesh);
   this.lights=Array.from({length:2},()=>{const l=new THREE.PointLight(0xffbd6b,0,20,2);l.castShadow=false;this.root.add(l);return {light:l,life:0}});
  }
- makeBatch(count,additive){
+ makeBatch(count,additive,fogDensity=.00032){
   const T=this.T,base=new T.PlaneGeometry(1,1),g=new T.InstancedBufferGeometry();g.index=base.index;g.attributes.position=base.attributes.position;g.attributes.uv=base.attributes.uv;
   const center=new T.InstancedBufferAttribute(new Float32Array(count*3),3),tint=new T.InstancedBufferAttribute(new Float32Array(count*4),4),data=new T.InstancedBufferAttribute(new Float32Array(count*4),4);for(const a of [center,tint,data])a.setUsage(T.DynamicDrawUsage);g.setAttribute('center',center);g.setAttribute('tint',tint);g.setAttribute('data',data);g.instanceCount=0;
-  const material=new T.ShaderMaterial({vertexShader:vertex,fragmentShader:fragment,uniforms:{atlas:{value:this.atlas},fogColor:{value:additive?new T.Color(0):this.scene.fog?.color||new T.Color(0x9daaa9)},fogDensity:{value:.0015}},transparent:true,depthWrite:false,depthTest:true,blending:additive?T.AdditiveBlending:T.NormalBlending});
+  const material=new T.ShaderMaterial({vertexShader:vertex,fragmentShader:fragment,uniforms:{atlas:{value:this.atlas},fogColor:{value:additive?new T.Color(0):this.scene.fog?.color||new T.Color(0x9daaa9)},fogDensity:{value:fogDensity}},transparent:true,depthWrite:false,depthTest:true,blending:additive?T.AdditiveBlending:T.NormalBlending});
   const mesh=new T.Mesh(g,material);mesh.frustumCulled=false;mesh.renderOrder=additive?12:10;return {mesh,center,tint,data,items:[]};
  }
  makeMarks(){
@@ -42,12 +42,14 @@ export class RotorEffects {
  tracer(from,to,{life=.055,width=.035}={}){if(!this.core.enabled||this.traces.length>=this.maxTraces)return;this.traces.push({from:{...from},to:{...to},age:0,life,width})}
  /** Emit trail by distance, not frame count. Stop/drop its loop with endTrail(id). */
  trail(id,position,opt={}){
-  const spacing=opt.spacing??this.trailSpacing;
-  if(!this.core.enabled)return;let t=this.trails.get(id);if(!t){if(this.trails.size>=this.maxTrails)return;t={previous:{...position},remainder:0,seen:this.core.time};this.trails.set(id,t);this.audio?.play('robot_flyg_loop',{position,loop:true,id:'missile:'+id,gain:.7})}
-  t.seen=this.core.time;const dx=position.x-t.previous.x,dy=position.y-t.previous.y,dz=position.z-t.previous.z,d=Math.hypot(dx,dy,dz),count=Math.min(20,Math.floor((d+t.remainder)/spacing));
-  for(let i=0;i<count;i++){const f=d?Math.min(1,(spacing-t.remainder+i*spacing)/d):1;this.core.particle({pos:{x:t.previous.x+dx*f,y:t.previous.y+dy*f+.05,z:t.previous.z+dz*f},life:this.core.range(1.8,2.6),size:.42,endSize:1.55,color:[.8,.81,.78],alpha:.82,tile:0,vel:{x:0,y:.18,z:0}})}t.remainder=(d+t.remainder)%spacing;t.previous={...position};this.audio?.setPosition(this.audio.loops.get('missile:'+id),position);
+  const spacing=Math.max(.8,opt.spacing??this.trailSpacing);
+  if(!this.core.enabled)return;let t=this.trails.get(id);if(!t){if(this.trails.size>=this.maxTrails)return;t={previous:{...position},remainder:0,seen:this.core.time,dying:0};this.trails.set(id,t);this.audio?.play('robot_flyg_loop',{position,loop:true,id:'missile:'+id,gain:.7})}
+  if(t.dying)return;
+  t.seen=this.core.time;
+  const dx=position.x-t.previous.x,dy=position.y-t.previous.y,dz=position.z-t.previous.z,d=Math.hypot(dx,dy,dz),count=Math.min(8,Math.floor((d+t.remainder)/spacing));
+  for(let i=0;i<count;i++){const f=d?Math.min(1,(spacing-t.remainder+i*spacing)/d):1;this.core.particle({pos:{x:t.previous.x+dx*f,y:t.previous.y+dy*f+.2,z:t.previous.z+dz*f},life:this.core.range(3.2,4.6),size:opt.size??5.5,endSize:opt.endSize??15,color:[.93,.94,.92],alpha:.82,tile:0,trail:true,drag:.35,vel:{x:this.core.range(-.45,.45),y:.55,z:this.core.range(-.45,.45)}})}t.remainder=(d+t.remainder)%spacing;t.previous={...position};this.audio?.setPosition(this.audio.loops.get('missile:'+id),position);
  }
- endTrail(id){this.trails.delete(id);this.audio?.stop('missile:'+id,.06)}
+ endTrail(id){const t=this.trails.get(id);if(t&&!t.dying)t.dying=this.core.time;this.audio?.stop('missile:'+id,.06)}
  /** Visual wreck only: pass an expendable mesh/clone, never the live player helicopter. */
  fallingWreck({id,object,velocity={x:8,y:0,z:0},spin={x:.7,y:.3,z:.5},scale=1,disposeOnRemove=false}){
   if(!this.core.enabled||this.wrecks.some(w=>w.id===id)||!object)return false;if(this.wrecks.length>=4)this.removeWreck(this.wrecks[0]);
@@ -55,7 +57,7 @@ export class RotorEffects {
  }
  removeWreck(w){w.object.removeFromParent();if(w.disposeOnRemove)w.object.traverse(o=>{o.geometry?.dispose();for(const m of (Array.isArray(o.material)?o.material:[o.material]).filter(Boolean))m.dispose()});this.wrecks.splice(this.wrecks.indexOf(w),1)}
  renderBatch(batch,items){
-  let i=0;for(const p of items){const t=p.age/p.life,s=p.size+(p.endSize-p.size)*t,fade=p.glow?(1-t)**1.5:Math.min(1,t*12)*Math.min(1,(1-t)*3);batch.center.setXYZ(i,p.pos.x,p.pos.y,p.pos.z);batch.tint.setXYZW(i,p.color[0],p.color[1],p.color[2],p.alpha*fade);batch.data.setXYZW(i,s,p.rotation,p.tile,0);i++}batch.mesh.geometry.instanceCount=i;for(const a of [batch.center,batch.tint,batch.data])a.needsUpdate=true;
+  let i=0;const fov=(this.camera.fov||60)*Math.PI/180,px=Math.max(480,typeof innerHeight==='number'?innerHeight:844),minPix=16;for(const p of items){const t=p.age/p.life,dist=Math.sqrt(p.distance||1),floor=p.trail?dist*2*Math.tan(fov/2)*(minPix/px):0,s=Math.max(p.size+(p.endSize-p.size)*t,floor),fade=p.glow?(1-t)**1.5:p.trail?Math.min(1,(1-t)*1.6):Math.min(1,t*12)*Math.min(1,(1-t)*3);batch.center.setXYZ(i,p.pos.x,p.pos.y,p.pos.z);batch.tint.setXYZW(i,p.color[0],p.color[1],p.color[2],p.alpha*fade);batch.data.setXYZW(i,s,p.rotation,p.tile,0);i++}batch.mesh.geometry.instanceCount=i;for(const a of [batch.center,batch.tint,batch.data])a.needsUpdate=true;
  }
  syncMarks(){
   const T=this.T;let index=0;
@@ -78,7 +80,7 @@ export class RotorEffects {
   if(this.disposed)return;dt=Math.max(0,Math.min(.05,dt));const T=this.T;
   for(const f of this.core.fires)if(f.anchor?.getWorldPosition){f.anchor.getWorldPosition(this.v);f.pos={x:this.v.x,y:this.v.y,z:this.v.z}}
   this.camera.getWorldPosition(this.cameraWorld);this.core.update(dt);for(const v of this.ownedVoices)if(!this.audio?.voices?.has(v))this.ownedVoices.delete(v);
-  const alpha=this.alpha.items,glow=this.glow.items;alpha.length=glow.length=0;for(const p of this.core.particles){p.distance=this.cameraWorld.distanceToSquared(p.pos);if(p.distance<800*800)(p.glow?glow:alpha).push(p)}alpha.sort((a,b)=>b.distance-a.distance);this.renderBatch(this.alpha,alpha);this.renderBatch(this.glow,glow);this.syncMarks();
+  const alpha=this.alpha.items,glow=this.glow.items;alpha.length=glow.length=0;for(const p of this.core.particles){p.distance=this.cameraWorld.distanceToSquared(p.pos);if(p.distance<1400*1400)(p.glow?glow:alpha).push(p)}alpha.sort((a,b)=>b.distance-a.distance);this.renderBatch(this.alpha,alpha);this.renderBatch(this.glow,glow);this.syncMarks();
   let j=0;for(const d of this.core.debris){this.dummy.position.copy(d.pos);this.dummy.rotation.set(d.rotation,d.rotation*.71,d.rotation*.3);this.dummy.scale.set(d.size,d.size*.57,d.size*1.35);this.dummy.updateMatrix();this.debris.setMatrixAt(j,this.dummy.matrix);this.debris.setColorAt(j,this.color.set(d.metal?0x5b5c59:0x645b47));j++}this.debris.count=j;this.debris.instanceMatrix.needsUpdate=true;if(this.debris.instanceColor)this.debris.instanceColor.needsUpdate=true;
   for(let i=this.traces.length-1;i>=0;i--){this.traces[i].age+=dt;if(this.traces[i].age>this.traces[i].life)this.traces.splice(i,1)}
   j=0;for(const t of this.traces){this.v.copy(t.to).sub(t.from);const len=this.v.length();this.dummy.position.copy(t.from).addScaledVector(this.v,.5);this.dummy.quaternion.setFromUnitVectors(this.up.set(0,0,1),this.v.normalize());this.dummy.scale.set(t.width,t.width,len);this.dummy.updateMatrix();this.traceMesh.setMatrixAt(j++,this.dummy.matrix)}this.traceMesh.count=j;this.traceMesh.instanceMatrix.needsUpdate=true;
@@ -91,7 +93,7 @@ export class RotorEffects {
   }
   const live=new Set();for(const f of this.core.fires){const id='fire:'+f.id;live.add(id);if(!this.emitters.has(id)){const v=this.audio?.play('brand_loop',{position:f.pos,loop:true,id,gain:.5,priority:0});if(v)this.emitters.set(id,v)}const v=this.emitters.get(id);if(v)this.audio?.setPosition(v,f.pos)}
   for(const [id]of this.emitters)if(!live.has(id)){this.audio?.stop(id,.3);this.emitters.delete(id)}
-  for(const [id,t]of this.trails)if(this.core.time-t.seen>.4)this.endTrail(id);
+  for(const [id,t]of this.trails){if(!t.dying&&this.core.time-t.seen>.45)this.endTrail(id);if(t.dying&&this.core.time-t.dying>4.4)this.trails.delete(id);}
  }
  setEnabled(value){this.core.enabled=!!value;this.root.visible=!!value;if(!value)this.reset()}
  reset(){for(const v of this.ownedVoices)this.audio?.stopVoice(v);this.ownedVoices.clear();this.core.reset();this.traces.length=0;for(const id of [...this.trails.keys()])this.endTrail(id);for(const id of this.emitters.keys())this.audio?.stop(id);this.emitters.clear();for(const w of [...this.wrecks])this.removeWreck(w);for(const l of this.lights){l.life=0;l.light.intensity=0}this.update(0)}

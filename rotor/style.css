@@ -27,7 +27,9 @@
 #hud #collective{position:absolute;background:transparent;border:none;border-radius:0;margin:0;touch-action:none;pointer-events:auto;z-index:5}
 #hud #collective b{position:absolute;top:0;left:4px;font-size:11px;font-weight:600;letter-spacing:.6px;color:#e4f0d4;text-shadow:0 1px 2px #000}
 #hud #collective.dragging{background:linear-gradient(90deg,#d1eb8124,transparent 80%)}
-body:not(.cockpit) #hud #collective{background:#132a2cc0;border:1px solid #b9d8c74d;border-radius:10px}
+#hud #collective{background:linear-gradient(#d5d8d2,#9aa099);border:1px solid #eef1ea;border-radius:12px}
+#hud #collective b{color:#1c221c;text-shadow:none}
+body:not(.cockpit) #hud #collective{background:linear-gradient(#d5d8d2,#9aa099)}
 #hud #pedals{position:absolute;inset:0;pointer-events:none;text-align:left}
 #hud #pedals button{position:absolute;margin:0;padding:0;border:0;border-radius:12px;background:transparent;font-size:0;touch-action:none;pointer-events:auto;z-index:5}
 #hud #pedals button.held{background:linear-gradient(#0000,#9eb48a55);box-shadow:inset 0 10px 14px #0007}
@@ -43,7 +45,7 @@ body.cockpit #hud #stick,body.cockpit #hud .cross-x,body.cockpit #hud .cross-y,b
 #hud #rocket.held b{color:#1c140c}
 #hud #rocket.empty{opacity:.55}
 #hud #rocket.wait{opacity:.72}
-#hud #gun{position:absolute;z-index:7;border-radius:46% 46% 42% 42%;border:0;padding:0;margin:0;background:radial-gradient(circle at 38% 32%,#5c6560,#1a1f1c 68%,#101412);color:#d5dece;box-shadow:inset 0 -4px 6px #000a,0 1px 2px #0008;touch-action:none;pointer-events:auto;display:grid;place-items:center;font-size:16px;line-height:1;transform:translate(-50%,-62%)}
+#hud #gun{position:absolute;z-index:7;border-radius:50%;border:2px solid #c9a15a;padding:0;margin:0;background:radial-gradient(circle at 38% 32%,#8a3a32,#1a1210 70%);color:#f6efe4;box-shadow:inset 0 -4px 6px #000a,0 1px 2px #0008;touch-action:none;pointer-events:auto;display:grid;place-items:center;font-size:13px;font-weight:700;letter-spacing:1px;line-height:1;transform:translate(-50%,-50%)}
 #hud #gun.held{background:radial-gradient(circle at 40% 32%,#a85848,#3a1c18 72%);color:#fff4ea}
 #hud #aimFocus{z-index:6;transform:none;bottom:auto}
 #hud #cyclic{width:100%;height:100%;margin:0}
@@ -65,7 +67,13 @@ body.cockpit .vignette{background:radial-gradient(ellipse at 50% 46%,transparent
 #hud #gun,#hud #rocket,#hud .gauge,#hud #collective,#hud #cyclic,#hud #pedals button,#hud #windshield{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #briefing .brand{margin-bottom:18px}
 #gyroNote{margin-top:0;color:#e7c9a4}
-body.playing #missionHud{top:calc(env(safe-area-inset-top, 0px) + 56px);margin-left:0;max-width:min(340px, calc(100% - 16px));white-space:normal;transition:opacity .2s linear}
+body.playing #missionHud{top:calc(env(safe-area-inset-top, 0px) + 54px);margin-left:0;max-width:min(250px, calc(100% - 20px));white-space:normal;transition:opacity .2s linear}
 #reticle small{top:74px;font-size:11px;letter-spacing:.3px;line-height:1.2;background:#101816cc;padding:3px 8px;border-radius:6px}
 .marker span[hidden]{display:none}
 @media(max-width:600px) and (orientation:portrait){#missionHud{top:max(8px,env(safe-area-inset-top));width:auto}header{top:0;left:auto;right:0}}
+#viewQuick{position:fixed;top:max(10px,env(safe-area-inset-top));right:max(64px,calc(env(safe-area-inset-right) + 64px));left:auto;transform:none;z-index:8;min-height:36px;padding:6px 12px;border-radius:18px;border:1px solid #d5e4c866;background:#132428e6;color:#e7f0dc;font-size:12px;letter-spacing:.4px;pointer-events:auto}
+#aimPad{position:absolute;z-index:6;border-radius:50%;border:2px solid #d7e4c8cc;background:radial-gradient(circle at 50% 45%,#24302888,#101614e6 70%);color:#e7f0dc;display:grid;place-items:center;touch-action:none;pointer-events:auto;box-shadow:inset 0 0 0 10px #ffffff10}
+#aimPad b{font-size:12px;letter-spacing:1.4px;font-weight:700}
+#aimPad i{position:absolute;width:34%;height:34%;border:1px solid #e7f0dc99;border-radius:50%}
+#uppdragVal{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+#uppdragVal button{border:1px solid #d1eb8166;background:#132428cc;color:#e7f0dc;border-radius:8px;min-height:40px;padding:8px 10px;font-size:12px}

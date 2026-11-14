@@ -12,6 +12,7 @@
 <canvas id="world" aria-label="Helikopterstrid i 3D"></canvas>
 <div class="vignette"></div>
 <header>
+  <button id="viewQuick" type="button" hidden>Bakifrån</button>
   <button id="menuBtn" class="icon" type="button" aria-label="Öppna meny">☰</button>
 </header>
 <div id="missionHud" hidden><span class="eyebrow" id="missionLabel">OPERATION / SKÄRGÅRD</span><b id="objective">Slå ut fientliga mål · 0 / 5</b></div>
@@ -21,8 +22,13 @@
   <div class="brand"><b>ROTOR<span>STRIKE</span></b><small>HELIKOPTER MED GYRO</small></div>
   <span class="eyebrow">FLYGUPPDRAG 01 / NORRA SKÄRGÅRDEN</span>
   <h1>Luta telefonen.<br><em>Flyg.</em></h1>
-  <p>Telefonens lutning är styrspaken. Dra i lyftspaken till vänster. Pedalerna vrider nosen. Peka i vindrutan för att sikta.</p>
-  <div class="mission-meta"><span><i>01</i> STRIDSHELIKOPTER</span><span><i>05</i> FIENTLIGA MÅL</span></div>
+  <p>Luta telefonen för att flyga. Vänster kant upp svänger höger. Lyft i det grå fältet. Sikte i ringen nere till höger. Eld till vänster.</p>
+  <div class="mission-meta"><span><i>01</i> STRIDSHELIKOPTER</span><span><i>03</i> UPPDRAG</span></div>
+  <div id="uppdragVal">
+    <button type="button" data-uppdrag="konvoj">Konvojen</button>
+    <button type="button" data-uppdrag="lv">Luftvärn</button>
+    <button type="button" data-uppdrag="duell">Duell</button>
+  </div>
   <button id="startBattle" class="primary" type="button">STARTA UPPDRAG <span>↗</span></button>
   <button id="startPractice" class="text-button" type="button">Fri flygning och styrträning <span>→</span></button>
   <div class="briefing-foot"><span class="dot"></span> RIKTIGT GYRO · LYFT PÅ SKÄRMEN</div>
@@ -42,7 +48,8 @@
   <div id="collective" class="lever" role="slider" tabindex="0" aria-label="Lyftspak" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><b id="collectiveValue">LYFT 60%</b></div>
   <div class="pedals" id="pedals"><button id="yawLeft" type="button" aria-label="Vänster pedal"></button><button id="yawRight" type="button" aria-label="Höger pedal"></button></div>
   <div class="cyclic-block" id="cyclicBlock"><div id="cyclic" aria-label="Dra för att luta helikoptern" role="application"><span class="forward">FRAMÅT</span><span class="cross-x"></span><span class="cross-y"></span><div id="stick"></div></div></div>
-  <button id="gun" type="button" aria-label="Kanon. Håll in avtryckaren på spaken."><span>⌖</span></button>
+  <button id="gun" type="button" aria-label="Eld. Håll in för automatkanon."><span>ELD</span></button>
+  <div id="aimPad" aria-label="Sikte. Dra i ringen."><b>SIKTE</b><i></i></div>
   <button id="rocket" type="button" aria-label="Robot. Ett tryck avlossar en robot."><span class="rocket-mark">↟</span><small>ROBOT</small><b id="ammo">12</b></button>
   <button id="aimFocus" type="button" hidden aria-pressed="false">STYR SIKTET</button>
 </main>
@@ -72,7 +79,7 @@
     </details>
     <details><summary>Så flyger du</summary>
       <p>Håll telefonen bekvämt och tryck Nollställ gyro. Den lutningen blir noll. Luta framåt för att flyga fram, åt sidan för att luta. Framåtlutning tar bort lyft, så höj spaken till vänster om du sjunker. Över ungefär 35 knop hjälper fartlyftet, och du behöver mindre lyft för att hålla höjden.</p>
-      <p>Hovringshjälpen kan slås på här i menyn. I cockpit syns styrspaken, lyftspaken och pedalerna, och de följer det du gör. Dra i vindrutan så går siktet dit fingret är. Avtryckaren sitter på spakens grepp: håll in för automatkanon. Robotknappen nere till höger skjuter en robot per tryck, mot ett låst mål eller rakt dit siktet pekar. Håll inne en mätare så växer den. Farten står i höjdmätaren.</p>
+      <p>Lyftspaken är det grå fältet nere till vänster: dra upp och ned. Siktet styrs i den stora ringen nere till höger. Eldknappen sitter till vänster. Robotknappen ligger längst ner i mitten. Knappen Bakifrån byter till vyn bakom helikoptern utan att öppna menyn. Vänster kant av telefonen upp svänger höger, och tvärtom.</p>
       <p>På iPhone frågar Safari om rörelse när du startar eller kalibrerar. Om inget händer: Inställningar, Safari, Rörelse och orientering.</p>
       <p>Tangentbord: W A S D styr. Q och E är pedaler. R och F är lyftet. Mellanslag skjuter. X är robot. C kalibrerar. Z centrerar siktet. V byter vy. G växlar fokus. Esc öppnar menyn.</p>
     </details>

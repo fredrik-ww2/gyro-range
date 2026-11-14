@@ -7,7 +7,7 @@
   },
   "description": "Körvärden. Spelet läser mobile, robot och masterGain. Ändra siffrorna och ladda om sidan.",
   "mobile": {
-    "particles": 360,
+    "particles": 520,
     "surfaceMarks": 48,
     "metalDecals": 12,
     "debris": 40,
@@ -171,9 +171,11 @@
     "omladdningSekunder": 1.4,
     "fartMeterPerSekund": 90,
     "livstidSekunder": 6,
-    "spar": 0.55,
+    "spar": 1.35,
     "diameter": 0.18,
-    "langd": 1.5
+    "langd": 1.5,
+    "rokStorlek": 6,
+    "rokSlut": 14
   },
   "masterGain": 0.5
 }

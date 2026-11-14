@@ -3,6 +3,7 @@
 // genom lodrätt utan att roll och gir byter plats (gimbal lock).
 // Lyft, motstånd och roder växer med dynamiskt tryck. Alla tal ligger i planets aero-objekt.
 import { luftdensitet } from './flight-model.js';
+import { lyftSkala, motstandExtra, roderMoment, sjunkKraft } from './landning.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -272,8 +273,11 @@ export class KvantFlyg {
       cl = Math.max(A.stall_cl_golv, max * Math.max(A.stall_cl_andel, 1 - over * A.stall_cl_fall));
     }
     cl += flaps * A.klaff_cl;
-    cl = clamp(cl, -A.cl_max, A.cl_max);
+    const clTak = A.cl_max + ((S.klaffEffekt && S.klaffTal) ? flaps * (S.klaffTal.cl_max_extra || 0) : 0);
+    cl = clamp(cl, -clTak, clTak);
+    cl = lyftSkala(cl, beta, S);
     let cd = A.cd0 + A.k_inducerat * cl * cl + (stalled ? A.stall_cd_extra : 0) + gear * A.hjul_cd + flaps * A.klaff_cd;
+    cd = motstandExtra(cd, flaps, beta, S);
     cd = Math.max(A.cd0, cd);
     let lx = u.x - vhat.x * vu;
     let ly = u.y - vhat.y * vu;
@@ -292,6 +296,8 @@ export class KvantFlyg {
     let Fx = T * f.x + L * lx + side * r.x - broms * D * vhat.x;
     let Fy = T * f.y + L * ly + side * r.y - broms * D * vhat.y - m * g;
     let Fz = T * f.z + L * lz + side * r.z - broms * D * vhat.z;
+    const sjunk = sjunkKraft(this.y, S.markY, Vnu, beta, m, S);
+    if (sjunk) Fy += sjunk;
     this.vx += Fx / m * dt;
     this.vy += Fy / m * dt;
     this.vz += Fz / m * dt;
@@ -331,6 +337,9 @@ export class KvantFlyg {
     // mot noll skulle annars slåss mot en hållen sväng.
     const rollNiva = A.niva_k > 0 && spakLugnt && rollLugnt && !haller;
     if (rollNiva) Clm += -A.cl_niva * A.niva_k * this.bank();
+    const mom = roderMoment(Cm, Cn, { flaps, beta, da, Vref, S });
+    Cm = mom.Cm;
+    Cn = mom.Cn;
     const bas = q * A.vingyta_m2;
     this.pitchRate = clamp(pq + bas * c * Cm / A.troget_tipp * dt, -A.max_tipp_rad_s, A.max_tipp_rad_s);
     this.rollRate = clamp(pr + bas * b * Clm / A.troget_roll * dt, -A.max_roll_rad_s, A.max_roll_rad_s);
@@ -375,7 +384,7 @@ export class KvantFlyg {
     const dirx = -Math.sin(this.psi);
     const dirz = -Math.cos(this.psi);
     const q = 0.5 * luftdensitet(this.y) * this.V * this.V;
-    const aero = q * A.vingyta_m2 * (A.cd0 + A.mark_cd + gear * A.hjul_cd + flaps * A.klaff_cd);
+    const aero = q * A.vingyta_m2 * motstandExtra(A.cd0 + A.mark_cd + gear * A.hjul_cd + flaps * A.klaff_cd, flaps, 0, S);
     const broms = (S.broms || 0) * (gas < 0.03 && this.V > 0.2 ? 1 : 0);
     const rull = A.rullmotstand_n + Math.abs(dr) * A.rull_roder_n + broms;
     let T = 0;
@@ -396,5 +405,19 @@ export class KvantFlyg {
     this.drag = aero + rull;
     this.CL = cl;
     this.phi = 0;
+  }
+  // Studs: nosen lyfts lite och farten sjunker, så nästa sättning kan bli hårdare om den inte fångas.
+  studsa(vy, fartAndel, nosRad) {
+    this.vy = vy;
+    this.vs = vy;
+    const mal = Math.max(0, this.V * (Number.isFinite(fartAndel) ? fartAndel : 1));
+    const h = Math.hypot(this.vx, this.vz);
+    if (h > 0.1) {
+      this.vx *= mal / h;
+      this.vz *= mal / h;
+    }
+    this.V = Math.hypot(this.vx, this.vy, this.vz);
+    if (nosRad) this.ori = qnorm(qmul(this.ori, qaxel(1, 0, 0, nosRad)));
+    this.pitchRate = Math.max(this.pitchRate, nosRad > 0 ? 0.15 : 0);
   }
 }

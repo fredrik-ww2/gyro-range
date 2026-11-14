@@ -14,7 +14,7 @@ import {createHaptics} from '../js/haptics.js';
 import {skapaAppleKamera} from './kamera/kamera_apple_zoom_v1.js';
 import {skapaMark} from './mark.js';
 import {skapaMotstandare} from './motstandare.js';
-import {skapaPanel,skapaJaktPanel,hojdvisare,jaktHorisont,panelHorisont} from './panel.js?v=14';
+import {skapaPanel,skapaJaktPanel,hojdvisare,jaktHorisont,panelHorisont} from './panel.js?v=15';
 import {propellerSkiva,motorRpm,propVarv} from './propeller.js';
 import {ledTabell,ringRadie,sikteLed,flygtid,luftdensitet,MYNNING,REFERENSFART} from './ballistik.js';
 import {skapaBomber} from './bomber.js';
@@ -22,11 +22,12 @@ import {skapaRoder} from './roder.js';
 import {skapaMal} from './mal.js';
 import {layoutFor, applyLayout} from './layout.js?v=14';
 import {tomOmgang, traffPaSpelare, ljudBehov, FLYG_VERSION, vyEtikett} from './omgang.js?v=14';
-import {skapaKanal,skapaMekanik,gasSlag} from './ljud.js?v=14';
+import {skapaKanal,skapaMekanik,gasSlag} from './ljud.js?v=15';
+import {sattning,verkstall,nyStuds,nastaKlaff,klaffIndex,KLAFF_STEG,kulaLage} from './landning.js';
 import {monteraFlyg} from './gyrobox-adapter.js';
 import {installeraIosLjud, forberedTystLage} from '../shared/ios-ljud.js';
 const $=id=>document.getElementById(id), began=performance.now();
-const C=await fetch('./config.json?v=10').then(r=>{if(!r.ok)throw Error('Inställningar saknas');return r.json();});
+const C=await fetch('./config.json?v=12').then(r=>{if(!r.ok)throw Error('Inställningar saknas');return r.json();});
 const V=await fetch('./kamera/profil.json').then(r=>r.json());
 const motor=C.motor, RING=ringRadie(1.225);
 const settings={...C.styrning,skottkansla:1.5,hapticStyle:'auto',roll_troskel_grader:C.gyro_zon.roll_troskel_grader,brytare:{...C.brytare,atergang:false,horisont:false}};
@@ -118,6 +119,7 @@ const shadowCanvas=document.createElement('canvas');shadowCanvas.width=shadowCan
 let stallBuzz=0,running=false,firing=false,gas=C.flyg.gas,pitch=0,roll=0,heading=0,hits=0,shots=0,nextShot=0,hitUntil=0,time=0,fps=0,frameCount=0,frameTime=0,spelareHp=C.motstandare.spelare_hp,skadaTill=0,bransle=1,panelAcc=0;
 // Flygprov 05: motorn går alltid, propellerstigningen sköts automatiskt, bränslet tar inte slut. Pedalerna eller gyrots vridning ger sidroder.
 let motorPa=true,tandning=true,primer=0,patroner=3,paMarken=false,roder=0,pedalRoder=0,propPitch=0.4,gearPos=0,gearMal=0,flaps=0,bomberKvar=2,bombTung=false,bombTraff=0,landInfo='';
+let studsTillstand=nyStuds(),landBetygTill=0,frysFlyg=false;
 let audio=null,buffers={};
 installeraIosLjud({hamta:()=>audio,oppna:()=>{void seTillLjud();}});
 const skottKanal=skapaKanal(),motorKanal=skapaKanal(),mekanik=skapaMekanik();
@@ -157,7 +159,7 @@ function nollstallOmgang(){const t=tomOmgang({spelareHp:C.motstandare.spelare_hp
  paMarken=false;gearMal=0;gearPos=0;flaps=0;motorPa=true;tandning=true;primer=0;propPitch=0.4;bransle=1;fm.crashed=false;
  $('skada').style.opacity='0';$('hit').style.opacity='0';$('pedalV').classList.remove('ned');$('pedalH').classList.remove('ned');
  stopFire();for(const target of targets){target.down=0;target.mesh.visible=!!settings.brytare.mal;target.mesh.position.copy(target.base);}
- guns.rensa();bomber.rensa();mal?.aterstall();nollZon(zonTillstand);pitchSpring.x=pitchSpring.v=bankSpring.x=bankSpring.v=0;aterstallSeger();
+ guns.rensa();bomber.rensa();mal?.aterstall();nollZon(zonTillstand);pitchSpring.x=pitchSpring.v=bankSpring.x=bankSpring.v=0;studsTillstand=nyStuds();landBetygTill=0;visaBetyg('');aterstallSeger();
 }
 function flygklar(){nollstallOmgang();}
 function visaSpak(){$('gasreglage').hidden=false;$('pedaler').hidden=false;$('system').hidden=false;const j=$('jaktpanel');if(j)j.hidden=sight||!C.jaktpanel.synlig;synkaReglage();if(!sight)ritaJakt();placeraHorisont();}
@@ -179,9 +181,15 @@ function pedalNer(e,v){e.preventDefault();pedalRoder=v;e.currentTarget.classList
 function pedalUpp(e){if(e.currentTarget.classList.contains('ned')){e.currentTarget.classList.remove('ned');pedalRoder=0;}}
 $('pedalV').onpointerdown=e=>pedalNer(e,-1);$('pedalH').onpointerdown=e=>pedalNer(e,1);
 for(const ev of ['pointerup','pointercancel','lostpointercapture']){$('pedalV').addEventListener(ev,pedalUpp);$('pedalH').addEventListener(ev,pedalUpp);}
-function synkaReglage(){const lampa=$('hjulLampa'),ror=Math.abs(gearPos-gearMal)>0.04;lampa.className='lampa'+(ror?' rod':gearPos>0.92?' gron':'');$('hjul').setAttribute('aria-label',ror?'Hjulen rör sig':gearPos>0.92?'Hjulen är nere och låsta':'Hjulen är uppe');$('klaffText').textContent=flaps>0.8?'Land':flaps>0.2?'Start':'Inne';$('bombAntal').textContent=String(bomberKvar);$('forare').hidden=!sight;}
+function kulaNu(){if(!(settings.brytare.landning&&settings.brytare.koordinerad))return undefined;return kulaLage(fm.beta||0,(C.landningsutmaning||{}).kula_full_rad);}
+function visaBetyg(text,sort){const el=$('landBetyg');if(!el)return;if(!text){el.hidden=true;el.textContent='';el.className='';return;}el.hidden=false;el.textContent=text;el.className=sort||'';}
+function synkaReglage(){const lampa=$('hjulLampa'),ror=Math.abs(gearPos-gearMal)>0.04;lampa.className='lampa'+(ror?' rod':gearPos>0.92?' gron':'');$('hjul').setAttribute('aria-label',ror?'Hjulen rör sig':gearPos>0.92?'Hjulen är nere och låsta':'Hjulen är uppe');
+ const steg=klaffIndex(flaps),namn=KLAFF_STEG[steg];$('klaffText').textContent=namn.kort;$('klaff').classList.toggle('klaff-start',steg===1);$('klaff').classList.toggle('klaff-land',steg===2);$('klaff').setAttribute('aria-label','Klaff '+namn.namn.toLowerCase());
+ const lapp=$('flyglapp');if(lapp){const visa=!!(running&&settings.brytare.landning);lapp.hidden=!visa;lapp.querySelectorAll('#klaffLapp span').forEach(s=>s.classList.toggle('pa',+s.dataset.steg===steg));
+  const ruta=$('kulaRuta'),kulaPa=visa&&!!settings.brytare.koordinerad;if(ruta)ruta.hidden=!kulaPa;if(kulaPa){const k=kulaLage(fm.beta||0,(C.landningsutmaning||{}).kula_full_rad);$('kulaBoll').style.setProperty('--kula',k.toFixed(3));$('kulaNamn').textContent=Math.abs(k)>0.4?'Sidglidning':'Kula';ruta.classList.toggle('ur',Math.abs(k)>0.4);}}
+ $('bombAntal').textContent=String(bomberKvar);$('forare').hidden=!sight;}
 $('hjul').onclick=()=>{if(paMarken&&gearMal>0.5){$('status').textContent='Hjulen ska vara nere på marken';return;}gearMal=gearMal>0.5?0:1;synkaReglage();};
-$('klaff').onclick=()=>{flaps=flaps<0.2?0.45:flaps<0.7?1:0;synkaReglage();$('status').textContent=flaps>0.8?'Landningsklaff ute':flaps>0.2?'Startklaff ute':'Klaffen inne';};
+$('klaff').onclick=()=>{const n=nastaKlaff(flaps);flaps=n.varde;synkaReglage();mekanikLjud('klaff');$('status').textContent=n.namn==='Landning'?'Landningsklaff ute':n.namn==='Start'?'Startklaff ute':'Klaffen inne';statusLas=time+1.6;};
 function fallBomb(){if(!bomberKvar){$('status').textContent='Inga bomber kvar';return false;}fyllHast(hast,fm);const ok=bomber.fall(aircraft.position,{x:hast.x,y:hast.y,z:hast.z},227);if(!ok)return false;bomberKvar--;synkaReglage();$('status').textContent='Bomb fälld';return true;}
 $('fall').onclick=fallBomb;
 const Zon=C.gyro_zon;
@@ -192,6 +200,10 @@ function visaTroskel(){rollTal.textContent=Math.round(settings.roll_troskel_grad
 visaTroskel();rollStyr.oninput=e=>{settings.roll_troskel_grader=+e.target.value;visaTroskel();};
 const names={gyro:'Gyrostyrning',nivellering:'Automatisk nivellering',krasch:'Krasch vid markkontakt',skjutning:'Vingvapen',mal:'Målballonger',markskydd:'Mjukt markskydd',haptik:'Vibrationer',ljud:'Ljud',skada:'Skada',led:'Ledmarkör'};
 for(const [key,name]of Object.entries(names)){const label=document.createElement('label');label.textContent=name;const box=document.createElement('input');box.type='checkbox';box.checked=!!settings.brytare[key];box.dataset.nyckel=key;box.onchange=()=>{settings.brytare[key]=box.checked;if(key==='gyro'){input.active=box.checked;styrLage=box.checked?'gyro':'finger';center();if(box.checked&&running)gyro.start();else gyro.stop();}if(key==='haptik')haptics.sync();if(key==='ljud'){if(box.checked)void seTillLjud();else{motorKanal.tyst();skottKanal.tyst();mekanik.tyst();}}};label.append(box);$('toggles').append(label);}
+const landNamn={landning:'Landningsutmaning',klaffeffekt:'Klaffeffekt',koordinerad:'Kräver koordinerad sväng',studs:'Studs och haveri'};
+for(const [key,name]of Object.entries(landNamn)){const label=document.createElement('label');label.className='landrad';label.append(document.createTextNode(name));const box=document.createElement('input');box.type='checkbox';box.checked=!!settings.brytare[key];box.dataset.nyckel=key;box.onchange=()=>{settings.brytare[key]=box.checked;if(key==='landning')synkaUtmaning();synkaReglage();};label.append(box);$('toggles').append(label);}
+function synkaUtmaning(){const pa=!!settings.brytare.landning;for(const key of ['klaffeffekt','koordinerad','studs']){const box=document.querySelector('#toggles input[data-nyckel="'+key+'"]');if(box)box.disabled=!pa;}synkaReglage();}
+synkaUtmaning();
 function visaMeny(oppna){$('settings').hidden=!oppna;$('settingsButton').setAttribute('aria-expanded',String(!!oppna));}
 $('settingsButton').onclick=()=>visaMeny($('settings').hidden);$('closeSettings').onclick=()=>visaMeny(false);
 function stopFire(){firing=false;$('fire').classList.remove('firing');skottKanal.tyst();}
@@ -226,35 +238,40 @@ function uppdateraSikte(view){if(!sight)return;cockpitCam.getWorldPosition(aimPo
  if(!framfor)return;const mx=(lp.x*.5+.5)*innerWidth,my=(-lp.y*.5+.5)*innerHeight;sikteState.dx=mx-x;sikteState.dy=my-y;
  $('ledGrupp').setAttribute('transform',`translate(${sikteState.dx} ${sikteState.dy})`);$('avstandHint').textContent=Math.round(led.R)+' m';}
 function boostPsi(){if(!motorPa)return motor.boost_tom_psi;const span=motor.boost_full_psi-motor.boost_tom_psi;return motor.boost_tom_psi+span*gas*(gas<.05?1:fm.powerFactor());}
-function ritaPanel(){const rpm=motorRpm(gas,motor,propPitch,motorPa&&bransle>0);panel.rita({fart:fm.V,hojd:fm.y,vs:fm.vs,roll,pitch,gir:turnRate,kurs:heading,rpm,boost:boostPsi(),olja:motorPa?62+gas*18:20,bransle,stall:fm.stalled});return hojdvisare(fm.y);}
+function ritaPanel(){const rpm=motorRpm(gas,motor,propPitch,motorPa&&bransle>0);panel.rita({fart:fm.V,hojd:fm.y,vs:fm.vs,roll,pitch,gir:turnRate,kurs:heading,rpm,boost:boostPsi(),olja:motorPa?62+gas*18:20,bransle,stall:fm.stalled,kula:kulaNu()});return hojdvisare(fm.y);}
 function spinProp(dt){const rps=propVarv(gas,motor,propPitch,motorPa&&bransle>0);propNav+=rps*Math.PI*2*dt;for(const n of propNoder)n.rotateZ(rps*Math.PI*2*dt);const t=Math.min(1,Math.max(0,(rps-6)/18));if(blur)blur.mat.opacity=motorPa?(.12+t*.7):0;for(const n of propNoder)n.traverse(o=>{if(o.isMesh&&o.material){o.material.opacity=motorPa?1-t*.92:0;o.material.depthWrite=t<.35;}});}
-function crash(){fm.crashed=true;stopFire();crashInfo={fart_kmh:Math.round(fm.V*3.6),vinkel_grader:Math.round(-fm.gamma*180/Math.PI)};const p=aircraft.position.clone();p.y=height(p.x,p.z)+.3;fm.y=height(fm.x,fm.z)+4;aircraft.position.set(fm.x,fm.y,fm.z);aircraft.rotation.set(0,heading,0,'YXZ');
+function crash(orsak){fm.crashed=true;stopFire();crashInfo={fart_kmh:Math.round(fm.V*3.6),vinkel_grader:Math.round(-fm.gamma*180/Math.PI)};const p=aircraft.position.clone();p.y=height(p.x,p.z)+.3;fm.y=height(fm.x,fm.z)+4;aircraft.position.set(fm.x,fm.y,fm.z);aircraft.rotation.set(0,heading,0,'YXZ');
  effects.spela('traff_mark',{pos:p,laddning_g:C.krasch.laddning_g,kaliber_mm:20,underlag:'torr'});crashFx=effects.spela('brand_rok',{pos:p,fas:'brinner',skala:C.krasch.brand_skala});
- visual.visible=false;if(sight)setSight(false);haptics.hit();$('crashEyebrow').textContent='STÖRTAT';$('crashTitle').textContent='Planet störtade';$('crashText').textContent=`Planet störtade i ${crashInfo.fart_kmh} km/h, ${crashInfo.vinkel_grader}° mot marken.`;$('crashPanel').hidden=false;$('status').textContent='Störtade';}
+ visual.visible=false;if(sight)setSight(false);haptics.hit();visaBetyg('');if(orsak){$('crashEyebrow').textContent='HAVERI';$('crashTitle').textContent='Haveri';$('crashText').textContent=orsak;}else{$('crashEyebrow').textContent='STÖRTAT';$('crashTitle').textContent='Planet störtade';$('crashText').textContent=`Planet störtade i ${crashInfo.fart_kmh} km/h, ${crashInfo.vinkel_grader}° mot marken.`;}$('crashPanel').hidden=false;$('status').textContent=orsak?'Haveri':'Störtade';}
 function nedskjuten(){fm.crashed=true;stopFire();const p=aircraft.position.clone();effects.spela('traff_mark',{pos:p,laddning_g:2200,kaliber_mm:20,underlag:'torr'});crashFx=effects.spela('brand_rok',{pos:p,fas:'brinner',skala:1.3});
  visual.visible=false;if(sight)setSight(false);$('crashEyebrow').textContent='NEDSKJUTEN';$('crashTitle').textContent='Du blev nedskjuten';$('crashText').textContent='Fw 190 träffade dig. Tryck Flyg igen.';$('crashPanel').hidden=false;$('status').textContent='Nedskjuten';}
 function styrText(){if(styrLage==='nekad')return 'Gyro nekades · dra med fingret';if(!settings.brytare.gyro||!input.active||styrLage==='finger')return 'Dra i bilden för att flyga · Centrera rätar upp';if(lastInput?.source==='tyst')return 'Sensorn svarar inte · håll kvar och tryck Centrera';return 'Luta för att flyga · vrid för sidroder · Centrera nollställer';}
-function ritaJakt(){if(sight||!running)return null;return jaktPanel.rita({fart:fm.V,hojd:fm.y,vs:fm.vs,roll,pitch,nz:fm.nz,stall:fm.stalled});}
-function skrivHud(){const fwAvst=opp.state.laddad&&opp.group.visible?(()=>{const d=opp.group.position.distanceTo(aircraft.position);return ' · Fw '+(d>=1000?(d/1000).toFixed(1).replace('.',',')+' km':Math.round(d)+' m');})():'';$('flightHud').textContent=`${Math.round(fm.V*3.6)} km/h · ${Math.round(fm.y)} m · ${fm.vs>=0?'+':''}${fm.vs.toFixed(0)} m/s${fwAvst}${fm.stalled?' · STALL':''}${Number.isFinite(fm.nz)?' · '+fm.nz.toFixed(1)+' G':''}`;$('flightHud').classList.toggle('stall',!!fm.stalled);if(time<statusLas)return;const agl=fm.y-height(fm.x,fm.z);const stallText=C.instrument.stall_status;$('status').textContent=fm.stalled?stallText:fm.y>8000?'Tunn luft · taket närmar sig':fm.y>6000?'Tunn luft · stigningen avtar':paMarken?(landInfo?landInfo+' · stäng gasen och bromsa, full gas för ny start':(fm.V>30?'Rullar · dra lätt vid 160 km/h':'På marken · full gas, håll rakt med sidrodret')):agl<60?(gearPos>0.85?(flaps>0.8?'Inflygning · håll under 220 km/h, sjunk mjukt':'Lågflyg · landningsklaff ute ger mjukare landning'):'Lågflyg · hjul ut för att landa'):styrText();}
-function logic(dt){gyro.update(dt);lastInput=input.read();gyroLada.forma(lastInput,dt);if(input.pending&&!zonVantade)nollZon(zonTillstand);zonVantade=!!input.pending;let pitchCmd=lastInput.pitch;if(lutningTvang&&Number.isFinite(lutningTvang.pitch))pitchCmd=lutningTvang.pitch;else if(!settings.brytare.nivellering)pitchCmd=dampCritical(pitchSpring,pitchCmd,dt,C.styrning.kritisk_omega);const lutning=lutningTvang?lutningTvang.roll:(lastInput.pose.roll+(gyro.drag?.x||0));const rollHast=lutningTvang&&Number.isFinite(lutningTvang.rollRate)?lutningTvang.rollRate:lastInput.rollHast;const komm=styrKommando(zonTillstand,{roll:lutning,rollRate:rollHast,pitch:pitchCmd},dt,C.gyro_zon,fm.A,{kanslighet:settings.kanslighet,nivellering:!!settings.brytare.nivellering,troskel:settings.roll_troskel_grader});
+function ritaJakt(){if(sight||!running)return null;return jaktPanel.rita({fart:fm.V,hojd:fm.y,vs:fm.vs,roll,pitch,nz:fm.nz,stall:fm.stalled,kula:kulaNu()});}
+function skrivHud(){if(!paMarken&&landBetygTill&&time>landBetygTill)visaBetyg('');const fwAvst=opp.state.laddad&&opp.group.visible?(()=>{const d=opp.group.position.distanceTo(aircraft.position);return ' · Fw '+(d>=1000?(d/1000).toFixed(1).replace('.',',')+' km':Math.round(d)+' m');})():'';$('flightHud').textContent=`${Math.round(fm.V*3.6)} km/h · ${Math.round(fm.y)} m · ${fm.vs>=0?'+':''}${fm.vs.toFixed(0)} m/s${fwAvst}${fm.stalled?' · STALL':''}${Number.isFinite(fm.nz)?' · '+fm.nz.toFixed(1)+' G':''}`;$('flightHud').classList.toggle('stall',!!fm.stalled);if(time<statusLas)return;const agl=fm.y-height(fm.x,fm.z);const stallText=C.instrument.stall_status;$('status').textContent=fm.stalled?stallText:fm.y>8000?'Tunn luft · taket närmar sig':fm.y>6000?'Tunn luft · stigningen avtar':paMarken?(landInfo?landInfo+' · stäng gasen och bromsa, full gas för ny start':(fm.V>30?'Rullar · dra lätt vid 160 km/h':'På marken · full gas, håll rakt med sidrodret')):agl<60?(gearPos>0.85?(flaps>0.8?(settings.brytare.landning&&settings.brytare.koordinerad?'Inflygning · klaff landning, håll kulan i mitten':'Inflygning · håll under 220 km/h, sjunk mjukt'):'Lågflyg · landningsklaff ute ger mjukare landning'):'Lågflyg · hjul ut för att landa'):styrText();}
+function logic(dt){if(frysFlyg){skrivHud();synkaReglage();return;}gyro.update(dt);lastInput=input.read();gyroLada.forma(lastInput,dt);if(input.pending&&!zonVantade)nollZon(zonTillstand);zonVantade=!!input.pending;let pitchCmd=lastInput.pitch;if(lutningTvang&&Number.isFinite(lutningTvang.pitch))pitchCmd=lutningTvang.pitch;else if(!settings.brytare.nivellering)pitchCmd=dampCritical(pitchSpring,pitchCmd,dt,C.styrning.kritisk_omega);const lutning=lutningTvang?lutningTvang.roll:(lastInput.pose.roll+(gyro.drag?.x||0));const rollHast=lutningTvang&&Number.isFinite(lutningTvang.rollRate)?lutningTvang.rollRate:lastInput.rollHast;const komm=styrKommando(zonTillstand,{roll:lutning,rollRate:rollHast,pitch:pitchCmd},dt,C.gyro_zon,fm.A,{kanslighet:settings.kanslighet,nivellering:!!settings.brytare.nivellering,troskel:settings.roll_troskel_grader});
  if(Math.abs(gearPos-gearMal)>0.002)gearPos=Math.max(0,Math.min(1,gearPos+Math.sign(gearMal-gearPos)*dt/2.4));
  const markFore=height(fm.x,fm.z);
  // Sidroder: pedalerna vinner, annars gyrots vridning. Propellerstigningen följer farten automatiskt (fin vid låg fart, grov vid hög).
  roder=Math.max(-1,Math.min(1,(pedalRoder!==0?pedalRoder:(lastInput.roder||0))+(komm.roderHjalp||0)));
  propPitch+=(Math.max(0.12,Math.min(0.9,(fm.V-32)/145))-propPitch)*Math.min(1,dt*1.5);
- fm.tillampaNivellering(!!settings.brytare.nivellering);fm.step(dt,komm.input,motorPa?gas:0,undefined,{motorPa,gear:gearPos,flaps,pitch:propPitch,roder,paMarken,markY:markFore,broms:C.landning.broms_n});
- if(paMarken&&fm.lyftAv){paMarken=false;if(fm.lyft)fm.lyft(0.08);else fm.gamma=0.08;fm.y=markFore+2.4;landInfo='';$('status').textContent='I luften. Hjul in när du har höjd.';}
+ const U=C.landningsutmaning||{},utmaningPa=!!settings.brytare.landning;
+ fm.tillampaNivellering(!!settings.brytare.nivellering);fm.step(dt,komm.input,motorPa?gas:0,undefined,{motorPa,gear:gearPos,flaps,pitch:propPitch,roder,paMarken,markY:markFore,broms:C.landning.broms_n,klaffEffekt:utmaningPa&&!!settings.brytare.klaffeffekt,koordinerad:utmaningPa&&!!settings.brytare.koordinerad,klaffTal:U.klaff,glidTal:U.sidglid});
+ if(paMarken&&fm.lyftAv){paMarken=false;if(fm.lyft)fm.lyft(0.08);else fm.gamma=0.08;fm.y=markFore+2.4;landInfo='';visaBetyg('');$('status').textContent='I luften. Hjul in när du har höjd.';}
  const at=fm.attitude();pitch=at.pitch;roll=at.roll;heading=at.yaw;loadFactor=fm.nz;turnRate=fm.V>1?fm.nz*9.80665*Math.sin(roll)/fm.V:0;turnRadius=Math.abs(turnRate)>1e-5?fm.V/Math.abs(turnRate):Infinity;
  aircraft.position.set(fm.x,fm.y,fm.z);sattKropp();forward.set(0,0,-1).applyQuaternion(aircraft.quaternion);
  const markY=height(fm.x,fm.z),agl=fm.y-markY;
- // Landning: hjulen ute, farten under maxfart, vingarna plana, sjunk mildare än hårdgränsen. Mjuk landning sätter ner planet,
- // hård landning studsar och varnar, allt annat är en krasch. Utan hjul eller för fort gäller vanlig markkontakt.
- const L=C.landning;
- if(!paMarken&&gearPos>0.85&&agl<1.8&&fm.V<L.max_fart_ms&&Math.abs(roll)<L.max_bank_rad&&fm.vs>L.hard_vs_ms){
-  if(fm.vs>L.mjuk_vs_ms){landInfo=fm.vs>-1.2?'Mjuk landning':'Landade';paMarken=true;fm.y=markY+1.35;fm.gamma=0;fm.vs=0;if(fm.kvaternion)fm.vy=0;aircraft.position.y=fm.y;haptics.hit();}
-  else{if(fm.kvaternion)fm.vy=-fm.vs*0.35;else{fm.vs=-fm.vs*0.35;fm.gamma=Math.abs(fm.gamma)*0.5;}fm.y=markY+2.2;haptics.hit();landInfo='Hård landning – studs';statusLas=time+2.5;$('status').textContent='Hård landning! Håll nosen uppe och sätt ner mjukare.';}
+ // Sättning. Utmaningen mäter sjunk, fart, bank och sidglidning. Av, eller studs av, använder de gamla gränserna.
+ if(studsTillstand.las>0)studsTillstand.las=Math.max(0,studsTillstand.las-dt);
+ else if(!paMarken){
+  const beslut=sattning({agl,vs:fm.vs,fart:fm.V,bank:roll,beta:fm.beta||0,gear:gearPos},{utmaning:utmaningPa,studs:!!settings.brytare.studs,markskydd:!!settings.brytare.markskydd,krasch:!!settings.brytare.krasch,L:C.landning,kontakt_m:C.krasch.kontakt_m,G:U,studsAntal:studsTillstand.antal});
+  if(beslut.typ==='satter'||beslut.typ==='studs'||beslut.typ==='skydd'||beslut.typ==='haveri'){
+   const ut=verkstall({y:fm.y,vy:fm.vy,vs:fm.vs,V:fm.V,markY,paMarken,crashed:fm.crashed},{...beslut,gammal:!!beslut.gammal},studsTillstand,{...U,kontakt_m:C.krasch.kontakt_m});
+   if(ut.typ==='satter'){paMarken=true;fm.y=ut.y;fm.vy=0;fm.vs=0;fm.gamma=0;aircraft.position.y=fm.y;landInfo=ut.betyg;visaBetyg(ut.betyg,'');haptics.hit();if(ut.ljud)mekanikLjud(ut.ljud);statusLas=time+2.5;$('status').textContent=beslut.status||ut.betyg;}
+   else if(ut.typ==='studs'){if(ut.gammal){if(fm.kvaternion)fm.vy=ut.vy;else{fm.vs=ut.vs;fm.gamma=Math.abs(fm.gamma)*0.5;}}else if(fm.studsa)fm.studsa(ut.vy,U.studs_fart_andel,ut.nos);else{fm.vy=ut.vy;fm.vs=ut.vs;}fm.y=ut.y;aircraft.position.y=fm.y;landInfo=ut.betyg;landBetygTill=time+4;visaBetyg(ut.betyg,'hard');haptics.hit();if(ut.ljud)mekanikLjud(ut.ljud);statusLas=time+2.5;$('status').textContent=beslut.status||ut.betyg;}
+   else if(ut.typ==='skydd'){fm.y=Math.max(fm.y,markY+C.krasch.kontakt_m);if(fm.vs<0)fm.vs=0;if(fm.kvaternion&&fm.vy<0)fm.vy=0;fm.gamma=Math.max(0,fm.gamma);}
+   else if(ut.typ==='haveri')crash(beslut.orsak);
+  }
  }
- else if(!paMarken&&agl<C.krasch.kontakt_m){if(settings.brytare.markskydd||!settings.brytare.krasch){fm.y=markY+C.krasch.kontakt_m;if(fm.vs<0)fm.vs=0;if(fm.kvaternion&&fm.vy<0)fm.vy=0;fm.gamma=Math.max(0,fm.gamma);}else crash();}
  if(Math.hypot(fm.x-markX,fm.z-markZ)>180){markX=fm.x;markZ=fm.z;mark.place(fm.x,fm.z);}
  if(firing&&settings.brytare.skjutning&&time>=nextShot){shoot();nextShot=time+C.vapen.intervall_s;}
  if(motorKanal.spelar()&&audio){const nu=audio.currentTime||0;motorKanal.takt(motorPa?(.55+gas*.7):.2,nu);motorKanal.volym(motorPa?C.ljud.motor_volym*(.4+gas*.6):0,nu);}
@@ -310,10 +327,13 @@ function simuleraAnfall(sek){running=true;$('startPanel').hidden=true;const star
  for(let i=0;i<n;i++){time+=.05;if(!fm.crashed)logic(.05);const tr=guns.update(.05,malLista());for(const h of tr)behandla(h);minD=Math.min(minD,opp.group.position.distanceTo(aircraft.position));}
  return {skott:opp.state.skott-startSkott,dist:opp.group.position.distanceTo(aircraft.position),minD,dot:opp.state.dot,led:opp.state.led,hp:opp.state.hp,spelareHp};}
  function sattRoder(v){roder=v||0;}
+function sattKlaff(v){flaps=Math.max(0,Math.min(1,+v||0));synkaReglage();}
+function sattHjul(v){gearMal=v>0.5?1:0;gearPos=gearMal;synkaReglage();}
+function frys(pa){frysFlyg=!!pa;}
 function sattLutning(pose){lutningTvang=pose;if(!pose)nollZon(zonTillstand);}
 function zonLage(){return {lage:zonTillstand.lage,rollRate:zonTillstand.rollRate,da:fm.da,de:fm.de};}
 function kor(sek){const n=Math.max(1,Math.round(sek/.05));for(let i=0;i<n;i++){time+=.05;if(running&&!fm.crashed)logic(.05);bomberUpp(.05);}synkaReglage();if(sight)ritaPanel();return {y:fm.y,psi:fm.psi,V:fm.V,paMarken,motorPa,gear:gearPos,flaps,bomber:bomberKvar,bombTraff,bransle};}
-window.flygTest={get fm(){return fm;},plan:()=>currentModel,valjPlan,gimbal:gimbalProv,crash,nedskjuten,flyAgain,setSight,setBombVy,setGas,setPitch,sattHojd,ritaPanel,ritaJakt,klattra,sittKors,provLed,skjutNer,beskjut,simuleraAnfall,snurra:spinProp,hojdvisare,markstart,fallBomb,kor,sattRoder,sattLutning,zonLage,nollstallOmgang,traffa:(h)=>behandla(h),version:FLYG_VERSION,ljud:()=>ljudBehov(audio,!!settings.brytare.ljud),skottAntal:()=>skottKanal.antal(),motorAntal:()=>motorKanal.antal(),gasKlick:()=>gasKlick,mekanikAntal:()=>mekanik.antal(),mekanikSpela:(typ)=>mekanikLjud(typ),mekanikTopp,hallAvtryckare,slappAvtryckare,seTillLjud,ringRadie:RING,ballistikTabell:()=>ledTabell(1.225,[REFERENSFART]),state:()=>({crashed:fm.crashed,stalled:fm.stalled,speed_kmh:fm.V*3.6,altitude:fm.y,agl:fm.y-height(fm.x,fm.z),vs:fm.vs,running,pitch,roll,heading,gas,spelareHp,hits,shots,fps,time,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,sight,sikte:{...sikteState},prop:{nav:propNav,rps:propVarv(gas,motor,propPitch,motorPa)},fiende:opp.info(),bransle,motorPa,paMarken,gear:gearPos,gearMal,flaps,propPitch,roder,pedalRoder,bomber:bomberKvar,bombTung,tandning,primer,patroner,bombTraff,landInfo,lyssnare:input._antal,kalla:lastInput?.source||'finger',niva:fm.A.niva_k,nivaBas:fm.nivaBas,panel:$('panel').dataset}),gyro,input,settings,targets,aircraft,guns,opp,scene,camera,cockpitCam,renderer,visual,mark,bomber,mal};
+window.flygTest={get fm(){return fm;},plan:()=>currentModel,valjPlan,gimbal:gimbalProv,crash,nedskjuten,flyAgain,setSight,setBombVy,setGas,setPitch,sattHojd,ritaPanel,ritaJakt,klattra,sittKors,provLed,skjutNer,beskjut,simuleraAnfall,snurra:spinProp,hojdvisare,markstart,fallBomb,kor,sattRoder,sattKlaff,sattHjul,frys,sattLutning,zonLage,nollstallOmgang,traffa:(h)=>behandla(h),version:FLYG_VERSION,ljud:()=>ljudBehov(audio,!!settings.brytare.ljud),skottAntal:()=>skottKanal.antal(),motorAntal:()=>motorKanal.antal(),gasKlick:()=>gasKlick,mekanikAntal:()=>mekanik.antal(),mekanikSpela:(typ)=>mekanikLjud(typ),mekanikTopp,hallAvtryckare,slappAvtryckare,seTillLjud,ringRadie:RING,ballistikTabell:()=>ledTabell(1.225,[REFERENSFART]),state:()=>({crashed:fm.crashed,stalled:fm.stalled,speed_kmh:fm.V*3.6,altitude:fm.y,agl:fm.y-height(fm.x,fm.z),vs:fm.vs,running,pitch,roll,heading,gas,spelareHp,hits,shots,fps,time,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,sight,sikte:{...sikteState},prop:{nav:propNav,rps:propVarv(gas,motor,propPitch,motorPa)},fiende:opp.info(),bransle,motorPa,paMarken,gear:gearPos,gearMal,flaps,propPitch,roder,pedalRoder,bomber:bomberKvar,bombTung,tandning,primer,patroner,bombTraff,landInfo,lyssnare:input._antal,kalla:lastInput?.source||'finger',niva:fm.A.niva_k,nivaBas:fm.nivaBas,panel:$('panel').dataset}),gyro,input,settings,targets,aircraft,guns,opp,scene,camera,cockpitCam,renderer,visual,mark,bomber,mal};
 $('status').textContent='Redo · tryck Starta och håll mobilen bekvämt';
 const etikett=$('versionEtikett');if(etikett)etikett.textContent=FLYG_VERSION;
 function placeraHorisont(){const min=44;const jakt=$('jaktpanel'),jKnapp=$('jaktHorisont');if(jKnapp){const synlig=!!(running&&!sight&&!bombVy&&jakt&&!jakt.hidden);if(!synlig)jKnapp.hidden=true;else{const r=jakt.getBoundingClientRect();if(r.width<8||r.height<8)jKnapp.hidden=true;else{const p=jaktHorisont(r.width,r.height,C.jaktpanel);const d=Math.max(min,p.r*2);jKnapp.hidden=false;jKnapp.style.left=(r.left+p.x-d/2)+'px';jKnapp.style.top=(r.top+p.y-d/2)+'px';jKnapp.style.width=d+'px';jKnapp.style.height=d+'px';}}}

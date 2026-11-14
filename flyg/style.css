@@ -208,3 +208,24 @@ button.horisontknapp:active,button.horisontknapp.tryckt{
 #startPanel h2{font-size:22px;margin:2px 0 6px}
 #startPanel p{margin:4px 0}
 #startPanel button{margin:3px 0;min-height:42px}
+#flyglapp{position:fixed;z-index:6;top:calc(max(8px,env(safe-area-inset-top)) + 40px);left:8px;display:flex;flex-direction:column;gap:4px;pointer-events:none;max-width:min(210px,calc(100vw - 120px))}
+#klaffLapp{display:flex;gap:3px}
+#klaffLapp span{flex:1;text-align:center;font:700 12px -apple-system,BlinkMacSystemFont,sans-serif;color:#f6f1e4;background:#142a27e6;border:1px solid #d9c89e55;border-radius:7px;padding:4px 3px;line-height:1.1}
+#klaffLapp span.pa{background:#e3c88e;color:#172724;border-color:#e3c88e}
+#kulaRuta{display:flex;align-items:center;gap:6px;background:#142a27e6;border:1px solid #d9c89e70;border-radius:8px;padding:3px 6px}
+#kulaNamn{font:700 11px -apple-system,BlinkMacSystemFont,sans-serif;color:#f6f1e4;min-width:28px}
+#kulaRuta.ur{border-color:#e7c56a}
+#kulaRuta.ur #kulaNamn{color:#e7c56a}
+#kulaRor{position:relative;flex:1;height:16px;border-radius:8px;background:#0c0c0a;border:1px solid #8a8470;overflow:hidden}
+#kulaRor::before{content:'';position:absolute;left:50%;top:1px;bottom:1px;width:1px;background:#d9c89e88}
+#kulaBoll{position:absolute;top:2px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#d7d0be 55%,#8a8470);left:calc(50% + var(--kula, 0) * 42%)}
+#landBetyg{position:fixed;z-index:7;left:50%;top:16%;transform:translateX(-50%);max-width:min(280px,calc(100vw - 32px));background:#142a27f2;border:2px solid #7dcea0;color:#f6f1e4;font:700 22px -apple-system,BlinkMacSystemFont,sans-serif;padding:10px 16px;border-radius:12px;pointer-events:none;text-align:center;box-shadow:0 10px 28px #0008}
+#landBetyg.hard{border-color:#e07a3d}
+#landBetyg.haveri{border-color:#d64532}
+#settings.flygmeny #toggles label.landrad{grid-column:1 / -1}
+#settings.flygmeny #toggles input:disabled{opacity:.35}
+#klaff.klaff-start{border-color:#e7c56a}
+#klaff.klaff-land{border-color:#7dcea0;color:#d8ffe8}
+@media(max-height:520px){
+ #settings.flygmeny #toggles label.landrad{min-height:20px}
+}

@@ -24,6 +24,7 @@ import {layoutFor, applyLayout} from './layout.js?v=14';
 import {tomOmgang, traffPaSpelare, ljudBehov, FLYG_VERSION, vyEtikett} from './omgang.js?v=14';
 import {skapaKanal,skapaMekanik,gasSlag} from './ljud.js?v=14';
 import {monteraFlyg} from './gyrobox-adapter.js';
+import {installeraIosLjud, forberedTystLage} from '../shared/ios-ljud.js';
 const $=id=>document.getElementById(id), began=performance.now();
 const C=await fetch('./config.json?v=10').then(r=>{if(!r.ok)throw Error('Inställningar saknas');return r.json();});
 const V=await fetch('./kamera/profil.json').then(r=>r.json());
@@ -118,13 +119,12 @@ let stallBuzz=0,running=false,firing=false,gas=C.flyg.gas,pitch=0,roll=0,heading
 // Flygprov 05: motorn går alltid, propellerstigningen sköts automatiskt, bränslet tar inte slut. Pedalerna eller gyrots vridning ger sidroder.
 let motorPa=true,tandning=true,primer=0,patroner=3,paMarken=false,roder=0,pedalRoder=0,propPitch=0.4,gearPos=0,gearMal=0,flaps=0,bomberKvar=2,bombTung=false,bombTraff=0,landInfo='';
 let audio=null,buffers={};
+installeraIosLjud({hamta:()=>audio,oppna:()=>{void seTillLjud();}});
 const skottKanal=skapaKanal(),motorKanal=skapaKanal(),mekanik=skapaMekanik();
 let gasKlick=0;
-function mekanikLjud(typ){if(!settings.brytare.ljud||!audio||audio.state==='closed')return 0;if(audio.state==='suspended'){const p=audio.resume();if(p&&typeof p.catch==='function')p.catch(()=>{});}return mekanik.spela(audio,typ);}
+function mekanikLjud(typ){if(!settings.brytare.ljud||!audio||audio.state==='closed')return 0;if(audio.state==='suspended'||audio.state==='interrupted'){const p=audio.resume();if(p&&typeof p.catch==='function')p.catch(()=>{});}return mekanik.spela(audio,typ);}
 async function mekanikTopp(){const AC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!AC)return null;const off=new AC(1,24000,48000);const m=skapaMekanik();for(let i=0;i<8;i++)m.spela(off,i%2?'stopp':'hack');const buf=await off.startRendering();const d=buf.getChannelData(0);let peak=0;for(let i=0;i<d.length;i++){const a=Math.abs(d[i]);if(a>peak)peak=a;}m.slapp();return peak;}
-function lasOppTyst(){
- try{if(navigator.audioSession)navigator.audioSession.type='playback';else if(!window.__tystBrytare){const n=22050,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,n,true);v.setUint32(28,n*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);const a=document.createElement('audio');a.setAttribute('playsinline','');a.setAttribute('x-webkit-airplay','deny');a.loop=true;a.src=URL.createObjectURL(new Blob([b],{type:'audio/wav'}));window.__tystBrytare=a;a.play().catch(()=>{});}else window.__tystBrytare.play().catch(()=>{});}catch{}
-}
+function lasOppTyst(){forberedTystLage();}
 function rensaLjudNoder(){motorKanal.tyst();skottKanal.tyst();}
 function stangLjud(){mekanik.slapp();rensaLjudNoder();const dying=audio;audio=null;buffers={};if(dying&&dying.state!=='closed'){const p=dying.close?.();if(p&&typeof p.catch==='function')p.catch(()=>{});}}
 async function seTillLjud(){
@@ -204,7 +204,7 @@ function doljSpel(){stopFire();gyro.stop();if(audio&&audio.state==='running'){co
 function visaSpel(){if(!running)return;input.center();if(settings.brytare.gyro&&input.active&&gyro.beviljad)gyro.start();void seTillLjud();}
 if(!globalThis.__flygLiv){globalThis.__flygLiv=true;
  document.addEventListener('visibilitychange',()=>{if(document.hidden)doljSpel();else visaSpel();});
- addEventListener('pagehide',()=>{stopFire();gyro.stop();stangLjud();});
+ addEventListener('pagehide',()=>{stopFire();gyro.stop();if(audio&&(audio.state==='running'||audio.state==='interrupted')){const p=audio.suspend?.();if(p&&typeof p.catch==='function')p.catch(()=>{});}});
  addEventListener('pageshow',()=>{if(running)void seTillLjud();});
  addEventListener('ww2-native-lifecycle',e=>{if(e.detail?.active===false)doljSpel();else visaSpel();});
 }

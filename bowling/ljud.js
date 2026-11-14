@@ -2,6 +2,8 @@
 // Högst 12 röster. En mjuk kurva håller toppen under -1 dBTP.
 // Inget anrop till navigator.vibrate.
 
+import { forberedTystLage, installeraIosLjud, vakna } from '../shared/ios-ljud.js';
+
 const GOLV = 0.0001;
 
 function kurva(n, tak) {
@@ -24,28 +26,7 @@ function loss(nod) {
 
 // Samma tysta <audio>-slinga som panorama/ljud.js, så iOS Safari med
 // ljudlös-strömbrytaren ändå släpper igenom WebAudio efter en gest.
-function lasOppTyst() {
-  try {
-    if (navigator.audioSession) navigator.audioSession.type = 'playback';
-    else if (!globalThis.__tystBrytare) {
-      const n = 8000;
-      const b = new ArrayBuffer(44 + n * 2);
-      const v = new DataView(b);
-      const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
-      w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt ');
-      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-      v.setUint32(24, n, true); v.setUint32(28, n * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
-      w(36, 'data'); v.setUint32(40, n * 2, true);
-      const a = document.createElement('audio');
-      a.setAttribute('playsinline', '');
-      a.loop = true;
-      a.volume = 0.001;
-      a.src = URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
-      globalThis.__tystBrytare = a;
-      a.play().catch(() => {});
-    } else globalThis.__tystBrytare.play().catch(() => {});
-  } catch { /* äldre webbläsare */ }
-}
+function lasOppTyst() { forberedTystLage(); }
 
 export function skapaLjud(konfig) {
   let ctx = null;
@@ -98,7 +79,7 @@ export function skapaLjud(konfig) {
     lasOppTyst();
     try {
       const c = saker();
-      if (c && c.state === 'suspended') c.resume();
+      if (c && (c.state === 'suspended' || c.state === 'interrupted')) vakna(c);
     } catch { /* ljud är valfritt */ }
   }
 
@@ -485,6 +466,7 @@ export function skapaLjud(konfig) {
     stang(rost);
   }
 
+  installeraIosLjud({ hamta: () => ctx, oppna: () => vack() });
   return {
     vack,
     klick,

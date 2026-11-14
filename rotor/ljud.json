@@ -1,5 +1,5 @@
 {
-  "note": "Tom file betyder att ljud.js syntetiserar händelsen. Sätt file till en relativ sökväg, till exempel ljud/kanon.ogg, så spelas den filen i stället. OGG eller MP3. Ingen kod behöver ändras. Volym 0–1. loop true betyder ett ihållande lager.",
+  "note": "Tom file betyder att ljud.js kan syntetisera händelsen. Spelet spelar inspelningarna i ljud/ljud.json (volym, loop, ogg och mp3-reserv). effekter.json styr partiklar, märken och robotantal.",
   "storageKey": "rotor-strike-sound",
   "masterVolume": 0.85,
   "refDistance": 150,

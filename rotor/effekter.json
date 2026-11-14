@@ -1,0 +1,177 @@
+{
+  "version": "2.0",
+  "units": {
+    "length": "metres",
+    "time": "seconds",
+    "up": "Y"
+  },
+  "description": "Körvärden. Spelet läser mobile, robot och masterGain. Ändra siffrorna och ladda om sidan.",
+  "mobile": {
+    "particles": 360,
+    "surfaceMarks": 48,
+    "metalDecals": 12,
+    "debris": 40,
+    "fires": 4,
+    "fallingWrecks": 4,
+    "tracers": 32,
+    "missileTrails": 8,
+    "audioVoices": 20,
+    "audioLoops": 8
+  },
+  "events": {
+    "shot": {
+      "audio": "kanon_skott",
+      "visual": [
+        "muzzle_flash_45ms",
+        "short_smoke"
+      ],
+      "note": "silent=true vid separat salvloop"
+    },
+    "cannon_burst": {
+      "audio": [
+        "kanon_salva_loop",
+        "kanon_slut"
+      ],
+      "visual": [
+        "shot_events_at_10Hz",
+        "tracer_every_third_shot"
+      ],
+      "hostCalls": [
+        "audio.startCannon",
+        "audio.stopCannon"
+      ]
+    },
+    "impact_dirt": {
+      "audio": "traff_mark",
+      "visual": [
+        "dust",
+        "debris",
+        "bullet_mark_65s"
+      ]
+    },
+    "impact_stone": {
+      "audio": "traff_mark",
+      "visual": [
+        "grey_dust",
+        "debris",
+        "bullet_mark_65s"
+      ],
+      "note": "Delat markljud, inte separat steninspelning"
+    },
+    "impact_metal": {
+      "audio": "traff_metall",
+      "visual": [
+        "sparks",
+        "debris",
+        "mesh_attached_decal_90s"
+      ]
+    },
+    "impact_water": {
+      "audio": "vatten_plask",
+      "visual": [
+        "droplets",
+        "ripple_2s"
+      ]
+    },
+    "launch": {
+      "audio": "robot_avfyr",
+      "visual": [
+        "ignition",
+        "launch_smoke"
+      ]
+    },
+    "rocket_flight": {
+      "audio": "robot_flyg_loop",
+      "visual": [
+        "distance_spaced_smoke"
+      ],
+      "hostCalls": [
+        "fx.trail",
+        "fx.endTrail"
+      ]
+    },
+    "explosion": {
+      "audio": [
+        "explosion_nara",
+        "explosion_fjarran"
+      ],
+      "visual": [
+        "flash",
+        "hot_core",
+        "debris",
+        "smoke",
+        "ground_dust",
+        "ground_mark_150s"
+      ],
+      "note": "En ljudvariant väljs efter avstånd; inga markmärken vid grounded=false"
+    },
+    "explosion_water": {
+      "audio": [
+        "explosion_nara",
+        "explosion_fjarran"
+      ],
+      "visual": [
+        "water_column",
+        "mist",
+        "ripple_4s"
+      ]
+    },
+    "destroy": {
+      "audio": [
+        "explosion_nara",
+        "brand_loop"
+      ],
+      "visual": [
+        "explosion",
+        "fire_28s",
+        "smoke"
+      ],
+      "note": "Ett targetId per förstört mål"
+    },
+    "falling_wreck": {
+      "audio": [
+        "vrak_nedslag",
+        "explosion_nara",
+        "brand_loop"
+      ],
+      "visual": [
+        "fall",
+        "tumble",
+        "smoke",
+        "impact",
+        "persistent_wreck_60s"
+      ]
+    },
+    "cockpit": {
+      "audio": [
+        "skada_egen",
+        "varning_lag_hojd",
+        "varning_grans",
+        "varning_lasning",
+        "klick_brytare",
+        "pedal_tryck",
+        "spak_rorelse"
+      ],
+      "note": "Värdspelet utlöser vid faktiska händelser; hylsor är separat valbar extern Foley"
+    },
+    "flight": {
+      "audio": [
+        "rotor_loop_lag",
+        "rotor_loop_hog",
+        "turbin_loop",
+        "vind_loop",
+        "motor_start",
+        "motor_stopp"
+      ],
+      "note": "Host styr start-/stoppsekvens; motorloopar kan mixas via audio.setFlight"
+    }
+  },
+  "robot": {
+    "antal": 12,
+    "omladdningSekunder": 1.4,
+    "fartMeterPerSekund": 90,
+    "livstidSekunder": 6,
+    "spar": 1.3
+  },
+  "masterGain": 0.5
+}

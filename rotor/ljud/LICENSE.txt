@@ -1,0 +1,1 @@
+Egen kod och proceduralt framställda texturer i Rotor Strike ljud och effekter v2 får användas, ändras och distribueras utan ytterligare krav på erkännande. De tillhandahålls utan garanti. Tredjepartsresurser omfattas av sina egna licenser enligt KALLOR.md. Three.js och DecalGeometry: MIT. Kenney och ljudinspelningar: CC0 1.0.

@@ -9,8 +9,12 @@ import { byggBand, byggKurvor, byggOversikt, formSek, formTal } from './kurvor.j
 import { arSlutOrd, klippSvans, lasVektor, matHz, rundaSampel, vinkelSkillnad } from './motor.js';
 import { arOmslag } from '../js/riktning.js';
 import { monteraRorelse } from './gyrobox-adapter.js';
+import { installeraIosLjud, oppnaKontext, tick } from '../shared/ios-ljud.js';
 
 const $ = (id) => document.getElementById(id);
+let ljudCtx = null;
+installeraIosLjud({ hamta: () => ljudCtx, oppna() { ljudCtx = oppnaKontext(ljudCtx); } });
+function knack() { ljudCtx = oppnaKontext(ljudCtx); tick(ljudCtx); }
 const huvud = $('huvud');
 
 let config;
@@ -1178,6 +1182,7 @@ function startaTal() {
 }
 
 function borjaInspelning() {
+  knack();
   nollage = senaste.vinkel ? senaste.vinkel.slice() : null;
   foreEuler = senaste.vinkel ? { alpha: senaste.vinkel[0], beta: senaste.vinkel[1], gamma: senaste.vinkel[2] } : null;
   senastRelativ = null;
@@ -1232,6 +1237,7 @@ function avbrytInspelning() {
 
 function avsluta(orsak) {
   if (!rec?.aktiv) return;
+  knack();
   rec.aktiv = false;
   clearInterval(stoppKlocka);
   const nu = (performance.now() - rec.start) / 1000;

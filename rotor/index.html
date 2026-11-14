@@ -22,7 +22,7 @@
   <div class="brand"><b>ROTOR<span>STRIKE</span></b><small>HELIKOPTER MED GYRO</small></div>
   <span class="eyebrow">FLYGUPPDRAG 01 / NORRA SKÄRGÅRDEN</span>
   <h1>Luta telefonen.<br><em>Flyg.</em></h1>
-  <p>Luta telefonen för att flyga. Vänster kant upp svänger höger. Lyft i det grå fältet. Sikte i ringen nere till höger. Eld till vänster.</p>
+  <p>Luta telefonen för att flyga. Vänster kant upp svänger höger. Lyft med spaken till vänster. Sikte i ringen nere till höger. Eld till vänster.</p>
   <div class="mission-meta"><span><i>01</i> STRIDSHELIKOPTER</span><span><i>03</i> UPPDRAG</span></div>
   <div id="uppdragVal">
     <button type="button" data-uppdrag="konvoj">Konvojen</button>
@@ -40,14 +40,16 @@
   <div id="reticle"><i></i><b></b><span>+</span><small id="lockLabel">SÖKER MÅL</small></div>
   <div id="targetMarkers"></div>
   <div id="warning" role="status"></div>
+  <div id="instrumentPanel" aria-hidden="true"></div>
   <div id="gauges">
-    <button class="gauge" id="gauge-altitude" type="button" aria-label="Höjd och fart"><canvas id="gaugeAlt" width="320" height="320"></canvas></button>
-    <button class="gauge" id="gauge-vertical" type="button" aria-label="Stig och sjunk"><canvas id="gaugeVsi" width="320" height="320"></canvas></button>
-    <button class="gauge" id="gauge-radar" type="button" aria-label="Radar och kompass"><canvas id="radar" width="320" height="320"></canvas></button>
+    <button class="gauge" id="gauge-altitude" type="button" aria-label="Höjd"><canvas id="gaugeAlt" width="320" height="320"></canvas><span class="g-read"><b id="altRead">0</b><small>m</small></span><span class="g-name">HÖJD</span></button>
+    <button class="gauge" id="gauge-attitude" type="button" aria-label="Horisont. Visar lutning i sidled och om nosen pekar upp eller ned."><canvas id="gaugeAtt" width="320" height="320"></canvas><span class="g-name">HORISONT</span></button>
+    <button class="gauge" id="gauge-speed" type="button" aria-label="Fart framåt"><canvas id="gaugeSpeed" width="320" height="320"></canvas><span class="g-read"><b id="spdRead">0</b><small>kn</small></span><span class="g-name">FART</span></button>
+    <button class="gauge" id="gauge-radar" type="button" aria-label="Radar och kompass"><canvas id="radar" width="320" height="320"></canvas><span class="g-read"><b id="hdgRead">000</b><small>°</small></span><span class="g-name" id="armorRead" title="Pansar 100%">PANSAR</span></button>
   </div>
   <div id="collective" class="lever" role="slider" tabindex="0" aria-label="Lyftspak" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><b id="collectiveValue">LYFT 60%</b></div>
   <div class="pedals" id="pedals"><button id="yawLeft" type="button" aria-label="Vänster pedal"></button><button id="yawRight" type="button" aria-label="Höger pedal"></button></div>
-  <div class="cyclic-block" id="cyclicBlock"><div id="cyclic" aria-label="Dra för att luta helikoptern" role="application"><span class="forward">FRAMÅT</span><span class="cross-x"></span><span class="cross-y"></span><div id="stick"></div></div></div>
+  <div class="cyclic-block" id="cyclicBlock"><div id="cyclic" aria-label="Cyklik. Följer telefonens lutning. Framåt är uppåt." role="application"><span class="forward">FRAM</span><span class="cross-x"></span><span class="cross-y"></span><div id="stick"><i id="stickShaft"></i></div><b class="cyc-name">CYKLIK</b></div></div>
   <button id="gun" type="button" aria-label="Eld. Håll in för automatkanon."><span>ELD</span></button>
   <div id="aimPad" aria-label="Sikte. Dra i ringen."><b>SIKTE</b><i></i></div>
   <button id="rocket" type="button" aria-label="Robot. Ett tryck avlossar en robot."><span class="rocket-mark">↟</span><small>ROBOT</small><b id="ammo">12</b></button>
@@ -79,7 +81,7 @@
     </details>
     <details><summary>Så flyger du</summary>
       <p>Håll telefonen bekvämt och tryck Nollställ gyro. Den lutningen blir noll. Luta framåt för att flyga fram, åt sidan för att luta. Framåtlutning tar bort lyft, så höj spaken till vänster om du sjunker. Över ungefär 35 knop hjälper fartlyftet, och du behöver mindre lyft för att hålla höjden.</p>
-      <p>Lyftspaken är det grå fältet nere till vänster: dra upp och ned. Siktet styrs i den stora ringen nere till höger. Eldknappen sitter till vänster. Robotknappen ligger längst ner i mitten. Knappen Bakifrån byter till vyn bakom helikoptern utan att öppna menyn. Vänster kant av telefonen upp svänger höger, och tvärtom.</p>
+      <p>Lyftspaken är den mörka spaken till vänster. Dra upp och ned. Den stannar där du släpper. Cyklikspaken i panelen följer hur du lutar telefonen. Siktet styrs i den stora ringen nere till höger. Eldknappen sitter till vänster. Robotknappen ligger längst ner. Knappen Bakifrån byter till vyn bakom helikoptern utan att öppna menyn. Vänster kant av telefonen upp svänger höger, och tvärtom.</p>
       <p>På iPhone frågar Safari om rörelse när du startar eller kalibrerar. Om inget händer: Inställningar, Safari, Rörelse och orientering.</p>
       <p>Tangentbord: W A S D styr. Q och E är pedaler. R och F är lyftet. Mellanslag skjuter. X är robot. C kalibrerar. Z centrerar siktet. V byter vy. G växlar fokus. Esc öppnar menyn.</p>
     </details>

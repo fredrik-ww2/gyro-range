@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#172724">
 <link rel="icon" href="data:,">
 <title>Flygplan · Gyrotest</title>
-<link rel="stylesheet" href="./style.css?v=13">
+<link rel="stylesheet" href="./style.css?v=14">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
@@ -16,6 +16,15 @@
 <section id="settings" class="flygmeny" hidden>
 <div class="meny-topp row"><h2>Meny</h2><button id="closeSettings" type="button">Stäng</button></div>
 <div class="meny-kropp">
+<section class="meny-del styrlage" id="styrlage" aria-labelledby="styrlageRubrik">
+<h2 id="styrlageRubrik">Styrläge</h2>
+<div id="styrlageVal" class="styrlage-val" role="radiogroup" aria-label="Styrläge"></div>
+<p id="styrlageText" class="styrlage-text"></p>
+<details id="styrlageFin">
+<summary>Finjustera</summary>
+<div id="styrlageReglage"></div>
+</details>
+</section>
 <section class="meny-del plan" aria-labelledby="planRubrikFlyg">
 <h2 id="planRubrikFlyg">Flygplan &amp; version</h2>
 <div class="meny-id"><span class="eyebrow" id="versionEtikett">Flygprov 08</span><h1 id="aircraftName">Hawker Typhoon Mk Ib</h1></div>
@@ -139,6 +148,6 @@
 </button>
 </div>
 </footer>
-<script type="module" src="./main.js?v=15"></script>
+<script type="module" src="./main.js?v=16"></script>
 <script src="../lankar/horn.js"></script></body>
 </html>

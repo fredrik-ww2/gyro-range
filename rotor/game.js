@@ -12,6 +12,8 @@ import {Ljud} from './ljud.js';
 import {RotorAudio} from './fx/AudioEngine.js';
 import {RotorEffects} from './fx/RotorEffects.js';
 import {installeraIosLjud, arIos, forberedTystLage} from '../shared/ios-ljud.js';
+import {monteraRotorLage} from './styrlage.js';
+import {hovringKryss, knackHovring} from './hovring-hack.js';
 const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=THREE.MathUtils.lerp;
 const control=new ControlModule(config.control),flight=new FlightDynamics(config.flight),gyro=new GyroAdapter(config.gyro);
 let gyroLada;
@@ -140,6 +142,7 @@ function writeSetting(row,value){
     flight.configure(patch);
   }else control.configure({[row.id]:value});
   if(row.id==='inputTimeoutSeconds')gyro.staleSeconds=value;
+  styrLageUi?.kolla();
 }
 function buildMenu(){
   const box=$('tuning');
@@ -161,6 +164,7 @@ function buildMenu(){
       if(row.id==='sound'){soundOn=input.checked;try{localStorage.setItem(ljudManifest.storageKey,soundOn?'1':'0');}catch{}if(rotorAudio){rotorAudio.setEnabled(soundOn);if(soundOn)rotorAudio.unlock().then(()=>{if(playing)rotorAudio.startFlight();}).catch(()=>{});}else ljud.setEnabled(soundOn);knack('klick_brytare','click');return;}
       if(row.group==='flight')flight.configure({[row.id]:input.checked});
       else control.configure({[row.id]:input.checked});
+      styrLageUi?.kolla();
       syncModeUI();
     };
     label.append(span,input);$('toggles').append(label);
@@ -185,7 +189,7 @@ function syncModeUI(){
   $('cameraView').value=control.settings.view;
   $('cameraView').disabled=!control.settings.cockpitEnabled;
   const tick=(id,on)=>{const el=$(id);if(el)el.checked=!!on;};
-  tick('cockpitEnabled',control.settings.cockpitEnabled);tick('aimEnabled',aim);tick('hoverAssist',flight.assists.hover);tick('autoTorque',flight.assists.autoTorque);tick('sound',soundOn);
+  tick('cockpitEnabled',control.settings.cockpitEnabled);tick('aimEnabled',aim);tick('hoverAssist',flight.assists.hover);tick('autoTorque',flight.assists.autoTorque);tick('hovringHack',flight.params.hovringHack);tick('sound',soundOn);
   $('cyclicBlock').hidden=!(mode==='touch'||mode==='gyro-aim');
   const touchAim=aim&&(mode==='gyro-flight'||mode==='touch'||(mode==='gyro-both'&&!control.clutch));
   $('windshield').hidden=!touchAim;
@@ -221,7 +225,7 @@ function aimFromWindshield(clientX,clientY){
 }
 function releaseInputs(){keys.clear();touch.x=touch.y=0;aimTouch={x:0,y:0};touch.left=touch.right=false;firing=false;cannonOff();fingerAim=null;gunHold?.clear();rocketHold?.clear();control.releaseMomentaryInputs();$('stick').style.transform='translate(-50%,-50%)';document.querySelectorAll('.held,.grown').forEach(e=>e.classList.remove('held','grown'));syncModeUI();}
 function updateCollectiveUI(){const pct=Math.round(collective*100);$('collectiveValue').textContent='LYFT '+pct+'%';$('collective').setAttribute('aria-valuenow',pct);}
-function setCollective(value){collective=clamp(value,0,1);control.setCollective(collective);updateCollectiveUI();}
+function setCollective(value,tyst){const fore=collective;collective=clamp(value,0,1);control.setCollective(collective);updateCollectiveUI();const el=$('collective');const mal=flight.params.hoverCollective;const hack=!!flight.params.hovringHack;el.classList.toggle('vid-hovring',hack&&Math.abs(collective-mal)<=0.018);if(!tyst&&hack&&hovringKryss(fore,collective,mal)){knackHovring();el.classList.add('vid-hack');clearTimeout(el._hackTimer);el._hackTimer=setTimeout(()=>el.classList.remove('vid-hack'),180);}}
 function bindDrag(element,onMove,onEnd){let pointer=null;element.addEventListener('pointerdown',e=>{if(pointer!==null)return;e.preventDefault();pointer=e.pointerId;try{element.setPointerCapture(pointer);}catch{}onMove(e);});element.addEventListener('pointermove',e=>{if(e.pointerId===pointer)onMove(e);});const end=e=>{if(e.pointerId!==pointer)return;pointer=null;onEnd?.();};element.addEventListener('pointerup',end);element.addEventListener('pointercancel',end);element.addEventListener('lostpointercapture',end);}
 bindDrag($('collective'),e=>{if(!$('collective').classList.contains('dragging')){$('collective').classList.add('dragging');knack('spak_rorelse','click');}const r=$('collective').getBoundingClientRect();setCollective(1-(e.clientY-r.top)/r.height);},()=>$('collective').classList.remove('dragging'));
 $('collective').addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','Home','End'].includes(e.key)){e.preventDefault();e.stopPropagation();setCollective(e.key==='Home'?0:e.key==='End'?1:collective+(e.key==='ArrowUp'?0.02:-0.02));}});
@@ -255,7 +259,8 @@ function updateGyroNote(access){
  el.textContent=gyroDenied?'Gyrot är avstängt i Safari. Tillåt Rörelse och orientering under Inställningar, eller välj Bara spakar.':'Gyrot svarar inte. Öppna menyn uppe till höger och tryck Nollställ gyro.';
 }
 async function calibrate(){startAudio();const ask=gyro.requestPermission();let access=null;try{access=await ask;}catch{}const live=gyro.read();if(live&&Number.isFinite(live.pitch))control.feedOrientation({pitch:live.pitch,roll:live.roll,yaw:live.yaw});gyro.calibrate();control.feedOrientation({pitch:0,roll:0,yaw:0});control.calibrate();updateGyroNote(access);flashMessage('Den här lutningen är nu noll.');knack('klick_brytare','click');}
-gyroLada=monteraRotor({control,kalibrera:()=>calibrate()});
+const styrLageUi=monteraRotorLage({control,flight,config,onAndrad(){ritaReglage();}});
+gyroLada=monteraRotor({control,kalibrera:()=>calibrate(),lage:()=>styrLageUi.etikett()});
 $('calibrate').onclick=calibrate;
 $('testCalibrate').onclick=()=>{control.feedOrientation(test);control.calibrate();flashMessage('Testläget är nu noll.');};
 for(const axis of ['Pitch','Roll','Yaw'])$('test'+axis).oninput=e=>{test[axis.toLowerCase()]=+e.target.value;$('test'+axis+'Out').textContent=e.target.value+'°';};
@@ -264,7 +269,7 @@ $('menuBtn').onclick=showSettings;$('closeSettings').onclick=()=>settings.close(
 settings.addEventListener('close',()=>{releaseInputs();ljud.setDucked(false);rotorAudio?.setDucked(false);last=performance.now();});
 settings.addEventListener('click',e=>{if(e.target===settings){const r=settings.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)settings.close();}});
 function start(which){
-  mode=which;playing=true;armor=100;ammo=robot.antal;kills=0;flight.reset();fx?.reset();if(rotorAudio){rotorAudio.reset();rotorAudio.setDucked(false);}setCollective(flight.params.hoverCollective);releaseInputs();
+  mode=which;playing=true;armor=100;ammo=robot.antal;kills=0;flight.reset();fx?.reset();if(rotorAudio){rotorAudio.reset();rotorAudio.setDucked(false);}setCollective(flight.params.hoverCollective,true);releaseInputs();
   gyro.calibrate();control.feedOrientation({pitch:0,roll:0,yaw:0});control.calibrate();
   if(control.settings.view==='cockpit'&&control.settings.cockpitEnabled)control.viewBlend=1;
   if(settings.open)settings.close();if(result.open)result.close();$('briefing').hidden=true;$('aircraftCard').hidden=true;$('hud').hidden=false;$('missionHud').hidden=mode!=='battle';$('viewQuick').hidden=false;document.body.classList.add('playing');
@@ -280,7 +285,7 @@ $('startBattle').onclick=()=>begin('battle');$('startPractice').onclick=()=>begi
 for(const b of document.querySelectorAll('#uppdragVal button'))b.onclick=()=>{uppdragId=b.dataset.uppdrag;begin('battle');};
 function finish(win){if(result.open)return;releaseInputs();const u=UPPDRAG[uppdragId];$('resultEyebrow').textContent=win?'UPPDRAG SLUTFÖRT':'UPPDRAG AVBRUTET';$('resultTitle').textContent=win?(u?u.namn+' klar.':'Området säkrat.'):'Uppdraget misslyckades.';$('resultText').textContent=win?`${poang} poäng. Tid kvar ${Math.max(0,Math.ceil(uppdragTid))} s. Pansar ${Math.ceil(armor)}%.`:(mode==='battle'?`${u?u.namn:''} tog slut. ${poang} poäng.`:'Försök igen, eller träna under fri flygning.');result.showModal();ljud.setDucked(true);rotorAudio?.setDucked(true);}
 result.addEventListener('cancel',e=>e.preventDefault());
-window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!settings.open&&!result.open)showSettings();return;}if(settings.open||result.open||/INPUT|SELECT/.test(e.target.tagName))return;const k=e.key.toLowerCase();if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='x')fireMissile();if(k==='c')calibrate();if(k==='h'){flight.configure({hoverAssist:!flight.assists.hover});syncModeUI();}if(k==='v')setView(control.settings.view==='cockpit'?'external':'cockpit');if(k==='b'){control.configure({aimEnabled:!control.settings.aimEnabled});syncModeUI();}if(k==='g')toggleFocus();if(k==='o'){control.setLookDown(!control.getViewState().lookDown);syncModeUI();}if(k==='z')resetAim();});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!settings.open&&!result.open)showSettings();return;}if(settings.open||result.open||/INPUT|SELECT/.test(e.target.tagName))return;const k=e.key.toLowerCase();if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='x')fireMissile();if(k==='c')calibrate();if(k==='h'){flight.configure({hoverAssist:!flight.assists.hover});styrLageUi?.kolla();}if(k==='v')setView(control.settings.view==='cockpit'?'external':'cockpit');if(k==='b'){control.configure({aimEnabled:!control.settings.aimEnabled});syncModeUI();}if(k==='g')toggleFocus();if(k==='o'){control.setLookDown(!control.getViewState().lookDown);syncModeUI();}if(k==='z')resetAim();});
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 window.addEventListener('blur',()=>{releaseInputs();if(playing&&!settings.open&&!result.open)showSettings();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseInputs();if(playing&&!settings.open&&!result.open)showSettings();}last=performance.now();});
@@ -323,6 +328,12 @@ function updateInput(dt){
     if(keys.has('f'))setCollective(collective-dt*.25);
   }
   control.update(dt);
+}
+function ritaReglage(){
+  for(const row of config.menu){const input=$(row.id);if(!input)continue;input.value=readSetting(row);const out=input.parentElement?.querySelector('output');if(out)out.textContent=fmt(row,readSetting(row));}
+  for(const row of config.toggles){if(row.id==='sound')continue;const input=$(row.id);if(input)input.checked=!!readSetting(row);}
+  const mark=$('hoverMark');if(mark){mark.hidden=!flight.params.hovringHack;mark.style.bottom=((flight.params.hoverCollective||0.6)*100)+'%';}
+  syncModeUI();
 }
 buildMenu();syncModeUI();
 window.helicopterInput=Object.freeze({

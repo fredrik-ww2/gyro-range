@@ -160,3 +160,16 @@ body:has(#hStatus) .gyrobox-rot {
   top: calc(env(safe-area-inset-top, 0px) + 46px);
   max-width: min(210px, calc(100vw - 24px));
 }
+.gyrobox-lage {
+  display: inline-block;
+  margin: 0 0 4px 2px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #e7e1d4;
+  color: #17240f;
+  font: 800 11px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0.2px;
+}
+.gyrobox-lage:empty { display: none; }
+.gyrobox-lage[data-lage="realistisk"] { background: #9ad7ff; color: #10202a; }
+.gyrobox-lage[data-lage="eget"] { background: #e7c56a; color: #17240f; }

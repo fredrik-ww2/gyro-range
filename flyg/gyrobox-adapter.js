@@ -3,7 +3,7 @@ import { monteraGyrobox } from '../shared/gyrobox.js';
 const GRAD = 180 / Math.PI;
 
 // flyg/config.json: styrning + gyro_zon.
-export function monteraFlyg({ styrning, zon, kalibrera }) {
+export function monteraFlyg({ styrning, zon, kalibrera, lage }) {
   const sens = styrning.kanslighet ?? 1;
   const box = monteraGyrobox({
     spel: 'flyg',
@@ -38,6 +38,7 @@ export function monteraFlyg({ styrning, zon, kalibrera }) {
       return 'tipp';
     },
     kalibrera,
+    lage,
     tillampa(nu) { zon.rate_utjamning_s = nu.roll.utjamning; }
   });
   return {

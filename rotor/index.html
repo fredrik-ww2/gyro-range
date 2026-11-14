@@ -45,7 +45,7 @@
     <button class="gauge" id="gauge-vertical" type="button" aria-label="Stig och sjunk"><canvas id="gaugeVsi" width="320" height="320"></canvas></button>
     <button class="gauge" id="gauge-radar" type="button" aria-label="Radar och kompass"><canvas id="radar" width="320" height="320"></canvas></button>
   </div>
-  <div id="collective" class="lever" role="slider" tabindex="0" aria-label="Lyftspak" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><b id="collectiveValue">LYFT 60%</b></div>
+  <div id="collective" class="lever" role="slider" tabindex="0" aria-label="Lyftspak" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><i id="hoverMark" hidden><span>Hovring</span></i><b id="collectiveValue">LYFT 60%</b></div>
   <div class="pedals" id="pedals"><button id="yawLeft" type="button" aria-label="Vänster pedal"></button><button id="yawRight" type="button" aria-label="Höger pedal"></button></div>
   <div class="cyclic-block" id="cyclicBlock"><div id="cyclic" aria-label="Dra för att luta helikoptern" role="application"><span class="forward">FRAMÅT</span><span class="cross-x"></span><span class="cross-y"></span><div id="stick"></div></div></div>
   <button id="gun" type="button" aria-label="Eld. Håll in för automatkanon."><span>ELD</span></button>
@@ -56,6 +56,11 @@
 <dialog id="settings">
   <div class="dialog-head"><div><span class="eyebrow">FLYGKONTROLLER</span><h2>Din styrning.</h2></div><button id="closeSettings" class="icon" type="button" aria-label="Stäng meny">×</button></div>
   <div class="settings-scroll">
+    <div id="styrlage" class="styrlage">
+      <span class="eyebrow">STYRLÄGE</span>
+      <div id="styrlageVal" class="styrlage-val" role="radiogroup" aria-label="Styrläge"></div>
+      <p id="styrlageText" class="mode-help"></p>
+    </div>
     <label class="setting"><span>Så styrs helikoptern</span><select id="controlMode" aria-label="Styrläge"></select></label>
     <p id="uppdragRad" class="mode-help"></p>
     <p id="modeHelp" class="mode-help"></p>
@@ -69,7 +74,7 @@
     <label class="setting"><span>Kameravy</span><select id="cameraView" aria-label="Kameravy"><option value="cockpit">Cockpit</option><option value="external">Utomhus</option></select></label>
     <button id="lookDown" class="outline" type="button">Se spaken</button>
     <div id="tuning"></div>
-    <p class="mode-help">Reglagen gäller tills du laddar om sidan. Grundvärdena ligger i config.json.</p>
+    <p class="mode-help">Läget och reglagen sparas i telefonen. Grundvärdena ligger i config.json.</p>
     <details id="controlTest"><summary>Prova utan telefon</summary><p>Gradtal före dödzon och mjukhet. Stäng menyn när du vill flyga.</p>
       <label class="range-setting"><span>Pitch <output id="testPitchOut">0°</output></span><input id="testPitch" type="range" min="-40" max="40" value="0"></label>
       <label class="range-setting"><span>Roll <output id="testRollOut">0°</output></span><input id="testRoll" type="range" min="-40" max="40" value="0"></label>

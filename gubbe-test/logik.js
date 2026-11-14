@@ -151,14 +151,19 @@ export function fartUrGyro(pose, rr) {
   return { upp, fram: -upp, yaw, roll };
 }
 
+function wrapDelta(d) {
+  if (!Number.isFinite(d)) return 0;
+  return ((d + 180) % 360 + 360) % 360 - 180;
+}
+
 export function derivat(fore, nu, dt) {
   const tom = { upp: 0, fram: 0, yaw: 0, roll: 0 };
   if (!fore || !nu || !(dt > 0) || dt > 0.25) return tom;
   return {
-    upp: (nu.upp - fore.upp) / dt,
-    fram: (nu.fram - fore.fram) / dt,
-    yaw: (nu.yaw - fore.yaw) / dt,
-    roll: (nu.roll - fore.roll) / dt
+    upp: wrapDelta(nu.upp - fore.upp) / dt,
+    fram: wrapDelta(nu.fram - fore.fram) / dt,
+    yaw: wrapDelta(nu.yaw - fore.yaw) / dt,
+    roll: wrapDelta(nu.roll - fore.roll) / dt
   };
 }
 

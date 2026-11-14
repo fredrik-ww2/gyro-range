@@ -8,6 +8,7 @@ button:disabled{opacity:.45}
 #kamerabild{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;background:#000;pointer-events:none}
 #vy{position:absolute;inset:0;z-index:1;width:100%;height:100%;display:block;touch-action:none}
 #version{position:absolute;z-index:5;left:max(10px,env(safe-area-inset-left));top:calc(env(safe-area-inset-top) + 8px);padding:4px 9px;border-radius:999px;background:#121816d0;color:var(--lime);font-size:12px;font-weight:750;letter-spacing:.04em;pointer-events:none}
+body:has(.gyrobox-rot) #version{display:none}
 #startKort{position:absolute;z-index:6;left:16px;right:16px;top:46%;transform:translateY(-50%);max-width:440px;margin:auto;padding:26px 22px 20px;border:1px solid #ffffff26;background:#16211ef2;backdrop-filter:blur(16px);border-radius:28px;box-shadow:0 16px 50px #0006}
 .ogonbryn{display:block;font-size:11px;letter-spacing:.18em;font-weight:750;color:var(--lime)}
 h1{margin:8px 0 6px;font-size:34px;font-weight:700;letter-spacing:-.04em}

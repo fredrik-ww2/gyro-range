@@ -16,10 +16,10 @@ const MODE_PRESETS={
 export class ControlModule {
  constructor(options={}){
   this.settings={
-   controlMode:'gyro-flight',deadzoneDeg:5,fullScaleDeg:30,sensitivity:1,smoothingSeconds:.16,yawFullScaleDeg:35,tiltEnabled:true,yawMode:'pedals',inputTimeoutSeconds:.6,
+   controlMode:'gyro-flight',deadzoneDeg:4,softKneeDeg:2,fullScaleDeg:30,sensitivity:1,smoothingSeconds:.16,cyclicRate:8,yawFullScaleDeg:35,tiltEnabled:true,yawMode:'pedals',inputTimeoutSeconds:.6,
    aimEnabled:true,aimRouting:'separate',aimSensitivity:1,aimDeadzoneDeg:.5,aimSmoothingSeconds:.09,aimYawLimitDeg:35,aimPitchLimitDeg:25,cockpitEnabled:true,view:'cockpit',viewTransitionSeconds:.75
   };
-  this.raw={pitch:0,roll:0,yaw:0};this.zero={...this.raw};this.direct={x:0,y:0};this.filtered={x:0,y:0,yaw:0};this.collective=.6;this.pedals=0;this.age=Infinity;
+  this.raw={pitch:0,roll:0,yaw:0};this.zero={...this.raw};this.direct={x:0,y:0};this.filtered={x:0,y:0,yaw:0};this.inertial={x:0,y:0,yaw:0};this.collective=.6;this.pedals=0;this.age=Infinity;
   this.aimRaw={pitch:0,yaw:0};this.aimZero={...this.aimRaw};this.aimDirect={x:0,y:0};this.aimFiltered={x:0,y:0};this.aimSource='direct';this.aimAge=Infinity;this.clutch=null;this.viewBlend=this.settings.view==='cockpit'?0:0;this.lookDown=false;
   this.configure(options);
  }
@@ -27,9 +27,9 @@ export class ControlModule {
   const preset=options.controlMode?MODE_PRESETS[options.controlMode]:null;
   if(options.controlMode&&!preset)throw new RangeError('Unknown mode');
   const n={...this.settings,...(preset||{}),...options};
-  for(const k of ['deadzoneDeg','fullScaleDeg','sensitivity','smoothingSeconds','yawFullScaleDeg','inputTimeoutSeconds','aimSensitivity','aimDeadzoneDeg','aimSmoothingSeconds','aimYawLimitDeg','aimPitchLimitDeg','viewTransitionSeconds'])finite(n[k],k);
+  for(const k of ['deadzoneDeg','fullScaleDeg','sensitivity','smoothingSeconds','softKneeDeg','cyclicRate','yawFullScaleDeg','inputTimeoutSeconds','aimSensitivity','aimDeadzoneDeg','aimSmoothingSeconds','aimYawLimitDeg','aimPitchLimitDeg','viewTransitionSeconds'])finite(n[k],k);
   if(n.deadzoneDeg<0||n.deadzoneDeg>=n.fullScaleDeg||n.fullScaleDeg>90)throw new RangeError('Require 0 ≤ deadzone < full scale ≤ 90');
-  if(n.sensitivity<=0||n.sensitivity>4||n.smoothingSeconds<0||n.yawFullScaleDeg<=n.deadzoneDeg||n.yawFullScaleDeg>180||n.inputTimeoutSeconds<=0)throw new RangeError('Invalid flight settings');
+  if(n.sensitivity<=0||n.sensitivity>4||n.smoothingSeconds<0||n.softKneeDeg<0||n.softKneeDeg>20||n.cyclicRate<0||n.cyclicRate>40||n.yawFullScaleDeg<=n.deadzoneDeg||n.yawFullScaleDeg>180||n.inputTimeoutSeconds<=0)throw new RangeError('Invalid flight settings');
   if(n.aimSensitivity<=0||n.aimSensitivity>4||n.aimDeadzoneDeg<0||n.aimDeadzoneDeg>=Math.min(n.aimYawLimitDeg,n.aimPitchLimitDeg)||n.aimYawLimitDeg>80||n.aimPitchLimitDeg>60||n.aimSmoothingSeconds<0||n.viewTransitionSeconds<=0)throw new RangeError('Invalid aim/view settings');
   if(!['pedals','orientation'].includes(n.yawMode)||!['separate','shared'].includes(n.aimRouting)||!['external','cockpit'].includes(n.view)||!CONTROL_MODES.includes(n.controlMode))throw new RangeError('Unknown mode');
   for(const k of ['tiltEnabled','aimEnabled','cockpitEnabled'])if(typeof n[k]!=='boolean')throw new TypeError(`${k} must be boolean`);
@@ -74,15 +74,29 @@ export class ControlModule {
    this.direct={...h.cyclic};this.aimDirect={...this.aimFiltered};this.aimSource='direct';this.clutch=null;
   }
  }
- calibrate(){this.clutch=null;this.zero={...this.raw};this.filtered={x:0,y:0,yaw:0};this.calibrateAim();}
- releaseMomentaryInputs(){this.setAimClutch(false);this.direct={x:0,y:0};this.pedals=0;this.age=Infinity;this.filtered={x:0,y:0,yaw:0};this.lookDown=false;}
- normalize(degrees,full=this.settings.fullScaleDeg){const d=wrap(degrees),s=this.settings;return Math.sign(d)*clamp((Math.abs(d)-s.deadzoneDeg)/(full-s.deadzoneDeg)*s.sensitivity,0,1);}
+ calibrate(){this.clutch=null;this.zero={...this.raw};this.filtered={x:0,y:0,yaw:0};this.inertial={x:0,y:0,yaw:0};this.calibrateAim();}
+ releaseMomentaryInputs(){this.setAimClutch(false);this.direct={x:0,y:0};this.pedals=0;this.age=Infinity;this.filtered={x:0,y:0,yaw:0};this.inertial={x:0,y:0,yaw:0};this.lookDown=false;}
+ normalize(degrees,full=this.settings.fullScaleDeg){
+  const d=wrap(degrees),s=this.settings,abs=Math.abs(d),dz=s.deadzoneDeg,span=full-dz;
+  if(!(span>0))return 0;
+  let mag=(abs-dz)/span;
+  const knee=s.softKneeDeg||0;
+  if(abs<=dz)mag=0;
+  else if(knee>0&&abs<dz+knee){const u=(abs-dz)/knee;mag=u*u*(3-2*u)*(knee/span);}
+  return Math.sign(d||0)*clamp(mag*s.sensitivity,0,1);
+ }
  aimNormalize(degrees,full){const d=wrap(degrees),s=this.settings;return Math.sign(d)*clamp((Math.abs(d)-s.aimDeadzoneDeg)/(full-s.aimDeadzoneDeg)*s.aimSensitivity,0,1);}
  update(dt){
   finite(dt,'dt');if(dt<0)throw new RangeError('dt must be nonnegative');this.age+=dt;this.aimAge+=dt;const s=this.settings,fresh=this.age<=s.inputTimeoutSeconds;
   let target=s.tiltEnabled?{x:fresh?this.normalize(this.raw.roll-this.zero.roll):0,y:fresh?this.normalize(this.raw.pitch-this.zero.pitch):0}:this.direct;
   let yaw=s.yawMode==='pedals'?this.pedals:(fresh?this.normalize(this.raw.yaw-this.zero.yaw,s.yawFullScaleDeg):0);
   if(this.clutch){target=fresh?this.clutch.cyclic:{x:0,y:0};if(s.yawMode==='orientation')yaw=fresh?this.clutch.yaw:0;}
+  if(s.cyclicRate>0&&s.tiltEnabled){
+   const max=s.cyclicRate*dt,lim=(cur,mal)=>cur+clamp(mal-cur,-max,max);
+   target={x:lim(this.inertial.x,target.x),y:lim(this.inertial.y,target.y)};
+   yaw=lim(this.inertial.yaw,yaw);
+  }
+  this.inertial.x=target.x;this.inertial.y=target.y;this.inertial.yaw=yaw;
   const t=s.smoothingSeconds===0?1:1-Math.exp(-dt/s.smoothingSeconds);
   this.filtered.x+=(target.x-this.filtered.x)*t;this.filtered.y+=(target.y-this.filtered.y)*t;this.filtered.yaw+=(yaw-this.filtered.yaw)*t;
   let a={x:0,y:0};

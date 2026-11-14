@@ -1,5 +1,5 @@
 import {
-  VERSION, standardInstallningar, sammanfoga, vinklarFranOrientering, fartUrGyro,
+  VERSION, standardInstallningar, sammanfoga, vinklarFranOrientering, fartUrGyro, derivat,
   bearbetaAxel, nyttAxelTillstand, forstarka, skapaFart, skapaGester, fartFramAv,
   sidoFart, stegPosition, visaNamn, bytLage, sikteRiktning, skapaJamnhet, skapaBrus,
   ryckighet, skapaSkak, skakSteg, hoppMark, K_LUGN, PACE
@@ -37,6 +37,8 @@ k('gyro topp mot', fartUrGyro(uppratt, { beta: 25 }).upp > 15 && fartUrGyro(uppr
 k('gyro roll', fartUrGyro(uppratt, { alpha: -20 }).roll > 10);
 k('pitch och yaw blandas inte', Math.abs(fartUrGyro(uppratt, { beta: 30 }).yaw) < 5);
 k('landskap fart upp', fartUrGyro({ ...uppratt, screen: 90 }, { gamma: -30 }).upp > 15);
+const yawHopp = derivat({ upp: 0, fram: 0, yaw: 179, roll: 0 }, { upp: 0, fram: 0, yaw: -179, roll: 0 }, 0.1);
+k('yaw-wrap runt noll', yawHopp.yaw > 10 && yawHopp.yaw < 40);
 
 const lin = forstarka(10, 1, 0);
 const starkLiten = forstarka(10, 1, 2);

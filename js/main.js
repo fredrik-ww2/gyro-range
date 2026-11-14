@@ -1021,7 +1021,9 @@ async function boot(){
   skakAmpNu=amp;
   const t=performance.now()/1000;
   const rytm=vapenStilla?0:Math.sin(t*(2.4+puls*7))*puls*styr.varden.spurt.puls_skak*vila;
-  breathEuler.set((Math.sin(t*1.7)+Math.sin(t*2.9+1.1)*.55)*amp+rytm,(Math.sin(t*1.25+.4)+Math.sin(t*3.3)*.45)*amp,0,'YXZ');
+  const ande=styr.varden.skak.andetag??1, darr=styr.varden.skak.tremor??0.16;
+  const scopeDamp=scopeAmt>.4?.22:stallning==='liggande'?.35:1;
+  breathEuler.set((Math.sin(t*1.55)+Math.sin(t*2.7+1.1)*.35)*amp*ande+Math.sin(t*52)*amp*darr*scopeDamp+rytm,(Math.sin(t*1.2+.4)+Math.sin(t*3.1)*.28)*amp*ande+Math.sin(t*47+.7)*amp*darr*.55*scopeDamp,0,'YXZ');
   breathQuat.setFromEuler(breathEuler);
  }
  syncStallningUi();

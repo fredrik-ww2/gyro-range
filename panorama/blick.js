@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { provFranEvent, skarmGrader } from '../shared/sensor.js';
 
 const RAD = Math.PI / 180;
 const FIX = new THREE.Quaternion(-Math.SQRT1_2, 0, 0, Math.SQRT1_2);
@@ -37,8 +38,7 @@ export function normalStyr(raw) {
 // Samma kedja som GyroAim.lasOrientering: YXZ, kameran längs -Z, -90° runt X, skärmvinkel runt Z.
 // Höger vridning (alpha minskar) tittar åt höger. Inte spegelvänt.
 export function skarmVinkel() {
-  const v = globalThis.screen?.orientation?.angle ?? globalThis.window?.orientation ?? 0;
-  return Number.isFinite(+v) ? +v : 0;
+  return skarmGrader(globalThis);
 }
 
 export function enhetsKvaternion(alpha, beta, gamma, skarmGrader, q, euler, skarmQ) {
@@ -202,8 +202,9 @@ export function skapaBlick(canvas, val = {}) {
 
   if (val.lyssna !== false && typeof addEventListener === 'function') {
     addEventListener('deviceorientation', e => {
-      if (![e.alpha, e.beta, e.gamma].every(Number.isFinite)) return;
-      lasVinkel(e.alpha, e.beta, e.gamma);
+      const prov = provFranEvent(e);
+      if (!prov) return;
+      lasVinkel(prov.alpha, prov.beta, prov.gamma);
     }, {passive: true});
     addEventListener('devicemotion', e => {
       const rr = e.rotationRate;

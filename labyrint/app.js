@@ -157,13 +157,14 @@ function visaMeny(oppna) {
   if (oppna) ritaPrestanda();
 }
 
+const lutZon = {fram: {pa: false}, sida: {pa: false}};
 function aktuellLutning(dt) {
   const ra = gyro.grader();
   if (ra.kalla === 'tvingad') return ra;
   const gyroKurva = {...konfig.gyro, dodzon: install.dodzon};
   const formad = gyroLada.forma(
-    mjukLutning(ra.fram, install.kanslighet, gyroKurva),
-    mjukLutning(ra.sida, install.kanslighet, gyroKurva),
+    mjukLutning(ra.fram, install.kanslighet, gyroKurva, lutZon.fram),
+    mjukLutning(ra.sida, install.kanslighet, gyroKurva, lutZon.sida),
     ra.fram,
     ra.sida,
     dt
@@ -177,9 +178,9 @@ function jamna(dt, lut) {
     visLut.sida = lut.sida;
     return;
   }
-  const k = 1 - Math.exp(-Math.max(0, dt) / Math.max(0.02, konfig.gyro.utjamningSek));
-  visLut.fram += (lut.fram - visLut.fram) * k;
-  visLut.sida += (lut.sida - visLut.sida) * k;
+  const k = (tau) => 1 - Math.exp(-Math.max(0, dt) / Math.max(0.02, tau));
+  visLut.fram += (lut.fram - visLut.fram) * k(konfig.gyro.utjamningFram ?? konfig.gyro.utjamningSek);
+  visLut.sida += (lut.sida - visLut.sida) * k(konfig.gyro.utjamningSida ?? konfig.gyro.utjamningSek);
 }
 
 function hanteraLage(dt) {

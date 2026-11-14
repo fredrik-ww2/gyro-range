@@ -15,6 +15,9 @@ export const TORN_MAX = (Math.PI * 2) / TORN_VARV_S;
 export const ELD_FART = 12 * Math.PI / 180;
 export const ELD_MIN = -10 * Math.PI / 180;
 export const ELD_MAX = 25 * Math.PI / 180;
+// Sekunder från stilla till full fart. Tornet och eldröret har tröghet.
+export const TORN_UPP = Math.max(0.05, Number(config.styr?.tornUpp) || 0.32);
+export const ELD_UPP = Math.max(0.05, Number(config.styr?.eldUpp) || 0.18);
 
 const AXLAR = ['styra', 'torn', 'eldror'];
 
@@ -87,7 +90,8 @@ export function behandlaAxel(rad, ax, dt, jamn, nyckel) {
     a = 0;
     jamn.zon[nyckel] = false;
   } else {
-    a = Math.sign(a) * (m - dz);
+    // Inne i hysteresbandet är m < dz. Utan taket byter utslaget tecken.
+    a = Math.sign(a) * Math.max(0, m - dz);
     jamn.zon[nyckel] = true;
   }
   a *= ax.kanslighet;
@@ -181,6 +185,10 @@ export function sjalvtest() {
   const ax = STANDARD.axlar.torn;
   const tyst = behandlaAxel(1 * Math.PI / 180, ax, 0.05, jam, 'torn');
   krav('dödzon är tyst', tyst.u === 0);
+  const jam2 = skapaJamning();
+  behandlaAxel(10 * Math.PI / 180, ax, 0, jam2, 'torn');
+  const tillbaka = behandlaAxel(2 * Math.PI / 180, ax, 0, jam2, 'torn');
+  krav('hysteres vänder inte tornet', tillbaka.rad >= 0 && tillbaka.u >= 0);
   jam.torn = 0;
   const halv = behandlaAxel((ax.dodzon + ax.full * 0.5) * Math.PI / 180, ax, 0, jam, 'torn');
   krav('halv vinkel är ungefär halv fart', Math.abs(halv.u - 0.5) < 0.08);

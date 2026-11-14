@@ -1,4 +1,5 @@
 import * as THREE from '../js/vendor/three.module.js';
+import { provFranEvent, skarmGrader } from '../shared/sensor.js';
 
 // Samma kedja som vagn-test/gyro.js, js/gyro.js och flyg/orientering.js:
 // YXZ euler(beta, alpha, -gamma), sedan -90° runt X, sedan skärmvinkeln runt Z.
@@ -9,8 +10,7 @@ const FIX = new THREE.Quaternion(-Math.SQRT1_2, 0, 0, Math.SQRT1_2);
 const Z_AXEL = new THREE.Vector3(0, 0, 1);
 
 export function skarmVinkel() {
-  const v = globalThis.screen?.orientation?.angle ?? globalThis.window?.orientation ?? 0;
-  return Number.isFinite(+v) ? +v : 0;
+  return skarmGrader(globalThis);
 }
 
 export function enhetsKvaternion(alpha, beta, gamma, skarmGrader, q, euler, skarmQ) {
@@ -190,10 +190,11 @@ export function skapaGyro(konfig, mal = globalThis) {
     if (typeof mal?.addEventListener === 'function') mal.addEventListener(typ, fn, { passive: true });
   };
   pa('deviceorientation', e => {
-    if (![e.alpha, e.beta, e.gamma].every(Number.isFinite)) return;
+    const prov = provFranEvent(e);
+    if (!prov) return;
     kalla = 'sensor';
     senasteSensor = performance.now();
-    las(e.alpha, e.beta, e.gamma);
+    las(prov.alpha, prov.beta, prov.gamma);
   });
   pa('devicemotion', e => {
     kalla = 'sensor';

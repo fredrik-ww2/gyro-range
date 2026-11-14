@@ -3,6 +3,7 @@
 // vinkelomslag (samma läge, andra siffror) får inte bli fullt roder.
 // Expo skickar vinkelhastighet. Första provet efter centrering är nolläget.
 import { arOmslag, eulerStyrning, nyNoll, skarmDelta } from './orientering.js';
+import { provFranEvent, skarmGrader } from '../shared/sensor.js';
 
 const STALE_MS = 450;
 
@@ -36,9 +37,7 @@ export class FlightInput {
   }
   nu() { return this.klocka ? this.klocka() : (globalThis.performance?.now?.() ?? Date.now()); }
   skarm() {
-    const v = globalThis.screen?.orientation?.angle ?? globalThis.window?.orientation ?? 0;
-    const n = +v;
-    return Number.isFinite(n) ? n : 0;
+    return skarmGrader(globalThis);
   }
   _skarmByte() {
     const n = this.skarm();
@@ -89,8 +88,8 @@ export class FlightInput {
   }
   _webb(e) {
     if (!this.active || this._nativeFarsk()) return;
-    if (!Number.isFinite(e.beta) || !Number.isFinite(e.gamma)) return;
-    const prov = { alpha: Number.isFinite(e.alpha) ? e.alpha : 0, beta: e.beta, gamma: e.gamma };
+    const prov = provFranEvent(e);
+    if (!prov) return;
     const ang = this.skarm();
     if (ang !== this._skarmSen) this._skarmByte();
     if (this.pending || !this.origin) {
@@ -121,7 +120,16 @@ export class FlightInput {
     const sensor = this.active && !this.pending && (freshNative || freshWeb);
     const p = sensor ? this.pose : { pitch: 0, roll: 0, yaw: 0 };
     const fin = (v) => Number.isFinite(v) ? v : 0;
-    const dead = (x) => Math.abs(x) < this.c.neutral_rad ? 0 : x;
+    const z = Math.max(this.c.neutral_rad || 0, this.c.dodzon || 0);
+    const knee = this.c.dodzon_mjuk || 0;
+    const dead = (x) => {
+      const a = Math.abs(x);
+      if (!(z > 0) || a >= z + knee) return a < z ? 0 : x;
+      if (a <= z) return 0;
+      const u = (a - z) / knee;
+      const s = u * u * (3 - 2 * u);
+      return Math.sign(x) * (z + knee) * s;
+    };
     const clamp = (x, m) => Math.max(-m, Math.min(m, x));
     const gain = this.settings.kanslighet;
     const rv = this.c.roder_vinkel_rad || 0.35;

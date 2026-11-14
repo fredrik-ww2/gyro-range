@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {enhetsKvaternion, kvaternionFranVinklar, skarmVinkel, vinklarFranKvaternion} from './blick.js?v=15';
+import {provFranEvent} from '../shared/sensor.js';
 
 const RAD = Math.PI / 180;
 const GRAD = 180 / Math.PI;
@@ -510,8 +511,9 @@ export function skapaLaser(val = {}) {
 
   if (val.lyssna !== false && typeof addEventListener === 'function') {
     addEventListener('deviceorientation', e => {
-      if (![e.alpha, e.beta, e.gamma].every(Number.isFinite)) return;
-      las(e.alpha, e.beta, e.gamma);
+      const prov = provFranEvent(e);
+      if (!prov) return;
+      las(prov.alpha, prov.beta, prov.gamma);
     }, {passive: true});
   }
 

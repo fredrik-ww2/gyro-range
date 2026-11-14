@@ -28,7 +28,11 @@ export function monteraLabyrint({ gyro, gyroKonfig }) {
     },
     las(id) { return box.varde(id) || 0; },
     kalibrera() { gyro.plattaUt(); },
-    tillampa(nu) { gyroKonfig.utjamningSek = nu.fram.utjamning; }
+    tillampa(nu) {
+      gyroKonfig.utjamningSek = nu.fram.utjamning;
+      gyroKonfig.utjamningFram = nu.fram.utjamning;
+      gyroKonfig.utjamningSida = nu.sida.utjamning;
+    }
   });
   return {
     box,

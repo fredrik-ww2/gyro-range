@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import {sjalvtest as gyroTest, skapaRorelse} from './gyro.js?v=7';
-import {sjalvtest as styrTest, STANDARD, normalStyr, ordnaTrosklar, skapaJamning, behandlaAxel, bandMal, skapaVagn, stegaVagn, stegaTorn, stegaEldror, ELD_MIN, ELD_MAX} from './styr.js?v=7';
+import {sjalvtest as gyroTest, skapaRorelse} from './gyro.js?v=8';
+import {sjalvtest as styrTest, STANDARD, normalStyr, ordnaTrosklar, skapaJamning, behandlaAxel, bandMal, skapaVagn, stegaVagn, stegaTorn, stegaEldror, ELD_MIN, ELD_MAX, TORN_UPP, ELD_UPP} from './styr.js?v=8';
 import {sjalvtest as banTest, banTabell, skapaGranat, stegGranat, delTid, V0} from './ballistik.js?v=7';
 import {byggVarld, stegaMal} from './varld.js?v=20';
 import {sjalvtest as mekTest, MEKANIK, VAXLAR, gasAntal, gasVarde, gasOpt, vaxelOpt, vaxelFranId, draHack, slappHack, drivKommando} from './mekanik.js?v=7';
@@ -28,6 +28,8 @@ catch { install = STANDARD; }
 const gyroLada = monteraVagn({axlar: install.axlar, nollstall: () => rorelse.nollstall()});
 const jamn = skapaJamning();
 const vagn = skapaVagn();
+let tornFart = 0;
+let eldFart = 0;
 const ljudMotor = skapaMekanikLjud();
 let vaxelIndex = vaxelFranId('N');
 let gasIndex = 0;
@@ -1385,6 +1387,13 @@ function stegaGranat(dt) {
   }
 }
 
+function slepMot(cur, mal, dt, tid) {
+  const steg = dt / Math.max(0.05, tid);
+  const d = mal - cur;
+  if (Math.abs(d) <= steg) return mal;
+  return cur + Math.sign(d) * steg;
+}
+
 function tick(dt) {
   if (!igang || !varld || !(dt > 0)) return;
   const rav = gyroLada.forma(lasVinklar(), dt);
@@ -1398,8 +1407,10 @@ function tick(dt) {
   stegaVagn(vagn, mal, dt);
   vagn.x = Math.max(-980, Math.min(980, vagn.x));
   vagn.z = Math.max(-980, Math.min(980, vagn.z));
-  vagn.torn = stegaTorn(vagn.torn, behandlad.torn.u, dt);
-  vagn.eld = stegaEldror(vagn.eld, behandlad.eldror.u, dt);
+  tornFart = slepMot(tornFart, behandlad.torn.u, dt, TORN_UPP);
+  eldFart = slepMot(eldFart, behandlad.eldror.u, dt, ELD_UPP);
+  vagn.torn = stegaTorn(vagn.torn, tornFart, dt);
+  vagn.eld = stegaEldror(vagn.eld, eldFart, dt);
   for (const t of varld.tigrar) stegaTiger(t, dt);
   const fj = stegFjader(rekylX, rekylV, dt, 230, 18);
   rekylX = fj.x;

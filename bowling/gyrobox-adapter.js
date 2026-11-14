@@ -3,7 +3,7 @@ import { monteraGyrobox } from '../shared/gyrobox.js';
 const GRAD = 180 / Math.PI;
 
 // bowling/konfig.js. Svingen är redan ett fartläge, siktet följer vinkeln.
-export function monteraBowling({ konfig, lage }) {
+export function monteraBowling({ konfig, lage, kalibrera }) {
   const sens = konfig.kanslighet ?? 1;
   const box = monteraGyrobox({
     spel: 'bowling',
@@ -36,7 +36,8 @@ export function monteraBowling({ konfig, lage }) {
       if (id === 'sikt') return 'Sikte';
       if (id === 'sving') return 'Sving';
       return 'Krok';
-    }
+    },
+    kalibrera
   });
   return {
     box,

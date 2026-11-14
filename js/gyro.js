@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {tolkaOrientering} from './riktning.js';
+import {arOmslag, nyNollRiktning, tolkaOrientering} from './riktning.js';
 import {provFranEvent, skarmGrader} from '../shared/sensor.js';
 const rad=THREE.MathUtils.degToRad;
 // Samma orienteringskonvention som DeviceOrientationControls: YXZ, kamerans -Z,
@@ -15,12 +15,14 @@ export class GyroAim {
   this.vinklar={pitch:0,roll:0,yaw:0};this.up=new THREE.Vector3(0,1,0);this.tvungenVinkel=null;
   addEventListener('deviceorientation',e=>{
    if(this.nativeSource)return;
+   if(globalThis.document?.hidden){this._doljd=true;return;}
    const prov=provFranEvent(e);
    if(!prov)return;
    this.lasOrientering(prov.alpha,prov.beta,prov.gamma);
   },{passive:true});
   addEventListener('devicemotion',e=>{
    if(this.nativeSource)return;
+   if(globalThis.document?.hidden){this._doljd=true;return;}
    // acceleration, inte accelerationIncludingGravity: inga tyngdkraftsvärden integreras.
    for(const k of ['x','y','z']) this.values.acc[k]=Number.isFinite(e.acceleration?.[k])?e.acceleration[k]:0;
    for(const k of ['alpha','beta','gamma'])this.values.rotationRate[k]=Number.isFinite(e.rotationRate?.[k])?e.rotationRate[k]:0;
@@ -36,7 +38,7 @@ export class GyroAim {
    this.lastEvent=performance.now();this.received=true;
    this.values.rotationRate={alpha:d.x*180/Math.PI,beta:d.y*180/Math.PI,gamma:d.z*180/Math.PI};this.values.interval=elapsed*1000;
    if(!this.active||elapsed<=0||elapsed>.25)return;
-   const a=rad(screen.orientation?.angle??window.orientation??0),c=Math.cos(a),s=Math.sin(a);
+   const a=rad(this.skarmVinkel()),c=Math.cos(a),s=Math.sin(a);
    this.vector.set((d.x*c-d.y*s)*elapsed,-(d.x*s+d.y*c)*elapsed,-d.z*elapsed);
    const len=this.vector.length();if(len)this.raw.multiply(this.nativeDelta.setFromAxisAngle(this.vector.normalize(),len)).normalize();
   });
@@ -64,7 +66,7 @@ export class GyroAim {
   return {orientation:ov,motion:mv};
  }
  center(){
-  this.nativeTime=null;this.fartRedo=false;this.nollAlpha=this.values.alpha;this.nollBeta=this.values.beta;this.nollGamma=this.values.gamma;this._foreBeta=null;
+  this.nativeTime=null;this.fartRedo=false;this.nollAlpha=this.values.alpha;this.nollBeta=this.values.beta;this.nollGamma=this.values.gamma;this._foreBeta=null;this._nollFart=true;this._foreProv=null;
   if(this.nativeSource){this.raw.identity();this.origin.identity();this.pendingCenter=false;}else if(this.received){this.origin.copy(this.raw).invert();this.pendingCenter=false;}else this.pendingCenter=true;
   this.drag={x:0,y:0};this.smooth.identity();this.aimHeld=false;this.vinklar.pitch=this.vinklar.yaw=this.vinklar.roll=0;
  }
@@ -97,8 +99,17 @@ export class GyroAim {
  mataFart(dt){
   if(this._inj){this.values.pitchNedDps=this._injPitch;this.values.vridHogerDps=this._injTwist;this._inj=false;return Math.max(Math.abs(this._injPitch),this._injTwist);}
   if(!this.nativeSource&&Number.isFinite(this.values.beta)){
-   if(!Number.isFinite(this._foreBeta)){this._foreBeta=this.values.beta;this._foreGamma=this.values.gamma||0;this._foreAlpha=this.values.alpha||0;this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
+   const nuProv={alpha:this.values.alpha||0,beta:this.values.beta,gamma:this.values.gamma||0};
+   if(!Number.isFinite(this._foreBeta)||this._doljd||this._nollFart){
+    this._doljd=false;this._nollFart=false;
+    this._foreBeta=nuProv.beta;this._foreGamma=nuProv.gamma;this._foreAlpha=nuProv.alpha;
+    this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;
+   }
    const fore={alpha:this._foreAlpha,beta:this._foreBeta,gamma:this._foreGamma};
+   if(arOmslag(fore,nuProv)){
+    this._foreBeta=nuProv.beta;this._foreGamma=nuProv.gamma;this._foreAlpha=nuProv.alpha;
+    this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;
+   }
    const v=tolkaOrientering(this.values.alpha,this.values.beta,this.values.gamma,fore,this.skarmVinkel());
    this._foreBeta=this.values.beta;this._foreAlpha=this.values.alpha||0;this._foreGamma=this.values.gamma||0;
    if(!(dt>0)){this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
@@ -119,6 +130,14 @@ export class GyroAim {
  }
  update(dt){
   const s=this.settings;
+  const angNu=this.skarmVinkel();
+  if(this._skarmSen==null)this._skarmSen=angNu;
+  else if(angNu!==this._skarmSen){
+   this._skarmSen=angNu;this._nollFart=true;this._nyssSkarm=true;
+   if(Number.isFinite(this.values.beta)){this.nollAlpha=this.values.alpha;this.nollBeta=this.values.beta;this.nollGamma=this.values.gamma;}
+   this.vinklar.pitch=this.vinklar.yaw=this.vinklar.roll=0;
+   if(this.received){this.origin.copy(this.raw).invert();this.pendingCenter=false;}
+  }else this._nyssSkarm=false;
   const speed=this.mataFart(dt),nowMs=performance.now();
   if(speed>(s.aterga_trosk_dps??5))this.movedAt=nowMs;
   // Återgång gäller fingerdraget. Telefonens absoluta lutning är siktet och
@@ -139,6 +158,12 @@ export class GyroAim {
   if(!this.nativeSource&&Number.isFinite(this.nollBeta)&&Number.isFinite(this.values.beta)){
    this.kalla='vinkel';
     const ang=this.skarmVinkel();
+    const nuProv={alpha:this.values.alpha,beta:this.values.beta,gamma:this.values.gamma};
+    if(!this._nyssSkarm&&this._foreProv&&arOmslag(this._foreProv,nuProv)){
+     const n=nyNollRiktning(nuProv,this.vinklar,ang);
+     this.nollAlpha=n.alpha;this.nollBeta=n.beta;this.nollGamma=n.gamma;
+    }
+    this._foreProv=nuProv;
     const v=tolkaOrientering(this.values.alpha,this.values.beta,this.values.gamma,{alpha:this.nollAlpha,beta:this.nollBeta,gamma:this.nollGamma},ang);
     this.vinklar.pitch=v.pitch;this.vinklar.roll=v.roll;this.vinklar.yaw=v.yaw;
    }else{this.vinklar.pitch=this.euler.x;this.vinklar.yaw=this.euler.y;this.vinklar.roll=this.euler.z;}

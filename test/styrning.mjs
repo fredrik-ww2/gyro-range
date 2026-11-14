@@ -19,7 +19,8 @@ k('standardaxel är exakt', behandlaAxel(axel({}), 0.37, 80, 0.02, minne()) === 
 k('känslighet 2', nära(behandlaAxel(axel({ kanslighet: 2 }), 0.2, 0, 0.016, minne()), 0.4, 1e-9));
 k('känslighet 0,5', nära(behandlaAxel(axel({ kanslighet: 0.5 }), 0.2, 0, 0.016, minne()), 0.1, 1e-9));
 k('dödzon nollar liten vinkel', behandlaAxel(axel({ dodzon: 5 }), 2 * D, 0, 0.016, minne()) === 0);
-k('dödzon lämnar stor vinkel', nära(behandlaAxel(axel({ dodzon: 5 }), 12 * D, 0, 0.016, minne()), 12 * D, 1e-6));
+k('dödzon utan hopp', nära(behandlaAxel(axel({ dodzon: 5 }), 5.2 * D, 0, 0.016, minne()), 0.2 * D, 1e-6));
+k('dödzon lämnar resten', nära(behandlaAxel(axel({ dodzon: 5 }), 12 * D, 0, 0.016, minne()), 7 * D, 1e-6));
 {
   const lugn = behandlaAxel(axel({ fart: 3 }), 0.4, 15, 0.016, minne());
   const snabb = behandlaAxel(axel({ fart: 3 }), 0.4, 180, 0.016, minne());

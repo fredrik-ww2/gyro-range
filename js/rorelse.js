@@ -2,9 +2,11 @@ const rad=Math.PI/180;
 
 export function gangFartFranLutning(pitchNedRad,gang){
  const grad=pitchNedRad/rad;
- if(grad<gang.dodZon_grad)return 0;
- const u=Math.min(1,(grad-gang.dodZon_grad)/Math.max(.01,gang.max_grad-gang.dodZon_grad));
- return gang.fart_langsam_ms+u*(gang.fart_max_ms-gang.fart_langsam_ms);
+ const dod=gang.dodZon_grad||0;
+ if(!(grad>dod))return 0;
+ const u=Math.min(1,(grad-dod)/Math.max(.01,gang.max_grad-dod));
+ // 0 precis utanför dödzonen, full fart vid max lutning. Ingen tröskel som startar gången med ett ryck.
+ return u*(gang.fart_langsam_ms+u*(gang.fart_max_ms-gang.fart_langsam_ms));
 }
 
 // Sidlutning svänger kroppen. Liten lutning är stilla. Större lutning ger en tydligt stark sväng.

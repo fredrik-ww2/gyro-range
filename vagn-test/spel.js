@@ -9,6 +9,7 @@ import {sjalvtest as effektTest, stegFjader, vridMot, nastaSalva, tigerUtslagen,
 import {sjalvtest as hojdTest, skrovLutning} from './hojd.js?v=7';
 import {sjalvtest as pansarTest, REGLER, VAGN_LISTA, standardRegler, siktenFor, sikteFor, klassFranLokal, bedomTraff} from './pansar.js?v=7';
 import {monteraVagn} from './gyrobox-adapter.js';
+import {lyssnaSkarm} from '../shared/sensor.js';
 import config from './config.json' with { type: 'json' };
 
 const NYCKEL = 'vagn_test_v1';
@@ -118,7 +119,7 @@ function passa() {
 passa();
 addEventListener('resize', passa);
 visualViewport?.addEventListener('resize', passa);
-addEventListener('orientationchange', () => { rorelse.nollstall(); jamn.styra = jamn.torn = jamn.eldror = 0; setTimeout(passa, 200); });
+lyssnaSkarm(() => { rorelse.nollstall(); jamn.styra = jamn.torn = jamn.eldror = 0; setTimeout(passa, 200); });
 
 const kartCanvas = $('karta');
 const kartCtx = kartCanvas.getContext('2d');

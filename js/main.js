@@ -1095,7 +1095,8 @@ async function boot(){
  function styrSteg(dt,aimBas){
   const P=styr.varden,dod=(P.sikte.ytterst?0:P.sikte.dodZon_grad)*Math.PI/180,kans=P.sikte.ytterst?P.sikte.kanslighet*4:P.sikte.kanslighet;
   let pitch=gyro.vinklar.pitch,roll=gyro.vinklar.roll,yaw=gyro.vinklar.yaw;
-  if(Math.abs(pitch)<dod)pitch=0;if(Math.abs(roll)<dod)roll=0;
+  const klippDod=x=>{const a=Math.abs(x);if(!(dod>0)||a<=dod)return dod>0&&a<=dod?0:x;return Math.sign(x)*(a-dod);};
+  pitch=klippDod(pitch);roll=klippDod(roll);
   puls=Math.max(0,puls-dt/Math.max(.2,P.spurt.puls_avklingning_s));
   const takt=gyro.values.pitchNedDps||0;
   if(Math.abs(takt)<P.gang.knyck_dps*.7)lugnPitch=pitch;

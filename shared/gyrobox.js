@@ -83,7 +83,9 @@ export function koppla(spelUt, rawDeg, instIn, stdIn, state, dt, opt = {}) {
   const inst = normaliseraAxel(instIn, std);
   const stateOk = state || nyttTillstand();
   const spel = Number.isFinite(spelUt) ? spelUt : 0;
-  const raw = (Number.isFinite(rawDeg) ? rawDeg : 0) - (stateOk.noll || 0);
+  const rawAbs = Number.isFinite(rawDeg) ? rawDeg : 0;
+  const noll = stateOk.noll || 0;
+  const raw = rawAbs - noll;
   const jamna = opt.jamna !== false;
   let x;
 
@@ -110,9 +112,10 @@ export function koppla(spelUt, rawDeg, instIn, stdIn, state, dt, opt = {}) {
   } else {
     stateOk.iVrid = false;
     stateOk.integral = 0;
-    const bas = formaRen(raw, std);
+    // bas är vinkeln spelet redan räknat på. nu är samma vinkel efter nollställning.
+    const bas = formaRen(rawAbs, std);
     const nu = formaRen(raw, inst);
-    if (Math.abs(bas) < 1e-4 && Math.abs(nu) < 1e-4) x = spel;
+    if (Math.abs(bas) < 1e-4 && Math.abs(nu) < 1e-4) x = noll ? 0 : spel;
     else if (Math.abs(bas) < 1e-4) x = nu * (stateOk.gain || std.gain || 0);
     else {
       const g = spel / bas;
@@ -299,7 +302,7 @@ export function monteraGyrobox(spec) {
     const span = {
       kanslighet: [0.2, 3, 0.05],
       kurva: [0.35, 3, 0.05],
-      dodzon: [0, Math.max(20, (std.dodzon || 0) + 5), 0.5],
+      dodzon: [0, 40, 0.5],
       utjamning: [0, Math.max(0.8, (std.utjamning || 0) + 0.2), 0.01]
     }[nyckel];
     const lab = el('label', 'gyrobox-reg');

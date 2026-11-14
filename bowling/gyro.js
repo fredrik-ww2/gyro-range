@@ -130,10 +130,11 @@ export function skapaGyro(konfig, mal = globalThis) {
       wVarld.copy(wDev).applyQuaternion(relativ);
       omega = wVarld.x;
     } else if (foreTheta != null && tid > foreTid) {
+      const dtSek = (tid - foreTid) / 1000;
       let d = theta - foreTheta;
       if (d > 180) d -= 360;
       if (d < -180) d += 360;
-      omega = d / ((tid - foreTid) / 1000);
+      omega = dtSek > 0 && dtSek < 0.3 ? d / dtSek : 0;
     }
     foreTheta = theta;
     foreTid = tid;
@@ -190,6 +191,7 @@ export function skapaGyro(konfig, mal = globalThis) {
     if (typeof mal?.addEventListener === 'function') mal.addEventListener(typ, fn, { passive: true });
   };
   pa('deviceorientation', e => {
+    if (mal.document?.hidden) { foreTheta = null; return; }
     const prov = provFranEvent(e);
     if (!prov) return;
     kalla = 'sensor';
@@ -197,6 +199,7 @@ export function skapaGyro(konfig, mal = globalThis) {
     las(prov.alpha, prov.beta, prov.gamma);
   });
   pa('devicemotion', e => {
+    if (mal.document?.hidden) return;
     kalla = 'sensor';
     senasteSensor = performance.now();
     const rr = e.rotationRate || {};

@@ -33,6 +33,16 @@ krav('invertera byter tecken', nara(formaRen(6, { ...std, invertera: true }), -6
   const s = nyttTillstand();
   const dod = { ...std, dodzon: 15 };
   krav('större dödzon nollar', koppla(0.5, 10, dod, std, s, 0.016) === 0);
+  const kant = nyttTillstand();
+  const precis = koppla(0.2, 15.2, dod, std, kant, 0.016);
+  krav('dödzonens kant hoppar inte', Math.abs(precis) < 0.02);
+}
+
+{
+  const s = nyttTillstand();
+  s.noll = 12;
+  krav('kalibrering nollar hållen vinkel', nara(koppla(0.4, 12, std, std, s, 0.016), 0));
+  krav('kalibrering följer skillnaden', nara(koppla(0.8, 24, std, std, s, 0.016), 0.4));
 }
 
 {

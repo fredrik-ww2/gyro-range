@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#172724">
 <link rel="icon" href="data:,">
 <title>Flygplan · Gyrotest</title>
-<link rel="stylesheet" href="./style.css?v=13">
+<link rel="stylesheet" href="./style.css?v=15">
 <script type="importmap">{"imports":{"three":"../js/vendor/three.module.js"}}</script>
 </head>
 <body>
@@ -100,10 +100,15 @@
 </div>
 <div id="system" hidden>
 <button id="hjul" type="button" class="metall" aria-label="Hjulen är uppe"><span class="lampa" id="hjulLampa"></span><span>Hjul</span></button>
-<button id="klaff" type="button" class="metall"><span id="klaffText">Inne</span><span>Klaff</span></button>
+<button id="klaff" type="button" class="metall" aria-label="Klaff inne"><span id="klaffText">Inne</span><span>Klaff</span></button>
 <button id="fall" type="button" class="metall" aria-label="Fäll bomb"><span id="bombAntal">2</span><span>Fäll</span></button>
 <button id="bombsikte" type="button" class="metall" aria-pressed="false"><span class="knappkropp liten"></span><span>Bombsikte</span></button>
 </div>
+<div id="flyglapp" hidden>
+<div id="klaffLapp" aria-live="polite"><span data-steg="0">Inne</span><span data-steg="1">Start</span><span data-steg="2">Landning</span></div>
+<div id="kulaRuta" aria-label="Kulindikator"><span id="kulaNamn">Kula</span><div id="kulaRor"><i id="kulaBoll"></i></div></div>
+</div>
+<div id="landBetyg" hidden></div>
 <div id="fiendePil" hidden><div id="fiendePilSymbol">▲</div><div id="fiendePilText"></div></div>
 <div id="skada" aria-hidden="true"></div>
 <div id="hit" aria-hidden="true">×</div>
@@ -113,7 +118,7 @@
 <div id="planMeny" class="planmeny"></div>
 <p class="small" id="planHjalp"></p>
 <p class="small" id="planSparad"></p>
-<p>Hjul, klaff och cockpit fungerar som förut. Vrid telefonen för sidroder. En Fw 190 finns i luften.</p>
+<p>Klaffen har lägena inne, start och landning. Vid landning ska kulan ligga i mitten. Vrid telefonen för sidroder, eller tryck Vänster och Höger.</p>
 <button id="kall" disabled>Starta från marken</button>
 <button id="start" disabled>Starta i luften</button>
 <button id="manual" disabled>Starta i luften med finger</button>
@@ -146,6 +151,6 @@
 </button>
 </div>
 </footer>
-<script type="module" src="./main.js?v=15"></script>
+<script type="module" src="./main.js?v=17"></script>
 <script src="../lankar/horn.js"></script></body>
 </html>

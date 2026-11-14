@@ -73,7 +73,8 @@ export function skapaPanel(canvas){
   kurs(sex[1],bot,r,rad);
   ratt(sex[2],bot,r,'SVÄNG',0);
   ctx.strokeStyle='#9aa194';ctx.lineWidth=5;ctx.beginPath();ctx.arc(sex[2],bot+20,24,Math.PI*1.15,Math.PI*1.85);ctx.stroke();
-  const boll=Math.max(-18,Math.min(18,-s.roll*12));
+  const kula=Number.isFinite(s.kula)?s.kula:null;
+  const boll=kula==null?Math.max(-18,Math.min(18,-s.roll*12)):Math.max(-18,Math.min(18,kula*18));
   ctx.beginPath();ctx.arc(sex[2]+boll,bot+20,6,0,Math.PI*2);ctx.fillStyle='#f4f0e4';ctx.fill();
   visare(ctx,sex[2],bot,Math.max(-50,Math.min(50,s.gir*18)),42,2.6);nav(ctx,sex[2],bot);
   ratt(62,top,sr,'BOOST',8,13);visare(ctx,62,top,Math.max(-80,Math.min(80,s.boost/8*70)),34,2.2);
@@ -230,7 +231,17 @@ function ritaHorisont(ctx,x,y,r,a,s,C,font){
  ctx.strokeStyle=F.symbol||F.visareKort;ctx.lineWidth=Math.max(1.6,r*0.045);ctx.lineCap='round';ctx.lineJoin='round';
  ctx.beginPath();ctx.moveTo(x-a*0.55,y);ctx.lineTo(x-a*0.18,y);ctx.lineTo(x,y+a*0.12);ctx.lineTo(x+a*0.18,y);ctx.lineTo(x+a*0.55,y);ctx.stroke();
  ctx.fillStyle=F.symbol||F.visareKort;ctx.beginPath();ctx.arc(x,y,Math.max(1.2,r*0.035),0,Math.PI*2);ctx.fill();
- jaktText(ctx,'HOR',x,y+a*0.62,Math.max(7,r*0.16),F,font,'700');
+ if(Number.isFinite(s.kula)){
+  const tw=a*0.92, th=Math.max(5,a*0.16), ty=y+a*0.48;
+  ctx.fillStyle='rgba(8,8,8,.88)';
+  ctx.fillRect(x-tw/2,ty,tw,th);
+  ctx.strokeStyle=F.symbol||F.visareKort;ctx.lineWidth=Math.max(1,r*0.02);
+  ctx.strokeRect(x-tw/2,ty,tw,th);
+  ctx.beginPath();ctx.moveTo(x,ty);ctx.lineTo(x,ty+th);ctx.stroke();
+  const bx=x+Math.max(-1,Math.min(1,s.kula))*(tw/2-th*0.42);
+  ctx.beginPath();ctx.arc(bx,ty+th/2,th*0.36,0,Math.PI*2);
+  ctx.fillStyle=Math.abs(s.kula)>0.35?'#e7c56a':'#f4f1e6';ctx.fill();
+ } else jaktText(ctx,'HOR',x,y+a*0.62,Math.max(7,r*0.16),F,font,'700');
 }
 function ritaHojd(ctx,x,y,r,a,s,C,font){
  const F=C.farger, meter=Math.max(0,s.hojd||0);
@@ -294,6 +305,8 @@ export function skapaJaktPanel(canvas,cfg){
   canvas.dataset.fart=ut.kmh.toFixed(0);
   canvas.dataset.hojd=ut.meter.toFixed(0);
   canvas.dataset.g=(Number.isFinite(s.nz)?s.nz:1).toFixed(2);
+  if(Number.isFinite(s.kula)) canvas.dataset.kula=s.kula.toFixed(3);
+  else delete canvas.dataset.kula;
   canvas.dataset.enhet='km/h,m';
   canvas.dataset.gSynlig=ut.g?'1':'0';
   return ut;

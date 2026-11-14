@@ -200,7 +200,108 @@ export function skapaMekanik() {
     return buf;
   }
 
+  function klaffRost(audio) {
+    if (!audio || audio.state === 'closed') return 0;
+    while (roster.length >= MAX) rensa(roster[0]);
+    const b = sakerBus(audio);
+    const nu = Math.max(0, Number(audio.currentTime) || 0);
+    const langd = 0.28;
+    const noder = [];
+    const post = { noder, borta: false, timer: 0 };
+    const hall = audio.createGain();
+    hall.gain.setValueAtTime(0.34, nu);
+    hall.gain.exponentialRampToValueAtTime(0.0008, nu + langd);
+    hall.connect(b.inGain);
+    noder.push(hall);
+    const osc = audio.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(92, nu);
+    osc.frequency.linearRampToValueAtTime(148, nu + 0.2);
+    const og = audio.createGain();
+    og.gain.setValueAtTime(0.22, nu);
+    og.gain.exponentialRampToValueAtTime(0.0008, nu + 0.24);
+    const lp = audio.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(420, nu);
+    osc.connect(lp);
+    lp.connect(og);
+    og.connect(hall);
+    osc.start(nu);
+    osc.stop(nu + 0.26);
+    noder.push(osc, lp, og);
+    const klick = audio.createBufferSource();
+    klick.buffer = brusBuffer(audio);
+    const hp = audio.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.setValueAtTime(1800, nu);
+    const kg = audio.createGain();
+    const kNar = nu + 0.16;
+    kg.gain.setValueAtTime(0.0008, nu);
+    kg.gain.setValueAtTime(0.7, kNar);
+    kg.gain.exponentialRampToValueAtTime(0.0008, kNar + 0.03);
+    klick.connect(hp);
+    hp.connect(kg);
+    kg.connect(hall);
+    klick.start(kNar);
+    klick.stop(kNar + 0.04);
+    noder.push(klick, hp, kg);
+    const slut = () => rensa(post);
+    osc.onended = slut;
+    post.timer = setTimeout(slut, Math.round((langd + 0.08) * 1000));
+    roster.push(post);
+    return roster.length;
+  }
+
+  function dunsRost(audio, mjuk) {
+    if (!audio || audio.state === 'closed') return 0;
+    while (roster.length >= MAX) rensa(roster[0]);
+    const b = sakerBus(audio);
+    const nu = Math.max(0, Number(audio.currentTime) || 0);
+    const langd = mjuk ? 0.16 : 0.24;
+    const noder = [];
+    const post = { noder, borta: false, timer: 0 };
+    const hall = audio.createGain();
+    hall.gain.setValueAtTime(mjuk ? 0.32 : 0.62, nu);
+    hall.gain.exponentialRampToValueAtTime(0.0008, nu + langd);
+    hall.connect(b.inGain);
+    noder.push(hall);
+    const osc = audio.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(mjuk ? 110 : 74, nu);
+    osc.frequency.exponentialRampToValueAtTime(mjuk ? 55 : 36, nu + (mjuk ? 0.1 : 0.16));
+    const og = audio.createGain();
+    og.gain.setValueAtTime(mjuk ? 0.45 : 0.8, nu);
+    og.gain.exponentialRampToValueAtTime(0.0008, nu + (mjuk ? 0.12 : 0.2));
+    osc.connect(og);
+    og.connect(hall);
+    osc.start(nu);
+    osc.stop(nu + langd);
+    noder.push(osc, og);
+    const brus = audio.createBufferSource();
+    brus.buffer = brusBuffer(audio);
+    const bp = audio.createBiquadFilter();
+    bp.type = 'lowpass';
+    bp.frequency.setValueAtTime(mjuk ? 500 : 280, nu);
+    const bg = audio.createGain();
+    bg.gain.setValueAtTime(mjuk ? 0.35 : 0.7, nu);
+    bg.gain.exponentialRampToValueAtTime(0.0008, nu + (mjuk ? 0.08 : 0.14));
+    brus.connect(bp);
+    bp.connect(bg);
+    bg.connect(hall);
+    brus.start(nu);
+    brus.stop(nu + 0.09);
+    noder.push(brus, bp, bg);
+    const slut = () => rensa(post);
+    osc.onended = slut;
+    post.timer = setTimeout(slut, Math.round((langd + 0.08) * 1000));
+    roster.push(post);
+    return roster.length;
+  }
+
   function rost(audio, typ, nar) {
+    if (typ === 'klaff') return klaffRost(audio);
+    if (typ === 'studs') return dunsRost(audio, false);
+    if (typ === 'sattning') return dunsRost(audio, true);
     if (!audio || audio.state === 'closed') return 0;
     while (roster.length >= MAX) rensa(roster[0]);
     const b = sakerBus(audio);

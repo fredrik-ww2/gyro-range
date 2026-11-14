@@ -16,7 +16,11 @@
   "haptik": true,
   "ljud": true,
   "skada": false,
-  "krasch": true
+  "krasch": true,
+  "landning": true,
+  "klaffeffekt": true,
+  "koordinerad": true,
+  "studs": true
  },
  "styrning": {
   "kanslighet": 1,
@@ -751,7 +755,43 @@
   "hard_vs_ms": -7,
   "max_bank_rad": 0.3,
   "broms_n": 7000,
-  "_om": "Landning: hjul ute, under max_fart, sjunk mildare än hard_vs. Mellan mjuk och hard: studs och varning. Bromsen verkar när gasen är stängd på marken."
+  "_om": "Landning: hjul ute, under max_fart, sjunk mildare än hard_vs. Mellan mjuk och hard: studs och varning. Bromsen verkar när gasen är stängd på marken. De här talen används när Landningsutmaning eller Studs och haveri är av."
+ },
+ "landningsutmaning": {
+  "_om": "Gäller när brytare.landning är på. Klaffeffekt, koordinerad sväng och studs kan stängas var för sig. Sjunk är negativt uppåt: -2 är ett mjukt sjunk. Mjuk kräver att sjunk, fart, bank och sidglidning alla är inom mjuk-gränsen. Över haveri-gränsen i något av dem blir det haveri, om inte Mjukt markskydd är på eller Krasch vid markkontakt är av. Däremellan studsar planet.",
+  "kula_full_rad": 0.15,
+  "sitt_m": 1.35,
+  "studs_las_s": 0.35,
+  "studs_ater_andel": 0.42,
+  "studs_lyft_m": 1.15,
+  "studs_fart_andel": 0.93,
+  "studs_nos_rad": 0.06,
+  "studs_max": 3,
+  "mjuk_vs_ms": -2.4,
+  "haveri_vs_ms": -7,
+  "mjuk_fart_ms": 50,
+  "haveri_fart_ms": 62,
+  "mjuk_bank_rad": 0.12,
+  "haveri_bank_rad": 0.3,
+  "mjuk_beta_rad": 0.06,
+  "haveri_beta_rad": 0.2,
+  "klaff": {
+   "cl_max_extra": 0.5,
+   "cd_extra": 0.045,
+   "cm_nos": -0.1
+  },
+  "sidglid": {
+   "cn_skev_extra": 0.045,
+   "lagfart_ms": 55,
+   "lag_tak": 2.2,
+   "cd_beta": 1.1,
+   "lyft_beta": 1.4,
+   "sjunk_ms2": 7,
+   "sjunk_hojd_m": 90,
+   "sjunk_fart_ms": 72,
+   "sjunk_beta_rad": 0.07,
+   "sjunk_spann_rad": 0.18
+  }
  },
  "bombuppdrag": {
   "bomber": 4,

@@ -1,14 +1,15 @@
 import * as THREE from 'three';
-import {sjalvtest as gyroTest, skapaRorelse} from './gyro.js?v=5';
-import {sjalvtest as styrTest, STANDARD, normalStyr, ordnaTrosklar, skapaJamning, behandlaAxel, bandMal, skapaVagn, stegaVagn, stegaTorn, stegaEldror, ELD_MIN, ELD_MAX} from './styr.js?v=5';
-import {sjalvtest as banTest, banTabell, skapaGranat, stegGranat, delTid, V0} from './ballistik.js?v=5';
-import {byggVarld, stegaMal} from './varld.js?v=5';
-import {sjalvtest as mekTest, MEKANIK, VAXLAR, gasAntal, gasVarde, gasOpt, vaxelOpt, vaxelFranId, draHack, slappHack, drivKommando} from './mekanik.js?v=5';
-import {sjalvtest as ljudTest, skapaMekanikLjud, kansla} from './ljud.js?v=5';
-import {sjalvtest as effektTest, stegFjader, vridMot, nastaSalva, tigerUtslagen, nedslagMotSpelare} from './effekt.js?v=5';
-import {sjalvtest as hojdTest, skrovLutning} from './hojd.js?v=5';
-import {sjalvtest as pansarTest, REGLER, VAGN_LISTA, standardRegler, siktenFor, sikteFor, klassFranLokal, bedomTraff} from './pansar.js?v=5';
+import {sjalvtest as gyroTest, skapaRorelse} from './gyro.js?v=7';
+import {sjalvtest as styrTest, STANDARD, normalStyr, ordnaTrosklar, skapaJamning, behandlaAxel, bandMal, skapaVagn, stegaVagn, stegaTorn, stegaEldror, ELD_MIN, ELD_MAX} from './styr.js?v=7';
+import {sjalvtest as banTest, banTabell, skapaGranat, stegGranat, delTid, V0} from './ballistik.js?v=7';
+import {byggVarld, stegaMal} from './varld.js?v=20';
+import {sjalvtest as mekTest, MEKANIK, VAXLAR, gasAntal, gasVarde, gasOpt, vaxelOpt, vaxelFranId, draHack, slappHack, drivKommando} from './mekanik.js?v=7';
+import {sjalvtest as ljudTest, skapaMekanikLjud, kansla} from './ljud.js?v=7';
+import {sjalvtest as effektTest, stegFjader, vridMot, nastaSalva, tigerUtslagen, nedslagMotSpelare} from './effekt.js?v=7';
+import {sjalvtest as hojdTest, skrovLutning} from './hojd.js?v=7';
+import {sjalvtest as pansarTest, REGLER, VAGN_LISTA, standardRegler, siktenFor, sikteFor, klassFranLokal, bedomTraff} from './pansar.js?v=7';
 import {monteraVagn} from './gyrobox-adapter.js';
+import config from './config.json' with { type: 'json' };
 
 const NYCKEL = 'vagn_test_v1';
 const REGEL_NYCKEL = 'vagn_test_regler_v5';
@@ -70,9 +71,10 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(sikteFor(vagnId, sikteId).synfalt, 1, 0.3, 7000);
+const camera = new THREE.PerspectiveCamera(sikteFor(vagnId, sikteId).synfalt, 1, config.kamera?.nearSikte || 0.06, config.kamera?.far || 7000);
 camera.position.set(0, 2.1, 5);
 
 const tabell = banTabell();
@@ -413,7 +415,6 @@ function stegaTiger(t, dt) {
     t.mesh.position.x += Math.sin(t.rekylYaw || 0) * t.rekylFore;
     t.mesh.position.z += Math.cos(t.rekylYaw || 0) * t.rekylFore;
   }
-  t.mesh.rotation.x = 0;
   if (!t.utslagen) {
     if (t.fart > 0) stegaMal(t, dt);
     const mal = Math.atan2(vagn.x - t.mesh.position.x, vagn.z - t.mesh.position.z);
@@ -430,8 +431,13 @@ function stegaTiger(t, dt) {
   const yaw = t.mesh.rotation.y;
   t.mesh.position.x -= Math.sin(yaw) * t.rekyl;
   t.mesh.position.z -= Math.cos(yaw) * t.rekyl;
-  t.mesh.rotation.x = -Math.max(0, t.rekyl) * 0.05;
-  if (t.yVid) t.mesh.position.y = t.yVid(t.mesh.position.x, t.mesh.position.z);
+  const markK = config.mark || {};
+  const lut = varld?.hf ? skrovLutning(t.mesh.position.x, t.mesh.position.z, yaw + Math.PI, varld.hf, markK.wb, markK.spar) : null;
+  if (lut) t.mesh.position.y = lut.y;
+  else if (t.yVid) t.mesh.position.y = t.yVid(t.mesh.position.x, t.mesh.position.z);
+  t.mesh.rotation.order = 'YXZ';
+  t.mesh.rotation.z = lut ? lut.roll : 0;
+  t.mesh.rotation.x = (lut ? -lut.pitch : 0) - Math.max(0, t.rekyl) * 0.05;
   t.rekylFore = t.rekyl;
   t.rekylYaw = yaw;
   if (t.mesh.userData.blixt > 0) {
@@ -990,7 +996,7 @@ function sparaRegler() {
 }
 
 function sattFov(tvinga) {
-  const mal = kamera === 'bak' ? 58 : sikteFor(vagnId, sikteId).synfalt;
+  const mal = kamera === 'bak' ? (config.kamera?.bak?.fov || 46) : sikteFor(vagnId, sikteId).synfalt;
   if (!tvinga && Math.abs(camera.fov - mal) < 0.02) return;
   camera.fov = mal;
   camera.updateProjectionMatrix();
@@ -1032,7 +1038,8 @@ function fyllSikte() {
 function sattVagn(id) {
   if (!REGLER.vagnar[id] || !varld) return;
   vagnId = id;
-  $('vagnKnapp').textContent = REGLER.vagnar[id].kort;
+  const visning = {sherman_m4_75: 'Panzer IV H', sherman_m4a3_76w: 'Panzer IV H'};
+  $('vagnKnapp').textContent = visning[id] || REGLER.vagnar[id].kort;
   fyllSikte();
   const a = aktiv();
   for (const r of new Set(Object.values(varld.riggar))) r.rigg.visible = r === a;
@@ -1040,35 +1047,69 @@ function sattVagn(id) {
   lasFast();
 }
 
+function hallKamera(x, y, z, lx, ly, lz, marg) {
+  const hojd = varld?.hojd;
+  if (!hojd) return {x, y, z};
+  let cx = x;
+  let cy = y;
+  let cz = z;
+  for (let i = 0; i < 5; i++) {
+    const mark = hojd(cx, cz);
+    if (cy >= mark + marg) break;
+    cx += (lx - cx) * 0.22;
+    cz += (lz - cz) * 0.22;
+    cy = mark + marg;
+  }
+  return {x: cx, y: Math.max(cy, hojd(cx, cz) + marg), z: cz};
+}
+
 function lasFast() {
   if (!varld) return;
   const a = aktiv();
   if (!a) return;
-  const lut = skrovLutning(vagn.x, vagn.z, vagn.yaw, varld.hf);
+  const markK = config.mark || {};
+  const lut = skrovLutning(vagn.x, vagn.z, vagn.yaw, varld.hf, markK.wb, markK.spar);
   const back = Math.max(0, rekylX);
   const jitter = skak * 0.045;
+  const rek = config.rekyl || {};
   a.rigg.position.set(
-    vagn.x + Math.sin(vagn.yaw) * back * 0.12,
+    vagn.x + Math.sin(vagn.yaw) * back * (rek.skrov ?? 0.1),
     lut.y,
-    vagn.z + Math.cos(vagn.yaw) * back * 0.12
+    vagn.z + Math.cos(vagn.yaw) * back * (rek.skrov ?? 0.1)
   );
   a.rigg.rotation.order = 'YXZ';
-  a.rigg.rotation.set(-lut.pitch, vagn.yaw, -lut.roll);
+  a.rigg.rotation.set(lut.pitch, vagn.yaw, -lut.roll);
   a.torn.rotation.y = -vagn.torn;
-  a.eldror.rotation.x = vagn.eld;
-  if (a.pipa) a.pipa.position.z = back * 0.9;
+  a.eldror.rotation.x = vagn.eld + back * (rek.nick ?? 0.22);
+  if (a.pipa) a.pipa.position.z = back * (rek.pipa ?? 2.6);
+  const near = kamera === 'bak' ? (config.kamera?.nearBak || 0.22) : (config.kamera?.nearSikte || 0.06);
+  if (Math.abs(camera.near - near) > 1e-4) {
+    camera.near = near;
+    camera.updateProjectionMatrix();
+  }
   if (kamera === 'bak') {
     if (camera.parent !== scene) scene.add(camera);
-    const dist = 12;
-    const hoj = 4.4;
-    const sida = 3.2;
+    const k = config.kamera?.bak || {};
+    const dist = k.dist ?? 7.4;
+    const hoj = k.hojd ?? 2.7;
+    const sida = k.sida ?? 0.28;
     const fx = -Math.sin(vagn.yaw);
     const fz = -Math.cos(vagn.yaw);
     const rx = Math.cos(vagn.yaw);
     const rz = -Math.sin(vagn.yaw);
+    const lx = vagn.x + fx * (k.lookFram ?? 0.2);
+    const ly = lut.y + (k.lookHojd ?? 1.15);
+    const lz = vagn.z + fz * (k.lookFram ?? 0.2);
+    const lyft = hallKamera(
+      vagn.x - fx * dist + rx * sida,
+      lut.y + hoj,
+      vagn.z - fz * dist + rz * sida,
+      lx, ly, lz,
+      k.markMarg ?? 0.9
+    );
     camera.up.set(0, 1, 0);
-    camera.position.set(vagn.x - fx * dist + rx * sida, lut.y + hoj, vagn.z - fz * dist + rz * sida);
-    titt.set(vagn.x + fx * 6, lut.y + 1.85, vagn.z + fz * 6);
+    camera.position.set(lyft.x, lyft.y, lyft.z);
+    titt.set(lx, ly, lz);
     camera.lookAt(titt);
   } else {
     if (camera.parent !== a.eldror) a.eldror.add(camera);
@@ -1078,8 +1119,9 @@ function lasFast() {
       bas.y + back * 0.14 + Math.cos(skakTid * 43) * jitter * 0.7,
       bas.z + back * 0.5
     );
+    const sikteNick = config.kamera?.sikteNick ?? 0.1;
     camera.rotation.set(
-      -back * 0.12 + Math.sin(skakTid * 51) * jitter * 0.7,
+      -sikteNick - back * 0.12 + Math.sin(skakTid * 51) * jitter * 0.7,
       Math.cos(skakTid * 37) * jitter * 0.45,
       back * 0.015 + Math.sin(skakTid * 33) * jitter * 0.3
     );
@@ -1425,9 +1467,10 @@ function visaSpel() {
 }
 
 $('starta').addEventListener('click', async () => {
+  const sensorLovande = rorelse.start();
   $('starta').disabled = true;
   const ljudLovande = ljudMotor.oppna();
-  try { await rorelse.start(); }
+  try { await sensorLovande; }
   catch { $('hint').hidden = false; }
   try { await Promise.race([ljudLovande, new Promise(r => setTimeout(r, 1500))]); }
   catch { /* ljudet får komma ikapp */ }

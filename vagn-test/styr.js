@@ -1,5 +1,8 @@
 // Enkel bandstyrning i meter. Positiv roll svänger höger oavsett om gasen är fram eller back.
 // Positivt u på torn vrider tornet åt höger. Positivt u på eldröret höjer.
+// Grundvärdena ligger i config.json och kan dras i menyn.
+
+import config from './config.json' with { type: 'json' };
 
 export const VMAX = 40 / 3.6;
 export const BACKGAS = 0.22;
@@ -15,16 +18,18 @@ export const ELD_MAX = 25 * Math.PI / 180;
 
 const AXLAR = ['styra', 'torn', 'eldror'];
 
+const FRAN_FIL = config.styr || {};
 export const STANDARD = {
-  visaMat: false,
-  ljud: true,
+  visaMat: !!FRAN_FIL.visaMat,
+  ljud: FRAN_FIL.ljud !== false,
   axlar: {
-    styra: {dodzon: 2.5, kanslighet: 1, full: 36, utjamning: 0.22, invertera: false},
-    torn: {dodzon: 3, kanslighet: 1, full: 30, utjamning: 0.16, invertera: false},
-    eldror: {dodzon: 3, kanslighet: 1, full: 26, utjamning: 0.16, invertera: false}
+    styra: {...FRAN_FIL.axlar.styra},
+    torn: {...FRAN_FIL.axlar.torn},
+    eldror: {...FRAN_FIL.axlar.eldror}
   },
-  trosklar: {broms: 6, ettBand: 15, backBand: 26}
+  trosklar: {...FRAN_FIL.trosklar}
 };
+const HYST = Math.min(0.6, Math.max(0, config.gyro?.hysteres ?? 0.45));
 
 function klamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
 
@@ -68,7 +73,7 @@ export function jamna(visad, mal, dt, utjamning) {
 }
 
 export function skapaJamning() {
-  return {styra: 0, torn: 0, eldror: 0};
+  return {styra: 0, torn: 0, eldror: 0, zon: {styra: false, torn: false, eldror: false}};
 }
 
 export function behandlaAxel(rad, ax, dt, jamn, nyckel) {
@@ -76,8 +81,15 @@ export function behandlaAxel(rad, ax, dt, jamn, nyckel) {
   if (ax.invertera) a = -a;
   const dz = ax.dodzon * Math.PI / 180;
   const m = Math.abs(a);
-  if (m <= dz) a = 0;
-  else a = Math.sign(a) * (m - dz);
+  if (!jamn.zon) jamn.zon = {};
+  const grans = jamn.zon[nyckel] ? dz * (1 - HYST) : dz;
+  if (m <= grans) {
+    a = 0;
+    jamn.zon[nyckel] = false;
+  } else {
+    a = Math.sign(a) * (m - dz);
+    jamn.zon[nyckel] = true;
+  }
   a *= ax.kanslighet;
   const nasta = jamna(jamn[nyckel], a, dt, ax.utjamning);
   jamn[nyckel] = nasta;

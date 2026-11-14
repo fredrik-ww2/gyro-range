@@ -1,12 +1,16 @@
 import * as THREE from '../js/vendor/three.module.js';
+import config from './config.json' with { type: 'json' };
 
-// Samma kedja som panorama/blick.js: YXZ, kamera längs -Z, -90° runt X, skärmvinkel runt Z.
-// Höger vridning (alpha minskar) är positiv yaw. Toppen upp är positiv pitch.
-// Högerkant ned är positiv roll. Inte spegelvänt, varken stående eller i landskap.
+// Samma enhetskvaternion som panorama/blick.js: YXZ, kamera längs -Z, -90° runt X,
+// skärmvinkel runt Z. Den relativa kvaternionen läses i ZXY i skärmens ram,
+// för YXZ låser yaw och roll mot varandra när telefonen står upprätt (beta ≈ 90).
+// Positiv pitch: ovansidan upp (sänk beta från upprätt). Positiv yaw: vrid åt höger.
+// Positiv roll: högerkant ned. Inte spegelvänt, varken stående eller i landskap.
 
 const RAD = Math.PI / 180;
 const FIX = new THREE.Quaternion(-Math.SQRT1_2, 0, 0, Math.SQRT1_2);
 const Z_AXEL = new THREE.Vector3(0, 0, 1);
+const GYRO = config.gyro || {};
 
 export function skarmVinkel() {
   const v = globalThis.screen?.orientation?.angle ?? globalThis.window?.orientation ?? 0;
@@ -17,20 +21,36 @@ export function enhetsKvaternion(alpha, beta, gamma, skarmGrader, q, euler, skar
   euler.set(beta * RAD, alpha * RAD, -gamma * RAD, 'YXZ');
   q.setFromEuler(euler).multiply(FIX);
   if (skarmGrader) q.multiply(skarmQ.setFromAxisAngle(Z_AXEL, -skarmGrader * RAD));
+  q.normalize();
   return q;
 }
 
-// upp = toppen upp, hoger = vridning åt höger, sida = högerkant ned. Radianer.
+// Radianer, i skärmens ram. Ovansidan upp, vridning åt höger, högerkant ned.
 export function vinklarFranKvaternion(q, euler) {
-  euler.setFromQuaternion(q, 'YXZ');
-  return {pitch: euler.x, yaw: -euler.y, roll: euler.z};
+  euler.setFromQuaternion(q, 'ZXY');
+  return {pitch: -euler.x, yaw: -euler.y, roll: euler.z};
+}
+
+export function kvaternionFranVinklar(v, euler, q) {
+  euler.set(-v.pitch, -v.yaw, v.roll, 'ZXY');
+  return q.setFromEuler(euler).normalize();
 }
 
 function jamforPose(noll, nu, q, euler, skarmQ, rel) {
   const o = enhetsKvaternion(noll[0], noll[1], noll[2], noll[3], q, euler, skarmQ).clone();
   o.invert();
   const n = enhetsKvaternion(nu[0], nu[1], nu[2], nu[3], q, euler, skarmQ);
-  return vinklarFranKvaternion(rel.multiplyQuaternions(o, n), euler);
+  return vinklarFranKvaternion(rel.multiplyQuaternions(o, n).normalize(), euler);
+}
+
+function vinkelHop(a, b) {
+  const d = (x, y) => {
+    let t = x - y;
+    while (t > Math.PI) t -= Math.PI * 2;
+    while (t < -Math.PI) t += Math.PI * 2;
+    return t;
+  };
+  return Math.hypot(d(a.pitch, b.pitch), d(a.yaw, b.yaw), d(a.roll, b.roll));
 }
 
 export function sjalvtest() {
@@ -44,20 +64,40 @@ export function sjalvtest() {
   const staende = [0, 90, 0, 0];
   const hoger = jamfor(staende, [-30, 90, 0, 0]);
   const tillbaka = jamfor(staende, [0, 90, 0, 0]);
-  const ned = jamfor(staende, [0, 50, 0, 0]);
-  const upp = jamfor(staende, [0, 130, 0, 0]);
-  const rull = jamfor(staende, [90, 70, -90, 0]);
-  krav('höger stannar höger', hoger.yaw > 0.4 && Math.abs(hoger.pitch) < 0.08);
-  krav('tillbaka till start', Math.abs(tillbaka.yaw) < 0.02 && Math.abs(tillbaka.pitch) < 0.02);
-  krav('toppen ned', ned.pitch < -0.5);
-  krav('toppen upp', upp.pitch > 0.5);
-  krav('sidlutning', rull.roll > 0.2);
+  const tittaUpp = jamfor(staende, [0, 50, 0, 0]);
+  const tittaNed = jamfor(staende, [0, 130, 0, 0]);
+  const rull = jamfor(staende, [-90, 114, 90, 0]);
+  const bland = jamfor(staende, [0, 70, 25, 0]);
+  krav('höger stannar höger', hoger.yaw > 0.4 && Math.abs(hoger.pitch) < 0.08 && Math.abs(hoger.roll) < 0.08);
+  krav('tillbaka till start', Math.abs(tillbaka.yaw) < 0.02 && Math.abs(tillbaka.pitch) < 0.02 && Math.abs(tillbaka.roll) < 0.02);
+  krav('ovansidan upp höjer', tittaUpp.pitch > 0.5 && Math.abs(tittaUpp.roll) < 0.08);
+  krav('ovansidan mot användaren sänker', tittaNed.pitch < -0.5);
+  krav('porträtt högerkant ned är roll', rull.roll > 0.3 && Math.abs(rull.yaw) < 0.3 && Math.abs(rull.pitch) < 0.3);
+  krav('porträtt vridning läcker inte till styrning', Math.abs(bland.roll) < 0.15 && bland.yaw < -0.25 && bland.pitch > 0.2);
 
   const land = [90, 0, -90, 90];
   const landJamfor = jamfor(staende, land);
   const landHoger = jamfor(land, [60, 0, -90, 90]);
-  krav('landskap samma fönster', Math.abs(landJamfor.yaw) < 0.08 && Math.abs(landJamfor.pitch) < 0.08);
+  const landRatt = jamfor(land, [90, -25, -90, 90]);
+  krav('landskap samma fönster', Math.abs(landJamfor.yaw) < 0.08 && Math.abs(landJamfor.pitch) < 0.08 && Math.abs(landJamfor.roll) < 0.08);
   krav('landskap höger är höger', landHoger.yaw > 0.4 && Math.abs(landHoger.pitch) < 0.2);
+  krav('landskap högerkant ned är roll', landRatt.roll > 0.3 && Math.abs(landRatt.yaw) < 0.2);
+
+  const runt = kvaternionFranVinklar({pitch: 0.4, yaw: -0.3, roll: 0.2}, euler, q);
+  const tillbakaV = vinklarFranKvaternion(runt, euler);
+  krav('vinklar går att återskapa', Math.abs(tillbakaV.pitch - 0.4) < 1e-6 && Math.abs(tillbakaV.yaw + 0.3) < 1e-6 && Math.abs(tillbakaV.roll - 0.2) < 1e-6);
+
+  const rorelse = skapaRorelse(null);
+  rorelse.mata(0, 90, 0, 0, 0);
+  rorelse.mata(-0.6, 90, 0, 0, 800);
+  const drift = rorelse.vinklar();
+  krav('långsam kompassdrift hålls i noll', Math.abs(drift.yaw) < 0.03 && Math.abs(drift.roll) < 0.03);
+  rorelse.mata(-22, 90, 0, 0, 980);
+  krav('snabb vridning syns', rorelse.vinklar().yaw > 0.25);
+  rorelse.nollstall();
+  krav('nollställning nollar utslaget', Math.abs(rorelse.vinklar().yaw) < 0.02 && Math.abs(rorelse.vinklar().pitch) < 0.02);
+  rorelse.mata(-22, 90, 0, 0, 1100);
+  krav('samma pose efter noll är stilla', Math.abs(rorelse.vinklar().yaw) < 0.05);
   return fel;
 }
 
@@ -67,17 +107,61 @@ export function skapaRorelse(canvas) {
   const relativ = new THREE.Quaternion();
   const euler = new THREE.Euler();
   const skarmQ = new THREE.Quaternion();
+  const senastQ = new THREE.Quaternion();
+  const byggQ = new THREE.Quaternion();
+  const jamnad = {pitch: 0, yaw: 0, roll: 0};
   let aktiv = false;
   let fick = false;
   let vantarNoll = true;
+  let harQ = false;
+  let senastTid = 0;
+  let senastVinkel = {pitch: 0, yaw: 0, roll: 0};
   let tvingadSkarm = null;
   const pek = {roll: 0, yaw: 0, pitch: 0, nere: false};
+  const glitchEuler = (GYRO.glitchEulerGrader ?? 35) * RAD;
+  const glitchFysisk = (GYRO.glitchFysiskGrader ?? 18) * RAD;
+  const drift = (GYRO.driftGraderPerSek ?? 2.4) * RAD;
+  const tau = Math.max(0, GYRO.utjamningSek ?? 0.05);
 
-  function las(alpha, beta, gamma) {
+  function baseraOm(mal) {
+    kvaternionFranVinklar(mal, euler, byggQ);
+    origin.copy(raw).multiply(byggQ.invert()).normalize();
+  }
+
+  function las(alpha, beta, gamma, tidMs) {
     const skarm = tvingadSkarm == null ? skarmVinkel() : tvingadSkarm;
     enhetsKvaternion(alpha, beta, gamma, skarm, raw, euler, skarmQ);
     fick = true;
-    if (vantarNoll) nollstall();
+    const tid = Number.isFinite(tidMs) ? tidMs : (globalThis.performance?.now?.() ?? Date.now());
+    if (vantarNoll || !harQ) {
+      origin.copy(raw).invert();
+      senastQ.copy(raw);
+      senastVinkel = {pitch: 0, yaw: 0, roll: 0};
+      jamnad.pitch = jamnad.yaw = jamnad.roll = 0;
+      vantarNoll = false;
+      harQ = true;
+      senastTid = tid;
+      return;
+    }
+    const dt = Math.max(0, (tid - senastTid) / 1000);
+    senastTid = tid;
+    let v = vinklarFranKvaternion(relativ.multiplyQuaternions(origin, raw).normalize(), euler);
+    const fysisk = senastQ.angleTo(raw);
+    const hopp = vinkelHop(v, senastVinkel);
+    senastQ.copy(raw);
+    if (dt > 0 && dt < 0.45 && fysisk < glitchFysisk && hopp > glitchEuler && hopp > fysisk * 4) {
+      baseraOm(senastVinkel);
+      v = {...senastVinkel};
+    } else if (dt > 0.02 && dt < 1.5 && hopp / dt < drift) {
+      const halld = {pitch: v.pitch, yaw: senastVinkel.yaw, roll: v.roll};
+      baseraOm(halld);
+      v = halld;
+    }
+    senastVinkel = v;
+    const k = !(tau > 0) || !(dt > 0) ? 1 : 1 - Math.exp(-dt / tau);
+    jamnad.pitch += (v.pitch - jamnad.pitch) * k;
+    jamnad.yaw += (v.yaw - jamnad.yaw) * k;
+    jamnad.roll += (v.roll - jamnad.roll) * k;
   }
 
   const pa = (mal, typ, fn, opt) => {
@@ -88,27 +172,27 @@ export function skapaRorelse(canvas) {
     las(e.alpha, e.beta, e.gamma);
   }, {passive: true});
 
-  let pekare = null;
-  let ned = null;
+  const pekare = new Map();
   if (canvas) {
     canvas.addEventListener('pointerdown', e => {
-      if (e.target !== canvas || harGyro()) return;
-      pekare = e.pointerId;
-      ned = [e.clientX, e.clientY];
+      if (e.target !== canvas || harGyro() || (e.button != null && e.button > 0)) return;
+      pekare.set(e.pointerId, [e.clientX, e.clientY]);
       pek.nere = true;
-      try { canvas.setPointerCapture(pekare); } catch { /* pekaren kan hinna släppas */ }
+      try { canvas.setPointerCapture(e.pointerId); } catch { /* pekaren kan hinna släppas */ }
     });
     canvas.addEventListener('pointermove', e => {
-      if (e.pointerId !== pekare || !ned || harGyro()) return;
+      const ned = pekare.get(e.pointerId);
+      if (!ned || harGyro()) return;
       const dx = e.clientX - ned[0];
       const dy = e.clientY - ned[1];
       pek.yaw = Math.max(-1.15, Math.min(1.15, dx / 150 * 0.7));
       pek.pitch = Math.max(-1.15, Math.min(1.15, -dy / 150 * 0.7));
     });
     const slut = e => {
-      if (e && e.pointerId !== pekare) return;
-      pekare = null;
-      ned = null;
+      if (!e || !pekare.has(e.pointerId)) return;
+      pekare.delete(e.pointerId);
+      try { canvas.releasePointerCapture(e.pointerId); } catch { /* ingen fångst */ }
+      if (pekare.size) return;
       pek.nere = false;
       pek.yaw = 0;
       pek.pitch = 0;
@@ -121,7 +205,7 @@ export function skapaRorelse(canvas) {
 
   function gyroVinklar() {
     if (!fick) return {roll: 0, yaw: 0, pitch: 0};
-    return vinklarFranKvaternion(relativ.multiplyQuaternions(origin, raw), euler);
+    return {roll: jamnad.roll, yaw: jamnad.yaw, pitch: jamnad.pitch};
   }
 
   function vinklar() {
@@ -130,10 +214,12 @@ export function skapaRorelse(canvas) {
   }
 
   function nollstall() {
-    if (fick) {
+    if (fick && harQ) {
       origin.copy(raw).invert();
+      senastVinkel = {pitch: 0, yaw: 0, roll: 0};
       vantarNoll = false;
     } else vantarNoll = true;
+    jamnad.pitch = jamnad.yaw = jamnad.roll = 0;
     pek.roll = 0;
     pek.yaw = 0;
     pek.pitch = 0;
@@ -145,6 +231,7 @@ export function skapaRorelse(canvas) {
         return typeof T?.requestPermission === 'function' ? T.requestPermission() : Promise.resolve(T ? 'granted' : 'unavailable');
       } catch (e) { return Promise.reject(e); }
     };
+    // Båda anropen startas direkt, före första await, så iOS räknar dem till samma tryck.
     const orientering = tillat(globalThis.DeviceOrientationEvent);
     const rorelse = tillat(globalThis.DeviceMotionEvent);
     const [a, b] = await Promise.allSettled([orientering, rorelse]);
@@ -161,10 +248,10 @@ export function skapaRorelse(canvas) {
     nollstall,
     vinklar,
     get harGyro() { return harGyro(); },
-    mata(alpha, beta, gamma, skarm) {
+    mata(alpha, beta, gamma, skarm, tid) {
       aktiv = true;
-      tvingadSkarm = skarm;
-      las(alpha, beta, gamma);
+      tvingadSkarm = skarm == null ? 0 : skarm;
+      las(alpha, beta, gamma, tid);
       tvingadSkarm = null;
     },
     sattPek(roll, yaw, pitch) {

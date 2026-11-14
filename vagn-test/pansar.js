@@ -1,7 +1,7 @@
 // Träffzon, anslagsvinkel, rikoschett, overmatch och genomslag.
 // Siffrorna kommer från pansar_data.js, som är lyft ur vagn_pansarregler.json.
 
-import {REGLER} from './pansar_data.js?v=5';
+import {REGLER} from './pansar_data.js?v=6';
 
 export {REGLER};
 

@@ -171,7 +171,9 @@
     "omladdningSekunder": 1.4,
     "fartMeterPerSekund": 90,
     "livstidSekunder": 6,
-    "spar": 1.3
+    "spar": 0.55,
+    "diameter": 0.18,
+    "langd": 1.5
   },
   "masterGain": 0.5
 }

@@ -45,7 +45,7 @@ export class RotorEffects {
   const spacing=opt.spacing??this.trailSpacing;
   if(!this.core.enabled)return;let t=this.trails.get(id);if(!t){if(this.trails.size>=this.maxTrails)return;t={previous:{...position},remainder:0,seen:this.core.time};this.trails.set(id,t);this.audio?.play('robot_flyg_loop',{position,loop:true,id:'missile:'+id,gain:.7})}
   t.seen=this.core.time;const dx=position.x-t.previous.x,dy=position.y-t.previous.y,dz=position.z-t.previous.z,d=Math.hypot(dx,dy,dz),count=Math.min(20,Math.floor((d+t.remainder)/spacing));
-  for(let i=0;i<count;i++){const f=d?Math.min(1,(spacing-t.remainder+i*spacing)/d):1;this.core.particle({pos:{x:t.previous.x+dx*f,y:t.previous.y+dy*f,z:t.previous.z+dz*f},life:this.core.range(1.1,2.2),size:.45,endSize:1.8,color:[.72,.73,.7],alpha:.62,tile:0,vel:{x:0,y:.35,z:0}})}t.remainder=(d+t.remainder)%spacing;t.previous={...position};this.audio?.setPosition(this.audio.loops.get('missile:'+id),position);
+  for(let i=0;i<count;i++){const f=d?Math.min(1,(spacing-t.remainder+i*spacing)/d):1;this.core.particle({pos:{x:t.previous.x+dx*f,y:t.previous.y+dy*f+.05,z:t.previous.z+dz*f},life:this.core.range(1.8,2.6),size:.42,endSize:1.55,color:[.8,.81,.78],alpha:.82,tile:0,vel:{x:0,y:.18,z:0}})}t.remainder=(d+t.remainder)%spacing;t.previous={...position};this.audio?.setPosition(this.audio.loops.get('missile:'+id),position);
  }
  endTrail(id){this.trails.delete(id);this.audio?.stop('missile:'+id,.06)}
  /** Visual wreck only: pass an expendable mesh/clone, never the live player helicopter. */

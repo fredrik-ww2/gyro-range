@@ -1,6 +1,7 @@
 // Egen ljudbuss. Toppen ligger under taket i konfig, och fler än max röster startas inte.
 
 import { forberedTystLage, installeraIosLjud, vakna } from '../shared/ios-ljud.js';
+import { handelse } from '../shared/ios-brygga.js';
 
 function kurva(db) {
   const tak = Math.pow(10, db / 20);
@@ -194,6 +195,11 @@ export function skapaLjud(konfig) {
   }
 
   function fran(state) {
+    for (const h of state.handelser || []) {
+      if (h.typ === 'studs') handelse('labyrint-studs', { niva: Math.max(0.2, Math.min(1, h.kraft || 0.4)) });
+      else if (h.typ === 'hal') handelse('labyrint-hal', { niva: 1 });
+      else if (h.typ === 'mal') handelse('labyrint-mal', { niva: 1 });
+    }
     if (!ctx || !roll) return;
     const nu = ctx.currentTime;
     const fart = state.fart || 0;

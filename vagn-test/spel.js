@@ -10,6 +10,7 @@ import {sjalvtest as hojdTest, skrovLutning} from './hojd.js?v=7';
 import {sjalvtest as pansarTest, REGLER, VAGN_LISTA, standardRegler, siktenFor, sikteFor, klassFranLokal, bedomTraff} from './pansar.js?v=7';
 import {monteraVagn} from './gyrobox-adapter.js';
 import {lyssnaSkarm} from '../shared/sensor.js';
+import {handelse, iAppen} from '../shared/ios-brygga.js';
 import config from './config.json' with { type: 'json' };
 
 const NYCKEL = 'vagn_test_v1';
@@ -407,9 +408,11 @@ function stegaTigerSkott(t, dt) {
     skak = Math.max(skak, 1);
     ljudMotor.traff(Math.max(6, avst));
     varna('Träff mot vagnen');
+    handelse('vagn-traff-egen', { niva: 1 });
   } else if (sort === 'nara') {
     skak = Math.max(skak, 0.48);
     varna('Nedslag nära');
+    handelse('vagn-nara', { niva: Math.max(0.35, Math.min(1, 1 - avst / 28)) });
   }
 }
 
@@ -1223,6 +1226,7 @@ function traffa(traffPunkt, tiger) {
     salvaNedslag(traffPunkt, bed.genomslag ? 'pansar' : skottTyp === 'pansar' ? 'pansar' : 'traff');
     text = bed.text + (blev ? ' · utslagen' : '');
     traff = bed.genomslag;
+    if (bed.genomslag) handelse('vagn-genomslag', { niva: 1 });
   } else {
     ljudMotor.nedslag(avstand);
     salvaNedslag(traffPunkt, 'mark');
@@ -1263,6 +1267,8 @@ function avfyra() {
   ljudMotor.kanon();
   salvaMynning(start, dir);
   blixt();
+  handelse('vagn-kanon', { niva: 1 });
+  handelse('vagn-rekyl', { niva: 1 });
 }
 function blixt() {
   const el = $('blixt');
@@ -1274,7 +1280,7 @@ function blixt() {
 
 $('eld').addEventListener('click', e => {
   if (!igang || ladd > 0) { e.preventDefault(); return; }
-  try { navigator.vibrate?.(28); } catch { /* Safari utan vibrate */ }
+  if (!iAppen()) { try { navigator.vibrate?.(28); } catch { /* Safari utan vibrate */ } }
   avfyra();
 });
 
@@ -1422,7 +1428,9 @@ function tick(dt) {
   lasFast();
   stegaGranat(dt);
   stegaPartiklar(dt);
+  const laddFore = ladd;
   if (ladd > 0) ladd = Math.max(0, ladd - dt);
+  if (laddFore > 0.05 && ladd <= 0.05) handelse('vagn-laddning', { niva: 1 });
   const mil = ljudMotor.stega({
     dt, gas, kvot: VAXLAR[vaxelIndex].kvot, fart: vagn.fart,
     band: Math.max(Math.abs(vagn.vL), Math.abs(vagn.vR)),
@@ -1431,6 +1439,15 @@ function tick(dt) {
     gir: behandlad.styra.u
   });
   ritaInstrument(mil.rpm, dt);
+  const rpm = mil.rpm || 0;
+  const motorNiva = Math.max(0, Math.min(1, (rpm - 400) / 1800));
+  handelse('vagn-motor', { pa: igang && rpm > 450, niva: Math.max(0.08, motorNiva), kontinuerlig: true });
+  const bandFart = Math.max(Math.abs(vagn.vL), Math.abs(vagn.vR));
+  handelse('vagn-band', { pa: bandFart > 0.15, niva: Math.min(1, bandFart / 8), kontinuerlig: true });
+  const tornNiva = Math.min(1, Math.abs(behandlad.torn.u || 0));
+  handelse('vagn-torn', { pa: tornNiva > 0.08, niva: tornNiva, kontinuerlig: true });
+  const hojdNiva = Math.min(1, Math.abs(behandlad.eldror.u || 0));
+  handelse('vagn-hojd', { pa: hojdNiva > 0.08, niva: hojdNiva, kontinuerlig: true });
   $('eldStatus').textContent = ladd > 0.05 ? 'Laddar ' + Math.ceil(ladd) : 'Redo';
   $('eldWrap').classList.toggle('laddar', ladd > 0.05);
   if (!granat) $('flygtid').hidden = true;

@@ -7,6 +7,7 @@ import { skapaLjud } from './ljud.js';
 import { skapaBana } from './bana.js';
 import { monteraBowling } from './gyrobox-adapter.js';
 import { lyssnaSkarm } from '../shared/sensor.js';
+import { handelse } from '../shared/ios-brygga.js';
 
 const $ = id => document.getElementById(id);
 const canvas = $('vy');
@@ -46,18 +47,26 @@ function hantera(r) {
   if (r.handelse === 'slapp' && r.kast) {
     fysik.starta(r.kast);
     ljud.landning(r.kast.fart);
+    handelse('bowling-slapp', { niva: Math.max(0.35, Math.min(1, (r.kast.fart || 6) / 9)) });
     omstallKlar = false;
     stillaSedan = 0;
   }
   return r;
 }
 
+let rannaKand = false;
+let kaglaKand = false;
 function ljudAvSteg(res) {
-  if (res?.ranna) ljud.ranna();
+  if (res?.ranna) {
+    ljud.ranna();
+    if (!rannaKand) { rannaKand = true; handelse('bowling-ranna', { niva: 0.7 }); }
+  }
   if (res?.antalTraffade > 0) {
     const fart = Math.hypot(fysik.ball.vx, fysik.ball.vz) || fysik.kast?.fart || 6;
     ljud.krasch(res.antalTraffade, fart);
+    if (!kaglaKand) { kaglaKand = true; handelse('bowling-traff', { niva: Math.max(0.4, Math.min(1, res.antalTraffade / 6)) }); }
   }
+  if (!fysik.ball.aktiv) { rannaKand = false; kaglaKand = false; }
   if (fysik.ball.aktiv) ljud.rulla(Math.hypot(fysik.ball.vx, fysik.ball.vz), !fysik.ball.ranna);
   else ljud.tystRull();
 }

@@ -23,6 +23,11 @@
           "sokvag": "form/satellit/"
         },
         {
+          "namn": "Satellitlandskap, ny tolkning",
+          "text": "Träd bara i dungarna. Väg, kollision och spara till biblioteket.",
+          "sokvag": "satlandskap/"
+        },
+        {
           "namn": "Område från bilder",
           "text": "Flera foton blir en 3D-plats.",
           "sokvag": "form/omrade/"

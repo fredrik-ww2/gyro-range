@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d7e0cf">
+<title>Satellitlandskap</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./stil.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "../js/vendor/three.module.js"
+  }
+}
+</script>
+</head>
+<body data-redo="nej" data-trad-fore="" data-trad-nu="" data-falt-trad="" data-vagar="" data-mobil-byte="">
+<canvas id="yta" aria-label="Tolkad 3D-vy av satellitbilden. Dra för att vinkla, nyp för att zooma."></canvas>
+<header>
+  <button type="button" id="menyKnapp" aria-label="Meny" aria-expanded="false" aria-controls="meny">☰</button>
+  <div class="rubrik">
+    <strong>Satellitlandskap</strong>
+    <span id="status">Tolkar provbilden…</span>
+  </div>
+  <div id="mobil" class="piller" aria-live="polite">Mobil …</div>
+</header>
+<p id="hint">Dra för att vinkla · Nyp för att zooma</p>
+<div id="meny" hidden>
+  <div class="meny-huvud">
+    <strong>Inställningar</strong>
+    <button type="button" id="menyStang">Stäng</button>
+  </div>
+  <p id="jamforelse" class="led"></p>
+  <label class="falt">Bredd i meter
+    <input id="bredd" type="number" min="30" max="1200" step="10" value="180" inputmode="numeric">
+  </label>
+  <div class="rad">
+    <button type="button" id="provKnapp">Använd provbilden</button>
+    <button type="button" id="laddaKnapp">Ladda upp egen bild</button>
+  </div>
+  <input id="fil" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+  <h2>Vy</h2>
+  <div class="rad">
+    <button type="button" id="vyOversikt">Översikt</button>
+    <button type="button" id="vySned">Snedvy</button>
+    <button type="button" id="vyNara">Nära dungen</button>
+    <button type="button" id="vyMark">Marknivå</button>
+  </div>
+  <h2>Vägtextur</h2>
+  <div id="vagVal" class="miniatyrer" role="listbox" aria-label="Välj vägtextur"></div>
+  <h2>Kollision</h2>
+  <button type="button" id="kollisionKnapp">Skapa kollisionsytor</button>
+  <p class="led">Markens höjdfält och enkla cylindrar för träden. De följer med när du sparar.</p>
+  <h2>Spara</h2>
+  <button type="button" id="oppnaSpara" class="stark">Spara till biblioteket</button>
+  <p class="lankrad"><a class="textlank" data-alla-lankar href="../lankar/">Alla länkar</a></p>
+</div>
+<div id="sparaDialog" hidden role="dialog" aria-labelledby="sparaRubrik">
+  <form id="sparaForm">
+    <h2 id="sparaRubrik">Spara landskapet</h2>
+    <p id="sparaAnledning" class="led"></p>
+    <label class="falt">Namn
+      <input id="sparaNamn" required maxlength="80" autocomplete="off">
+    </label>
+    <label class="falt">Mapp
+      <input id="sparaMapp" required maxlength="120" autocomplete="off">
+    </label>
+    <p id="sparaStorlek" class="piller mork"></p>
+    <div class="rad">
+      <button type="submit" class="stark">Spara i biblioteket</button>
+      <button type="button" id="nerGlb">Ladda ner 3D-modell (GLB)</button>
+      <button type="button" id="nerJson">Ladda ner JSON</button>
+    </div>
+    <p id="sparaMeddelande" class="led" role="status"></p>
+    <button type="button" id="sparaStang">Stäng</button>
+    <h3>I biblioteket på den här telefonen</h3>
+    <ul id="bibliotek"></ul>
+  </form>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

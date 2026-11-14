@@ -3,6 +3,7 @@ import {malOvergang, skapaSim} from './fysik.js';
 import {skapaGyro, mjukLutning} from './gyro.js';
 import {skapaLjud} from './ljud.js';
 import {skapaBrade} from './brade.js';
+import {monteraLabyrint} from './gyrobox-adapter.js';
 
 const $ = (id) => document.getElementById(id);
 const RAD = Math.PI / 180;
@@ -21,6 +22,7 @@ document.title = texter.titel || document.title;
 
 const install = lasInstall();
 const gyro = skapaGyro($('spel'), konfig);
+const gyroLada = monteraLabyrint({gyro, gyroKonfig: konfig.gyro});
 const ljud = skapaLjud(konfig);
 const brade = skapaBrade($('spel'), konfig);
 let banaIndex = klamp(install.bana | 0, 0, konfig.banor.length - 1);
@@ -155,15 +157,18 @@ function visaMeny(oppna) {
   if (oppna) ritaPrestanda();
 }
 
-function aktuellLutning() {
+function aktuellLutning(dt) {
   const ra = gyro.grader();
   if (ra.kalla === 'tvingad') return ra;
   const gyroKurva = {...konfig.gyro, dodzon: install.dodzon};
-  return {
-    fram: mjukLutning(ra.fram, install.kanslighet, gyroKurva),
-    sida: mjukLutning(ra.sida, install.kanslighet, gyroKurva),
-    kalla: ra.kalla,
-  };
+  const formad = gyroLada.forma(
+    mjukLutning(ra.fram, install.kanslighet, gyroKurva),
+    mjukLutning(ra.sida, install.kanslighet, gyroKurva),
+    ra.fram,
+    ra.sida,
+    dt
+  );
+  return {fram: formad.fram, sida: formad.sida, kalla: ra.kalla};
 }
 
 function jamna(dt, lut) {
@@ -201,7 +206,7 @@ function hanteraLage(dt) {
 }
 
 function stegEn(dt) {
-  const lut = aktuellLutning();
+  const lut = aktuellLutning(dt);
   jamna(dt, lut);
   if (igang) {
     sim.steg(dt, {fram: Math.sin(visLut.fram * RAD), sida: Math.sin(visLut.sida * RAD)});

@@ -175,6 +175,7 @@ export function skapaBlick(canvas, val = {}) {
   const visad = tomVinkel();
   const drag = {x: 0, y: 0};
   const RAD_PER_PX = 0.0048;
+  let formaFn = null;
 
   function lasVinkel(alpha, beta, gamma) {
     enhetsKvaternion(alpha, beta, gamma, skarmVinkel(), raw, euler, skarmQ);
@@ -287,12 +288,14 @@ export function skapaBlick(canvas, val = {}) {
     };
   }
 
-  function malVinklar() {
+  function malVinklar(dt) {
     const abs = fickVinkel ? vinklarFranKvaternion(relativ.multiplyQuaternions(origin, raw), euler) : tomVinkel();
     const ut = {};
     for (const id of AXLAR) {
       const ax = styr.axlar[id];
-      ut[id] = ax.lage === 'rorelse' ? integrerad[id] : abs[id] * ax.kanslighet;
+      let v = ax.lage === 'rorelse' ? integrerad[id] : abs[id] * ax.kanslighet;
+      if (formaFn) v = formaFn(id, v, abs[id], dt || 0);
+      ut[id] = v;
     }
     if (styr.horisont) ut.sida = 0;
     return ut;
@@ -309,7 +312,7 @@ export function skapaBlick(canvas, val = {}) {
       }
       return visadQ;
     }
-    const mal = malVinklar();
+    const mal = malVinklar(dt);
     for (const id of AXLAR) {
       visad[id] = snappa ? mal[id] : jamna(visad[id], mal[id], dt, styr.axlar[id].utjamning);
     }
@@ -323,6 +326,7 @@ export function skapaBlick(canvas, val = {}) {
     get rak() { return styr.horisont; },
     set rak(v) { styr = normalStyr({...styr, horisont: !!v}); },
     satt(nasta) { styr = normalStyr(nasta); },
+    setForma(fn) { formaFn = typeof fn === 'function' ? fn : null; },
     get harGyro() { return harGyro(); },
     get senast() { return senastVinkel; },
     taEmot,

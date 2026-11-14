@@ -185,6 +185,7 @@
 </script>
 
 <script type="module">
+import { monteraRorelseTest } from './gyrobox-adapter.js';
 // ---- motion-core.js (inbäddad) ----
 // motion-core.js – MotionCore v0.1.0 (2026-11-07)
 // Motoroberoende kärna för gyro, rörelse och haptik i mobilwebben (WW2-projektet).
@@ -803,7 +804,12 @@ addEventListener('resize', resizeCanvases); resizeCanvases();
 
 // ---------- Sikte ----------
 let siktOut = { yaw: 0, pitch: 0, rawYaw: 0, rawPitch: 0 }, skott = [];
-subs.add(s => { const o = aim.update(s); if (o.rawYaw != null) siktOut = o; });
+const gyroLada = monteraRorelseTest({
+  sikte: CFG.sikte,
+  flik: () => flik,
+  orient: { nu: () => lastO || {}, noll: () => aim.recenter() }
+});
+subs.add(s => { const o = aim.update(s); if (o.rawYaw != null) siktOut = gyroLada.forma(o, s.dt); });
 function koppla(id, path, dec) {
   const r = $('r' + id), v = $('v' + id);
   const get = () => path.reduce((a, k) => a[k], CFG.sikte);

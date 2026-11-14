@@ -380,6 +380,7 @@ export function skapaLaser(val = {}) {
   const dod = skapaDodzon();
   const kin = {vrida: tomKin(), uppner: tomKin(), sida: tomKin()};
   let install = normalLaser(STANDARD_LASER);
+  let formaFn = null;
   let fick = false;
   let vantarNoll = true;
   let behollVy = false;
@@ -473,7 +474,7 @@ export function skapaLaser(val = {}) {
         filtrerad.copy(skalad);
       } else euro.filtrera(skalad, dtS, install.utjamning, filtrerad);
       dod.tillampa(filtrerad, install.dodzon, hallen);
-      return visa(hallen);
+      return visa(formaUt(hallen, dtS));
     }
     byteVag('axlar');
     if (!(install.utjamning > 0)) {
@@ -486,7 +487,15 @@ export function skapaLaser(val = {}) {
     const dodzonRad = install.dodzon * RAD;
     for (const id of AXEL_ID) ut[id] = stegaAxel(kin[id], v[id], dtS, install.axlar[id], dodzonRad);
     kvaternionFranVinklar(ut, euler, skalad);
-    return visa(skalad);
+    return visa(formaUt(skalad, dtS));
+  }
+
+  function formaUt(q, dtS) {
+    if (typeof formaFn !== 'function') return q;
+    const v = lasVinklar(q);
+    const ut = {};
+    for (const id of AXEL_ID) ut[id] = formaFn(id, v[id], dtS);
+    return kvaternionFranVinklar(ut, euler, skalad);
   }
 
   function skakPx() {
@@ -511,6 +520,7 @@ export function skapaLaser(val = {}) {
     mata: las,
     get install() { return install; },
     satt(nasta) { install = normalLaser(nasta); },
+    setForma(fn) { formaFn = typeof fn === 'function' ? fn : null; },
     get fick() { return fick; },
     matare() {
       const ut = {};

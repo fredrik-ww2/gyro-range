@@ -5,11 +5,13 @@ import { skapaMaskin } from './tillstand.js';
 import { skapaFysik } from './fysik.js';
 import { skapaLjud } from './ljud.js';
 import { skapaBana } from './bana.js';
+import { monteraBowling } from './gyrobox-adapter.js';
 
 const $ = id => document.getElementById(id);
 const canvas = $('vy');
 const konfig = KONFIG;
 const gyro = skapaGyro(konfig);
+const gyroLada = monteraBowling({ konfig, lage: () => maskin.tillstand });
 const maskin = skapaMaskin(konfig);
 const fysik = skapaFysik(konfig);
 const ljud = skapaLjud(konfig);
@@ -245,7 +247,7 @@ function loop(now) {
   if (!manuell) {
     const nytt = gyro.senasteSensor > senKonsum;
     if (nytt) senKonsum = gyro.senasteSensor;
-    hantera(maskin.steg(now, gyro.nu, nytt, frammeNu()));
+    hantera(maskin.steg(now, gyroLada.forma(gyro.nu, dt), nytt, frammeNu()));
     ljudAvSteg(fysik.steg(dt));
     kanskeOmstall(now);
   }

@@ -7,6 +7,7 @@ import {
   skapaSkak, skakSteg, hoppMark, KNAPP_FART
 } from './logik.js';
 import { skapaHaptik, skakIntervall } from './haptik.js';
+import { monteraGubbe } from './gyrobox-adapter.js';
 
 const $ = (id) => document.getElementById(id);
 const DEG = Math.PI / 180;
@@ -162,6 +163,11 @@ scene.add(gubbe);
 let sparad = null;
 try { sparad = JSON.parse(localStorage.getItem(NYCKEL) || 'null'); } catch { sparad = null; }
 const installningar = sammanfoga(sparad);
+const gyroLada = monteraGubbe({
+  installningar,
+  lage: () => lage,
+  nollstall: () => nollstall()
+});
 const haptik = skapaHaptik(document, navigator);
 haptik.pa = installningar.haptik;
 const fartMaskin = skapaFart();
@@ -283,9 +289,10 @@ function steg(dt) {
   const vink = vinklarNu();
   const fart = farterNu(vink, dt);
   foreVinkel = vink;
-  const utVrid = bearbeta('vrid', vink, fart, dt);
-  const utFram = bearbeta('fram', vink, fart, dt);
-  const utSida = bearbeta('sida', vink, fart, dt);
+  const prefix = lage === 'sikta' ? 'sik' : 'ga';
+  const utVrid = gyroLada.forma(prefix + 'Vrid', bearbeta('vrid', vink, fart, dt), vink.yaw, dt);
+  const utFram = gyroLada.forma(prefix + 'Fram', bearbeta('fram', vink, fart, dt), lage === 'sikta' ? vink.upp : vink.fram, dt);
+  const utSida = gyroLada.forma(prefix + 'Sida', bearbeta('sida', vink, fart, dt), vink.roll, dt);
   let framFart = 0;
   let sida = 0;
   if (lage === 'ga') {

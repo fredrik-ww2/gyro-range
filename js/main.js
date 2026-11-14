@@ -12,6 +12,7 @@ import {gangFartFranLutning,kroppFartRad,kroppIVila,hoftMalRad,benFoljer,skapaKn
 import {placeraTestmal,placeraHinder} from './varld.js';
 import {traffSlag} from './traff.js';
 import {skapaBen} from './benpose.js';
+import {monteraSkjutbana} from './gyrobox-adapter.js';
 import {skapaEffekterV2d} from '../assets/effekter/effekter_v2d.js';
 const $=id=>document.getElementById(id);
 const loadJSON=async p=>{const r=await fetch(new URL('../data/'+p,import.meta.url));if(!r.ok)throw Error(p+': '+r.status);return r.json();};
@@ -339,10 +340,12 @@ async function boot(){
  casingsMesh.instanceMatrix.needsUpdate=true;let casingCursor=0;
 
  let poseSteg=0,poseFrom=0,poseTo=0,poseT=.62,poseDur=.62,settleT=null,settleArmed=false,settleX=0,settleZ=0;
+ const gyroLada=monteraSkjutbana({gyro,settings,styrning:cfg.styrning,steg:()=>poseSteg});
  gyro.bearbeta=dt=>{
   const ut=lager.vinklar(poseSteg===0?'ga':'sikta',gyro.vinklar,graderPerSekund(gyro.values.rotationRate,gyro.skarmVinkel()),dt,gyroMeny.varden);
   if(!ut)return;
   gyro.vinklar.pitch=ut.pitch;gyro.vinklar.yaw=ut.yaw;gyro.vinklar.roll=ut.roll;
+  gyroLada.efter(dt);
  };
  let rifle=null,rifleP=0,climb=0,climbBack=null,climbP=0,hastyT=null,hastyAmp=0,hastyP=0;
  let bobAmp=0,bobPhase=0,bobFade=0,bobStop=null,bobHold=0,bobY=0,bobPitch=0,bobRoll=0;

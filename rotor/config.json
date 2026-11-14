@@ -38,6 +38,9 @@
     "yawRateGain": 1.05,
     "yawDamping": 1.15,
     "tiltYaw": 2.5,
+    "samordnadGir": 0,
+    "samordnadFartKnop": 45,
+    "hovringHack": false,
     "yawCap": 1.65,
     "maxHeight": 360,
     "groundClearance": 3,
@@ -73,8 +76,51 @@
     {"id": "transLiftMax", "group": "flight", "label": "Fartlyft, som mest", "min": 0, "max": 0.5, "step": 0.02, "digits": 2, "suffix": ""},
     {"id": "transLiftStartKnots", "group": "flight", "label": "Fartlyft börjar", "min": 10, "max": 50, "step": 1, "digits": 0, "suffix": " knop"},
     {"id": "transLiftEndKnots", "group": "flight", "label": "Fartlyft fullt", "min": 20, "max": 80, "step": 1, "digits": 0, "suffix": " knop"},
-    {"id": "maxAttitudeDeg", "group": "flight", "label": "Nosen följer spaken", "min": 10, "max": 45, "step": 1, "digits": 0, "suffix": "°"}
+    {"id": "maxAttitudeDeg", "group": "flight", "label": "Nosen följer spaken", "min": 10, "max": 45, "step": 1, "digits": 0, "suffix": "°"},
+    {"id": "tiltYaw", "group": "flight", "label": "Gir av lutning", "min": 0, "max": 4, "step": 0.1, "digits": 1, "suffix": ""},
+    {"id": "samordnadGir", "group": "flight", "label": "Gir följer banken", "min": 0, "max": 3, "step": 0.1, "digits": 1, "suffix": ""}
   ],
+  "presets": {
+    "text": {
+      "standard": "Som vanligt. Du sköter hovringen själv.",
+      "realistisk": "Spaken svarar kvickare. Nosen följer lutningen mer när du har fart, och lyftspaken knackar till vid hovring.",
+      "eget": "Du har ändrat en inställning. Tryck Standard eller Realistisk om du vill tillbaka."
+    },
+    "standard": {
+      "control": {
+        "smoothingSeconds": 0.16,
+        "cyclicRate": 8,
+        "deadzoneDeg": 4,
+        "fullScaleDeg": 30
+      },
+      "flight": {
+        "tiltYaw": 2.5,
+        "samordnadGir": 0,
+        "samordnadFartKnop": 45,
+        "transLiftStartKnots": 25,
+        "transLiftEndKnots": 45,
+        "hoverAssist": false,
+        "hovringHack": false
+      }
+    },
+    "realistisk": {
+      "control": {
+        "smoothingSeconds": 0.1,
+        "cyclicRate": 10,
+        "deadzoneDeg": 4,
+        "fullScaleDeg": 25
+      },
+      "flight": {
+        "tiltYaw": 1.6,
+        "samordnadGir": 1.15,
+        "samordnadFartKnop": 45,
+        "transLiftStartKnots": 15,
+        "transLiftEndKnots": 30,
+        "hoverAssist": true,
+        "hovringHack": true
+      }
+    }
+  },
   "help": {
     "gyro-flight": "Luta telefonen så flyger du. Vänster kant upp svänger höger. Sikte i ringen nere till höger. Eld till vänster. Lyft i det grå fältet.",
     "gyro-aim": "Dra i styrspaken för att flyga. Luta telefonen upp, ned och åt sidan för att sikta. Avtryckaren sitter på spaken.",
@@ -83,6 +129,7 @@
   },
   "toggles": [
     {"id": "hoverAssist", "group": "flight", "label": "Hovringshjälp", "text": "Bromsar glidning och håller höjden när lyftet står nära hovring."},
+    {"id": "hovringHack", "group": "flight", "label": "Hack vid hovring", "text": "Ett streck på lyftspaken, och en liten knackning när du passerar hovring."},
     {"id": "autoTorque", "group": "flight", "label": "Pedalkompensation", "text": "Tar bort vridet när du höjer eller sänker lyftet."},
     {"id": "cockpitEnabled", "group": "control", "label": "Cockpit", "text": "Förstaperson. Spak, lyft och pedaler syns och följer det du gör."},
     {"id": "aimEnabled", "group": "control", "label": "Rörligt sikte", "text": "Siktet kan peka åt ett annat håll än nosen. Dra i vindrutan."},

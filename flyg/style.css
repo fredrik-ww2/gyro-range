@@ -138,7 +138,7 @@ button.menyknapp[aria-expanded=true]{background:#e3c88e;color:#172724;border-col
  width:min(372px,calc(100vw - 12px - env(safe-area-inset-right)));
  max-height:calc(100dvh - max(8px,env(safe-area-inset-top)) - 58px);
  overflow:auto;
- background:#142a27f7;
+ background:#142a27;
  border:1px solid #d9c89e70;
  border-radius:14px;
  padding:8px 10px 8px;
@@ -167,13 +167,22 @@ button.menyknapp[aria-expanded=true]{background:#e3c88e;color:#172724;border-col
 #settings.flygmeny #toggles label{min-height:24px;font-size:11px;line-height:1.15;gap:4px;padding:0}
 #settings.flygmeny .meny-lankar{display:flex;gap:6px}
 #settings.flygmeny .meny-lankar a{flex:1;min-height:34px;display:inline-flex;align-items:center;justify-content:center}
+#settings.flygmeny .styrlage-val{display:grid;grid-template-columns:1fr 1fr auto;gap:4px;margin:4px 0}
+#settings.flygmeny .styrlage-val button{min-height:38px;font-weight:700;font-size:13px}
+#settings.flygmeny .styrlage-val button.pa{background:#e3c88e;color:#172724;border-color:#e3c88e}
+#settings.flygmeny .styrlage-eget{display:flex;align-items:center;justify-content:center;min-width:52px;min-height:38px;padding:4px 8px;border-radius:8px;border:1px solid #d9c89e55;font-size:13px;font-weight:700;opacity:.4}
+#settings.flygmeny .styrlage-eget.pa{opacity:1;background:#e7c56a;color:#172724;border-color:#e7c56a}
+#settings.flygmeny .styrlage-text{font-size:13px;line-height:1.35;margin:2px 0 4px;color:#f6f1e4}
+#settings.flygmeny #styrlageFin summary{font-size:13px;min-height:32px;cursor:pointer;color:#e3c88e}
+#settings.flygmeny .styrlage-check{display:flex;align-items:center;gap:6px;font-size:12px;min-height:28px}
 @media(max-height:520px){
  #settings.flygmeny{width:min(640px,calc(100vw - 12px - env(safe-area-inset-right)));top:calc(max(4px,env(safe-area-inset-top)) + 46px);max-height:calc(100dvh - max(4px,env(safe-area-inset-top)) - 52px);padding:6px 8px}
  #settings.flygmeny .meny-kropp{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.15fr);column-gap:10px;align-items:start}
- #settings.flygmeny .meny-del.plan{grid-column:1;grid-row:1}
- #settings.flygmeny .meny-del.tele{grid-column:1;grid-row:2}
- #settings.flygmeny .meny-del.lankar{grid-column:1;grid-row:3}
- #settings.flygmeny .meny-del.installningar{grid-column:2;grid-row:1 / span 3}
+ #settings.flygmeny .meny-del.styrlage{grid-column:1 / -1;grid-row:1}
+ #settings.flygmeny .meny-del.plan{grid-column:1;grid-row:2}
+ #settings.flygmeny .meny-del.tele{grid-column:1;grid-row:3}
+ #settings.flygmeny .meny-del.lankar{grid-column:1;grid-row:4}
+ #settings.flygmeny .meny-del.installningar{grid-column:2;grid-row:2 / span 3}
 }
 button.horisontknapp{
  position:fixed;

@@ -4,6 +4,7 @@
 // Expo skickar vinkelhastighet. Första provet efter centrering är nolläget.
 import { arOmslag, eulerStyrning, nyNoll, skarmDelta } from './orientering.js';
 import { provFranEvent, skarmGrader } from '../shared/sensor.js';
+import { hojdExpo, jamnaSteg } from './styrlage.js';
 
 const STALE_MS = 450;
 
@@ -26,6 +27,8 @@ export class FlightInput {
     this.rollHast = 0;
     this.rollHastAt = 0;
     this._antal = 0;
+    this._ut = {};
+    this._utTid = null;
     this._skarmSen = this.skarm();
     const pa = (typ, fn, opt) => { addEventListener(typ, fn, opt); this._antal++; };
     pa('ww2-native-gyro', (e) => this._native(e));
@@ -111,7 +114,21 @@ export class FlightInput {
     this.pending = true;
     this.senaste = null;
     this.origin = null;
+    this._ut = {};
+    this._utTid = null;
     if (this.native) this.nativeAt = this.nu();
+  }
+  _jamDt() {
+    const nu = this.nu();
+    const fore = this._utTid;
+    this._utTid = nu;
+    if (fore == null) return null;
+    return Math.min(0.1, Math.max(0, (nu - fore) / 1000));
+  }
+  _jamna(nyckel, mal, dt) {
+    const y = jamnaSteg(this._ut[nyckel], mal, dt, this.c.utjamning_s);
+    this._ut[nyckel] = y;
+    return y;
   }
   center() { this.reset(); this.gyro?.center?.(); }
   read() {
@@ -139,17 +156,20 @@ export class FlightInput {
     const gain = this.settings.kanslighet;
     const rv = this.c.roder_vinkel_rad || 0.35;
     const drag = this.gyro?.drag || { x: 0, y: 0 };
-    const roder = sensor ? clamp(dead(fin(p.yaw)) / rv, 1) : 0;
+    const jamDt = this._jamDt();
+    const pitchKalla = this._jamna('pitch', fin(p.pitch) + fin(drag.y), jamDt);
+    const rollZon = this._jamna('zon', fin(p.roll), jamDt);
+    const roder = sensor && this.c.sidroder_vrid !== false ? clamp(dead(fin(p.yaw)) / rv, 1) : 0;
     let source = 'finger';
     if (!this.active) source = 'av';
     else if (freshNative) source = 'native';
     else if (freshWeb) source = 'webb';
     else if (this.native || this.web) source = 'tyst';
     return {
-      pitch: clamp(dead(fin(p.pitch) + fin(drag.y)) * gain, this.c.max_pitch),
+      pitch: clamp(hojdExpo(dead(pitchKalla) * gain, this.c.max_pitch, this.c.hojd_expo), this.c.max_pitch),
       roll: clamp(dead(fin(p.roll) + (this.c.yaw_andel || 0) * fin(p.yaw) + fin(drag.x)) * gain * this.c.bank_forstarkning, this.c.max_roll),
       roder,
-      pose: { pitch: fin(p.pitch), roll: fin(p.roll), yaw: fin(p.yaw) },
+      pose: { pitch: fin(p.pitch), roll: rollZon, yaw: fin(p.yaw) },
       rollHast: (this.nu() - this.rollHastAt) < 250 && Number.isFinite(this.rollHast) ? this.rollHast : null,
       source
     };

@@ -20,13 +20,17 @@ export const DEFAULT_FLIGHT={
   yawRateGain:1.05,
   yawDamping:1.15,
   tiltYaw:2.5,
+  samordnadGir:0,
+  samordnadFartKnop:45,
+  hovringHack:false,
   yawCap:1.65,
   maxHeight:360,
   groundClearance:3,
   autoTorque:true,
   hoverAssist:false
 };
-const NUMERIC=Object.keys(DEFAULT_FLIGHT).filter(k=>k!=='autoTorque'&&k!=='hoverAssist');
+const BOOL=['autoTorque','hoverAssist','hovringHack'];
+const NUMERIC=Object.keys(DEFAULT_FLIGHT).filter(k=>!BOOL.includes(k));
 export class FlightDynamics {
   constructor(options){
     this.params={...DEFAULT_FLIGHT};
@@ -40,7 +44,7 @@ export class FlightDynamics {
     const next={...this.params};
     for(const [k,v] of Object.entries(partial)){
       if(!(k in DEFAULT_FLIGHT))throw new TypeError(`Unknown flight setting ${k}`);
-      if(k==='autoTorque'||k==='hoverAssist'){if(typeof v!=='boolean')throw new TypeError(`${k} must be boolean`);next[k]=v;continue;}
+      if(BOOL.includes(k)){if(typeof v!=='boolean')throw new TypeError(`${k} must be boolean`);next[k]=v;continue;}
       if(!Number.isFinite(v))throw new TypeError(`${k} must be finite`);
       next[k]=v;
     }
@@ -87,7 +91,11 @@ export class FlightDynamics {
     const torque=this.assists.autoTorque?0:(effective-p.hoverCollective)*p.torqueGain;
     // Vänster kant upp ger positiv roll och positiv spak i x, och nosen går åt höger.
     const tilt=(p.tiltYaw||0)*(c.x*1.4+Math.sin(this.roll)*.4);
-    this.yawRate+=(yaw*p.yawRateGain+tilt+torque-this.yawRate*p.yawDamping)*dt;
+    // Gir som följer banken. samordnadGir 0 lämnar den gamla giren orörd. Lite vid hovring, mer i fart.
+    const fartU=clamp(knots/Math.max(1,p.samordnadFartKnop||45),0,1);
+    const fartAndel=fartU*fartU*(3-2*fartU);
+    const samGir=(p.samordnadGir||0)*Math.sin(this.roll)*fartAndel;
+    this.yawRate+=(yaw*p.yawRateGain+tilt+samGir+torque-this.yawRate*p.yawDamping)*dt;
     this.yawRate=clamp(this.yawRate,-(p.yawCap||1.65),p.yawCap||1.65);
     this.heading+=this.yawRate*dt;
     this.x+=this.vx*dt;this.z+=this.vz*dt;this.y+=this.vy*dt;

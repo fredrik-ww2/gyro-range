@@ -40,7 +40,45 @@
   "gyro_brus_rad_s": 0.022,
   "yaw_andel": 0.0,
   "roder_vinkel_rad": 0.35,
-  "_roder": "Vrid telefonen runt lodrät axel = sidroder. roder_vinkel_rad är vridningen för fullt utslag. yaw_andel 0 = vridning bankar inte längre."
+  "hojd_expo": 1,
+  "sidroder_vrid": true,
+  "samordnad_svang": false,
+  "samordning_styrka": 0.9,
+  "_roder": "Vrid telefonen runt lodrät axel = sidroder, om sidroder_vrid är på. samordnad_svang låter sidrodret följa banken i stället. hojd_expo 1 = rak höjdroder, högre tal gör små lutningar finare. utjamning_s 0 = ingen utjämning.",
+  "_hojd_expo": "1 är rakt. Över 1 gör små lutningar finare på höjdrodret."
+ },
+ "presets": {
+  "text": {
+   "standard": "Som vanligt. Vrid telefonen när du vill använda sidrodret.",
+   "realistisk": "Lugnare små rörelser. Planet svänger rent när du lutar, utan att du vrider telefonen.",
+   "eget": "Du har ändrat en inställning. Tryck Standard eller Realistisk om du vill tillbaka."
+  },
+  "standard": {
+   "styrning": {
+    "dodzon": 0.025,
+    "dodzon_mjuk": 0.04,
+    "utjamning_s": 0.0,
+    "bank_forstarkning": 1.4,
+    "hojd_expo": 1,
+    "sidroder_vrid": true,
+    "samordnad_svang": false,
+    "samordning_styrka": 0.9
+   },
+   "gyro_zon": { "kurva_full_grader": 32 }
+  },
+  "realistisk": {
+   "styrning": {
+    "dodzon": 0.052,
+    "dodzon_mjuk": 0.035,
+    "utjamning_s": 0.1,
+    "bank_forstarkning": 1.2,
+    "hojd_expo": 1.8,
+    "sidroder_vrid": false,
+    "samordnad_svang": true,
+    "samordning_styrka": 0.9
+   },
+   "gyro_zon": { "kurva_full_grader": 28 }
+  }
  },
  "flyg": {
   "gas": 0.85,

@@ -2,7 +2,7 @@ import { monteraGyrobox } from '../shared/gyrobox.js';
 
 // rotor/config.json → control. Vid standardvärden är koppla identitet,
 // så ControlModule behåller dödzon, känslighet och mjukhet tills någon drar.
-export function monteraRotor({ control, kalibrera }) {
+export function monteraRotor({ control, kalibrera, lage }) {
   const c = control.settings;
   const flyg = (spann) => ({
     invertera: false,
@@ -58,6 +58,7 @@ export function monteraRotor({ control, kalibrera }) {
       return sen.yaw;
     },
     kalibrera,
+    lage,
     tillampa(nu) {
       const patch = {};
       if (nu.tipp) patch.smoothingSeconds = nu.tipp.utjamning;

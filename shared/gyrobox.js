@@ -244,6 +244,8 @@ export function monteraGyrobox(spec) {
   const stang = el('button', 'gyrobox-stang', 'Stäng och spara');
   stang.type = 'button';
   panel.append(stang);
+  const lageEl = typeof spec.lage === 'function' ? el('div', 'gyrobox-lage') : null;
+  if (lageEl) rot.append(lageEl);
   rot.append(chip, panel);
   (spec.rot || document.body).append(rot);
 
@@ -288,6 +290,12 @@ export function monteraGyrobox(spec) {
       try { vis = spec.las?.(id); } catch { vis = 0; }
     }
     if (!Number.isFinite(vis)) vis = 0;
+    let marke = '';
+    if (lageEl) {
+      try { marke = spec.lage() || ''; } catch { marke = ''; }
+      lageEl.textContent = marke;
+      lageEl.dataset.lage = String(marke).toLowerCase();
+    }
     chipText.textContent = `Gyro: ${funktionText(id)} · ${a.axel}`;
     const en = a.enhet || '°';
     const dec = Math.abs(vis) >= 100 ? 0 : 1;
@@ -295,7 +303,7 @@ export function monteraGyrobox(spec) {
     const spann = Math.max(1, standard[id].spann || 45);
     const u = clamp(vis / spann, -1, 1);
     meter.style.setProperty('--u', String(u));
-    chip.setAttribute('aria-label', `${chipText.textContent}. ${chipTal.textContent}. Öppna gyroinställningar`);
+    chip.setAttribute('aria-label', `${marke ? marke + '. ' : ''}${chipText.textContent}. ${chipTal.textContent}. Öppna gyroinställningar`);
   }
 
   function reglage(nyckel, etikett, inst, std, suffix) {

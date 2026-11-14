@@ -13,15 +13,16 @@ export function rensaOverlagg(data, w, h) {
     const bla = b > 155 && b > r + 12 && b > g + 6 && g > 120;
     if (mn > 220 || bla) glyf[i] = 1;
   }
+  const uiY = Math.min(96, Math.round(h * 0.075));
   const hall = filtrera(glyf, w, h, (c) => c.n >= 8 && c.n < 6000 && c.h >= 8 && c.h <= 40 && c.w <= 520);
   let rutor = [];
   for (const c of hall.rutor) {
-    if (c.y > h * 0.14 && !morkRing(data, w, h, c)) continue;
-    const m = 18;
-    rutor.push({ x: c.x - m, y: c.y - m, w: c.w + m * 2, h: c.h + m * 2 });
+    if (c.y < uiY) continue;
+    const platta = textPlatta(data, w, h, c);
+    if (platta) rutor.push(platta);
   }
 
-  const topp = Math.max(48, Math.round(h * 0.12));
+  const topp = uiY;
   const mork = new Uint8Array(n);
   for (let y = 0; y < topp; y++) {
     for (let x = 0; x < w; x++) {
@@ -36,7 +37,7 @@ export function rensaOverlagg(data, w, h) {
   }
   const stapel = filtrera(mork, w, h, (c) => c.w > w * 0.16 && c.h >= 3 && c.h < 36 && c.w / Math.max(1, c.h) > 6);
   for (const c of stapel.rutor) {
-    rutor.push({ x: c.x - 12, y: c.y - 30, w: c.w + 56, h: c.h + 40 });
+    rutor.push({ x: c.x - 24, y: Math.max(0, c.y - 34), w: c.w + 110, h: Math.min(uiY + 8, c.y + c.h + 10) - Math.max(0, c.y - 34) });
   }
 
   const vanster = Math.round(w * 0.45);
@@ -52,9 +53,9 @@ export function rensaOverlagg(data, w, h) {
       if (l > 160 && k < 50 && Math.min(r, g, b) > 135) ljus[i] = 1;
     }
   }
-  const plupp = filtrera(stang(ljus, w, h, 5), w, h, (c) => c.n > 80 && c.n < 16000 && c.w < w * 0.5 && c.h < topp);
+  const plupp = filtrera(stang(ljus, w, h, 3), w, h, (c) => c.n > 80 && c.n < 8000 && c.w < 260 && c.h < 80 && c.y < uiY);
   for (const c of plupp.rutor) {
-    rutor.push({ x: c.x - 10, y: c.y - 8, w: c.w + 20, h: c.h + 16 });
+    rutor.push({ x: c.x - 6, y: Math.max(0, c.y - 4), w: c.w + 12, h: Math.min(uiY + 4, c.y + c.h + 8) - Math.max(0, c.y - 4) });
   }
 
   rutor = slåIhop(rutor.map((c) => ({
@@ -66,22 +67,37 @@ export function rensaOverlagg(data, w, h) {
   return fyllRutor(data, rutor, w, h);
 }
 
-function morkRing(data, w, h, c) {
-  let morka = 0;
-  let tot = 0;
-  const x0 = Math.max(0, c.x - 8);
-  const y0 = Math.max(0, c.y - 8);
-  const x1 = Math.min(w - 1, c.x + c.w + 8);
-  const y1 = Math.min(h - 1, c.y + c.h + 8);
-  for (let y = y0; y <= y1; y += 2) {
-    for (let x = x0; x <= x1; x += 2) {
+function textPlatta(data, w, h, c) {
+  let minX = c.x;
+  let maxX = c.x + c.w;
+  let minY = c.y;
+  let maxY = c.y + c.h;
+  let n = 0;
+  const y0 = Math.max(0, c.y - 14);
+  const y1 = Math.min(h - 1, c.y + c.h + 14);
+  const x0 = Math.max(0, c.x - 14);
+  const x1 = Math.min(w - 1, c.x + c.w + 14);
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
       const i = (y * w + x) * 4;
-      const l = (data[i] + data[i + 1] + data[i + 2]) / 3;
-      tot++;
-      if (l < 85) morka++;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const l = (r + g + b) / 3;
+      const k = Math.max(r, g, b) - Math.min(r, g, b);
+      if (l < 78 && k < 55) {
+        n++;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
     }
   }
-  return tot > 0 && morka / tot > 0.22;
+  const bw = maxX - minX;
+  const bh = maxY - minY;
+  if (n < 50 || bh > 78 || bw > 260 || bh < 10) return null;
+  return { x: minX - 3, y: minY - 3, w: bw + 6, h: bh + 6 };
 }
 
 function slåIhop(rutor) {
@@ -93,7 +109,7 @@ function slåIhop(rutor) {
       for (let j = i + 1; j < lista.length; j++) {
         const a = lista[i];
         const b = lista[j];
-        const gap = 24;
+        const gap = 12;
         if (a.x > b.x + b.w + gap || b.x > a.x + a.w + gap || a.y > b.y + b.h + gap || b.y > a.y + a.h + gap) continue;
         const x = Math.min(a.x, b.x);
         const y = Math.min(a.y, b.y);

@@ -26,12 +26,12 @@ export function skapaScen(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' });
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.NoToneMapping;
   const scen = new THREE.Scene();
-  scen.background = new THREE.Color('#c5d4c2');
-  scen.fog = new THREE.Fog('#c5d4c2', 80, 520);
-  const kamera = new THREE.PerspectiveCamera(42, 1, 0.15, 2000);
-  const hemi = new THREE.HemisphereLight('#e7f0e2', '#6d6248', 1.15);
-  const sol = new THREE.DirectionalLight('#fff4dd', 1.35);
+  scen.background = new THREE.Color('#b7c4ae');
+  const kamera = new THREE.PerspectiveCamera(38, 1, 0.15, 4000);
+  const hemi = new THREE.HemisphereLight('#f4f7f1', '#8a7d62', 0.55);
+  const sol = new THREE.DirectionalLight('#fff6e4', 0.85);
   sol.position.set(80, 140, 40);
   scen.add(hemi, sol);
 
@@ -92,7 +92,7 @@ export function skapaScen(canvas) {
     const map = new THREE.CanvasTexture(c);
     map.colorSpace = THREE.SRGBColorSpace;
     map.anisotropy = 4;
-    const mat = new THREE.MeshStandardMaterial({ map, roughness: 1, metalness: 0 });
+    const mat = new THREE.MeshBasicMaterial({ map, toneMapped: false, fog: false });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.name = 'Mark';
     return mesh;
@@ -123,7 +123,7 @@ export function skapaScen(canvas) {
         dx /= len;
         dz /= len;
         if (i) vand += Math.hypot(p.x - punkter[i - 1].x, p.z - punkter[i - 1].z);
-        const y = p.y + 0.15;
+        const y = p.y + 0.7;
         pos.push(p.x - dz * halv, y, p.z + dx * halv, p.x + dz * halv, y, p.z - dx * halv);
         uv.push(0, vand / 8, 1, vand / 8);
       }
@@ -139,10 +139,19 @@ export function skapaScen(canvas) {
     geo.setIndex(idx);
     geo.computeVertexNormals();
     const map = textur(VAGAR[0].sokvag, true);
-    const mat = new THREE.MeshStandardMaterial({ map, roughness: 1, metalness: 0 });
+    const mat = new THREE.MeshBasicMaterial({
+      map,
+      color: '#6e6558',
+      toneMapped: false,
+      fog: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
+    });
     tillstand.vagMaterial = mat;
     const mesh = new THREE.Mesh(geo, mat);
     mesh.name = 'Vag';
+    mesh.renderOrder = 2;
     return mesh;
   }
 
@@ -372,9 +381,10 @@ export function skapaScen(canvas) {
       titta(f.x - 22, f.y + 7, f.z + 28, f.x, f.y + 3, f.z);
     } else if (namn === 'mark') {
       titta(f.x + 6, f.y + 1.7, f.z + 14, f.x, f.y + 2.2, f.z - 16);
+    } else if (namn === 'sned') {
+      titta(t.breddMeter * 0.62, t.djupMeter * 0.62, t.djupMeter * 0.78, 0, 0, 0);
     } else {
-      const dist = Math.max(t.breddMeter, t.djupMeter);
-      titta(t.breddMeter * 0.08, dist * 0.92, t.djupMeter * 0.72, -t.breddMeter * 0.18, 0, t.djupMeter * 0.06);
+      titta(0, t.djupMeter * 1.95, t.djupMeter * 0.02, 0, 0, 0);
     }
   }
 

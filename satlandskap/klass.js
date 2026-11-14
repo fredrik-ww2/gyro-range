@@ -748,7 +748,7 @@ function placeraMedFro(tradMask, pix, dist, w, h, installningar, breddM, djupM, 
     const i = yPix * w + xPix;
     if (!tradMask[i]) continue;
     const kant = dist[i];
-    if (kant < 2.2) continue;
+    if (kant < 0.7) continue;
     const x = (u - 0.5) * breddM;
     const z = (v - 0.5) * djupM;
     const cx = Math.floor((u * breddM) / cell);
@@ -939,15 +939,14 @@ export function tolka(bild, installningar = STANDARD, meta = {}) {
     const L = sMedel[i];
     const o = std[i];
     const gron = pix.gron[i];
-    const mork = L < Math.max(0.2, median * 0.72) && L < p40 * 1.05;
-    const textur = o > 0.02;
-    const jamnLjus = L > median * 0.9 && o < 0.05;
-    const vegetation = gron > 0.004 || L < median * 0.5;
+    const mork = L < Math.max(0.30, median * 0.84);
+    const textur = o > 0.016;
+    const jamnLjus = L > median * 0.94 && o < 0.04;
+    const vegetation = gron > 0.002 || L < median * 0.62;
     if (mork && textur && vegetation && !jamnLjus) kandidat[i] = 1;
   }
-  let trad = oppna(kandidat, w, h, 1);
-  trad = stang(trad, w, h, 2);
-  const minDunge = Math.max(70, Math.round(n * 0.0035));
+  let trad = stang(kandidat, w, h, 1);
+  const minDunge = Math.max(36, Math.round(n * 0.0008));
   for (const komp of komponenter(trad, w, h)) {
     if (komp.length < minDunge) {
       for (const p of komp) trad[p] = 0;
@@ -971,8 +970,8 @@ export function tolka(bild, installningar = STANDARD, meta = {}) {
     const bh = maxY - minY + 1;
     const aspekt = Math.max(bw, bh) / Math.min(bw, bh);
     const medel = summa / komp.length;
-    /* Hargån och andra långsmala, ljusare gröna band är inte trädkronor. */
-    if (aspekt > 3.1 && medel > 0.36) {
+    /* Bara ett ljust, långsmalt gräsband släpps. Mörka dungar, även avlånga, behålls. */
+    if (aspekt > 6 && medel > 0.5) {
       for (const p of komp) trad[p] = 0;
     }
   }

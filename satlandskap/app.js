@@ -68,6 +68,7 @@ document.getElementById('bredd').addEventListener('change', () => {
   if (raster) tolkaOm();
 });
 document.getElementById('vyOversikt').addEventListener('click', () => { scen.visaVy('oversikt'); oppnaMeny(false); });
+document.getElementById('vySned').addEventListener('click', () => { scen.visaVy('sned'); oppnaMeny(false); });
 document.getElementById('vyNara').addEventListener('click', () => { scen.visaVy('nara'); oppnaMeny(false); });
 document.getElementById('vyMark').addEventListener('click', () => { scen.visaVy('mark'); oppnaMeny(false); });
 

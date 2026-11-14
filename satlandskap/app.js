@@ -16,7 +16,7 @@ const scen = skapaScen(document.getElementById('yta'));
 let raster = null;
 let tolkning = null;
 let bildNamn = 'Markimvägen provbild';
-let vagId = 'grus';
+let vagId = 'sten';
 let kollisionSynlig = false;
 let senastBlob = null;
 

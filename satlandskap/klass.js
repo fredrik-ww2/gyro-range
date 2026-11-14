@@ -931,19 +931,15 @@ export function tolka(bild, installningar = STANDARD, meta = {}) {
   for (let i = 0; i < n; i++) std[i] = Math.sqrt(Math.max(0, cMedel[i] - sMedel[i] * sMedel[i]));
   const sorterad = Array.from(pix.luma).sort((a, b) => a - b);
   const median = sorterad[Math.floor(n * 0.5)];
-  const p40 = percentil(sorterad, 0.4);
 
+  /* Kronor är mörka och ojämna (skuggor mellan topparna). Grön äng och
+     slät åker är jämnare eller ljusare, även om de är gröna. */
   const kandidat = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     if (pix.etikett[i]) continue;
     const L = sMedel[i];
     const o = std[i];
-    const gron = pix.gron[i];
-    const mork = L < Math.max(0.30, median * 0.84);
-    const textur = o > 0.016;
-    const jamnLjus = L > median * 0.94 && o < 0.04;
-    const vegetation = gron > 0.002 || L < median * 0.62;
-    if (mork && textur && vegetation && !jamnLjus) kandidat[i] = 1;
+    if (L < 0.4 && o > 0.055) kandidat[i] = 1;
   }
   let trad = stang(kandidat, w, h, 1);
   const minDunge = Math.max(36, Math.round(n * 0.0008));
@@ -968,10 +964,9 @@ export function tolka(bild, installningar = STANDARD, meta = {}) {
     }
     const bw = maxX - minX + 1;
     const bh = maxY - minY + 1;
-    const aspekt = Math.max(bw, bh) / Math.min(bw, bh);
-    const medel = summa / komp.length;
-    /* Bara ett ljust, långsmalt gräsband släpps. Mörka dungar, även avlånga, behålls. */
-    if (aspekt > 6 && medel > 0.5) {
+    const smal = Math.min(bw, bh);
+    /* Ett smalt streck är åkant eller åfåra, inte en dunge. */
+    if (smal < 9) {
       for (const p of komp) trad[p] = 0;
     }
   }

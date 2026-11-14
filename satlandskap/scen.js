@@ -46,7 +46,7 @@ export function skapaScen(canvas) {
   const laddare = new GLTFLoader();
   const texturLaddare = new THREE.TextureLoader();
   const mal = new THREE.Vector3();
-  const tillstand = { tolkning: null, bild: null, vagId: 'grus', vagMaterial: null, kollisionSkapad: false };
+  const tillstand = { tolkning: null, bild: null, vagId: 'sten', vagMaterial: null, kollisionSkapad: false };
 
   function storlek() {
     const w = canvas.clientWidth || 390;
@@ -138,10 +138,10 @@ export function skapaScen(canvas) {
     geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
     geo.setIndex(idx);
     geo.computeVertexNormals();
-    const map = textur(VAGAR[0].sokvag, true);
+    const map = textur(VAGAR.find((v) => v.id === 'sten').sokvag, true);
     const mat = new THREE.MeshBasicMaterial({
       map,
-      color: '#6e6558',
+      color: '#f3f1ec',
       toneMapped: false,
       fog: false,
       polygonOffset: true,

@@ -58,6 +58,7 @@ header{left:auto;right:0;top:0;width:auto;padding:0;background:transparent;point
 #missionHud b{text-shadow:0 1px 2px #000c}
 body.playing .vignette{background:linear-gradient(180deg,transparent 72%,#0b161b66)}
 body.cockpit .vignette{background:radial-gradient(ellipse at 50% 46%,transparent 46%,#040c1018 100%)}
+body.cockpit #hud #gauges{display:none}
 #safeProbe{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
 #safeTop{display:block;width:0;height:env(safe-area-inset-top)}
 #safeBottom{display:block;width:0;height:env(safe-area-inset-bottom)}

@@ -118,7 +118,7 @@
     "gun": {"size": 0.15, "fallback": {"cx": 0.5, "cy": 0.82}},
     "portrait": {
       "windshieldEnd": 0.56,
-      "gaugeSize": 0.158,
+      "gaugeSize": 0.092,
       "collective": {"left": 0, "top": 0.74, "width": 0.18, "height": 0.26},
       "pedalLeft": {"left": 0.22, "top": 0.86, "width": 0.16, "height": 0.12},
       "pedalRight": {"left": 0.4, "top": 0.86, "width": 0.16, "height": 0.12},
@@ -128,14 +128,14 @@
       "aimPad": {"cx": 0.8, "cy": 0.78, "size": 0.3},
       "rocket": {"cx": 0.5, "cy": 0.93, "size": 0.14},
       "gauges": {
-        "altitude": {"cx": 0.36, "cy": 0.6},
-        "vertical": {"cx": 0.52, "cy": 0.6},
-        "radar": {"cx": 0.66, "cy": 0.6}
+        "altitude": {"cx": 0.34, "cy": 0.84},
+        "vertical": {"cx": 0.46, "cy": 0.84},
+        "radar": {"cx": 0.58, "cy": 0.84}
       }
     },
     "landscape": {
       "windshieldEnd": 0.58,
-      "gaugeSize": 0.1,
+      "gaugeSize": 0.072,
       "collective": {"left": 0, "top": 0.7, "width": 0.12, "height": 0.28},
       "pedalLeft": {"left": 0.2, "top": 0.82, "width": 0.1, "height": 0.14},
       "pedalRight": {"left": 0.32, "top": 0.82, "width": 0.1, "height": 0.14},
@@ -145,9 +145,9 @@
       "aimPad": {"cx": 0.84, "cy": 0.74, "size": 0.2},
       "rocket": {"cx": 0.62, "cy": 0.9, "size": 0.1},
       "gauges": {
-        "altitude": {"cx": 0.4, "cy": 0.64},
-        "vertical": {"cx": 0.54, "cy": 0.64},
-        "radar": {"cx": 0.68, "cy": 0.64}
+        "altitude": {"cx": 0.36, "cy": 0.78},
+        "vertical": {"cx": 0.46, "cy": 0.78},
+        "radar": {"cx": 0.56, "cy": 0.78}
       }
     }
   }

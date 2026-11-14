@@ -18,6 +18,8 @@ body:has(.gyrobox-rot) #lageRad { top: calc(env(safe-area-inset-top) + 106px); }
 body:has(.gyrobox-rot) #matning { top: calc(env(safe-area-inset-top) + 172px); }
 #topp > * { pointer-events: auto; }
 #version { padding: 4px 10px; border-radius: 999px; background: #121816e0; color: var(--lime); font-size: 13px; font-weight: 800; letter-spacing: .03em; }
+#matKnapp { position: fixed; z-index: 7; top: calc(env(safe-area-inset-top) + 48px); left: max(8px, env(safe-area-inset-left)); min-height: 28px; padding: 2px 10px; font-size: 13px; font-weight: 750; border-radius: 999px; pointer-events: auto; }
+#matKnapp[aria-expanded=true] { background: var(--lime); color: #19221a; }
 #noll, #install { margin-left: auto; min-height: 44px; padding: 8px 12px; font-weight: 700; }
 #noll { margin-left: auto; }
 #install { margin-left: 0; }

@@ -599,6 +599,11 @@ hall($('knappHoger'), 'hoger');
 $('knappGa').addEventListener('click', () => sattLage('ga'));
 $('knappSikta').addEventListener('click', () => sattLage('sikta'));
 $('noll').addEventListener('click', nollstall);
+$('matKnapp').addEventListener('click', () => {
+  const oppna = $('matning').hidden;
+  $('matning').hidden = !oppna;
+  $('matKnapp').setAttribute('aria-expanded', oppna ? 'true' : 'false');
+});
 $('res').addEventListener('click', () => { ligger = false; });
 $('install').addEventListener('click', () => {
   const oppna = $('panel').hidden;

@@ -57,7 +57,7 @@ export class RotorEffects {
  }
  removeWreck(w){w.object.removeFromParent();if(w.disposeOnRemove)w.object.traverse(o=>{o.geometry?.dispose();for(const m of (Array.isArray(o.material)?o.material:[o.material]).filter(Boolean))m.dispose()});this.wrecks.splice(this.wrecks.indexOf(w),1)}
  renderBatch(batch,items){
-  let i=0;const fov=(this.camera.fov||60)*Math.PI/180,px=Math.max(480,typeof innerHeight==='number'?innerHeight:844),minPix=16;for(const p of items){const t=p.age/p.life,dist=Math.sqrt(p.distance||1),floor=p.trail?dist*2*Math.tan(fov/2)*(minPix/px):0,s=Math.max(p.size+(p.endSize-p.size)*t,floor),fade=p.glow?(1-t)**1.5:p.trail?Math.min(1,(1-t)*1.6):Math.min(1,t*12)*Math.min(1,(1-t)*3);batch.center.setXYZ(i,p.pos.x,p.pos.y,p.pos.z);batch.tint.setXYZW(i,p.color[0],p.color[1],p.color[2],p.alpha*fade);batch.data.setXYZW(i,s,p.rotation,p.tile,0);i++}batch.mesh.geometry.instanceCount=i;for(const a of [batch.center,batch.tint,batch.data])a.needsUpdate=true;
+  let i=0;const fov=(this.camera.fov||60)*Math.PI/180,px=Math.max(480,typeof innerHeight==='number'?innerHeight:844),minPix=16;for(const p of items){const t=p.age/p.life,dist=Math.sqrt(p.distance||1),near=dist<9?dist/9:1,floor=p.trail?dist*2*Math.tan(fov/2)*(minPix/px):0,s=Math.max(p.size+(p.endSize-p.size)*t,floor)*near,fade=(p.glow?(1-t)**1.5:p.trail?Math.min(1,(1-t)*1.6):Math.min(1,t*12)*Math.min(1,(1-t)*3))*near;batch.center.setXYZ(i,p.pos.x,p.pos.y,p.pos.z);batch.tint.setXYZW(i,p.color[0],p.color[1],p.color[2],p.alpha*fade);batch.data.setXYZW(i,s,p.rotation,p.tile,0);i++}batch.mesh.geometry.instanceCount=i;for(const a of [batch.center,batch.tint,batch.data])a.needsUpdate=true;
  }
  syncMarks(){
   const T=this.T;let index=0;

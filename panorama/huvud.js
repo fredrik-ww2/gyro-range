@@ -16,6 +16,7 @@ import {skapaKollision, sjalvtest as kollTest} from './kollision.js?v=17';
 import {skapaSkytt, eldSteg, avstandTillSegment, sjalvtest as eldTest} from './eld.js?v=17';
 import {husSpec, sjalvtest as husTest} from './hus.js?v=17';
 import {monteraPanorama} from './gyrobox-adapter.js?v=1';
+import {handelse} from '../shared/ios-brygga.js';
 
 const config = await laddaConfig();
 
@@ -1007,7 +1008,7 @@ function avfyra() {
   sparrTill = nu + (SPARR_MS[laser.install.vapen] || 800);
   skottAntal++;
   ljud.skott();
-  if (laser.install.vibrera && typeof navigator.vibrate === 'function') {
+  if (!handelse('panorama-skott', { niva: 1 }) && laser.install.vibrera && typeof navigator.vibrate === 'function') {
     try { navigator.vibrate(18); } catch { /* Safari vibrerar inte */ }
   }
   blixt();
@@ -1021,6 +1022,7 @@ function avfyra() {
   const soldat = soldatApi.traffa(raycaster);
   if (soldat) {
     traffAntal++;
+    handelse('panorama-traff', { niva: soldat.dog ? 1 : 0.65 });
     ljud.traff(soldat.avstand);
     visaTraff();
     return soldat;

@@ -11,6 +11,7 @@ import { monteraGubbe } from './gyrobox-adapter.js';
 import { provFranEvent, lyssnaSkarm } from '../shared/sensor.js';
 import { arOmslag, nyNollRiktning } from '../js/riktning.js';
 import { installeraIosLjud, oppnaKontext, tick } from '../shared/ios-ljud.js';
+import { handelse } from '../shared/ios-brygga.js';
 
 const $ = (id) => document.getElementById(id);
 let stegLjud = null;
@@ -373,7 +374,7 @@ function steg(dt) {
     const iv = skakIntervall(sk.niva, installningar.sikta.maxSkak);
     if (iv > 0) {
       skakKlocka += dt;
-      if (skakKlocka >= iv) { skakKlocka = 0; haptik.tick(); }
+      if (skakKlocka >= iv) { skakKlocka = 0; haptik.tick(); handelse('gubbe-skak', { niva: Math.max(0.25, Math.min(1, sk.niva || 0.4)) }); }
     } else skakKlocka = 0;
   }
   const malLigg = ligger ? 1 : 0;
@@ -388,7 +389,7 @@ function steg(dt) {
   fas += dt * (2.2 + hor * 2.5) * (1 - ligg);
   if (hor > 0.45 && ligg < 0.5) {
     const halv = Math.floor(fas / Math.PI);
-    if (halv !== stegHalv) { stegHalv = halv; tick(stegLjud); }
+    if (halv !== stegHalv) { stegHalv = halv; tick(stegLjud); handelse('gubbe-steg', { niva: 0.55 }); }
   }
   const amp = Math.min(0.95, hor * 0.38) * (1 - ligg);
   const axel = Math.max(lage === 'sikta' ? 1 : 0, ligg);

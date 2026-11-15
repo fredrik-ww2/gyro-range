@@ -1,8 +1,9 @@
 // Native-bryggan används bara inne i appen. Safari behåller sitt switch-tick.
+const HAND={gevar:'skott-gevar',karbin:'skott-karbin',kulspruta:'kulspruta',hit:'traff',nedslag:'nedslag',huk:'huk',skott:'puls-skott',kram:'kram',steg:'steg','laddning-klar':'laddning-klar'};
 export function createHaptics(styles, settings) {
   const native=()=>typeof window.ReactNativeWebView?.postMessage==='function';
   const strength=()=>Math.max(0,Math.min(2,Number(settings.skottkansla)||0));
-  const send=(kind)=>{if(!settings.brytare.haptik||!strength())return;window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind,strength:strength()}));};
+  const send=(kind)=>{if(!settings.brytare.haptik||!strength())return;window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind,handelse:HAND[kind]||kind,strength:strength()}));};
   return {
     shot(style,kind='gevar') {
       if (!settings.brytare.haptik) return;
@@ -15,18 +16,19 @@ export function createHaptics(styles, settings) {
     impact(kraft=1){
       if(!settings.brytare.haptik)return;
       const tung=kraft>1;
-      if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:tung?'nedslag':'huk',strength:Math.max(.5,strength())*(tung?1.35:1)}));return;}
+      if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:tung?'nedslag':'huk',handelse:tung?'nedslag':'huk',strength:Math.max(.5,strength())*(tung?1.35:1)}));return;}
       if(typeof navigator.vibrate==='function')navigator.vibrate(tung?[14,24,18]:16);
     },
-    puls(niva=0.2){
+    puls(niva=0.2,kind){
       const n=Math.max(0,Math.min(1.5,Number(niva)||0));
       if(!settings.brytare.haptik||!n)return;
-      if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:n>.6?'skott':'kram',strength:n}));return;}
+      const vald=kind||(n>.6?'skott':'kram');
+      if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:vald,handelse:HAND[vald]||vald,strength:n}));return;}
       if(typeof navigator.vibrate==='function')navigator.vibrate(Math.round(8+n*28));
     },
     step(){
       if(!settings.brytare.haptik)return;
-      if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:'steg',strength:Math.max(0.35,strength())}));return;}
+      if(native()){window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic',kind:'steg',handelse:'steg',strength:Math.max(0.35,strength())}));return;}
       if(typeof navigator.vibrate==='function')navigator.vibrate(12);
     },
     sync(){if(native())window.ReactNativeWebView.postMessage(JSON.stringify({type:'haptic-settings',strength:strength(),enabled:!!settings.brytare.haptik}));},

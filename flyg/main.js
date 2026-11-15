@@ -25,6 +25,7 @@ import {tomOmgang, traffPaSpelare, ljudBehov, FLYG_VERSION, vyEtikett} from './o
 import {skapaKanal,skapaMekanik,gasSlag} from './ljud.js?v=14';
 import {monteraFlyg} from './gyrobox-adapter.js';
 import {installeraIosLjud, forberedTystLage} from '../shared/ios-ljud.js';
+import {handelse} from '../shared/ios-brygga.js';
 const $=id=>document.getElementById(id), began=performance.now();
 const C=await fetch('./config.json?v=10').then(r=>{if(!r.ok)throw Error('Inställningar saknas');return r.json();});
 const V=await fetch('./kamera/profil.json').then(r=>r.json());
@@ -182,7 +183,7 @@ for(const ev of ['pointerup','pointercancel','lostpointercapture']){$('pedalV').
 function synkaReglage(){const lampa=$('hjulLampa'),ror=Math.abs(gearPos-gearMal)>0.04;lampa.className='lampa'+(ror?' rod':gearPos>0.92?' gron':'');$('hjul').setAttribute('aria-label',ror?'Hjulen rör sig':gearPos>0.92?'Hjulen är nere och låsta':'Hjulen är uppe');$('klaffText').textContent=flaps>0.8?'Land':flaps>0.2?'Start':'Inne';$('bombAntal').textContent=String(bomberKvar);$('forare').hidden=!sight;}
 $('hjul').onclick=()=>{if(paMarken&&gearMal>0.5){$('status').textContent='Hjulen ska vara nere på marken';return;}gearMal=gearMal>0.5?0:1;synkaReglage();};
 $('klaff').onclick=()=>{flaps=flaps<0.2?0.45:flaps<0.7?1:0;synkaReglage();$('status').textContent=flaps>0.8?'Landningsklaff ute':flaps>0.2?'Startklaff ute':'Klaffen inne';};
-function fallBomb(){if(!bomberKvar){$('status').textContent='Inga bomber kvar';return false;}fyllHast(hast,fm);const ok=bomber.fall(aircraft.position,{x:hast.x,y:hast.y,z:hast.z},227);if(!ok)return false;bomberKvar--;synkaReglage();$('status').textContent='Bomb fälld';return true;}
+function fallBomb(){if(!bomberKvar){$('status').textContent='Inga bomber kvar';return false;}fyllHast(hast,fm);const ok=bomber.fall(aircraft.position,{x:hast.x,y:hast.y,z:hast.z},227);if(!ok)return false;bomberKvar--;synkaReglage();handelse('flyg-bomb',{niva:1});$('status').textContent='Bomb fälld';return true;}
 $('fall').onclick=fallBomb;
 const Zon=C.gyro_zon;
 const standardKans=settings.kanslighet, standardRoll=settings.roll_troskel_grader;
@@ -216,10 +217,10 @@ if(!globalThis.__flygLiv){globalThis.__flygLiv=true;
 function malLista(){const lista=[];if(opp.state.laddad)lista.push({id:'fiende',center:opp.group.position,radie:C.motstandare.traff_radie_m,agare:'fiende',lever:opp.state.lever&&opp.group.visible});
  lista.push({id:'spelare',center:aircraft.position,radie:C.motstandare.traff_radie_m,agare:'spelare',lever:running&&!fm.crashed});
  if(settings.brytare.mal)for(const t of targets)if(t.mesh.visible)lista.push({id:'ballong',ref:t,center:t.mesh.position,radie:C.vapen.traff_radie,agare:'mal',lever:true});return lista;}
-function behandla(h){if(h.id==='fiende'){opp.traff(1);hits++;hitUntil=time+.23;haptics.hit();if(!opp.state.lever){$('seger').hidden=false;$('status').textContent='Fw 190 nedskjuten';}}
- else if(h.id==='spelare'){const ut=traffPaSpelare(spelareHp,!!settings.brytare.skada,1);if(!settings.brytare.skada)return;spelareHp=ut.hp;skadaTill=time+.45;$('skada').style.opacity='.85';haptics.hit();if(ut.ned&&!fm.crashed)nedskjuten();}
- else if(h.ref){h.ref.down=time+C.vapen.aterkomst_s;h.ref.mesh.visible=false;hits++;hitUntil=time+.23;haptics.hit();}}
-function shoot(){shots++;guns.model=currentModel;fyllHast(hast,fm);guns.fire(forward,hast,aircraft,null,'spelare');haptics.shot('tung','kulspruta');shotSound();}
+function behandla(h){if(h.id==='fiende'){opp.traff(1);hits++;hitUntil=time+.23;if(!handelse('flyg-traff',{niva:1}))haptics.hit();if(!opp.state.lever){$('seger').hidden=false;$('status').textContent='Fw 190 nedskjuten';}}
+ else if(h.id==='spelare'){const ut=traffPaSpelare(spelareHp,!!settings.brytare.skada,1);if(!settings.brytare.skada)return;spelareHp=ut.hp;skadaTill=time+.45;$('skada').style.opacity='.85';if(!handelse('flyg-traffad',{niva:1}))haptics.hit();if(ut.ned&&!fm.crashed)nedskjuten();}
+ else if(h.ref){h.ref.down=time+C.vapen.aterkomst_s;h.ref.mesh.visible=false;hits++;hitUntil=time+.23;if(!handelse('flyg-traff',{niva:.7}))haptics.hit();}}
+function shoot(){shots++;guns.model=currentModel;fyllHast(hast,fm);guns.fire(forward,hast,aircraft,null,'spelare');if(!handelse('flyg-kulspruta',{niva:1}))haptics.shot('tung','kulspruta');shotSound();}
 function placeReticle(x,y){const r=Math.tan(RING)/Math.tan(K.fov_grader*Math.PI/360)*innerHeight/2;$('reticleGlow').setAttribute('transform',`translate(${x} ${y})`);$('ringGlow').setAttribute('r',r);$('ringB').setAttribute('r',r);sikteState.cx=x;sikteState.cy=y;sikteState.ring=r;}
 function uppdateraSikte(view){if(!sight)return;cockpitCam.getWorldPosition(aimPoint);forward.set(0,0,-1).applyQuaternion(aircraft.quaternion);aimPoint.addScaledVector(forward,8000);projected.copy(aimPoint).project(cockpitCam);
  const x=(projected.x*.5+.5)*innerWidth,y=(-projected.y*.5+.5)*innerHeight;placeReticle(x,y);
@@ -235,7 +236,7 @@ function ritaPanel(){const rpm=motorRpm(gas,motor,propPitch,motorPa&&bransle>0);
 function spinProp(dt){const rps=propVarv(gas,motor,propPitch,motorPa&&bransle>0);propNav+=rps*Math.PI*2*dt;for(const n of propNoder)n.rotateZ(rps*Math.PI*2*dt);const t=Math.min(1,Math.max(0,(rps-6)/18));if(blur)blur.mat.opacity=motorPa?(.12+t*.7):0;for(const n of propNoder)n.traverse(o=>{if(o.isMesh&&o.material){o.material.opacity=motorPa?1-t*.92:0;o.material.depthWrite=t<.35;}});}
 function crash(){fm.crashed=true;stopFire();crashInfo={fart_kmh:Math.round(fm.V*3.6),vinkel_grader:Math.round(-fm.gamma*180/Math.PI)};const p=aircraft.position.clone();p.y=height(p.x,p.z)+.3;fm.y=height(fm.x,fm.z)+4;aircraft.position.set(fm.x,fm.y,fm.z);aircraft.rotation.set(0,heading,0,'YXZ');
  effects.spela('traff_mark',{pos:p,laddning_g:C.krasch.laddning_g,kaliber_mm:20,underlag:'torr'});crashFx=effects.spela('brand_rok',{pos:p,fas:'brinner',skala:C.krasch.brand_skala});
- visual.visible=false;if(sight)setSight(false);haptics.hit();$('crashEyebrow').textContent='STÖRTAT';$('crashTitle').textContent='Planet störtade';$('crashText').textContent=`Planet störtade i ${crashInfo.fart_kmh} km/h, ${crashInfo.vinkel_grader}° mot marken.`;$('crashPanel').hidden=false;$('status').textContent='Störtade';}
+ visual.visible=false;if(sight)setSight(false);if(!handelse('flyg-krasch',{niva:1}))haptics.hit();$('crashEyebrow').textContent='STÖRTAT';$('crashTitle').textContent='Planet störtade';$('crashText').textContent=`Planet störtade i ${crashInfo.fart_kmh} km/h, ${crashInfo.vinkel_grader}° mot marken.`;$('crashPanel').hidden=false;$('status').textContent='Störtade';}
 function nedskjuten(){fm.crashed=true;stopFire();const p=aircraft.position.clone();effects.spela('traff_mark',{pos:p,laddning_g:2200,kaliber_mm:20,underlag:'torr'});crashFx=effects.spela('brand_rok',{pos:p,fas:'brinner',skala:1.3});
  visual.visible=false;if(sight)setSight(false);$('crashEyebrow').textContent='NEDSKJUTEN';$('crashTitle').textContent='Du blev nedskjuten';$('crashText').textContent='Fw 190 träffade dig. Tryck Flyg igen.';$('crashPanel').hidden=false;$('status').textContent='Nedskjuten';}
 function styrText(){if(styrLage==='nekad')return 'Gyro nekades · dra med fingret';if(!settings.brytare.gyro||!input.active||styrLage==='finger')return 'Dra i bilden för att flyga · Centrera rätar upp';if(lastInput?.source==='tyst')return 'Sensorn svarar inte · håll kvar och tryck Centrera';return 'Luta för att flyga · vrid för sidroder · Centrera nollställer';}
@@ -256,14 +257,15 @@ function logic(dt){gyro.update(dt);lastInput=input.read();gyroLada.forma(lastInp
  // hård landning studsar och varnar, allt annat är en krasch. Utan hjul eller för fort gäller vanlig markkontakt.
  const L=C.landning;
  if(!paMarken&&gearPos>0.85&&agl<1.8&&fm.V<L.max_fart_ms&&Math.abs(roll)<L.max_bank_rad&&fm.vs>L.hard_vs_ms){
-  if(fm.vs>L.mjuk_vs_ms){landInfo=fm.vs>-1.2?'Mjuk landning':'Landade';paMarken=true;fm.y=markY+1.35;fm.gamma=0;fm.vs=0;if(fm.kvaternion)fm.vy=0;aircraft.position.y=fm.y;haptics.hit();}
-  else{if(fm.kvaternion)fm.vy=-fm.vs*0.35;else{fm.vs=-fm.vs*0.35;fm.gamma=Math.abs(fm.gamma)*0.5;}fm.y=markY+2.2;haptics.hit();landInfo='Hård landning – studs';statusLas=time+2.5;$('status').textContent='Hård landning! Håll nosen uppe och sätt ner mjukare.';}
+  if(fm.vs>L.mjuk_vs_ms){landInfo=fm.vs>-1.2?'Mjuk landning':'Landade';paMarken=true;fm.y=markY+1.35;fm.gamma=0;fm.vs=0;if(fm.kvaternion)fm.vy=0;aircraft.position.y=fm.y;if(!handelse('flyg-landning',{niva:.8}))haptics.hit();}
+  else{if(fm.kvaternion)fm.vy=-fm.vs*0.35;else{fm.vs=-fm.vs*0.35;fm.gamma=Math.abs(fm.gamma)*0.5;}fm.y=markY+2.2;if(!handelse('flyg-landning-hard',{niva:1}))haptics.hit();landInfo='Hård landning – studs';statusLas=time+2.5;$('status').textContent='Hård landning! Håll nosen uppe och sätt ner mjukare.';}
  }
  else if(!paMarken&&agl<C.krasch.kontakt_m){if(settings.brytare.markskydd||!settings.brytare.krasch){fm.y=markY+C.krasch.kontakt_m;if(fm.vs<0)fm.vs=0;if(fm.kvaternion&&fm.vy<0)fm.vy=0;fm.gamma=Math.max(0,fm.gamma);}else crash();}
  if(Math.hypot(fm.x-markX,fm.z-markZ)>180){markX=fm.x;markZ=fm.z;mark.place(fm.x,fm.z);}
  if(firing&&settings.brytare.skjutning&&time>=nextShot){shoot();nextShot=time+C.vapen.intervall_s;}
  if(motorKanal.spelar()&&audio){const nu=audio.currentTime||0;motorKanal.takt(motorPa?(.55+gas*.7):.2,nu);motorKanal.volym(motorPa?C.ljud.motor_volym*(.4+gas*.6):0,nu);}
- if(fm.stalled&&time>stallBuzz){haptics.hit();stallBuzz=time+.35;}
+ handelse('flyg-motor',{pa:!!(running&&motorPa),niva:motorPa?Math.min(1,.22+gas*.78):0,kontinuerlig:true});
+ if(fm.stalled&&time>stallBuzz){if(!handelse('flyg-stall',{niva:1}))haptics.hit();stallBuzz=time+.35;}
  opp.update(dt,fm,time);
  skrivHud();
 }
@@ -296,7 +298,7 @@ function present(dt){spinProp(dt);if(!running)forward.set(0,0,-1).applyQuaternio
 }
 function beraknaNedslag(){fyllHast(hast,fm);let x=aircraft.position.x,y=aircraft.position.y-1.2,z=aircraft.position.z,vx=hast.x,vy=hast.y-2,vz=hast.z;for(let i=0;i<400;i++){const dt=0.08,drag=0.06*dt;vx*=1-drag;vz*=1-drag;vy-=9.81*dt;x+=vx*dt;y+=vy*dt;z+=vz*dt;const m=height(x,z);if(y<=m+0.5){nedslag.position.set(x,m+1.5,z);return true;}}return false;}
 function setBombVy(on){bombVy=!!on&&!!bombCam;if(bombVy){sight=false;$('cockpit').hidden=true;$('reticle').hidden=true;document.body.classList.remove('cockpitvy');synkaVyKnapp();} $('bombsikte')?.setAttribute('aria-pressed',String(bombVy));if(model)model.traverse(o=>{if(o.isMesh)o.visible=!(bombVy||sight);});if(blur)blur.mesh.visible=!(bombVy||sight);roderVy?.synlig(!(bombVy||sight));nedslag.visible=bombVy;placeraHorisont();}
-function bomberUpp(dt){bomber.uppdatera(dt,height,(b,markY)=>{bombTraff=time+1.4;const t=mal?.traff(b.x,b.z,b.massa);if(t){$('status').textContent=t;statusLas=time+3;haptics.hit();}const u=mal?.uppdragStatus();if(u?.klart&&!uppdragKlart){uppdragKlart=true;const ruta=$('seger');const h=ruta.querySelector('h2');const p=ruta.querySelector('p');if(h)h.textContent='Uppdraget är klart';if(p)p.textContent='Alla markmål är slagna. Flyg hem och landa, eller tryck Ny strid.';ruta.hidden=false;$('status').textContent='Uppdrag klart. Flyg hem och landa.';statusLas=time+6;}effects.spela('traff_mark',{pos:new THREE.Vector3(b.x,markY+.4,b.z),laddning_g:Math.round(b.massa*180),kaliber_mm:200,underlag:'torr'});});}
+function bomberUpp(dt){bomber.uppdatera(dt,height,(b,markY)=>{bombTraff=time+1.4;const t=mal?.traff(b.x,b.z,b.massa);if(t){$('status').textContent=t;statusLas=time+3;if(!handelse('flyg-bomb-traff',{niva:1}))haptics.hit();}const u=mal?.uppdragStatus();if(u?.klart&&!uppdragKlart){uppdragKlart=true;const ruta=$('seger');const h=ruta.querySelector('h2');const p=ruta.querySelector('p');if(h)h.textContent='Uppdraget är klart';if(p)p.textContent='Alla markmål är slagna. Flyg hem och landa, eller tryck Ny strid.';ruta.hidden=false;$('status').textContent='Uppdrag klart. Flyg hem och landa.';statusLas=time+6;}effects.spela('traff_mark',{pos:new THREE.Vector3(b.x,markY+.4,b.z),laddning_g:Math.round(b.massa*180),kaliber_mm:200,underlag:'torr'});});}
 function tick(dt){time+=dt;if(running&&!fm.crashed)logic(dt);if(running&&!fm.crashed&&mal){fyllHast(hast,fm);mal.uppdatera(dt,{pos:aircraft.position,vel:{x:hast.x,y:hast.y,z:hast.z}},Math.max(0,fm.y-height(fm.x,fm.z)),()=>behandla({id:'spelare'}),time);}bomberUpp(dt);const traffar=guns.update(dt,malLista());if(running)for(const h of traffar)behandla(h);present(dt);panelAcc+=dt;if(panelAcc>=.1){panelAcc=0;if(sight)ritaPanel();else if(running)ritaJakt();}}
 let previous=performance.now();renderer.setAnimationLoop(now=>{const elapsed=Math.max(.001,(now-previous)/1000),dt=Math.min(.05,elapsed);previous=now;tick(dt);frameCount++;frameTime+=elapsed;if(frameTime>.5){fps=frameCount/frameTime;frameCount=frameTime=0;$('metrics').textContent=`${fps.toFixed(0)} FPS · ${renderer.info.render.calls} anrop · ${Math.round(renderer.info.render.triangles/1000)}k tris · GPU≈${gpuEstimateMB.toFixed(0)} MB`;}});
 const gpuEstimateMB=(modelInfo.triangles*96+opp.state.tris*48+1024*1024*4*1.34)/1048576;

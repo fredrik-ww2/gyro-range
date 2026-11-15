@@ -10,11 +10,12 @@ import { arSlutOrd, klippSvans, lasVektor, matHz, rundaSampel, vinkelSkillnad } 
 import { arOmslag } from '../js/riktning.js';
 import { monteraRorelse } from './gyrobox-adapter.js';
 import { installeraIosLjud, oppnaKontext, tick } from '../shared/ios-ljud.js';
+import { handelse } from '../shared/ios-brygga.js';
 
 const $ = (id) => document.getElementById(id);
 let ljudCtx = null;
 installeraIosLjud({ hamta: () => ljudCtx, oppna() { ljudCtx = oppnaKontext(ljudCtx); } });
-function knack() { ljudCtx = oppnaKontext(ljudCtx); tick(ljudCtx); }
+function knack() { ljudCtx = oppnaKontext(ljudCtx); tick(ljudCtx); handelse('rorelse-markering', { niva: 0.55 }); }
 const huvud = $('huvud');
 
 let config;

@@ -37,12 +37,16 @@
 <div id="aircraftCard"><span class="eyebrow">DIN HELIKOPTER</span><b>RA-64 <span>RAVEN</span></b><span>30 mm automatkanon · styrda robotar</span></div>
 <main id="hud" hidden>
   <div id="windshield" aria-label="Sikte. Dra i vindrutan."></div>
+  <button id="nollFlyg" type="button">Nollställ</button>
+  <button id="kartaKnapp" type="button" aria-pressed="false">Karta</button>
   <div id="instrumentband">
-    <button id="kartaKnapp" type="button" aria-pressed="false">Karta</button>
-    <canvas id="mFart" width="160" height="160" aria-label="Fart"></canvas>
-    <canvas id="mHorisont" width="160" height="160" aria-label="Horisont"></canvas>
-    <canvas id="mHojd" width="160" height="160" aria-label="Höjd"></canvas>
-    <canvas id="mKurs" width="160" height="160" aria-label="Kurs"></canvas>
+    <div class="rad">
+      <div class="tal"><b id="talFart">0</b><span>KN</span></div>
+      <div class="tal"><b id="talHojd">0</b><span>METER</span></div>
+      <div class="tal"><b id="talKurs">000</b><span>KURS</span></div>
+    </div>
+    <canvas id="mHorisont" width="256" height="256" aria-label="Horisont"></canvas>
+    <div class="tal stig"><b id="talStig">+0,0</b><span>M/S</span></div>
   </div>
   <canvas id="minikarta" width="200" height="200" hidden aria-label="Karta"></canvas>
   <div id="reticle"><i></i><b></b><span>+</span><small id="lockLabel">SÖKER MÅL</small></div>

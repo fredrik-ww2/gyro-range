@@ -201,45 +201,48 @@ struct SpelVy: View {
     @State private var visaHaptik = false
 
     var body: some View {
-        ZStack(alignment: .top) {
-            WebbVy(sida: sida)
-                .ignoresSafeArea()
-            VStack(spacing: 0) {
-                HStack(spacing: 10) {
-                    knapp("Tillbaka", system: "chevron.left") { dismiss() }
-                    Spacer(minLength: 8)
-                    knapp("Haptik", system: "waveform") { visaHaptik = true }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-                if sida.laddar && sida.fel == nil {
-                    Text("Laddar spelet…")
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(.black.opacity(0.45), in: Capsule())
-                        .foregroundStyle(SpelFarg.text)
-                        .padding(.top, 8)
-                }
-                Spacer()
-                if let fel = sida.fel {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Inget nät")
-                            .font(.title3.weight(.bold))
-                        Text(fel)
-                            .font(.body)
-                        Button("Försök igen") { sida.laddaOm() }
-                            .font(.body.weight(.bold))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(SpelFarg.accent, in: RoundedRectangle(cornerRadius: 12))
-                            .foregroundStyle(.black)
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                knapp("Tillbaka", system: "chevron.left") { dismiss() }
+                Spacer(minLength: 8)
+                knapp("Haptik", system: "waveform") { visaHaptik = true }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color(SpelFarg.bakgrund))
+            ZStack(alignment: .top) {
+                WebbVy(sida: sida)
+                    .ignoresSafeArea(edges: .bottom)
+                VStack(spacing: 0) {
+                    if sida.laddar && sida.fel == nil {
+                        Text("Laddar spelet…")
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(.black.opacity(0.45), in: Capsule())
+                            .foregroundStyle(SpelFarg.text)
+                            .padding(.top, 8)
                     }
-                    .padding(18)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(SpelFarg.kort, in: RoundedRectangle(cornerRadius: 18))
-                    .foregroundStyle(SpelFarg.text)
-                    .padding(16)
+                    Spacer()
+                    if let fel = sida.fel {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Inget nät")
+                                .font(.title3.weight(.bold))
+                            Text(fel)
+                                .font(.body)
+                            Button("Försök igen") { sida.laddaOm() }
+                                .font(.body.weight(.bold))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .background(SpelFarg.accent, in: RoundedRectangle(cornerRadius: 12))
+                                .foregroundStyle(.black)
+                        }
+                        .padding(18)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(SpelFarg.kort, in: RoundedRectangle(cornerRadius: 18))
+                        .foregroundStyle(SpelFarg.text)
+                        .padding(16)
+                    }
                 }
             }
         }

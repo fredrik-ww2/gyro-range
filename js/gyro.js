@@ -115,7 +115,7 @@ export class GyroAim {
    if(!(dt>0)){this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
    const deg=180/Math.PI;
    // Positiv tipp är blick ned. Positiv vridning är åt höger, samma tecken som vinklar.yaw.
-   this.values.pitchNedDps=-v.pitch*deg/dt;this.values.vridHogerDps=Math.max(v.yaw*deg/dt,Math.abs(v.roll)*deg/dt);
+   this.values.pitchNedDps=-v.pitch*deg/dt;this.values.vridHogerDps=v.yaw*deg/dt;
    return Math.max(Math.abs(this.values.pitchNedDps),Math.abs(v.yaw)*deg/dt,Math.abs(v.roll)*deg/dt);
   }
   if(!this.received||!(dt>0)){this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
@@ -125,7 +125,7 @@ export class GyroAim {
   const w=THREE.MathUtils.clamp(this.rateQ.w,-1,1),ang=2*Math.acos(w);this.prevRaw.copy(this.raw);
   if(ang>1.2){this.values.pitchNedDps=0;this.values.vridHogerDps=0;return 0;}
   const sin=Math.sqrt(Math.max(0,1-w*w)),k=(sin>1e-6?ang/sin:2)*(180/Math.PI)/dt;
-  this.values.pitchNedDps=this.rateQ.x*k;this.values.vridHogerDps=Math.max(-this.rateQ.y*k,Math.abs(this.rateQ.z*k));
+  this.values.pitchNedDps=this.rateQ.x*k;this.values.vridHogerDps=-this.rateQ.y*k;
   return THREE.MathUtils.radToDeg(ang)/dt;
  }
  update(dt){

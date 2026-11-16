@@ -1,4 +1,5 @@
 import {lasKonfig} from './konfig.js';
+import '../shared/volym.js';
 import {malOvergang, skapaSim} from './fysik.js';
 import {skapaGyro, mjukLutning} from './gyro.js';
 import {skapaLjud} from './ljud.js';

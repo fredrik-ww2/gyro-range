@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import '../shared/volym.js';
 import {skapaBlick, sjalvtest, normalStyr, STANDARD_STYR} from './blick.js?v=15';
 import {byggVarld} from './varld.js?v=17';
 import {skapaLaser, sjalvtest as laserTest, normalLaser, STANDARD_LASER, matchaFonsterFov, appliceraForval, effektivFov} from './laser.js?v=15';

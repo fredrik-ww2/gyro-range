@@ -37,6 +37,14 @@
 <div id="aircraftCard"><span class="eyebrow">DIN HELIKOPTER</span><b>RA-64 <span>RAVEN</span></b><span>30 mm automatkanon · styrda robotar</span></div>
 <main id="hud" hidden>
   <div id="windshield" aria-label="Sikte. Dra i vindrutan."></div>
+  <div id="instrumentband">
+    <button id="kartaKnapp" type="button" aria-pressed="false">Karta</button>
+    <canvas id="mFart" width="160" height="160" aria-label="Fart"></canvas>
+    <canvas id="mHorisont" width="160" height="160" aria-label="Horisont"></canvas>
+    <canvas id="mHojd" width="160" height="160" aria-label="Höjd"></canvas>
+    <canvas id="mKurs" width="160" height="160" aria-label="Kurs"></canvas>
+  </div>
+  <canvas id="minikarta" width="200" height="200" hidden aria-label="Karta"></canvas>
   <div id="reticle"><i></i><b></b><span>+</span><small id="lockLabel">SÖKER MÅL</small></div>
   <div id="targetMarkers"></div>
   <div id="warning" role="status"></div>
@@ -45,7 +53,7 @@
     <button class="gauge" id="gauge-vertical" type="button" aria-label="Stig och sjunk"><canvas id="gaugeVsi" width="320" height="320"></canvas></button>
     <button class="gauge" id="gauge-radar" type="button" aria-label="Radar och kompass"><canvas id="radar" width="320" height="320"></canvas></button>
   </div>
-  <div id="collective" class="lever" role="slider" tabindex="0" aria-label="Lyftspak" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><b id="collectiveValue">LYFT 60%</b></div>
+  <div id="collective" class="lever" role="slider" tabindex="0" aria-label="Lyftspak" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><span class="lyft-spar"></span><span class="lyft-skala"></span><b id="collectiveValue">LYFT 60%</b><span id="collectiveGrip"></span></div>
   <div class="pedals" id="pedals"><button id="yawLeft" type="button" aria-label="Vänster pedal"></button><button id="yawRight" type="button" aria-label="Höger pedal"></button></div>
   <div class="cyclic-block" id="cyclicBlock"><div id="cyclic" aria-label="Dra för att luta helikoptern" role="application"><span class="forward">FRAMÅT</span><span class="cross-x"></span><span class="cross-y"></span><div id="stick"></div></div></div>
   <button id="gun" type="button" aria-label="Eld. Håll in för automatkanon."><span>ELD</span></button>

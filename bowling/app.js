@@ -1,4 +1,5 @@
 import * as THREE from '../js/vendor/three.module.js';
+import '../shared/volym.js';
 import { KONFIG } from './konfig.js';
 import { skapaGyro } from './gyro.js';
 import { skapaMaskin } from './tillstand.js';

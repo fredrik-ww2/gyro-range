@@ -47,7 +47,10 @@ final class SensorBrygga {
         let g = prov.gravity
         let a = prov.userAcceleration
         let q = prov.attitude.quaternion
-        let beta = atan2(-g.z, -g.y) * 180 / .pi
+        // W3C: beta 0 = platt skärm upp, 90 = upprätt. Den gamla formeln
+        // gav beta 0 upprätt, alltså mitt i gimbal-låset, så lutning åt
+        // höger och framåt fick fel tecken eller inget utslag alls.
+        let beta = atan2(-g.y, -g.z) * 180 / .pi
         let gamma = atan2(g.x, max(hypot(g.y, g.z), 1e-4)) * 180 / .pi
         var alpha = prov.attitude.yaw * 180 / .pi
         alpha = alpha.truncatingRemainder(dividingBy: 360)

@@ -10,6 +10,7 @@ import { arSlutOrd, klippSvans, lasVektor, matHz, rundaSampel, vinkelSkillnad } 
 import { arOmslag } from '../js/riktning.js';
 import { monteraRorelse } from './gyrobox-adapter.js';
 import { installeraIosLjud, oppnaKontext, tick } from '../shared/ios-ljud.js';
+import '../shared/volym.js';
 import { handelse } from '../shared/ios-brygga.js';
 
 const $ = (id) => document.getElementById(id);

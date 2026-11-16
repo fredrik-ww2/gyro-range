@@ -53,24 +53,11 @@ export class FlightInput {
     if (!this.active || !globalThis.window?.ReactNativeWebView) return;
     const d = e.detail;
     if (!d || ![d.x, d.y, d.z, d.t].every(Number.isFinite)) return;
+    // Appen skickar även deviceorientation. Spaken ska följa lutningen,
+    // inte bara en integrerad vridning runt Z. Den integrationen gav
+    // utslag åt vänster och inget åt höger när telefonen tiltades.
     this.native = true;
     this.nativeAt = this.nu();
-    if (this.pending) {
-      this.t = d.t;
-      this.pending = false;
-      this.pose = { pitch: 0, roll: 0, yaw: 0 };
-      return;
-    }
-    if (this.t !== null) {
-      const dt = Math.min(.05, Math.max(0, d.t - this.t));
-      const a = this.skarm() * Math.PI / 180, cs = Math.cos(a), sn = Math.sin(a);
-      const clean = (v) => Math.abs(v) < this.c.gyro_brus_rad_s ? 0 : v;
-      this.pose.pitch += clean(d.x * cs - d.y * sn) * dt;
-      this.pose.yaw += clean(d.x * sn + d.y * cs) * dt;
-      this.pose.roll -= clean(d.z) * dt;
-    }
-    this.rollHast = -d.z;
-    this.rollHastAt = this.nu();
     this.t = d.t;
   }
   // Webbens rotationRate är grader/s. Samma skärmbyte som vinklarna, så ett snabbt
@@ -87,7 +74,7 @@ export class FlightInput {
     this.rollHastAt = this.nu();
   }
   _webb(e) {
-    if (!this.active || this._nativeFarsk()) return;
+    if (!this.active) return;
     const prov = provFranEvent(e);
     if (!prov) return;
     const ang = this.skarm();
@@ -115,8 +102,8 @@ export class FlightInput {
   }
   center() { this.reset(); this.gyro?.center?.(); }
   read() {
-    const freshNative = this._nativeFarsk();
-    const freshWeb = !freshNative && this._webbFarsk() && !this.pending;
+    const freshWeb = this._webbFarsk() && !this.pending;
+    const freshNative = !freshWeb && this._nativeFarsk();
     const sensor = this.active && !this.pending && (freshNative || freshWeb);
     const p = sensor ? this.pose : { pitch: 0, roll: 0, yaw: 0 };
     const fin = (v) => Number.isFinite(v) ? v : 0;

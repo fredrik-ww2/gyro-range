@@ -25,6 +25,7 @@ struct WebbVy: UIViewRepresentable {
         web.scrollView.alwaysBounceVertical = false
         web.scrollView.alwaysBounceHorizontal = false
         web.scrollView.isScrollEnabled = false
+        web.scrollView.delaysContentTouches = false
         web.scrollView.contentInsetAdjustmentBehavior = .never
         web.scrollView.minimumZoomScale = 1
         web.scrollView.maximumZoomScale = 1

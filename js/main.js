@@ -15,6 +15,7 @@ import {skapaBen} from './benpose.js';
 import {monteraSkjutbana} from './gyrobox-adapter.js';
 import {skapaEffekterV2d} from '../assets/effekter/effekter_v2d.js';
 import {installeraIosLjud, forberedTystLage} from '../shared/ios-ljud.js';
+import '../shared/volym.js';
 const $=id=>document.getElementById(id);
 const loadJSON=async p=>{const r=await fetch(new URL('../data/'+p,import.meta.url));if(!r.ok)throw Error(p+': '+r.status);return r.json();};
 const t0=performance.now();
@@ -79,7 +80,7 @@ async function boot(){
  scene.updateMatrixWorld(true);soldierVisual.traverse(n=>{if(n.isSkinnedMesh){n.computeBoundingBox();n.computeBoundingSphere();}});const box=new THREE.Box3().setFromObject(soldierVisual),height=box.max.y-box.min.y;rawBounds.soldat=box.getSize(new THREE.Vector3()).toArray();const soldierScale=cfg.fiende.hojd_m/height;soldierVisual.scale.multiplyScalar(soldierScale);soldierVisual.position.y-=box.min.y*soldierScale;soldierVisual.rotation.y=cfg.fiende.rotation_y;
  const mixer=new THREE.AnimationMixer(soldierVisual);const clip=run.animations.find(a=>a.name===cfg.fiende.klipp);
  if(!clip)throw Error('Springklippet saknas');
- const inPlace=clip.clone();for(const track of inPlace.tracks){if(/^(root|pelvis)\.position$/.test(track.name)){for(let i=0;i<track.values.length;i+=3){track.values[i]=track.values[0];track.values[i+2]=track.values[2];}}}
+ const inPlace=clip.clone();for(const track of inPlace.tracks){if(!/position$/i.test(track.name)||!/root|hips|pelvis|body/i.test(track.name))continue;const v=track.values;if(v.length<3)continue;const x0=v[0],z0=v[2];for(let i=0;i<v.length;i+=3){v[i]=x0;v[i+2]=z0;}}
  const runAction=mixer.clipAction(inPlace).play();
  function klonaSkinn(source){
   const clone=source.clone(true);const src=[],dst=[];
@@ -1191,7 +1192,7 @@ async function boot(){
    const gar=stallning==='staende'&&gangFartNu>.4;
    if(gangFartNu>.25&&stallning!=='liggande')stegFas+=dt*(3.2+gangFartNu*1.4);
    jag.position.y=0;
-   if(gar){jagAction.paused=false;jagAction.timeScale=THREE.MathUtils.clamp(gangFartNu/3.1,.55,1.45);jagMixer.update(dt);benpose.ram(stallning,axel);}
+   if(gar){jagAction.paused=false;jagAction.timeScale=Math.max(.2,gangFartNu/3.1);jagMixer.update(dt);benpose.ram(stallning,axel);}
    else{jagAction.paused=true;benpose.kropp(stallning,axel,dt,gangFartNu>.25&&stallning!=='liggande'?stegFas:0);}
    jag.updateWorldMatrix(true,true);
    const markNamn=stallning==='liggande'?['pelvis','thigh_l','thigh_r','calf_l','calf_r']:stallning==='knastående'?['foot_l','ball_l','calf_r','foot_r','ball_r']:['foot_l','foot_r','ball_l','ball_r'];

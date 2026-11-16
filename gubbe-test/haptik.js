@@ -24,10 +24,16 @@ export function skapaHaptik(doc, nav = {}, nu = () => (globalThis.performance?.n
     const t = nu();
     if (t - senaste < 45) return false;
     senaste = t;
-    if (metod.id === 'vibrate') {
-      try { nav.vibrate(16); } catch { /* enheten saknar motor */ }
-      return true;
-    }
+    try {
+      if (globalThis.webkit?.messageHandlers?.gyroRange || globalThis.GyroRange || globalThis.ReactNativeWebView || metod.id === 'vibrate') {
+        const msg = { type: 'haptic', kind: 'vibrate', handelse: 'vibrera', niva: 0.45 };
+        if (globalThis.webkit?.messageHandlers?.gyroRange) globalThis.webkit.messageHandlers.gyroRange.postMessage(msg);
+        else if (typeof globalThis.GyroRange?.handelse === 'function') globalThis.GyroRange.handelse('vibrera', { niva: 0.45 });
+        else if (globalThis.ReactNativeWebView?.postMessage) globalThis.ReactNativeWebView.postMessage(JSON.stringify(msg));
+        else nav.vibrate?.(16);
+        return true;
+      }
+    } catch { /* prova brytaren */ }
     label?.click?.();
     return true;
   }

@@ -11,6 +11,22 @@
   user-select: none;
   -webkit-user-select: none;
 }
+.gyrobox-noll {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 6px);
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  border: 1px solid #e0f1a466;
+  background: #121816e6;
+  color: #e0f1a4;
+  font: inherit;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.gyrobox-rot.nollad .gyrobox-chip,
+.gyrobox-rot.nollad .gyrobox-noll { outline: 2px solid #e0f1a4; }
 .gyrobox-chip {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

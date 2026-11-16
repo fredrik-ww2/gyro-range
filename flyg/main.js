@@ -25,6 +25,7 @@ import {tomOmgang, traffPaSpelare, ljudBehov, FLYG_VERSION, vyEtikett} from './o
 import {skapaKanal,skapaMekanik,gasSlag} from './ljud.js?v=14';
 import {monteraFlyg} from './gyrobox-adapter.js';
 import {installeraIosLjud, forberedTystLage} from '../shared/ios-ljud.js';
+import '../shared/volym.js';
 import {handelse} from '../shared/ios-brygga.js';
 const $=id=>document.getElementById(id), began=performance.now();
 const C=await fetch('./config.json?v=10').then(r=>{if(!r.ok)throw Error('Inställningar saknas');return r.json();});

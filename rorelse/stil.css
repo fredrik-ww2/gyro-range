@@ -12,11 +12,19 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; background: var(--bg); color: var(--text); }
+html, body { height: 100%; overflow: hidden; }
 body {
   font: 17px/1.35 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   padding-top: calc(52px + env(safe-area-inset-top));
   padding-bottom: calc(86px + env(safe-area-inset-bottom));
   -webkit-text-size-adjust: 100%;
+}
+#huvud {
+  max-height: calc(100dvh - 52px - 86px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
 }
 [hidden] { display: none !important; }
 header {

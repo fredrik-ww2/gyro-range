@@ -160,7 +160,7 @@ body[data-karbin=ja][data-pose=framme][data-vy=forsta] #peep{display:block}
 #menu .menyfast a{display:flex;align-items:center;min-height:44px;padding:8px 14px;border-radius:18px;border:1px solid #ffffff36;color:#e0f1a4;font-weight:700;text-decoration:underline;touch-action:manipulation}
 #menyFlikar{flex:none;position:sticky;top:0;background:#16211ef2;z-index:1;padding-top:8px}
 #menyFlikar button{width:auto;flex:1;margin-top:0;min-height:40px}
-#menu [data-flikpanel]{flex:1;min-height:0;overflow:auto;touch-action:pan-y;padding-bottom:12px}
+#menu [data-flikpanel]{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;padding-bottom:12px}
 #menu #weapon,#menu #vyKnapp,#menu #siktVal,#menu #montera,#menu #zoomKnapp,#menu #nyttNoll,#menu #oppnaAxlar{position:static;left:auto;right:auto;top:auto;bottom:auto;transform:none;width:100%;max-width:none;min-height:44px;margin-top:8px}
 .versionrad{margin:14px 0 0;font-size:12px;color:#8ea094}
 #hud{position:absolute;z-index:25;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px;width:auto;margin:0;padding:0 max(8px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));pointer-events:none}

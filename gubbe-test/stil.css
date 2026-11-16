@@ -13,6 +13,7 @@ button.lime, .lime { background: var(--lime); color: #19221a; font-weight: 750; 
   linear-gradient(#f4f1e4, #f4f1e4) center/28px 1.5px no-repeat; }
 #topp { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top) + 8px) 10px 0 max(10px, env(safe-area-inset-left)); pointer-events: none; }
 body:has(#knappGa) .gyrobox-rot { max-width: min(210px, calc(100vw - 16px)) !important; }
+body:has(#noll) .gyrobox-noll { display: none; }
 body:has(.gyrobox-rot) #topp { top: 50px; padding-left: max(10px, env(safe-area-inset-left)); justify-content: flex-end; }
 body:has(.gyrobox-rot) #lageRad { top: calc(env(safe-area-inset-top) + 106px); }
 body:has(.gyrobox-rot) #matning { top: calc(env(safe-area-inset-top) + 172px); }

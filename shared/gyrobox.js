@@ -218,6 +218,9 @@ export function monteraGyrobox(spec) {
   meter.append(el('i', 'gyrobox-thumb'));
   chipRad.append(meter, chipTal);
   chip.append(chipText, chipRad);
+  const nollKnapp = el('button', 'gyrobox-noll', 'Nollställ');
+  nollKnapp.type = 'button';
+  nollKnapp.title = 'Sätt den här lutningen som noll';
 
   const panel = el('section', 'gyrobox-panel');
   panel.id = 'gyrobox-panel-' + spec.spel;
@@ -248,7 +251,7 @@ export function monteraGyrobox(spec) {
   const stang = el('button', 'gyrobox-stang', 'Stäng och spara');
   stang.type = 'button';
   panel.append(stang);
-  rot.append(chip, panel);
+  rot.append(chip, nollKnapp, panel);
   (spec.rot || document.body).append(rot);
 
   const stopp = (e) => e.stopPropagation();
@@ -496,7 +499,26 @@ export function monteraGyrobox(spec) {
     if (oppna) ritaPanel();
   }
 
-  chip.addEventListener('click', () => visa(!oppna));
+  let senChip = 0;
+  function bekraftaNoll() {
+    kalibrera();
+    rot.classList.add('nollad');
+    clearTimeout(rot._nollTid);
+    rot._nollTid = setTimeout(() => rot.classList.remove('nollad'), 700);
+    try {
+      const msg = { type: 'haptic', kind: 'vibrate', handelse: 'vibrera', niva: 0.6 };
+      if (globalThis.webkit?.messageHandlers?.gyroRange) globalThis.webkit.messageHandlers.gyroRange.postMessage(msg);
+      else if (typeof globalThis.GyroRange?.handelse === 'function') globalThis.GyroRange.handelse('vibrera', { niva: 0.6 });
+      else if (typeof navigator?.vibrate === 'function') navigator.vibrate(16);
+    } catch { /* knacken är extra */ }
+  }
+  nollKnapp.addEventListener('click', (e) => { e.stopPropagation(); bekraftaNoll(); });
+  chip.addEventListener('click', () => {
+    const nu = performance.now();
+    if (nu - senChip < 340) { senChip = 0; bekraftaNoll(); return; }
+    senChip = nu;
+    visa(!oppna);
+  });
   stang.addEventListener('click', () => { spara(); visa(false); });
   sparaNy.addEventListener('click', () => {
     const namn = (namnFalt.value || '').trim().slice(0, 40) || `Testläge ${lagen.length + 1}`;

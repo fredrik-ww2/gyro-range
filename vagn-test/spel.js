@@ -11,6 +11,7 @@ import {sjalvtest as pansarTest, REGLER, VAGN_LISTA, standardRegler, siktenFor, 
 import {monteraVagn} from './gyrobox-adapter.js';
 import {lyssnaSkarm} from '../shared/sensor.js';
 import {handelse, iAppen} from '../shared/ios-brygga.js';
+import '../shared/volym.js';
 import config from './config.json' with { type: 'json' };
 
 const NYCKEL = 'vagn_test_v1';

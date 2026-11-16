@@ -12,6 +12,7 @@ import { provFranEvent, lyssnaSkarm } from '../shared/sensor.js';
 import { arOmslag, nyNollRiktning } from '../js/riktning.js';
 import { installeraIosLjud, oppnaKontext, tick } from '../shared/ios-ljud.js';
 import { handelse } from '../shared/ios-brygga.js';
+import '../shared/volym.js';
 
 const $ = (id) => document.getElementById(id);
 let stegLjud = null;
@@ -386,7 +387,7 @@ function steg(dt) {
   hoft.position.y = 0.7 - ligg * 0.46;
   huvud.rotation.x = ligg * 0.7;
   const hor = Math.hypot(framFart, sida);
-  fas += dt * (2.2 + hor * 2.5) * (1 - ligg);
+  fas += dt * (hor > 0.25 ? Math.max(3.2, hor * 5.4) : 1.4) * (1 - ligg);
   if (hor > 0.45 && ligg < 0.5) {
     const halv = Math.floor(fas / Math.PI);
     if (halv !== stegHalv) { stegHalv = halv; tick(stegLjud); handelse('gubbe-steg', { niva: 0.55 }); }

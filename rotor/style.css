@@ -77,4 +77,27 @@ body.playing #missionHud{top:calc(env(safe-area-inset-top, 0px) + 54px);margin-l
 #aimPad b{font-size:12px;letter-spacing:1.4px;font-weight:700}
 #aimPad i{position:absolute;width:34%;height:34%;border:1px solid #e7f0dc99;border-radius:50%}
 #uppdragVal{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+#hud #windshield{pointer-events:none}
+#hud #collective{background:linear-gradient(#2a2e2c,#141716);border:1px solid #6a655c;border-radius:16px;box-shadow:inset 0 0 0 1px #000,inset 0 8px 16px #0008}
+#hud #collective b{color:#e7dcc4;text-shadow:0 1px 2px #000;z-index:2}
+#hud #collective .lyft-spar{position:absolute;left:50%;top:28px;bottom:10px;width:14px;margin-left:-7px;border-radius:8px;background:linear-gradient(#0c0e0d,#1c201e);box-shadow:inset 0 0 0 1px #000,inset 0 0 8px #000}
+#hud #collective .lyft-skala{position:absolute;left:8px;top:30px;bottom:12px;width:8px;background:repeating-linear-gradient(to top,#cbb892 0 2px,transparent 2px 14px);opacity:.8}
+#collectiveGrip{position:absolute;left:8px;right:8px;height:28px;border-radius:8px;bottom:calc(var(--lyft,.6) * (100% - 46px) + 10px);background:linear-gradient(#d7d2c6,#8a867c 45%,#3a3834);border:1px solid #1a1916;box-shadow:0 2px 0 #0a0a09,0 6px 8px #000a;z-index:2}
+#collectiveGrip::before{content:"";position:absolute;left:6px;right:6px;top:12px;height:3px;border-radius:2px;background:#2a2824}
+#nollFlyg{position:fixed;z-index:32;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));min-height:40px;padding:8px 12px;border-radius:14px;border:1px solid #e0f1a466;background:#121816ee;color:#e0f1a4;font-size:15px;font-weight:750;pointer-events:auto}
+body:has(#nollFlyg) .gyrobox-noll{display:none}
+#kartaKnapp{position:fixed;z-index:32;top:calc(max(10px,env(safe-area-inset-top)) + 48px);left:max(10px,env(safe-area-inset-left));min-height:36px;padding:6px 12px;border-radius:12px;border:1px solid #6a655c;background:#1a1e1c;color:#e7dcc4;font-size:13px;font-weight:700;pointer-events:auto}
+#kartaKnapp[aria-pressed=true]{background:#e0f1a4;color:#17211a}
+body:has(#nollFlyg) .gyrobox-rot{top:calc(env(safe-area-inset-top, 0px) + 100px);max-width:148px}
+#minikarta{position:absolute;z-index:6;left:max(8px,env(safe-area-inset-left));top:calc(env(safe-area-inset-top, 0px) + 148px);width:132px;height:132px;border-radius:12px;border:1px solid #6a655c;background:#101614;pointer-events:none}
+#instrumentband{position:absolute;z-index:6;left:76px;width:176px;bottom:156px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 8px 6px;border-radius:18px;background:#0c100ef2;border:1px solid #6a655c;box-shadow:inset 0 0 0 1px #000,0 10px 22px #0008;pointer-events:none}
+#instrumentband .rad{display:flex;width:100%;gap:4px}
+#instrumentband .tal{flex:1;text-align:center;color:#f4ecd8}
+#instrumentband .tal b{display:block;font-size:20px;font-weight:750;font-variant-numeric:tabular-nums;line-height:1.05}
+#instrumentband .tal span{display:block;margin-top:1px;font-size:10px;letter-spacing:.08em;color:#cbb892;font-weight:700}
+#instrumentband .stig b{font-size:16px}
+#instrumentband canvas{width:136px;height:136px;border-radius:50%;background:#101614;margin-top:4px}
+#hud #warning{top:calc(env(safe-area-inset-top, 0px) + 112px);left:50%;max-width:min(200px,52vw);white-space:normal;text-align:center;transform:translateX(-50%)}
+.settings-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain}
+#reticle{transform:translate(-50%,-50%)}
 #uppdragVal button{border:1px solid #d1eb8166;background:#132428cc;color:#e7f0dc;border-radius:8px;min-height:40px;padding:8px 10px;font-size:12px}
